@@ -1,7 +1,7 @@
 FROM node:20-alpine AS base
 
 # Install pnpm and pm2
-RUN npm install -g pnpm@8.15.0 pm2
+RUN npm install -g pnpm@9 pm2
 
 # Install dependencies for both
 WORKDIR /app
