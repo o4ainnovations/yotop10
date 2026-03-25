@@ -22,7 +22,8 @@ RUN cd backend && pnpm build
 # Production image
 FROM node:20-alpine AS runner
 WORKDIR /app
-RUN npm install -g pm2
+# Install pnpm and pm2 in production image
+RUN npm install -g pnpm@9 pm2
 
 # Copy built artifacts and config
 COPY --from=builder /app/frontend/.next/standalone ./frontend

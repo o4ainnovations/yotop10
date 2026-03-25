@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'frontend',
-      script: 'node_modules/next/dist/bin/next',
+      script: 'pnpm',
       args: 'start',
       cwd: './frontend',
       env: {
@@ -12,7 +12,8 @@ module.exports = {
     },
     {
       name: 'backend',
-      script: 'dist/server.js',
+      script: 'pnpm',
+      args: 'start',
       cwd: './backend',
       env: {
         NODE_ENV: 'production',
