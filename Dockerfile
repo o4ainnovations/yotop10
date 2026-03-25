@@ -16,6 +16,8 @@ WORKDIR /app
 COPY --from=deps /app/frontend/node_modules ./frontend/node_modules
 COPY --from=deps /app/backend/node_modules ./backend/node_modules
 COPY . .
+# Explicitly verify the file exists before building
+RUN ls -la ecosystem.config.js
 RUN cd frontend && pnpm build
 RUN cd backend && pnpm build
 
@@ -30,7 +32,7 @@ COPY --from=builder /app/frontend/public ./frontend/public
 COPY --from=builder /app/backend/dist ./backend/dist
 COPY --from=builder /app/backend/node_modules ./backend/node_modules
 COPY --from=builder /app/backend/package.json ./backend/
-COPY --from=builder /app/ecosystem.config.js ./
+COPY --from=builder /app/ecosystem.config.js /app/ecosystem.config.js
 
 # Start command
 CMD ["pm2-runtime", "start", "ecosystem.config.js"]
