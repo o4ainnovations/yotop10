@@ -29,15 +29,22 @@ app.get('/api/health', (req: Request, res: Response) => {
 });
 
 // API Routes (to be implemented)
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/users', require('./routes/users'));
-app.use('/api/listings', require('./routes/listings'));
-app.use('/api/categories', require('./routes/categories'));
-app.use('/api/search', require('./routes/search'));
-app.use('/api/reviews', require('./routes/reviews'));
+import authRoutes from './routes/auth';
+import usersRoutes from './routes/users';
+import listingsRoutes from './routes/listings';
+import categoriesRoutes from './routes/categories';
+import searchRoutes from './routes/search';
+import reviewsRoutes from './routes/reviews';
+
+app.use('/api/auth', authRoutes);
+app.use('/api/users', usersRoutes);
+app.use('/api/listings', listingsRoutes);
+app.use('/api/categories', categoriesRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api/reviews', reviewsRoutes);
 
 // Error handling middleware
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
 });

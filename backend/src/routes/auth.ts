@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 
-const router = Router();
+const router: Router = Router();
 
 // Login
 router.post('/login', (req: Request, res: Response) => {
@@ -17,4 +17,4 @@ router.post('/logout', (req: Request, res: Response) => {
   res.json({ message: 'Logout endpoint' });
 });
 
-module.exports = router;
+export default router;
