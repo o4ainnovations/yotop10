@@ -34,6 +34,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
+            cd /home/o4ainnovations/yotop10
             docker pull ${{ secrets.DOCKER_USER }}/yotop10:${{ github.sha }}
             docker compose down
             docker compose up -d
