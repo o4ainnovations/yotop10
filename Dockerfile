@@ -32,6 +32,7 @@ COPY --from=builder /app/backend/dist ./backend/dist
 COPY --from=builder /app/backend/node_modules ./backend/node_modules
 COPY --from=builder /app/backend/package.json ./backend/
 COPY --from=builder /app/backend/src/scripts ./backend/src/scripts
+COPY --from=builder /app/backend/src/models ./backend/src/models
 COPY --from=builder /app/backend/tsconfig.json ./backend/
 COPY --from=builder /app/ecosystem.config.js /app/ecosystem.config.js
 
