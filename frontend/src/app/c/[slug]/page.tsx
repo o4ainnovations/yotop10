@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 
 interface Category {
   id: string;
@@ -38,7 +39,6 @@ export default function CategoryFeedPage() {
 
   useEffect(() => {
     if (!slug) return;
-    setLoading(true);
 
     Promise.all([
       fetch(`/api/categories/${slug}`).then(res => {
@@ -78,7 +78,7 @@ export default function CategoryFeedPage() {
       <header>
         <h1>YoTop10</h1>
         <nav>
-          <a href="/">Home</a> | <a href="/categories">Categories</a> | <a href="/submit">Submit</a>
+          <Link href="/">Home</Link> | <Link href="/categories">Categories</Link> | <Link href="/submit">Submit</Link>
         </nav>
       </header>
       <main>
@@ -92,7 +92,7 @@ export default function CategoryFeedPage() {
             <ul>
               {category.children.map(child => (
                 <li key={child.id}>
-                  <a href={`/c/${child.slug}`}>{child.name}</a> ({child.post_count})
+                  <Link href={`/c/${child.slug}`}>{child.name}</Link> ({child.post_count})
                 </li>
               ))}
             </ul>
@@ -106,7 +106,7 @@ export default function CategoryFeedPage() {
           <div>
             {posts.map(post => (
               <div key={post.id} style={{ marginBottom: '20px', border: '1px solid #ccc', padding: '10px' }}>
-                <h3><a href={`/post/${post.id}`}>{post.title}</a></h3>
+                <h3><Link href={`/post/${post.id}`}>{post.title}</Link></h3>
                 <p>{post.post_type} | Fire: {post.fire_count} | Comments: {post.comment_count}</p>
                 <p>By {post.author_display_name} - {new Date(post.created_at).toLocaleDateString()}</p>
                 <p>{post.intro.substring(0, 200)}...</p>

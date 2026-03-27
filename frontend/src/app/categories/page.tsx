@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 interface ChildCategory {
   id: string;
@@ -51,7 +52,7 @@ export default function CategoriesPage() {
       <header>
         <h1>YoTop10</h1>
         <nav>
-          <a href="/">Home</a> | <a href="/categories">Categories</a> | <a href="/submit">Submit</a>
+          <Link href="/">Home</Link> | <Link href="/categories">Categories</Link> | <Link href="/submit">Submit</Link>
         </nav>
       </header>
       <main>
@@ -63,7 +64,7 @@ export default function CategoriesPage() {
             {categories.map(cat => (
               <div key={cat.id} style={{ marginBottom: '30px' }}>
                 <h2>
-                  {cat.icon} <a href={`/c/${cat.slug}`}>{cat.name}</a>
+                  {cat.icon} <Link href={`/c/${cat.slug}`}>{cat.name}</Link>
                 </h2>
                 <p>{cat.description}</p>
                 <p>Posts: {cat.post_count}</p>
@@ -73,7 +74,7 @@ export default function CategoriesPage() {
                     <ul>
                       {cat.children.map(child => (
                         <li key={child.id}>
-                          <a href={`/c/${child.slug}`}>{child.name}</a> ({child.post_count} posts)
+                          <Link href={`/c/${child.slug}`}>{child.name}</Link> ({child.post_count} posts)
                         </li>
                       ))}
                     </ul>

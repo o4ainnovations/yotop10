@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 
 interface ListItem {
   id: string;
@@ -105,7 +106,7 @@ export default function PostDetailPage() {
       <header>
         <h1>YoTop10</h1>
         <nav>
-          <a href="/">Home</a> | <a href="/categories">Categories</a> | <a href="/submit">Submit</a>
+          <Link href="/">Home</Link> | <Link href="/categories">Categories</Link> | <Link href="/submit">Submit</Link>
         </nav>
       </header>
       <main>
@@ -114,7 +115,7 @@ export default function PostDetailPage() {
           <h1>{post.title}</h1>
           <p>By {post.author_display_name} | Fire: {post.fire_count}</p>
           <p>{post.intro}</p>
-          <p><a href={`/submit?counter_to=${post.id}`}>Submit Counter-List</a> | <a href={`/post/${post.id}/history`}>View History</a></p>
+          <p><Link href={`/submit?counter_to=${post.id}`}>Submit Counter-List</Link> | <Link href={`/post/${post.id}/history`}>View History</Link></p>
         </article>
         <section>
           <h2>Ranked List</h2>
@@ -123,7 +124,7 @@ export default function PostDetailPage() {
               <h3>#{item.rank} {item.title}</h3>
               <p>{item.justification}</p>
               {item.image_url && <img src={item.image_url} alt={item.title} style={{ maxWidth: '300px' }} />}
-              <p>Fire: {item.fire_count} | <a href={`/post/${post.id}?item=${item.id}`}>Comment on this item</a>{item.source_url && <span> | <a href={item.source_url} target="_blank">Source</a></span>}</p>
+              <p>Fire: {item.fire_count} | <Link href={`/post/${post.id}?item=${item.id}`}>Comment on this item</Link>{item.source_url && <span> | <a href={item.source_url} target="_blank" rel="noopener noreferrer">Source</a></span>}</p>
             </div>
           ))}
         </section>
