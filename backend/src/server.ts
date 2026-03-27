@@ -31,6 +31,7 @@ app.get('/api/health', (req: Request, res: Response) => {
 // API Routes (to be implemented)
 import authRoutes from './routes/auth';
 import usersRoutes from './routes/users';
+import postsRoutes from './routes/posts';
 import listingsRoutes from './routes/listings';
 import categoriesRoutes from './routes/categories';
 import searchRoutes from './routes/search';
@@ -38,6 +39,7 @@ import reviewsRoutes from './routes/reviews';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/posts', postsRoutes);
 app.use('/api/listings', listingsRoutes);
 app.use('/api/categories', categoriesRoutes);
 app.use('/api/search', searchRoutes);
