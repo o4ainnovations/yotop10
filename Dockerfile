@@ -22,8 +22,8 @@ RUN cd backend && pnpm build
 # Production image
 FROM node:20-alpine AS runner
 WORKDIR /app
-# Install pnpm and pm2 in production image
-RUN npm install -g pnpm@9 pm2
+# Install pnpm, pm2, and tsx for running seed scripts
+RUN npm install -g pnpm@9 pm2 tsx
 
 # Copy built artifacts and config
 COPY --from=builder /app/frontend/.next/standalone ./frontend
@@ -31,6 +31,9 @@ COPY --from=builder /app/frontend/public ./frontend/public
 COPY --from=builder /app/backend/dist ./backend/dist
 COPY --from=builder /app/backend/node_modules ./backend/node_modules
 COPY --from=builder /app/backend/package.json ./backend/
+COPY --from=builder /app/backend/src/scripts ./backend/src/scripts
+COPY --from=builder /app/backend/tsconfig.json ./backend/
+COPY --from=builder /app/backend/.env.example ./backend/.env.example
 COPY --from=builder /app/ecosystem.config.js /app/ecosystem.config.js
 
 # Start command
