@@ -26,8 +26,10 @@ WORKDIR /app
 RUN npm install -g pnpm@9 pm2 tsx
 
 # Copy built artifacts and config
-COPY --from=builder /app/frontend/.next/standalone ./frontend
+COPY --from=builder /app/frontend/.next ./frontend/.next
 COPY --from=builder /app/frontend/public ./frontend/public
+COPY --from=builder /app/frontend/package.json ./frontend/
+COPY --from=builder /app/frontend/server.js ./frontend/
 COPY --from=builder /app/backend/dist ./backend/dist
 COPY --from=builder /app/backend/node_modules ./backend/node_modules
 COPY --from=builder /app/backend/package.json ./backend/
