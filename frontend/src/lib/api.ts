@@ -23,6 +23,7 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const baseUrl = getBaseUrl();
   const url = `${baseUrl}${endpoint}`;
+  console.log('[apiFetch] URL:', url);
 
   const response = await fetch(url, {
     ...options,
@@ -32,8 +33,12 @@ export async function apiFetch<T>(
     },
   });
 
+  console.log('[apiFetch] Response status:', response.status, response.statusText);
+
   if (!response.ok) {
-    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    const errorText = await response.text();
+    console.error('[apiFetch] Error response:', errorText);
+    throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorText}`);
   }
 
   return response.json();

@@ -30,19 +30,61 @@ export default function CategoriesPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('[Categories] Fetching from API...');
     API.getCategories()
       .then((data: any) => {
-        setCategories(data.categories);
+        console.log('[Categories] API response:', data);
+        setCategories(data.categories || []);
+        setError(null);
       })
       .catch(err => {
-        setError('Failed to load categories');
-        console.error(err);
+        console.error('[Categories] API error:', err);
+        setError(err.message || 'Failed to load categories');
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        console.log('[Categories] Loading complete');
+        setLoading(false);
+      });
   }, []);
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
+  if (error) {
+    return (
+      <div>
+        <header>
+          <h1>YoTop10</h1>
+          <nav>
+            <Link href="/">Home</Link> | <Link href="/categories">Categories</Link> | <Link href="/submit">Submit</Link>
+          </nav>
+        </header>
+        <main>
+          <div style={{ color: 'red', padding: '20px', border: '1px solid red' }}>
+            <h2>Error Loading Categories</h2>
+            <p><strong>Message:</strong> {error}</p>
+            <p><strong>API URL:</strong> {typeof window !== 'undefined' ? (window as any).__NEXT_DATA__?.props?.pageProps?.__NEXT_URL__ : 'server-side'}</p>
+            <p>Check browser console for more details.</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div>
+        <header>
+          <h1>YoTop10</h1>
+          <nav>
+            <Link href="/">Home</Link> | <Link href="/categories">Categories</Link> | <Link href="/submit">Submit</Link>
+          </nav>
+        </header>
+        <main>
+          <div style={{ padding: '20px' }}>
+            <p>Loading... (if this persists, check console for errors)</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div>
