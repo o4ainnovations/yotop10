@@ -25,6 +25,10 @@ WORKDIR /app
 # Install pnpm, pm2, and tsx for running seed scripts
 RUN npm install -g pnpm@9 pm2 tsx
 
+# Environment variables
+ENV NEXT_PUBLIC_API_URL=http://localhost:8100/api
+ENV INTERNAL_API_URL=http://localhost:8000/api
+
 # Copy built artifacts and config
 COPY --from=builder /app/frontend/.next/standalone ./frontend
 COPY --from=builder /app/frontend/.next/static ./frontend/.next/static
