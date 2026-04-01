@@ -57,36 +57,50 @@ app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
 
 // Database connections
 const connectDatabases = async () => {
-  try {
-    // MongoDB connection
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/yotop10';
-    await mongoose.connect(mongoUri);
-    console.log('✅ Connected to MongoDB');
+  // MongoDB connection
+  const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/yotop10';
+  await mongoose.connect(mongoUri);
+  console.log('✅ Connected to MongoDB');
 
-    // Redis connection
-    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-    const redisClient = createClient({ url: redisUrl });
-    redisClient.on('error', (err) => console.error('❌ Redis Client Error:', err));
-    await redisClient.connect();
-    console.log('✅ Connected to Redis');
+  // Redis connection
+  const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+  const redisClient = createClient({ url: redisUrl });
+  redisClient.on('error', (err) => console.error('❌ Redis Client Error:', err));
+  await redisClient.connect();
+  console.log('✅ Connected to Redis');
 
-    // Elasticsearch connection
-    const esClient = new ElasticsearchClient({
-      node: process.env.ELASTICSEARCH_URL || 'http://localhost:9200',
-    });
-    await esClient.ping();
-    console.log('✅ Connected to Elasticsearch');
-  } catch (error) {
-    console.error('❌ Database connection error:', error);
+  // Elasticsearch connection with retry logic
+  const esUrl = process.env.ELASTICSEARCH_URL || 'http://localhost:9200';
+  const esClient = new ElasticsearchClient({ node: esUrl });
+  const maxRetries = 10;
+  const retryDelay = 3000;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      await esClient.ping();
+      console.log('✅ Connected to Elasticsearch');
+      break;
+    } catch (error) {
+      if (attempt === maxRetries) {
+        throw new Error(`Failed to connect to Elasticsearch after ${maxRetries} attempts`);
+      }
+      console.log(`⚠️ Elasticsearch connection attempt ${attempt}/${maxRetries} failed, retrying in ${retryDelay}ms...`);
+      await new Promise((resolve) => setTimeout(resolve, retryDelay));
+    }
   }
 };
 
 // Start server
 const startServer = async () => {
-  await connectDatabases();
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-  });
+  try {
+    await connectDatabases();
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
 };
 
 startServer();
