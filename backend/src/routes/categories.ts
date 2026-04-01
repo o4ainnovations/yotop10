@@ -57,8 +57,8 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/categories/:slug — Single category by slug
-router.get('/:slug', async (req: Request, res: Response) => {
+// GET /api/categories/:slug — Single category by slug (supports nested slugs like "business/accounting-tax")
+router.get('/:slug(*)', async (req: Request, res: Response) => {
   try {
     const { slug } = req.params;
 

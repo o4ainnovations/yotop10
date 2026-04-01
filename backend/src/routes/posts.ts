@@ -172,7 +172,14 @@ router.get('/', async (req: Request, res: Response) => {
 
     // Filter by category
     if (category) {
-      query.category_id = category;
+      // Support both category ID and slug (including nested slugs like "business/accounting-tax")
+      const categoryDoc = await Category.findOne({ slug: category as string });
+      if (categoryDoc) {
+        query.category_id = categoryDoc._id;
+      } else {
+        // Also try by ID if slug doesn't match
+        query.category_id = category;
+      }
     }
 
     // Filter by post type
