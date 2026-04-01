@@ -27,7 +27,9 @@ RUN npm install -g pnpm@9 pm2 tsx
 
 # Copy built artifacts and config
 COPY --from=builder /app/frontend/.next/standalone ./frontend
+COPY --from=builder /app/frontend/.next/static ./frontend/.next/static
 COPY --from=builder /app/frontend/public ./frontend/public
+COPY --from=builder /app/frontend/.next/BUILD_ID ./frontend/.next/BUILD_ID
 COPY --from=builder /app/backend/dist ./backend/dist
 COPY --from=builder /app/backend/node_modules ./backend/node_modules
 COPY --from=builder /app/backend/package.json ./backend/
