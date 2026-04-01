@@ -181,4 +181,27 @@ router.delete('/:id', async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/categories/recalculate-post-counts — Recalculate post counts for all categories (maintenance)
+router.post('/recalculate-post-counts', async (req: Request, res: Response) => {
+  try {
+    // Get all categories
+    const categories = await Category.find({ is_archived: false }).lean();
+    
+    // For each category, count posts
+    const { Post } = await import('../models/Post');
+    
+    const results = await Promise.all(categories.map(async (cat) => {
+      const count = await Post.countDocuments({ category_id: cat._id, status: 'approved' });
+      await Category.findByIdAndUpdate(cat._id, { post_count: count });
+      return { slug: cat.slug, count };
+    }));
+    
+    console.log('Recalculated post counts:', results.filter(r => r.count > 0));
+    res.json({ message: 'Post counts recalculated', results });
+  } catch (error) {
+    console.error('Error recalculating post counts:', error);
+    res.status(500).json({ error: 'Failed to recalculate post counts' });
+  }
+});
+
 export default router;
