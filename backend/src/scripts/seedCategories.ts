@@ -246,7 +246,7 @@ async function seedCategories() {
     }
 
     if (childOperations.length > 0) {
-      await Category.bulkWrite(childOperations);
+      await Category.bulkWrite(childOperations, { ordered: false });
       childCount = childOperations.length;
     }
 
