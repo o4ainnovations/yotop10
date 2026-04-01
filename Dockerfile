@@ -16,6 +16,9 @@ WORKDIR /app
 COPY --from=deps /app/frontend/node_modules ./frontend/node_modules
 COPY --from=deps /app/backend/node_modules ./backend/node_modules
 COPY . .
+# Set env vars at build time for Next.js client-side
+ENV NEXT_PUBLIC_API_URL=http://localhost:8100/api
+ENV INTERNAL_API_URL=http://localhost:8000/api
 RUN cd frontend && pnpm build
 RUN cd backend && pnpm build
 
@@ -24,10 +27,6 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 # Install pnpm, pm2, and tsx for running seed scripts
 RUN npm install -g pnpm@9 pm2 tsx
-
-# Environment variables
-ENV NEXT_PUBLIC_API_URL=http://localhost:8100/api
-ENV INTERNAL_API_URL=http://localhost:8000/api
 
 # Copy built artifacts and config
 COPY --from=builder /app/frontend/.next/standalone ./frontend
