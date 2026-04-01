@@ -227,7 +227,7 @@ export default function PostDetailPage() {
       <header style={{ marginBottom: '20px', borderBottom: '1px solid #ccc', paddingBottom: '10px' }}>
         <h1>YoTop10</h1>
         <nav>
-          <Link href="/">Home</Link> | <Link href="/categories">Categories</Link> | <Link href="/submit">Submit</Link>
+          <Link href="/">Home</Link> | <Link href="/categories">Categories</Link>
         </nav>
       </header>
       
@@ -240,7 +240,7 @@ export default function PostDetailPage() {
           <p>By {post.author_display_name}</p>
           <p>{post.intro}</p>
           <p>
-            <Link href={`/submit?counter_to=${post.id}`}>Submit Counter-List</Link> | <Link href={`/post/${post.id}/history`}>View History</Link>
+            <Link href={`/post/${post.id}/history`}>View History</Link>
           </p>
         </article>
         

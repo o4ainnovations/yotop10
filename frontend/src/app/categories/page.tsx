@@ -53,7 +53,7 @@ export default function CategoriesPage() {
         <header>
           <h1>YoTop10</h1>
           <nav>
-            <Link href="/">Home</Link> | <Link href="/categories">Categories</Link> | <Link href="/submit">Submit</Link>
+            <Link href="/">Home</Link> | <Link href="/categories">Categories</Link>
           </nav>
         </header>
         <main>
@@ -74,7 +74,7 @@ export default function CategoriesPage() {
         <header>
           <h1>YoTop10</h1>
           <nav>
-            <Link href="/">Home</Link> | <Link href="/categories">Categories</Link> | <Link href="/submit">Submit</Link>
+            <Link href="/">Home</Link> | <Link href="/categories">Categories</Link>
           </nav>
         </header>
         <main>
@@ -91,7 +91,7 @@ export default function CategoriesPage() {
       <header>
         <h1>YoTop10</h1>
         <nav>
-          <Link href="/">Home</Link> | <Link href="/categories">Categories</Link> | <Link href="/submit">Submit</Link>
+          <Link href="/">Home</Link> | <Link href="/categories">Categories</Link>
         </nav>
       </header>
       <main>
