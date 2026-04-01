@@ -29,7 +29,8 @@ interface Post {
 
 export default function CategoryFeedPage() {
   const params = useParams();
-  const slug = params?.slug as string;
+  const slugParam = params?.slug;
+  const slug = Array.isArray(slugParam) ? slugParam.join('/') : slugParam as string;
 
   const [category, setCategory] = useState<Category | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
