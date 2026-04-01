@@ -30,10 +30,11 @@ export default function CategoriesPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log('[Categories] Fetching from API...');
     API.getCategories()
       .then((data: any) => {
-        console.log('[Categories] API response:', data);
+        const sports = data.categories?.find((c: Category) => c.slug === 'sports');
+        console.log('[Categories] Sports category post_count:', sports?.post_count);
+        console.log('[Categories] Sports children:', sports?.children?.map((c: ChildCategory) => `${c.slug}: ${c.post_count}`));
         setCategories(data.categories || []);
         setError(null);
       })
@@ -42,7 +43,6 @@ export default function CategoriesPage() {
         setError(err.message || 'Failed to load categories');
       })
       .finally(() => {
-        console.log('[Categories] Loading complete');
         setLoading(false);
       });
   }, []);
