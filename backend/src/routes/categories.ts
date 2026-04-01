@@ -186,17 +186,59 @@ router.post('/recalculate-post-counts', async (req: Request, res: Response) => {
   try {
     // Get all categories
     const categories = await Category.find({ is_archived: false }).lean();
-    
-    // For each category, count posts
     const { Post } = await import('../models/Post');
     
-    const results = await Promise.all(categories.map(async (cat) => {
-      const count = await Post.countDocuments({ category_id: cat._id, status: 'approved' });
-      await Category.findByIdAndUpdate(cat._id, { post_count: count });
-      return { slug: cat.slug, count };
+    // Build parent-child map
+    const childrenMap: Record<string, string[]> = {};
+    categories.forEach(cat => {
+      if (cat.parent_id) {
+        const parentId = cat.parent_id.toString();
+        if (!childrenMap[parentId]) {
+          childrenMap[parentId] = [];
+        }
+        childrenMap[parentId].push(cat._id.toString());
+      }
+    });
+    
+    // Get all category IDs
+    const categoryIds = categories.map(c => c._id.toString());
+    
+    // Count posts for each category
+    const postCounts: Record<string, number> = {};
+    for (const catId of categoryIds) {
+      postCounts[catId] = await Post.countDocuments({ 
+        category_id: catId, 
+        status: 'approved' 
+      });
+    }
+    
+    // For parent categories, add children's post counts
+    const parentCategories = categories.filter(c => !c.parent_id);
+    const results = await Promise.all(parentCategories.map(async (parent) => {
+      const directCount = postCounts[parent._id.toString()] || 0;
+      
+      // Sum up all children
+      const childIds = childrenMap[parent._id.toString()] || [];
+      const childrenCount = childIds.reduce((sum, childId) => {
+        return sum + (postCounts[childId] || 0);
+      }, 0);
+      
+      const totalCount = directCount + childrenCount;
+      
+      // Update the parent
+      await Category.findByIdAndUpdate(parent._id, { post_count: totalCount });
+      
+      return { slug: parent.slug, directCount, childrenCount, totalCount };
     }));
     
-    console.log('Recalculated post counts:', results.filter(r => r.count > 0));
+    // Also update child categories with their direct counts
+    const childCategories = categories.filter(c => c.parent_id);
+    for (const child of childCategories) {
+      const count = postCounts[child._id.toString()] || 0;
+      await Category.findByIdAndUpdate(child._id, { post_count: count });
+    }
+    
+    console.log('Recalculated post counts:', results);
     res.json({ message: 'Post counts recalculated', results });
   } catch (error) {
     console.error('Error recalculating post counts:', error);
