@@ -137,10 +137,11 @@ router.get('/posts/:id/comments', async (req: Request, res: Response) => {
     const commentMap = new Map<string, any>();
     const rootComments: any[] = [];
 
-    // First pass: create map
+    // First pass: create map and transform _id to id
     comments.forEach((comment: any) => {
       commentMap.set(comment._id.toString(), {
         ...comment,
+        id: comment._id.toString(),
         replies: [],
       });
     });

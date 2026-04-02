@@ -58,6 +58,10 @@ interface ReplyFormState {
   };
 }
 
+interface ItemDropdownState {
+  [itemId: string]: boolean;
+}
+
 export default function PostDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -75,6 +79,7 @@ export default function PostDetailPage() {
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyForms, setReplyForms] = useState<ReplyFormState>({});
   const [selectedItemId, setSelectedItemId] = useState<string | null>(itemParam);
+  const [itemDropdowns, setItemDropdowns] = useState<ItemDropdownState>({});
   
   const [userReactions, setUserReactions] = useState<Record<string, boolean>>({});
   const [reacting, setReacting] = useState(false);
@@ -111,7 +116,18 @@ export default function PostDetailPage() {
     if (comments.length === 0) return;
     
     const fingerprint = getOrCreateFingerprint();
-    const targets = comments.map((c: Comment) => ({ type: 'comment', id: c.id }));
+    const allComments: Comment[] = [];
+    const collectComments = (cmts: Comment[]) => {
+      cmts.forEach(c => {
+        allComments.push(c);
+        if (c.replies) collectComments(c.replies);
+      });
+    };
+    collectComments(comments);
+    
+    const targets = allComments.map((c: Comment) => ({ type: 'comment', id: c.id }));
+    
+    if (targets.length === 0) return;
     
     const baseUrl = getBaseUrl();
     
@@ -201,20 +217,19 @@ export default function PostDetailPage() {
     const fingerprint = getOrCreateFingerprint();
     
     try {
+      console.log('Sending reaction request:', { targetType, targetId, fingerprint });
       const data: any = await API.toggleReaction(targetType, targetId, fingerprint);
+      console.log('Reaction response:', data);
       
       setUserReactions(prev => ({ ...prev, [key]: data.user_reacted }));
       
       if (targetType === 'comment') {
         setComments(prev => updateCommentFireCount(prev, targetId, data.fire_count));
-      } else if (targetType === 'list_item') {
-        setItems(prev => prev.map(item => 
-          item.id === targetId ? { ...item, fire_count: data.fire_count } : item
-        ));
       } else if (targetType === 'post') {
         setPost((prev: any) => prev ? { ...prev, fire_count: data.fire_count } : null);
       }
-    } catch {
+    } catch (err) {
+      console.error('Failed to react:', err);
       alert('Failed to react');
     } finally {
       setReacting(false);
@@ -232,6 +247,13 @@ export default function PostDetailPage() {
   const getItemRank = (listItemId: string): number | null => {
     const item = items.find(i => i.id === listItemId);
     return item ? item.rank : null;
+  };
+
+  const toggleItemDropdown = (itemId: string) => {
+    setItemDropdowns(prev => ({
+      ...prev,
+      [itemId]: !prev[itemId]
+    }));
   };
 
   const renderComment = (comment: Comment, depth: number = 0) => {
@@ -263,6 +285,7 @@ export default function PostDetailPage() {
             <button 
               onClick={() => handleReaction('comment', comment.id)}
               style={{ background: 'none', border: 'none', cursor: 'pointer', marginRight: '10px' }}
+              disabled={reacting}
             >
               🔥 {comment.fire_count}
             </button>
@@ -323,7 +346,7 @@ export default function PostDetailPage() {
           <p>By {post.author_display_name}</p>
           <p>{post.intro}</p>
           <p>
-            <button onClick={() => handleReaction('post', post.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', marginRight: '10px' }}>
+            <button onClick={() => handleReaction('post', post.id)} disabled={reacting} style={{ background: 'none', border: 'none', cursor: 'pointer', marginRight: '10px' }}>
               🔥 {post.fire_count}
             </button>
             <Link href={`/post/${post.id}/history`}>View History</Link>
@@ -348,15 +371,27 @@ export default function PostDetailPage() {
                   {item.source_url && <span> | <a href={item.source_url} target="_blank" rel="noopener noreferrer">Source</a></span>}
                 </p>
               </div>
-              <div style={{ display: 'flex', gap: '5px', marginLeft: '10px' }}>
+              <div style={{ position: 'relative', marginLeft: '10px' }}>
                 <button 
-                  onClick={() => handleReaction('list_item', item.id)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }}
-                  title="Fire"
+                  onClick={() => toggleItemDropdown(item.id)}
+                  style={{ background: 'none', border: '1px solid #ccc', padding: '5px 10px', cursor: 'pointer', borderRadius: '3px' }}
+                  title="More options"
                 >
-                  🔥
+                  ⋮
                 </button>
-                <span style={{ fontSize: '14px', color: '#666' }}>{item.fire_count}</span>
+                {itemDropdowns[item.id] && (
+                  <div style={{ position: 'absolute', right: 0, top: '100%', backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '5px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)', zIndex: 100, minWidth: '150px' }}>
+                    <button 
+                      onClick={() => {
+                        setSelectedItemId(item.id);
+                        setItemDropdowns(prev => ({ ...prev, [item.id]: false }));
+                      }}
+                      style={{ display: 'block', width: '100%', padding: '10px', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}
+                    >
+                      📌 Comment on this item
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
