@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { API, getBaseUrl } from '@/lib/api';
+import { API, SingleCategoryResponse, PostsResponse, getBaseUrl } from '@/lib/api';
 
 interface Category {
   id: string;
@@ -43,13 +43,13 @@ export default function CategoryFeedPage() {
     if (!slug) return;
 
     Promise.all([
-      API.getCategory(slug).then((data: any) => data.category),
-      API.getPosts({ category: slug, page: 1, limit: 20 }).then((data: any) => data),
+      API.getCategory(slug).then((data: SingleCategoryResponse) => data.category),
+      API.getPosts({ category: slug, page: 1, limit: 20 }).then((data: PostsResponse) => data),
     ])
       .then(([catData, postsData]) => {
         setCategory(catData);
         setPosts(postsData.posts || []);
-        setHasMore(postsData.pagination?.totalPages > 1);
+        setHasMore((postsData.pagination?.totalPages ?? 1) > 1);
       })
       .catch(err => {
         setError('Failed to load category');

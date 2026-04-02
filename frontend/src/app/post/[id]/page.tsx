@@ -81,7 +81,6 @@ export default function PostDetailPage() {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(itemParam);
   const [itemDropdowns, setItemDropdowns] = useState<ItemDropdownState>({});
   
-  const [userReactions, setUserReactions] = useState<Record<string, boolean>>({});
   const [reacting, setReacting] = useState(false);
 
   const fetchComments = useCallback(async () => {
@@ -102,50 +101,16 @@ export default function PostDetailPage() {
     if (!postId) return;
     
     API.getPost(postId)
-      .then((data: any) => {
-        setPost(data.post);
-        setItems(data.items || []);
+      .then((data) => {
+        const typedData = data as { post: Post; items: ListItem[] };
+        setPost(typedData.post);
+        setItems(typedData.items || []);
       })
       .catch(() => setError('Failed to load post'))
       .finally(() => setLoading(false));
       
     fetchComments();
   }, [postId, fetchComments]);
-
-  useEffect(() => {
-    if (comments.length === 0) return;
-    
-    const fingerprint = getOrCreateFingerprint();
-    const allComments: Comment[] = [];
-    const collectComments = (cmts: Comment[]) => {
-      cmts.forEach(c => {
-        allComments.push(c);
-        if (c.replies) collectComments(c.replies);
-      });
-    };
-    collectComments(comments);
-    
-    const targets = allComments.map((c: Comment) => ({ type: 'comment', id: c.id }));
-    
-    if (targets.length === 0) return;
-    
-    const baseUrl = getBaseUrl();
-    
-    fetch(`${baseUrl}/reactions/state?targets=${encodeURIComponent(JSON.stringify(targets))}`, {
-      headers: { 'x-device-fingerprint': fingerprint },
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.targets) {
-          const reactionMap: Record<string, boolean> = {};
-          data.targets.forEach((t: { type: string; id: string; user_reacted: boolean }) => {
-            reactionMap[`${t.type}-${t.id}`] = t.user_reacted;
-          });
-          setUserReactions(reactionMap);
-        }
-      })
-      .catch(err => console.error('Failed to load reaction state:', err));
-  }, [comments]);
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -220,8 +185,6 @@ export default function PostDetailPage() {
       console.log('Sending reaction request:', { targetType, targetId, fingerprint });
       const data: any = await API.toggleReaction(targetType, targetId, fingerprint);
       console.log('Reaction response:', data);
-      
-      setUserReactions(prev => ({ ...prev, [key]: data.user_reacted }));
       
       if (targetType === 'comment') {
         setComments(prev => updateCommentFireCount(prev, targetId, data.fire_count));

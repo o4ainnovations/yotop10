@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { API } from '@/lib/api';
+import { API, CategoriesResponse } from '@/lib/api';
 
 interface Category {
   id: string;
@@ -22,7 +22,7 @@ export default function CategoriesPage() {
 
   useEffect(() => {
     API.getCategories()
-      .then((data: any) => {
+      .then((data: CategoriesResponse) => {
         setCategories(data.categories || []);
         setError(null);
       })
@@ -48,7 +48,7 @@ export default function CategoriesPage() {
           <div style={{ color: 'red', padding: '20px', border: '1px solid red' }}>
             <h2>Error Loading Categories</h2>
             <p><strong>Message:</strong> {error}</p>
-            <p><strong>API URL:</strong> {typeof window !== 'undefined' ? (window as any).__NEXT_DATA__?.props?.pageProps?.__NEXT_URL__ : 'server-side'}</p>
+            <p><strong>API URL:</strong> {typeof window !== 'undefined' ? 'client-side' : 'server-side'}</p>
             <p>Check browser console for more details.</p>
           </div>
         </main>
