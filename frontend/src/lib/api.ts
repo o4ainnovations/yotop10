@@ -168,8 +168,8 @@ export const API = {
 
   // Comments
   getComments: (postId: string): Promise<CommentsResponse> => apiFetch(`/posts/${postId}/comments`),
-  addComment: (postId: string, content: string) => apiFetch(`/posts/${postId}/comments`, {
+  addComment: (postId: string, content: string, parentCommentId?: string, listItemId?: string) => apiFetch(`/posts/${postId}/comments`, {
     method: 'POST',
-    body: JSON.stringify({ content }),
+    body: JSON.stringify({ content, parent_comment_id: parentCommentId, list_item_id: listItemId }),
   }),
 };

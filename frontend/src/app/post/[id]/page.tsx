@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { API } from '@/lib/api';
+import { API, getBaseUrl } from '@/lib/api';
 
 interface ListItem {
   id: string;
@@ -63,13 +63,13 @@ export default function PostDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Comment form state
   const [commentContent, setCommentContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [replyContent, setReplyContent] = useState('');
+  const [replySubmitting, setReplySubmitting] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(itemParam);
   
-  // Fire reaction state
   const [userReactions, setUserReactions] = useState<Record<string, boolean>>({});
   const [reacting, setReacting] = useState(false);
 
@@ -98,20 +98,16 @@ export default function PostDetailPage() {
       .catch(() => setError('Failed to load post'))
       .finally(() => setLoading(false));
       
-    // Fetch comments separately
     fetchComments();
   }, [postId, fetchComments]);
 
-  // Fetch initial reaction state when comments are loaded
   useEffect(() => {
     if (comments.length === 0) return;
     
     const fingerprint = getOrCreateFingerprint();
     const targets = comments.map((c: Comment) => ({ type: 'comment', id: c.id }));
     
-    const baseUrl = typeof window === 'undefined' 
-      ? process.env.INTERNAL_API_URL 
-      : process.env.NEXT_PUBLIC_API_URL;
+    const baseUrl = getBaseUrl();
     
     fetch(`${baseUrl}/reactions/state?targets=${encodeURIComponent(JSON.stringify(targets))}`, {
       headers: { 'x-device-fingerprint': fingerprint },
@@ -136,14 +132,31 @@ export default function PostDetailPage() {
     setSubmitting(true);
     
     try {
-      await API.addComment(postId, commentContent);
+      await API.addComment(postId, commentContent, undefined, selectedItemId || undefined);
       setCommentContent('');
-      setReplyTo(null);
-      fetchComments(); // Refresh comments
+      setSelectedItemId(null);
+      fetchComments();
     } catch {
       alert('Failed to post comment');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleSubmitReply = async (parentCommentId: string) => {
+    if (!replyContent.trim() || replySubmitting) return;
+
+    setReplySubmitting(true);
+    
+    try {
+      await API.addComment(postId, replyContent, parentCommentId, undefined);
+      setReplyContent('');
+      setReplyTo(null);
+      fetchComments();
+    } catch {
+      alert('Failed to post reply');
+    } finally {
+      setReplySubmitting(false);
     }
   };
 
@@ -161,15 +174,12 @@ export default function PostDetailPage() {
     setReacting(true);
     
     const key = `${targetType}-${targetId}`;
-    const currentReacted = userReactions[key] || false;
     
     try {
       const data: any = await API.toggleReaction(postId);
       
-      // Update local state
       setUserReactions(prev => ({ ...prev, [key]: data.user_reacted }));
       
-      // Update the fire count in comments
       if (targetType === 'comment') {
         setComments(prev => updateCommentFireCount(prev, targetId, data.fire_count));
       }
@@ -191,6 +201,8 @@ export default function PostDetailPage() {
   const renderComment = (comment: Comment, depth: number = 0) => {
     if (depth >= 3) return null;
     
+    const isReplying = replyTo === comment.id;
+    
     return (
       <div key={comment.id} style={{ marginLeft: depth * 20 + 'px', borderLeft: '2px solid #ccc', paddingLeft: '10px', marginTop: '10px' }}>
         <div style={{ backgroundColor: '#f5f5f5', padding: '10px', borderRadius: '5px' }}>
@@ -201,16 +213,40 @@ export default function PostDetailPage() {
           </div>
           <p>{comment.content}</p>
           <div style={{ fontSize: '12px', color: '#666' }}>
-            🔥 {comment.fire_count} 
+            <button 
+              onClick={() => handleReaction('comment', comment.id)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', marginRight: '10px' }}
+            >
+              🔥 {comment.fire_count}
+            </button>
             {depth < 2 && (
               <button 
-                onClick={() => setReplyTo(comment.id)}
-                style={{ marginLeft: '10px', background: 'none', border: 'none', color: '#0066cc', cursor: 'pointer' }}
+                onClick={() => setReplyTo(isReplying ? null : comment.id)}
+                style={{ background: 'none', border: 'none', color: '#0066cc', cursor: 'pointer' }}
               >
-                Reply
+                {isReplying ? 'Cancel' : 'Reply'}
               </button>
             )}
           </div>
+          
+          {isReplying && (
+            <div style={{ marginTop: '10px', padding: '10px', backgroundColor: '#fff', borderRadius: '5px', border: '1px solid #ddd' }}>
+              <textarea
+                value={replyContent}
+                onChange={(e) => setReplyContent(e.target.value)}
+                placeholder={`Reply to ${comment.author_display_name}...`}
+                style={{ width: '100%', minHeight: '60px', padding: '8px', marginBottom: '8px' }}
+                maxLength={2000}
+              />
+              <button 
+                onClick={() => handleSubmitReply(comment.id)}
+                disabled={replySubmitting || !replyContent.trim()}
+                style={{ padding: '8px 16px', backgroundColor: replySubmitting ? '#ccc' : '#0066cc', color: 'white', border: 'none', borderRadius: '5px', cursor: replySubmitting ? 'not-allowed' : 'pointer' }}
+              >
+                {replySubmitting ? 'Posting...' : 'Submit Reply'}
+              </button>
+            </div>
+          )}
         </div>
         {comment.replies?.map(r => renderComment(r, depth + 1))}
       </div>
@@ -253,10 +289,10 @@ export default function PostDetailPage() {
               {item.image_url && <img src={item.image_url} alt={item.title} style={{ maxWidth: '300px' }} />}
               <p style={{ fontSize: '14px', color: '#666' }}>
                 <button 
-                  onClick={() => setSelectedItemId(item.id)}
+                  onClick={() => setSelectedItemId(selectedItemId === item.id ? null : item.id)}
                   style={{ background: selectedItemId === item.id ? '#e0f0ff' : 'none', border: '1px solid #ccc', marginLeft: '5px', padding: '2px 8px', cursor: 'pointer' }}
                 >
-                  Comment on this item
+                  {selectedItemId === item.id ? '✓ Commenting on this item' : 'Comment on this item'}
                 </button>
                 {item.source_url && <span> | <a href={item.source_url} target="_blank" rel="noopener noreferrer">Source</a></span>}
               </p>
@@ -267,7 +303,6 @@ export default function PostDetailPage() {
         <section>
           <h2>Comments ({post.comment_count})</h2>
           
-          {/* Filter by item */}
           <div style={{ marginBottom: '15px' }}>
             <label>Filter: </label>
             <select 
@@ -284,13 +319,7 @@ export default function PostDetailPage() {
             </select>
           </div>
           
-          {/* Comment Form */}
           <form onSubmit={handleSubmitComment} style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f9f9f9', borderRadius: '5px' }}>
-            {replyTo && (
-              <div style={{ marginBottom: '10px', color: '#666' }}>
-                Replying to comment | <button onClick={() => setReplyTo(null)} style={{ color: 'red' }}>Cancel</button>
-              </div>
-            )}
             {selectedItemId && (
               <div style={{ marginBottom: '10px', color: '#0066cc' }}>
                 📌 Commenting on item #{items.find(i => i.id === selectedItemId)?.rank}
@@ -312,7 +341,6 @@ export default function PostDetailPage() {
             </button>
           </form>
           
-          {/* Comments List */}
           {comments.length === 0 ? (
             <p>No comments yet. Be the first to comment!</p>
           ) : (
