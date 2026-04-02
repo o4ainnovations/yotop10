@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { API, getBaseUrl } from '@/lib/api';
+import Image from 'next/image';
+import { API } from '@/lib/api';
 
 interface ListItem {
   id: string;
@@ -122,7 +123,7 @@ export default function PostDetailPage() {
       await API.addComment(postId, commentContent, undefined, selectedItemId || undefined);
       setCommentContent('');
       setSelectedItemId(null);
-      setPost((prev: any) => prev ? { ...prev, comment_count: prev.comment_count + 1 } : null);
+      setPost(prev => prev ? { ...prev, comment_count: prev.comment_count + 1 } : null);
       fetchComments();
     } catch {
       alert('Failed to post comment');
@@ -154,7 +155,7 @@ export default function PostDetailPage() {
         [parentCommentId]: { content: '', submitting: false }
       }));
       setReplyTo(null);
-      setPost((prev: any) => prev ? { ...prev, comment_count: prev.comment_count + 1 } : null);
+      setPost(prev => prev ? { ...prev, comment_count: prev.comment_count + 1 } : null);
       fetchComments();
     } catch {
       alert('Failed to post reply');
@@ -178,18 +179,17 @@ export default function PostDetailPage() {
     if (reacting) return;
     setReacting(true);
     
-    const key = `${targetType}-${targetId}`;
     const fingerprint = getOrCreateFingerprint();
     
     try {
       console.log('Sending reaction request:', { targetType, targetId, fingerprint });
-      const data: any = await API.toggleReaction(targetType, targetId, fingerprint);
+      const data = await API.toggleReaction(targetType, targetId, fingerprint) as { fire_count: number; user_reacted: boolean };
       console.log('Reaction response:', data);
       
       if (targetType === 'comment') {
         setComments(prev => updateCommentFireCount(prev, targetId, data.fire_count));
       } else if (targetType === 'post') {
-        setPost((prev: any) => prev ? { ...prev, fire_count: data.fire_count } : null);
+        setPost(prev => prev ? { ...prev, fire_count: data.fire_count } : null);
       }
     } catch (err) {
       console.error('Failed to react:', err);
@@ -323,7 +323,7 @@ export default function PostDetailPage() {
               <div style={{ flex: 1 }}>
                 <h3>#{item.rank} {item.title}</h3>
                 <p>{item.justification}</p>
-                {item.image_url && <img src={item.image_url} alt={item.title} style={{ maxWidth: '300px' }} />}
+                {item.image_url && <Image src={item.image_url} alt={item.title} style={{ maxWidth: '300px' }} width={300} height={200} unoptimized />}
                 <p style={{ fontSize: '14px', color: '#666' }}>
                   <button 
                     onClick={() => setSelectedItemId(selectedItemId === item.id ? null : item.id)}
