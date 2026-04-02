@@ -12,6 +12,7 @@ export interface IPost extends Document {
   fire_count: number;
   comment_count: number;
   view_count: number;
+  is_public: boolean;
   published_at?: Date;
   created_at: Date;
   updated_at: Date;
@@ -72,6 +73,11 @@ const postSchema = new Schema<IPost>(
     view_count: {
       type: Number,
       default: 0,
+    },
+    is_public: {
+      type: Boolean,
+      default: true,
+      index: true,
     },
     published_at: {
       type: Date,

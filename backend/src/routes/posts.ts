@@ -433,4 +433,39 @@ router.post('/', validatePostSubmission, async (req: Request, res: Response) => 
   }
 });
 
+// GET /api/posts/:id/history — Get post revision history
+router.get('/:id/history', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    const post = await Post.findById(id).lean();
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+    
+    const listItems = await ListItem.find({ post_id: id }).sort({ rank: 1 }).lean();
+    
+    const versions = [
+      {
+        version_number: 1,
+        title: post.title,
+        intro: post.intro,
+        items: listItems.map(item => ({
+          rank: item.rank,
+          title: item.title,
+          justification: item.justification,
+        })),
+        created_at: post.created_at,
+        author_username: post.author_username,
+        change_summary: 'Initial version',
+      },
+    ];
+    
+    res.json({ versions, total: versions.length });
+  } catch (error) {
+    console.error('Error fetching post history:', error);
+    res.status(500).json({ error: 'Failed to fetch post history' });
+  }
+});
+
 export default router;

@@ -3,12 +3,14 @@ import { body, validationResult } from 'express-validator';
 import mongoose from 'mongoose';
 import { Reaction } from '../models/Reaction';
 import { Comment } from '../models/Comment';
+import { Post } from '../models/Post';
+import { ListItem } from '../models/ListItem';
 
 const router: Router = Router();
 
 // Validation middleware
 const validateReaction = [
-  body('target_type').isIn(['comment']).withMessage('Invalid target type - reactions are only allowed on comments'),
+  body('target_type').isIn(['post', 'list_item', 'comment']).withMessage('Invalid target type'),
   body('target_id').isMongoId().withMessage('Invalid target ID'),
   body('device_fingerprint').notEmpty().withMessage('Device fingerprint is required'),
 ];
@@ -31,13 +33,23 @@ router.post('/', validateReaction, async (req: Request, res: Response) => {
 
     // Verify target exists and get current fire count
     let target;
+    let targetModel: 'Comment' | 'Post' | 'ListItem' = 'Comment';
     
     switch (target_type) {
       case 'comment':
         target = await Comment.findById(target_id);
+        targetModel = 'Comment';
+        break;
+      case 'post':
+        target = await Post.findById(target_id);
+        targetModel = 'Post';
+        break;
+      case 'list_item':
+        target = await ListItem.findById(target_id);
+        targetModel = 'ListItem';
         break;
       default:
-        return res.status(400).json({ error: 'Invalid target type - reactions are only allowed on comments' });
+        return res.status(400).json({ error: 'Invalid target type' });
     }
 
     if (!target) {
@@ -72,7 +84,17 @@ router.post('/', validateReaction, async (req: Request, res: Response) => {
     }
 
     // Update fire_count on the target
-    await Comment.findByIdAndUpdate(target_id, { fire_count: currentFireCount });
+    switch (targetModel) {
+      case 'Comment':
+        await Comment.findByIdAndUpdate(target_id, { fire_count: currentFireCount });
+        break;
+      case 'Post':
+        await Post.findByIdAndUpdate(target_id, { fire_count: currentFireCount });
+        break;
+      case 'ListItem':
+        await ListItem.findByIdAndUpdate(target_id, { fire_count: currentFireCount });
+        break;
+    }
 
     res.json({
       success: true,
@@ -98,7 +120,6 @@ router.get('/state', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'No targets provided' });
     }
 
-    // Parse targets: [{"type":"comment","id":"..."}]
     let parsedTargets: Array<{ type: string; id: string }>;
     try {
       parsedTargets = JSON.parse(targets as string);
@@ -106,28 +127,23 @@ router.get('/state', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid targets format' });
     }
 
-    // Filter to only comments
-    const commentTargets = parsedTargets.filter(t => t.type === 'comment');
-    if (commentTargets.length === 0) {
+    if (parsedTargets.length === 0) {
       return res.json({ targets: [] });
     }
 
-    // Get all reactions for these targets by this user
-    const targetIds = commentTargets.map(t => new mongoose.Types.ObjectId(t.id));
+    const targetIds = parsedTargets.map(t => new mongoose.Types.ObjectId(t.id));
+    
     const userReactions = await Reaction.find({
       user_device_fingerprint: device_fingerprint,
-      target_type: 'comment',
       target_id: { $in: targetIds },
     });
 
-    // Create a map of reacted targets
     const reactedMap = new Map<string, boolean>();
     userReactions.forEach(r => {
       reactedMap.set(r.target_id.toString(), true);
     });
 
-    // Build response
-    const results = commentTargets.map(t => ({
+    const results = parsedTargets.map(t => ({
       type: t.type,
       id: t.id,
       user_reacted: reactedMap.has(t.id) || false,

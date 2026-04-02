@@ -135,6 +135,7 @@ export default function PostDetailPage() {
       await API.addComment(postId, commentContent, undefined, selectedItemId || undefined);
       setCommentContent('');
       setSelectedItemId(null);
+      setPost((prev: any) => prev ? { ...prev, comment_count: prev.comment_count + 1 } : null);
       fetchComments();
     } catch {
       alert('Failed to post comment');
@@ -152,6 +153,7 @@ export default function PostDetailPage() {
       await API.addComment(postId, replyContent, parentCommentId, undefined);
       setReplyContent('');
       setReplyTo(null);
+      setPost((prev: any) => prev ? { ...prev, comment_count: prev.comment_count + 1 } : null);
       fetchComments();
     } catch {
       alert('Failed to post reply');
