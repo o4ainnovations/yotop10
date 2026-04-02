@@ -160,10 +160,17 @@ export const API = {
   getPostHistory: (id: string): Promise<PostHistoryResponse> => apiFetch(`/posts/${id}/history`),
 
   // Reactions
-  getReactionState: (postId: string) => apiFetch(`/reactions/state?post_id=${postId}`),
-  toggleReaction: (postId: string) => apiFetch('/reactions', {
+  getReactionState: (targets: Array<{ type: string; id: string }>) => {
+    const baseUrl = typeof window === 'undefined' 
+      ? process.env.INTERNAL_API_URL 
+      : process.env.NEXT_PUBLIC_API_URL;
+    return fetch(`${baseUrl}/reactions/state?targets=${encodeURIComponent(JSON.stringify(targets))}`, {
+      headers: { 'Content-Type': 'application/json' },
+    }).then(res => res.json());
+  },
+  toggleReaction: (targetType: string, targetId: string, deviceFingerprint: string) => apiFetch('/reactions', {
     method: 'POST',
-    body: JSON.stringify({ post_id: postId }),
+    body: JSON.stringify({ target_type: targetType, target_id: targetId, device_fingerprint: deviceFingerprint }),
   }),
 
   // Comments

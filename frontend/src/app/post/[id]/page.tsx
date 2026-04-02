@@ -51,6 +51,13 @@ interface Comment {
   replies?: Comment[];
 }
 
+interface ReplyFormState {
+  [commentId: string]: {
+    content: string;
+    submitting: boolean;
+  };
+}
+
 export default function PostDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -66,8 +73,7 @@ export default function PostDetailPage() {
   const [commentContent, setCommentContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [replyTo, setReplyTo] = useState<string | null>(null);
-  const [replyContent, setReplyContent] = useState('');
-  const [replySubmitting, setReplySubmitting] = useState(false);
+  const [replyForms, setReplyForms] = useState<ReplyFormState>({});
   const [selectedItemId, setSelectedItemId] = useState<string | null>(itemParam);
   
   const [userReactions, setUserReactions] = useState<Record<string, boolean>>({});
@@ -144,21 +150,37 @@ export default function PostDetailPage() {
     }
   };
 
-  const handleSubmitReply = async (parentCommentId: string) => {
-    if (!replyContent.trim() || replySubmitting) return;
+  const handleReplyContentChange = (commentId: string, content: string) => {
+    setReplyForms(prev => ({
+      ...prev,
+      [commentId]: { ...prev[commentId], content }
+    }));
+  };
 
-    setReplySubmitting(true);
+  const handleSubmitReply = async (parentCommentId: string) => {
+    const formState = replyForms[parentCommentId];
+    if (!formState?.content?.trim() || formState.submitting) return;
+
+    setReplyForms(prev => ({
+      ...prev,
+      [parentCommentId]: { ...prev[parentCommentId], submitting: true }
+    }));
     
     try {
-      await API.addComment(postId, replyContent, parentCommentId, undefined);
-      setReplyContent('');
+      await API.addComment(postId, formState.content, parentCommentId, undefined);
+      setReplyForms(prev => ({
+        ...prev,
+        [parentCommentId]: { content: '', submitting: false }
+      }));
       setReplyTo(null);
       setPost((prev: any) => prev ? { ...prev, comment_count: prev.comment_count + 1 } : null);
       fetchComments();
     } catch {
       alert('Failed to post reply');
-    } finally {
-      setReplySubmitting(false);
+      setReplyForms(prev => ({
+        ...prev,
+        [parentCommentId]: { ...prev[parentCommentId], submitting: false }
+      }));
     }
   };
 
@@ -176,14 +198,21 @@ export default function PostDetailPage() {
     setReacting(true);
     
     const key = `${targetType}-${targetId}`;
+    const fingerprint = getOrCreateFingerprint();
     
     try {
-      const data: any = await API.toggleReaction(postId);
+      const data: any = await API.toggleReaction(targetType, targetId, fingerprint);
       
       setUserReactions(prev => ({ ...prev, [key]: data.user_reacted }));
       
       if (targetType === 'comment') {
         setComments(prev => updateCommentFireCount(prev, targetId, data.fire_count));
+      } else if (targetType === 'list_item') {
+        setItems(prev => prev.map(item => 
+          item.id === targetId ? { ...item, fire_count: data.fire_count } : item
+        ));
+      } else if (targetType === 'post') {
+        setPost((prev: any) => prev ? { ...prev, fire_count: data.fire_count } : null);
       }
     } catch {
       alert('Failed to react');
@@ -200,17 +229,33 @@ export default function PostDetailPage() {
     }));
   };
 
+  const getItemRank = (listItemId: string): number | null => {
+    const item = items.find(i => i.id === listItemId);
+    return item ? item.rank : null;
+  };
+
   const renderComment = (comment: Comment, depth: number = 0) => {
     if (depth >= 3) return null;
     
     const isReplying = replyTo === comment.id;
+    const replyForm = replyForms[comment.id] || { content: '', submitting: false };
+    const itemRank = comment.list_item_id ? getItemRank(comment.list_item_id) : null;
     
     return (
       <div key={comment.id} style={{ marginLeft: depth * 20 + 'px', borderLeft: '2px solid #ccc', paddingLeft: '10px', marginTop: '10px' }}>
-        <div style={{ backgroundColor: '#f5f5f5', padding: '10px', borderRadius: '5px' }}>
+        <div style={{ backgroundColor: '#f5f5f5', padding: '10px', borderRadius: '5px', fontSize: depth > 0 ? '14px' : '16px' }}>
           <div>
             <strong>{comment.author_display_name}</strong> 
-            {comment.list_item_id && <span style={{ backgroundColor: '#e0f0ff', padding: '2px 6px', borderRadius: '3px', fontSize: '12px', marginLeft: '8px' }}>📌 On item</span>}
+            {comment.list_item_id && itemRank && (
+              <span style={{ backgroundColor: '#e0f0ff', padding: '2px 6px', borderRadius: '3px', fontSize: '12px', marginLeft: '8px' }}>
+                📌 On item #{itemRank}
+              </span>
+            )}
+            {comment.parent_comment_id && (
+              <span style={{ color: '#666', fontSize: '12px', marginLeft: '8px' }}>
+                ↩️ Reply
+              </span>
+            )}
             - {new Date(comment.created_at).toLocaleDateString()}
           </div>
           <p>{comment.content}</p>
@@ -234,18 +279,18 @@ export default function PostDetailPage() {
           {isReplying && (
             <div style={{ marginTop: '10px', padding: '10px', backgroundColor: '#fff', borderRadius: '5px', border: '1px solid #ddd' }}>
               <textarea
-                value={replyContent}
-                onChange={(e) => setReplyContent(e.target.value)}
+                value={replyForm.content}
+                onChange={(e) => handleReplyContentChange(comment.id, e.target.value)}
                 placeholder={`Reply to ${comment.author_display_name}...`}
                 style={{ width: '100%', minHeight: '60px', padding: '8px', marginBottom: '8px' }}
                 maxLength={2000}
               />
               <button 
                 onClick={() => handleSubmitReply(comment.id)}
-                disabled={replySubmitting || !replyContent.trim()}
-                style={{ padding: '8px 16px', backgroundColor: replySubmitting ? '#ccc' : '#0066cc', color: 'white', border: 'none', borderRadius: '5px', cursor: replySubmitting ? 'not-allowed' : 'pointer' }}
+                disabled={replyForm.submitting || !replyForm.content.trim()}
+                style={{ padding: '8px 16px', backgroundColor: replyForm.submitting ? '#ccc' : '#0066cc', color: 'white', border: 'none', borderRadius: '5px', cursor: replyForm.submitting ? 'not-allowed' : 'pointer' }}
               >
-                {replySubmitting ? 'Posting...' : 'Submit Reply'}
+                {replyForm.submitting ? 'Posting...' : 'Submit Reply'}
               </button>
             </div>
           )}
@@ -278,6 +323,9 @@ export default function PostDetailPage() {
           <p>By {post.author_display_name}</p>
           <p>{post.intro}</p>
           <p>
+            <button onClick={() => handleReaction('post', post.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', marginRight: '10px' }}>
+              🔥 {post.fire_count}
+            </button>
             <Link href={`/post/${post.id}/history`}>View History</Link>
           </p>
         </article>
@@ -285,19 +333,31 @@ export default function PostDetailPage() {
         <section style={{ marginBottom: '30px' }}>
           <h2>Ranked List</h2>
           {items.map(item => (
-            <div key={item.id} style={{ marginBottom: '20px', border: '1px solid #eee', padding: '15px', borderRadius: '5px' }}>
-              <h3>#{item.rank} {item.title}</h3>
-              <p>{item.justification}</p>
-              {item.image_url && <img src={item.image_url} alt={item.title} style={{ maxWidth: '300px' }} />}
-              <p style={{ fontSize: '14px', color: '#666' }}>
+            <div key={item.id} style={{ marginBottom: '20px', border: '1px solid #eee', padding: '15px', borderRadius: '5px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={{ flex: 1 }}>
+                <h3>#{item.rank} {item.title}</h3>
+                <p>{item.justification}</p>
+                {item.image_url && <img src={item.image_url} alt={item.title} style={{ maxWidth: '300px' }} />}
+                <p style={{ fontSize: '14px', color: '#666' }}>
+                  <button 
+                    onClick={() => setSelectedItemId(selectedItemId === item.id ? null : item.id)}
+                    style={{ background: selectedItemId === item.id ? '#e0f0ff' : 'none', border: '1px solid #ccc', marginLeft: '5px', padding: '2px 8px', cursor: 'pointer' }}
+                  >
+                    {selectedItemId === item.id ? '✓ Commenting on this item' : 'Comment on this item'}
+                  </button>
+                  {item.source_url && <span> | <a href={item.source_url} target="_blank" rel="noopener noreferrer">Source</a></span>}
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '5px', marginLeft: '10px' }}>
                 <button 
-                  onClick={() => setSelectedItemId(selectedItemId === item.id ? null : item.id)}
-                  style={{ background: selectedItemId === item.id ? '#e0f0ff' : 'none', border: '1px solid #ccc', marginLeft: '5px', padding: '2px 8px', cursor: 'pointer' }}
+                  onClick={() => handleReaction('list_item', item.id)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }}
+                  title="Fire"
                 >
-                  {selectedItemId === item.id ? '✓ Commenting on this item' : 'Comment on this item'}
+                  🔥
                 </button>
-                {item.source_url && <span> | <a href={item.source_url} target="_blank" rel="noopener noreferrer">Source</a></span>}
-              </p>
+                <span style={{ fontSize: '14px', color: '#666' }}>{item.fire_count}</span>
+              </div>
             </div>
           ))}
         </section>
