@@ -4,15 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { API } from '@/lib/api';
 
-interface ChildCategory {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  icon?: string;
-  post_count: number;
-}
-
 interface Category {
   id: string;
   name: string;
@@ -21,7 +12,7 @@ interface Category {
   icon?: string;
   post_count: number;
   is_featured: boolean;
-  children: ChildCategory[];
+  children: Array<{ id: string; name: string; slug: string; post_count: number }>;
 }
 
 export default function CategoriesPage() {
@@ -32,9 +23,6 @@ export default function CategoriesPage() {
   useEffect(() => {
     API.getCategories()
       .then((data: any) => {
-        const sports = data.categories?.find((c: Category) => c.slug === 'sports');
-        console.log('[Categories] Sports category post_count:', sports?.post_count);
-        console.log('[Categories] Sports children:', sports?.children?.map((c: ChildCategory) => `${c.slug}: ${c.post_count}`));
         setCategories(data.categories || []);
         setError(null);
       })
