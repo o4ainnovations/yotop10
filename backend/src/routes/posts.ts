@@ -1,7 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
 import crypto from 'crypto';
-import { Post } from '../models/Post';
+import mongoose from 'mongoose';
+import { Post, generateUniqueSlug } from '../models/Post';
 import { ListItem } from '../models/ListItem';
 import { User } from '../models/User';
 import { Category } from '../models/Category';
@@ -246,31 +247,40 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/posts/:id — Single post with items and comments
-router.get('/:id', async (req: Request, res: Response) => {
+// GET /api/posts/:idOrSlug — Single post with items and comments
+router.get('/:idOrSlug', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { idOrSlug } = req.params;
 
-    // Find approved post
-    const post = await Post.findOne({ _id: id, status: 'approved' })
-      .populate('category_id', 'name slug icon')
-      .lean();
+    // Find approved post - try both _id and slug
+    let post: any;
+    if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
+      post = await Post.findOne({ _id: idOrSlug, status: 'approved' })
+        .populate('category_id', 'name slug icon')
+        .lean();
+    }
+    
+    if (!post) {
+      post = await Post.findOne({ slug: idOrSlug, status: 'approved' })
+        .populate('category_id', 'name slug icon')
+        .lean();
+    }
 
     if (!post) {
       return res.status(404).json({ error: 'Post not found' });
     }
 
     // Increment view count
-    await Post.findByIdAndUpdate(id, { $inc: { view_count: 1 } });
+    await Post.findByIdAndUpdate(post._id, { $inc: { view_count: 1 } });
 
     // Get list items for this post
-    const listItems = await ListItem.find({ post_id: id })
+    const listItems = await ListItem.find({ post_id: post._id })
       .sort({ rank: 1 })
       .lean();
 
     // Get comments for this post (top-level only)
     const comments = await Comment.find({
-      post_id: id,
+      post_id: post._id,
       parent_comment_id: null,
     })
       .sort({ created_at: -1 })
@@ -377,7 +387,7 @@ router.post('/', validatePostSubmission, async (req: Request, res: Response) => 
     }
 
     // Create post
-    const post = await Post.create({
+    let post = await Post.create({
       author_id: user.user_id,
       author_username: user.username,
       author_display_name: author_display_name || user.username,
@@ -389,7 +399,18 @@ router.post('/', validatePostSubmission, async (req: Request, res: Response) => 
       fire_count: 0,
       comment_count: 0,
       view_count: 0,
+      slug: `temp-${crypto.randomBytes(8).toString('hex')}`, // Temporary slug to pass validation
     });
+    
+    // Generate final slug with ID
+    const finalSlug = generateUniqueSlug(title, post._id.toString());
+    await Post.findByIdAndUpdate(
+      post._id,
+      { slug: finalSlug }
+    );
+    
+    // Refresh post with slug
+    post = (await Post.findById(post._id))!;
 
     // Create list items
     const listItems = await Promise.all(
@@ -433,17 +454,25 @@ router.post('/', validatePostSubmission, async (req: Request, res: Response) => 
   }
 });
 
-// GET /api/posts/:id/history — Get post revision history
-router.get('/:id/history', async (req: Request, res: Response) => {
+// GET /api/posts/:idOrSlug/history — Get post revision history
+router.get('/:idOrSlug/history', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { idOrSlug } = req.params;
+
+    let post: any;
+    if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
+      post = await Post.findById(idOrSlug).lean();
+    }
     
-    const post = await Post.findById(id).lean();
+    if (!post) {
+      post = await Post.findOne({ slug: idOrSlug }).lean();
+    }
+
     if (!post) {
       return res.status(404).json({ error: 'Post not found' });
     }
-    
-    const listItems = await ListItem.find({ post_id: id }).sort({ rank: 1 }).lean();
+
+    const listItems = await ListItem.find({ post_id: post._id }).sort({ rank: 1 }).lean();
     
     const versions = [
       {

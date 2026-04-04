@@ -5,6 +5,7 @@ export interface IPost extends Document {
   author_username: string;
   author_display_name: string;
   title: string;
+  slug: string;
   post_type: string;
   intro: string;
   status: 'pending_review' | 'approved' | 'rejected';
@@ -17,6 +18,26 @@ export interface IPost extends Document {
   created_at: Date;
   updated_at: Date;
 }
+
+// Generate unique slug from title and ID
+export const generateUniqueSlug = (title: string, id: string): string => {
+  // Normalize title
+  let slug = title.toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim();
+  
+  // Truncate to 60 characters
+  if (slug.length > 60) {
+    slug = slug.substring(0, 60).replace(/-+$/, '');
+  }
+  
+  // Append last 6 characters of ID
+  const idSuffix = id.substring(id.length - 6);
+  
+  return `${slug}-${idSuffix}`;
+};
 
 const postSchema = new Schema<IPost>(
   {
@@ -38,6 +59,12 @@ const postSchema = new Schema<IPost>(
       type: String,
       required: true,
       index: true,
+    },
+    slug: {
+      type: String,
+      unique: true,
+      index: true,
+      required: true,
     },
     post_type: {
       type: String,
