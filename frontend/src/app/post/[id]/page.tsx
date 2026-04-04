@@ -13,7 +13,7 @@ export default function PostRedirectPage() {
       try {
         const data = await API.getPost(id);
         if (data?.post?.slug) {
-          redirect(`/${data.post.slug}`, 'replace');
+          redirect(`/${data.post.slug}`);
         }
       } catch {
         // Fallback if post not found
