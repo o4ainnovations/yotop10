@@ -95,13 +95,46 @@ Track anonymous users using:
 - [ ] `GET /api/posts/:id` — Single post with items + comments
 
 ### M5 — Post Detail Page
-- [ ] Frontend: `/post/[id]`
-- [ ] Full post display with ranked list items
-- [ ] Item-anchored comments (highlight specific item)
-- [ ] Nested comments (max 3 levels)
-- [ ] Fire reactions (toggle on/off)
-- [ ] "Submit a Counter-List" button
-- [ ] Post history/changelog
+- [x] Frontend: `/post/[id]`
+- [x] Full post display with ranked list items
+- [x] Item-anchored comments (highlight specific item)
+- [x] Nested comments (max 3 levels)
+- [x] Fire reactions (toggle on/off)
+- [x] "Submit a Counter-List" button
+- [x] Post history/changelog
+
+### M5.5 — The SEO "Authority" Routing System
+[ ] **Part A: Database Schema Evolution**
+- [ ] `slug` field added to Post schema: `{ type: String, unique: true, index: true }`
+- [ ] `generateUniqueSlug(title, id)` utility function:
+  - Normalize title (lowercase, remove special chars, replace spaces with `-`)
+  - Truncate to 60 chars
+  - Append last 6 chars of post ID
+- [ ] Migration script to populate slug for all existing posts
+
+[ ] **Part B: The "Flat" Wikipedia Route (Next.js)**
+- [ ] Restructure: `app/post/[id]/page.tsx` → `app/[slug]/page.tsx`
+- [ ] Update page to fetch via slug instead of ID
+- [ ] **Route Guard**:
+  - Define `RESERVED_ROUTES = ['admin', 'api', 'login', 'search', 'settings', 'profile', 'categories', 'c', 'auth']`
+  - If params.slug is in reserved list → trigger notFound()
+- [ ] **Legacy Support**:
+  - Old `/post/[id]` → 301 Permanent Redirect to new slug-based URL
+
+[ ] **Part C: Content Governance & Quality Control**
+- [ ] Title Similarity Engine: `GET /api/posts/check-title?q=...`
+- [ ] Frontend: "Similar list already exists" warning in Create Post UI if match > 80%
+- [ ] **SEO Indexing Guard**:
+  - Set `robots: "noindex"` if:
+    - `post.spark_score === 0` AND `post.age > 48h`
+    - Post description < 100 characters
+
+[ ] **Part D: Schema.org "Rich Results" Integration**
+- [ ] Post detail page injects ItemList JSON-LD with ListItem schema (position, name, description)
+- [ ] Dynamic canonical tag: `<link rel="canonical" href="https://yotop10.com/${slug}" />`
+
+[ ] **Part E: Internal Link Refactor**
+- [ ] Update all `<Link href={"/post/" + post.id}>` components across the app to use `href={"/" + post.slug}`
 
 ### M6 — Categories System
 - [ ] `GET /api/categories` — All categories
