@@ -5,8 +5,24 @@ import { Reaction } from '../models/Reaction';
 import { Comment } from '../models/Comment';
 import { Post } from '../models/Post';
 import { ListItem } from '../models/ListItem';
+import { SparkThreshold, getFloorMultiplier } from '../models/SparkThreshold';
 
 const router: Router = Router();
+
+// Get thresholds helper
+const getThresholds = async () => {
+  const threshold = await SparkThreshold.findOne().sort({ calculated_at: -1 });
+  if (threshold) return threshold;
+  
+  const defaultThreshold = new SparkThreshold({
+    percentile_99: 50,
+    percentile_95: 30,
+    percentile_85: 15,
+    percentile_70: 8,
+    calculated_at: new Date(),
+  });
+  return defaultThreshold;
+};
 
 // Validation middleware
 const validateReaction = [
@@ -95,12 +111,20 @@ router.post('/', validateReaction, async (req: Request, res: Response) => {
         // Calculate new spark score for this comment
         const comment = await Comment.findById(target_id);
         if (comment) {
+          // Calculate base score
+          const baseScore = (comment.reply_count * 2.0) + (currentFireCount * 0.5) + 3;
           const ageInHours = (now.getTime() - comment.created_at.getTime()) / (1000 * 60 * 60);
           const denominator = comment.reply_count + currentFireCount + 1;
           const ratio = comment.reply_count / denominator;
           const gamma = Math.max(1.1, 2.0 - ratio);
-          const numerator = (comment.reply_count * 2.0) + (currentFireCount * 0.5) + 3;
-          const sparkScore = Math.max(0, numerator / Math.pow(ageInHours + 1, gamma));
+          const currentDecayRank = baseScore / Math.pow(ageInHours + 1, gamma);
+          
+          // Apply floor
+          const thresholds = await getThresholds();
+          const floorMultiplier = getFloorMultiplier(baseScore, thresholds);
+          const floorValue = baseScore * floorMultiplier;
+          const sparkScore = Math.max(currentDecayRank, floorValue);
+          
           await Comment.findByIdAndUpdate(target_id, { spark_score: sparkScore });
           
           // Propagate engagement to ancestors
@@ -138,7 +162,12 @@ router.post('/', validateReaction, async (req: Request, res: Response) => {
               const parentRatio = totalReplies / parentDenominator;
               const parentGamma = Math.max(1.1, 2.0 - parentRatio);
               
-              const parentSparkScore = Math.max(0, parentNumerator / Math.pow(parentAgeInHours + 1, parentGamma));
+              const parentCurrentDecay = parentNumerator / Math.pow(parentAgeInHours + 1, parentGamma);
+              
+              // Apply floor to parent
+              const parentFloorMultiplier = getFloorMultiplier(parentBase, thresholds);
+              const parentFloorValue = parentBase * parentFloorMultiplier;
+              const parentSparkScore = Math.max(parentCurrentDecay, parentFloorValue);
               
               await Comment.findByIdAndUpdate(currentParentId, { 
                 spark_score: parentSparkScore,

@@ -6,11 +6,13 @@ import { Comment } from '../models/Comment';
 import { User } from '../models/User';
 import { Post } from '../models/Post';
 import { ListItem } from '../models/ListItem';
+import { SparkThreshold, getFloorMultiplier, FLOOR_MULTIPLIERS } from '../models/SparkThreshold';
 import { createClient } from 'redis';
 
 const router: Router = Router();
 
 let cronInterval: NodeJS.Timeout | null = null;
+let thresholdCronInterval: NodeJS.Timeout | null = null;
 
 // Initialize Redis client for rate limiting
 const getRedisClient = async () => {
@@ -20,28 +22,62 @@ const getRedisClient = async () => {
   return client;
 };
 
+// Get current thresholds or defaults
+const getThresholds = async () => {
+  const threshold = await SparkThreshold.findOne().sort({ calculated_at: -1 });
+  if (threshold) return threshold;
+  
+  // Return default thresholds if none exist
+  const defaultThreshold = new SparkThreshold({
+    percentile_99: 50,
+    percentile_95: 30,
+    percentile_85: 15,
+    percentile_70: 8,
+    calculated_at: new Date(),
+  });
+  return defaultThreshold;
+};
+
+// Calculate percentile from sorted array
+const getPercentileValue = (sortedArr: number[], percentile: number): number => {
+  if (sortedArr.length === 0) return 0;
+  const index = Math.ceil((percentile / 100) * sortedArr.length) - 1;
+  return sortedArr[Math.max(0, Math.min(index, sortedArr.length - 1))];
+};
+
 // Calculate Spark Score for a comment
-// Rank = ((Replies × 2.0) + (Fires × 0.5) + 3) / ((Age_In_Hours + 1)^γ)
-// γ = max(1.1, 2.0 - Replies/(Replies + Fires + 1))
-const calculateSparkScore = (fireCount: number, replyCount: number, createdAt: Date, _lastEngagedAt: Date): number => {
+// Final_Rank = max(Current_Decay_Rank, Base_Score × f)
+// Current_Decay_Rank = Base_Score / (Age_In_Hours + 1)^γ
+// Base_Score = (Replies × 2.0) + (Fires × 0.5) + 3.0
+// f = Floor Multiplier based on percentile rank
+const calculateSparkScore = async (fireCount: number, replyCount: number, createdAt: Date, _lastEngagedAt: Date): Promise<number> => {
   const now = new Date();
   const ageInHours = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+  
+  // Calculate base score
+  const baseScore = (replyCount * 2.0) + (fireCount * 0.5) + 3;
   
   // Calculate gravity based on reply-to-fire ratio
   const denominator = replyCount + fireCount + 1;
   const ratio = replyCount / denominator;
   const gamma = Math.max(1.1, 2.0 - ratio);
   
-  // Calculate numerator
-  const numerator = (replyCount * 2.0) + (fireCount * 0.5) + 3;
+  // Calculate current decay rank
+  const currentDecayRank = baseScore / Math.pow(ageInHours + 1, gamma);
   
-  // Calculate rank with time decay
-  const rank = numerator / Math.pow(ageInHours + 1, gamma);
+  // Get floor multiplier based on percentile
+  const thresholds = await getThresholds();
+  const floorMultiplier = getFloorMultiplier(baseScore, thresholds);
+  const floorValue = baseScore * floorMultiplier;
   
-  return Math.max(0, rank);
+  // Final rank is max of decay rank and floor
+  const finalRank = Math.max(currentDecayRank, floorValue);
+  
+  return Math.max(0, finalRank);
 };
 
 // Calculate Spark Score for parent comment with weighted child contributions
+// Final_Rank = max(Current_Decay_Rank, Base_Score × f)
 // Total_Score = Parent_Base_Score + (SUM(All_Child_Fires) * 0.25) + (SUM(All_Child_Replies) * 1.0)
 // Parent_Base_Score = (Parent_Replies * 2) + (Parent_Fires * 0.5) + 3
 const calculateParentSparkScore = async (commentId: string): Promise<number> => {
@@ -78,10 +114,18 @@ const calculateParentSparkScore = async (commentId: string): Promise<number> => 
   const ratio = totalReplies / denominator;
   const gamma = Math.max(1.1, 2.0 - ratio);
   
-  // Apply time decay
-  const sparkScore = numerator / Math.pow(ageInHours + 1, gamma);
+  // Calculate current decay rank
+  const currentDecayRank = numerator / Math.pow(ageInHours + 1, gamma);
   
-  return Math.max(0, sparkScore);
+  // Get floor multiplier based on base score
+  const thresholds = await getThresholds();
+  const floorMultiplier = getFloorMultiplier(parentBase, thresholds);
+  const floorValue = parentBase * floorMultiplier;
+  
+  // Final rank is max of decay rank and floor
+  const finalRank = Math.max(currentDecayRank, floorValue);
+  
+  return Math.max(0, finalRank);
 };
 
 // Update spark score for a comment
@@ -146,14 +190,14 @@ const startSparkScoreCron = () => {
       
       let updated = 0;
       for (const comment of comments) {
-        const newScore = calculateSparkScore(
+        const newScore = await calculateSparkScore(
           comment.fire_count,
           comment.reply_count,
           comment.created_at,
           comment.last_engaged_at
         );
         
-        // Stop recalculating if score is very low
+        // Stop recalculating if score is very low and below floor
         if (newScore < 0.01) {
           await Comment.findByIdAndUpdate(comment._id, { spark_score: newScore });
           updated++;
@@ -181,6 +225,69 @@ const stopSparkScoreCron = () => {
     cronInterval = null;
     console.log('[SparkEngine] Cron job stopped');
   }
+  if (thresholdCronInterval) {
+    clearInterval(thresholdCronInterval);
+    thresholdCronInterval = null;
+    console.log('[SparkEngine] Threshold cron job stopped');
+  }
+};
+
+// Calculate and store percentile thresholds
+const calculateThresholds = async () => {
+  try {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    
+    // Get all comments from last 30 days
+    const comments = await Comment.find({
+      created_at: { $gte: thirtyDaysAgo }
+    });
+    
+    if (comments.length === 0) {
+      console.log('[SparkEngine] No comments in last 30 days to calculate thresholds');
+      return;
+    }
+    
+    // Calculate base scores for all comments
+    const baseScores: number[] = [];
+    for (const comment of comments) {
+      const baseScore = (comment.reply_count * 2.0) + (comment.fire_count * 0.5) + 3;
+      baseScores.push(baseScore);
+    }
+    
+    // Sort for percentile calculation
+    const sortedScores = [...baseScores].sort((a, b) => a - b);
+    
+    // Calculate percentiles
+    const percentile_99 = getPercentileValue(sortedScores, 99);
+    const percentile_95 = getPercentileValue(sortedScores, 95);
+    const percentile_85 = getPercentileValue(sortedScores, 85);
+    const percentile_70 = getPercentileValue(sortedScores, 70);
+    
+    // Store thresholds
+    await SparkThreshold.create({
+      percentile_99,
+      percentile_95,
+      percentile_85,
+      percentile_70,
+      calculated_at: new Date(),
+    });
+    
+    console.log(`[SparkEngine] Thresholds updated: 99th=${percentile_99.toFixed(2)}, 95th=${percentile_95.toFixed(2)}, 85th=${percentile_85.toFixed(2)}, 70th=${percentile_70.toFixed(2)}`);
+  } catch (error) {
+    console.error('[SparkEngine] Threshold calculation error:', error);
+  }
+};
+
+// Start threshold calculation cron (every 6 hours)
+const startThresholdCron = () => {
+  if (thresholdCronInterval) return;
+  
+  // Run immediately on start
+  calculateThresholds();
+  
+  // Then every 6 hours
+  thresholdCronInterval = setInterval(calculateThresholds, 6 * 60 * 60 * 1000);
+  console.log('[SparkEngine] Threshold cron started (every 6 hours)');
 };
 
 // Generate unique random username (fully anonymous)
@@ -272,6 +379,7 @@ const getOrCreateUser = async (deviceFingerprint: string): Promise<{ user_id: st
 
 // Start cron on module load
 startSparkScoreCron();
+startThresholdCron();
 
 // Validation middleware
 const validateComment = [
