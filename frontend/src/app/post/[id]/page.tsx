@@ -59,17 +59,12 @@ interface ReplyFormState {
   };
 }
 
-interface ItemDropdownState {
-  [itemId: string]: boolean;
-}
-
 export default function PostDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const postId = params?.id as string;
   const itemParam = searchParams?.get('item');
   const commentsSectionRef = useRef<HTMLDivElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const [post, setPost] = useState<Post | null>(null);
   const [items, setItems] = useState<ListItem[]>([]);
@@ -82,7 +77,6 @@ export default function PostDetailPage() {
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyForms, setReplyForms] = useState<ReplyFormState>({});
   const [selectedItemId, setSelectedItemId] = useState<string | null>(itemParam);
-  const [itemDropdowns, setItemDropdowns] = useState<ItemDropdownState>({});
   
   const [reacting, setReacting] = useState(false);
 
@@ -114,16 +108,6 @@ export default function PostDetailPage() {
       
     fetchComments();
   }, [postId, fetchComments]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setItemDropdowns({});
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -223,15 +207,7 @@ export default function PostDetailPage() {
   };
 
   const toggleItemDropdown = (itemId: string) => {
-    setItemDropdowns(prev => ({
-      ...prev,
-      [itemId]: !prev[itemId]
-    }));
-  };
-
-  const handleDropdownCommentClick = (itemId: string) => {
     setSelectedItemId(itemId);
-    setItemDropdowns({});
     commentsSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
@@ -342,24 +318,14 @@ export default function PostDetailPage() {
                 {item.image_url && <Image src={item.image_url} alt={item.title} style={{ maxWidth: '300px' }} width={300} height={200} unoptimized />}
                 {item.source_url && <p style={{ fontSize: '14px', color: '#666' }}><a href={item.source_url} target="_blank" rel="noopener noreferrer">Source</a></p>}
               </div>
-              <div style={{ position: 'relative', marginLeft: '10px' }} ref={dropdownRef}>
+              <div style={{ position: 'relative', marginLeft: '10px' }}>
                 <button 
                   onClick={() => toggleItemDropdown(item.id)}
                   style={{ background: 'none', border: '1px solid #ccc', padding: '5px 8px', cursor: 'pointer', borderRadius: '3px', fontSize: '12px', lineHeight: 1 }}
-                  title="More options"
+                  title="Comment on this item"
                 >
-                  v
+                  ▾
                 </button>
-                {itemDropdowns[item.id] && (
-                  <div style={{ position: 'absolute', right: 0, top: '100%', backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '5px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)', zIndex: 100, minWidth: '180px' }}>
-                     <button 
-                      onClick={() => handleDropdownCommentClick(item.id)}
-                      style={{ display: 'block', width: '100%', padding: '12px', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', borderBottom: '1px solid #eee' }}
-                    >
-                      📌 Comment on item #{item.rank}
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
           ))}
