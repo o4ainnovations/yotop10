@@ -11,6 +11,8 @@ export interface IComment extends Document {
   content: string;
   fire_count: number;
   reply_count: number;
+  spark_score: number;
+  last_engaged_at: Date;
   created_at: Date;
   updated_at: Date;
 }
@@ -67,6 +69,15 @@ const commentSchema = new Schema<IComment>(
       type: Number,
       default: 0,
     },
+    spark_score: {
+      type: Number,
+      default: 0,
+      index: true,
+    },
+    last_engaged_at: {
+      type: Date,
+      default: Date.now,
+    },
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
@@ -76,8 +87,10 @@ const commentSchema = new Schema<IComment>(
 // Indexes for efficient queries
 commentSchema.index({ post_id: 1, created_at: -1 });
 commentSchema.index({ post_id: 1, list_item_id: 1, created_at: -1 });
+commentSchema.index({ post_id: 1, spark_score: -1 });
 commentSchema.index({ parent_comment_id: 1, created_at: 1 });
 commentSchema.index({ author_id: 1, created_at: -1 });
 commentSchema.index({ depth: 1 });
+commentSchema.index({ last_engaged_at: -1 });
 
 export const Comment = mongoose.model<IComment>('Comment', commentSchema);

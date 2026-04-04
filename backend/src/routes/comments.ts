@@ -10,12 +10,105 @@ import { createClient } from 'redis';
 
 const router: Router = Router();
 
+let cronInterval: NodeJS.Timeout | null = null;
+
 // Initialize Redis client for rate limiting
 const getRedisClient = async () => {
   const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
   const client = createClient({ url: redisUrl });
   await client.connect();
   return client;
+};
+
+// Calculate Spark Score
+// Rank = ((Replies × 2.0) + (Fires × 0.5) + 3) / ((Age_In_Hours + 1)^γ)
+// γ = max(1.1, 2.0 - Replies/(Replies + Fires + 1))
+const calculateSparkScore = (fireCount: number, replyCount: number, createdAt: Date, _lastEngagedAt: Date): number => {
+  const now = new Date();
+  const ageInHours = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+  
+  // Calculate gravity based on reply-to-fire ratio
+  const denominator = replyCount + fireCount + 1;
+  const ratio = replyCount / denominator;
+  const gamma = Math.max(1.1, 2.0 - ratio);
+  
+  // Calculate numerator
+  const numerator = (replyCount * 2.0) + (fireCount * 0.5) + 3;
+  
+  // Calculate rank with time decay
+  const rank = numerator / Math.pow(ageInHours + 1, gamma);
+  
+  return Math.max(0, rank);
+};
+
+// Update spark score for a comment
+const updateSparkScore = async (commentId: string) => {
+  const comment = await Comment.findById(commentId);
+  if (!comment) return;
+  
+  const sparkScore = calculateSparkScore(
+    comment.fire_count,
+    comment.reply_count,
+    comment.created_at,
+    comment.last_engaged_at
+  );
+  
+  await Comment.findByIdAndUpdate(commentId, { spark_score: sparkScore });
+  return sparkScore;
+};
+
+// Start cron job for time-decay updates
+const startSparkScoreCron = () => {
+  if (cronInterval) return;
+  
+  // Run every 20 minutes
+  cronInterval = setInterval(async () => {
+    try {
+      const seventyTwoHoursAgo = new Date(Date.now() - 72 * 60 * 60 * 1000);
+      
+      // Get comments from last 72 hours with spark_score > 0.01
+      const comments = await Comment.find({
+        created_at: { $gte: seventyTwoHoursAgo },
+        spark_score: { $gt: 0.01 },
+      });
+      
+      let updated = 0;
+      for (const comment of comments) {
+        const newScore = calculateSparkScore(
+          comment.fire_count,
+          comment.reply_count,
+          comment.created_at,
+          comment.last_engaged_at
+        );
+        
+        // Stop recalculating if score is very low
+        if (newScore < 0.01) {
+          await Comment.findByIdAndUpdate(comment._id, { spark_score: newScore });
+          updated++;
+        } else if (Math.abs(newScore - comment.spark_score) > 0.001) {
+          await Comment.findByIdAndUpdate(comment._id, { spark_score: newScore });
+          updated++;
+        }
+      }
+      
+      if (updated > 0) {
+        console.log(`[SparkEngine] Updated ${updated} comment scores`);
+      }
+    } catch (error) {
+      console.error('[SparkEngine] Cron error:', error);
+    }
+  }, 20 * 60 * 1000);
+  
+  console.log('[SparkEngine] Cron job started (every 20 minutes)');
+};
+
+// Stop cron job
+const stopSparkScoreCron = () => {
+  if (cronInterval) {
+    clearInterval(cronInterval);
+    cronInterval = null;
+    console.log('[SparkEngine] Cron job stopped');
+  }
 };
 
 // Generate unique random username (fully anonymous)
@@ -105,6 +198,9 @@ const getOrCreateUser = async (deviceFingerprint: string): Promise<{ user_id: st
   };
 };
 
+// Start cron on module load
+startSparkScoreCron();
+
 // Validation middleware
 const validateComment = [
   body('content').trim().notEmpty().withMessage('Content is required').isLength({ max: 2000 }).withMessage('Content must be less than 2000 characters'),
@@ -123,37 +219,39 @@ router.get('/posts/:id/comments', async (req: Request, res: Response) => {
     }
 
     // Build query
-    const query: any = { post_id: postId };
+    const query: Record<string, unknown> = { post_id: postId };
     if (list_item_id && mongoose.Types.ObjectId.isValid(list_item_id as string)) {
       query.list_item_id = list_item_id;
     }
 
-    // Get comments, sorted by creation date
+    // Get root comments (depth 0), sorted by spark_score descending
     const comments = await Comment.find(query)
-      .sort({ created_at: 1 })
+      .sort({ spark_score: -1, created_at: 1 })
       .lean();
 
     // Transform comments into nested structure
-    const commentMap = new Map<string, any>();
-    const rootComments: any[] = [];
+    const commentMap = new Map<string, Record<string, unknown>>();
+    const rootComments: Record<string, unknown>[] = [];
 
     // First pass: create map and transform _id to id
-    comments.forEach((comment: any) => {
-      commentMap.set(comment._id.toString(), {
+    comments.forEach((comment: Record<string, unknown>) => {
+      commentMap.set((comment._id as mongoose.Types.ObjectId).toString(), {
         ...comment,
-        id: comment._id.toString(),
+        id: (comment._id as mongoose.Types.ObjectId).toString(),
         replies: [],
       });
     });
 
     // Second pass: build tree
-    comments.forEach((comment: any) => {
-      const commentWithReplies = commentMap.get(comment._id.toString());
+    comments.forEach((comment: Record<string, unknown>) => {
+      const commentWithReplies = commentMap.get((comment._id as mongoose.Types.ObjectId).toString());
+      if (!commentWithReplies) return;
+      
       if (comment.parent_comment_id) {
-        const parent = commentMap.get(comment.parent_comment_id.toString());
+        const parent = commentMap.get((comment.parent_comment_id as mongoose.Types.ObjectId).toString());
         if (parent) {
-          parent.replies.push(commentWithReplies);
-          parent.reply_count = parent.replies.length;
+          (parent.replies as unknown[]).push(commentWithReplies);
+          (parent as Record<string, unknown>).reply_count = (parent.replies as unknown[]).length;
         } else {
           rootComments.push(commentWithReplies);
         }
@@ -232,6 +330,9 @@ router.post('/posts/:id/comments', validateComment, async (req: Request, res: Re
       }
     }
 
+    const now = new Date();
+    const initialSparkScore = calculateSparkScore(0, 0, now, now);
+
     // Create comment
     const comment = await Comment.create({
       post_id: postId,
@@ -244,11 +345,29 @@ router.post('/posts/:id/comments', validateComment, async (req: Request, res: Re
       content,
       fire_count: 0,
       reply_count: 0,
+      spark_score: initialSparkScore,
+      last_engaged_at: now,
     });
 
-    // Update parent's reply_count if this is a reply
+    // Update parent's reply_count, last_engaged_at, and spark_score if this is a reply
     if (parent_comment_id) {
-      await Comment.findByIdAndUpdate(parent_comment_id, { $inc: { reply_count: 1 } });
+      const parent = await Comment.findByIdAndUpdate(
+        parent_comment_id,
+        { 
+          $inc: { reply_count: 1 },
+          last_engaged_at: now,
+        },
+        { new: true }
+      );
+      if (parent) {
+        const newSparkScore = calculateSparkScore(
+          parent.fire_count,
+          parent.reply_count,
+          parent.created_at,
+          now
+        );
+        await Comment.findByIdAndUpdate(parent_comment_id, { spark_score: newSparkScore });
+      }
     }
 
     // Update post's comment_count
@@ -259,13 +378,13 @@ router.post('/posts/:id/comments', validateComment, async (req: Request, res: Re
       const redis = await getRedisClient();
       const key = `rate_limit:comments:${deviceFingerprint}`;
       const current = await redis.get(key);
-      const now = Date.now();
+      const currentTime = Date.now();
       let count = 1;
-      let windowStart = now;
+      let windowStart = currentTime;
 
       if (current) {
         const data = JSON.parse(current);
-        if (now - data.windowStart < 3600000) {
+        if (currentTime - data.windowStart < 3600000) {
           count = data.count + 1;
           windowStart = data.windowStart;
         }
@@ -352,7 +471,21 @@ router.delete('/comments/:id', async (req: Request, res: Response) => {
 
     // Update parent's reply_count if this is a reply
     if (comment.parent_comment_id) {
-      await Comment.findByIdAndUpdate(comment.parent_comment_id, { $inc: { reply_count: -1 } });
+      const parent = await Comment.findByIdAndUpdate(
+        comment.parent_comment_id,
+        { $inc: { reply_count: -1 } },
+        { new: true }
+      );
+      if (parent) {
+        const now = new Date();
+        const newSparkScore = calculateSparkScore(
+          parent.fire_count,
+          parent.reply_count,
+          parent.created_at,
+          now
+        );
+        await Comment.findByIdAndUpdate(comment.parent_comment_id, { spark_score: newSparkScore });
+      }
     }
 
     // Update post's comment_count
@@ -371,4 +504,28 @@ router.delete('/comments/:id', async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/comments/:id/spark - Recalculate spark score for a comment
+router.post('/comments/:id/spark', async (req: Request, res: Response) => {
+  try {
+    const commentId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(commentId)) {
+      return res.status(400).json({ error: 'Invalid comment ID' });
+    }
+
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+      return res.status(404).json({ error: 'Comment not found' });
+    }
+
+    const sparkScore = await updateSparkScore(commentId);
+
+    res.json({ spark_score: sparkScore });
+  } catch (error) {
+    console.error('Update spark score error:', error);
+    res.status(500).json({ error: 'Failed to update spark score' });
+  }
+});
+
+export { router, updateSparkScore, startSparkScoreCron, stopSparkScoreCron };
 export default router;

@@ -132,6 +132,7 @@ export interface Comment {
   depth: number;
   fire_count: number;
   reply_count: number;
+  spark_score: number;
   author_username: string;
   author_display_name: string;
   created_at: string;
