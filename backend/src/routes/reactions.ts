@@ -83,11 +83,27 @@ router.post('/', validateReaction, async (req: Request, res: Response) => {
       action = 'added';
     }
 
-    // Update fire_count on the target
+    // Update fire_count on the target and recalculate spark_score for comments
+    const now = new Date();
     switch (targetModel) {
-      case 'Comment':
-        await Comment.findByIdAndUpdate(target_id, { fire_count: currentFireCount });
+      case 'Comment': {
+        await Comment.findByIdAndUpdate(target_id, { 
+          fire_count: currentFireCount,
+          last_engaged_at: now,
+        });
+        // Recalculate spark score
+        const comment = await Comment.findById(target_id);
+        if (comment) {
+          const ageInHours = (now.getTime() - comment.created_at.getTime()) / (1000 * 60 * 60);
+          const denominator = comment.reply_count + currentFireCount + 1;
+          const ratio = comment.reply_count / denominator;
+          const gamma = Math.max(1.1, 2.0 - ratio);
+          const numerator = (comment.reply_count * 2.0) + (currentFireCount * 0.5) + 3;
+          const sparkScore = Math.max(0, numerator / Math.pow(ageInHours + 1, gamma));
+          await Comment.findByIdAndUpdate(target_id, { spark_score: sparkScore });
+        }
         break;
+      }
       case 'Post':
         await Post.findByIdAndUpdate(target_id, { fire_count: currentFireCount });
         break;

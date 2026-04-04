@@ -43,6 +43,7 @@ interface Comment {
   depth: number;
   fire_count: number;
   reply_count: number;
+  spark_score: number;
   author_username: string;
   author_display_name: string;
   created_at: string;
@@ -122,7 +123,7 @@ export default function PostDetailPage() {
       setSelectedItemId(null);
       setPost(prev => prev ? { ...prev, comment_count: prev.comment_count + 1 } : null);
       fetchComments();
-      commentsSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+commentsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch {
       alert('Failed to post comment');
     } finally {
@@ -225,7 +226,10 @@ export default function PostDetailPage() {
       <div key={comment.id} style={{ marginLeft: depth * 20 + 'px', borderLeft: '2px solid #ccc', paddingLeft: '10px', marginTop: '10px' }}>
         <div style={{ backgroundColor: '#f5f5f5', padding: '10px', borderRadius: '5px', fontSize: depth > 0 ? '14px' : '16px' }}>
           <div>
-            <strong>{comment.author_display_name}</strong> 
+            <strong>{comment.author_display_name}</strong>
+            <span style={{ color: '#888', fontSize: '12px', marginLeft: '8px' }}>
+              ✨ {comment.spark_score.toFixed(2)}
+            </span>
             {comment.list_item_id && itemRank && (
               <span style={{ backgroundColor: '#e0f0ff', padding: '2px 6px', borderRadius: '3px', fontSize: '12px', marginLeft: '8px' }}>
                 📌 On item #{itemRank}
