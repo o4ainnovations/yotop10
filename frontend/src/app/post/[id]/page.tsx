@@ -229,7 +229,7 @@ export default function PostDetailPage() {
     }));
   };
 
-  const handleDropdownCommentClick = (itemId: string, itemRank: number) => {
+  const handleDropdownCommentClick = (itemId: string) => {
     setSelectedItemId(itemId);
     setItemDropdowns({});
     commentsSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -352,8 +352,8 @@ export default function PostDetailPage() {
                 </button>
                 {itemDropdowns[item.id] && (
                   <div style={{ position: 'absolute', right: 0, top: '100%', backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '5px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)', zIndex: 100, minWidth: '180px' }}>
-                    <button 
-                      onClick={() => handleDropdownCommentClick(item.id, item.rank)}
+                     <button 
+                      onClick={() => handleDropdownCommentClick(item.id)}
                       style={{ display: 'block', width: '100%', padding: '12px', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', borderBottom: '1px solid #eee' }}
                     >
                       📌 Comment on item #{item.rank}
