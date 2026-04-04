@@ -321,10 +321,10 @@ export default function PostDetailPage() {
               <div style={{ position: 'relative', marginLeft: '10px' }}>
                 <button 
                   onClick={() => toggleItemDropdown(item.id)}
-                  style={{ background: 'none', border: '1px solid #ccc', padding: '5px 8px', cursor: 'pointer', borderRadius: '3px', fontSize: '12px', lineHeight: 1 }}
+                  style={{ background: 'none', border: '1px solid #ccc', padding: '5px 8px', cursor: 'pointer', borderRadius: '3px', fontSize: '12px', lineHeight: 1, fontWeight: 'bold' }}
                   title="Comment on this item"
                 >
-                  ▾
+                  v
                 </button>
               </div>
             </div>
