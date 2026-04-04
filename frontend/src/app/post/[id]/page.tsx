@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -68,6 +68,8 @@ export default function PostDetailPage() {
   const searchParams = useSearchParams();
   const postId = params?.id as string;
   const itemParam = searchParams?.get('item');
+  const commentsSectionRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const [post, setPost] = useState<Post | null>(null);
   const [items, setItems] = useState<ListItem[]>([]);
@@ -112,6 +114,16 @@ export default function PostDetailPage() {
       
     fetchComments();
   }, [postId, fetchComments]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setItemDropdowns({});
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -182,9 +194,7 @@ export default function PostDetailPage() {
     const fingerprint = getOrCreateFingerprint();
     
     try {
-      console.log('Sending reaction request:', { targetType, targetId, fingerprint });
       const data = await API.toggleReaction(targetType, targetId, fingerprint) as { fire_count: number; user_reacted: boolean };
-      console.log('Reaction response:', data);
       
       if (targetType === 'comment') {
         setComments(prev => updateCommentFireCount(prev, targetId, data.fire_count));
@@ -217,6 +227,12 @@ export default function PostDetailPage() {
       ...prev,
       [itemId]: !prev[itemId]
     }));
+  };
+
+  const handleDropdownCommentClick = (itemId: string, itemRank: number) => {
+    setSelectedItemId(itemId);
+    setItemDropdowns({});
+    commentsSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const renderComment = (comment: Comment, depth: number = 0) => {
@@ -324,34 +340,23 @@ export default function PostDetailPage() {
                 <h3>#{item.rank} {item.title}</h3>
                 <p>{item.justification}</p>
                 {item.image_url && <Image src={item.image_url} alt={item.title} style={{ maxWidth: '300px' }} width={300} height={200} unoptimized />}
-                <p style={{ fontSize: '14px', color: '#666' }}>
-                  <button 
-                    onClick={() => setSelectedItemId(selectedItemId === item.id ? null : item.id)}
-                    style={{ background: selectedItemId === item.id ? '#e0f0ff' : 'none', border: '1px solid #ccc', marginLeft: '5px', padding: '2px 8px', cursor: 'pointer' }}
-                  >
-                    {selectedItemId === item.id ? '✓ Commenting on this item' : 'Comment on this item'}
-                  </button>
-                  {item.source_url && <span> | <a href={item.source_url} target="_blank" rel="noopener noreferrer">Source</a></span>}
-                </p>
+                {item.source_url && <p style={{ fontSize: '14px', color: '#666' }}><a href={item.source_url} target="_blank" rel="noopener noreferrer">Source</a></p>}
               </div>
-              <div style={{ position: 'relative', marginLeft: '10px' }}>
+              <div style={{ position: 'relative', marginLeft: '10px' }} ref={dropdownRef}>
                 <button 
                   onClick={() => toggleItemDropdown(item.id)}
-                  style={{ background: 'none', border: '1px solid #ccc', padding: '5px 10px', cursor: 'pointer', borderRadius: '3px' }}
+                  style={{ background: 'none', border: '1px solid #ccc', padding: '5px 8px', cursor: 'pointer', borderRadius: '3px', fontSize: '12px', lineHeight: 1 }}
                   title="More options"
                 >
-                  ⋮
+                  v
                 </button>
                 {itemDropdowns[item.id] && (
-                  <div style={{ position: 'absolute', right: 0, top: '100%', backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '5px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)', zIndex: 100, minWidth: '150px' }}>
+                  <div style={{ position: 'absolute', right: 0, top: '100%', backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '5px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)', zIndex: 100, minWidth: '180px' }}>
                     <button 
-                      onClick={() => {
-                        setSelectedItemId(item.id);
-                        setItemDropdowns(prev => ({ ...prev, [item.id]: false }));
-                      }}
-                      style={{ display: 'block', width: '100%', padding: '10px', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}
+                      onClick={() => handleDropdownCommentClick(item.id, item.rank)}
+                      style={{ display: 'block', width: '100%', padding: '12px', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', borderBottom: '1px solid #eee' }}
                     >
-                      📌 Comment on this item
+                      📌 Comment on item #{item.rank}
                     </button>
                   </div>
                 )}
@@ -360,7 +365,7 @@ export default function PostDetailPage() {
           ))}
         </section>
         
-        <section>
+        <section ref={commentsSectionRef}>
           <h2>Comments ({post.comment_count})</h2>
           
           <div style={{ marginBottom: '15px' }}>
