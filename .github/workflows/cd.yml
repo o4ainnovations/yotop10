@@ -51,8 +51,7 @@ jobs:
           script: |
             cd /home/o4ainnovations/yotop10
             git config --global --add safe.directory /home/o4ainnovations/yotop10
-            git pull
-            # Update docker-compose to use GHCR image
-            sed -i 's|image: .*|image: ghcr.io/${{ github.repository_owner }}/yotop10:latest|' docker-compose.yml
+            git fetch origin
+            git reset --hard origin/main
             docker compose pull
             docker compose up -d
