@@ -65,6 +65,7 @@ export default function PostDetailPage() {
   const postId = params?.id as string;
   const itemParam = searchParams?.get('item');
   const commentsSectionRef = useRef<HTMLDivElement>(null);
+  const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [post, setPost] = useState<Post | null>(null);
   const [items, setItems] = useState<ListItem[]>([]);
@@ -121,6 +122,7 @@ export default function PostDetailPage() {
       setSelectedItemId(null);
       setPost(prev => prev ? { ...prev, comment_count: prev.comment_count + 1 } : null);
       fetchComments();
+      commentsSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
     } catch {
       alert('Failed to post comment');
     } finally {
@@ -209,6 +211,7 @@ export default function PostDetailPage() {
   const toggleItemDropdown = (itemId: string) => {
     setSelectedItemId(itemId);
     commentsSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setTimeout(() => commentTextareaRef.current?.focus(), 300);
   };
 
   const renderComment = (comment: Comment, depth: number = 0) => {
@@ -351,12 +354,8 @@ export default function PostDetailPage() {
           </div>
           
           <form onSubmit={handleSubmitComment} style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f9f9f9', borderRadius: '5px' }}>
-            {selectedItemId && (
-              <div style={{ marginBottom: '10px', color: '#0066cc' }}>
-                📌 Commenting on item #{items.find(i => i.id === selectedItemId)?.rank}
-              </div>
-            )}
             <textarea
+              ref={commentTextareaRef}
               value={commentContent}
               onChange={(e) => setCommentContent(e.target.value)}
               placeholder="Write a comment..."
