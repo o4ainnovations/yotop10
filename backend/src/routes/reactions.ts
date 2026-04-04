@@ -91,7 +91,8 @@ router.post('/', validateReaction, async (req: Request, res: Response) => {
           fire_count: currentFireCount,
           last_engaged_at: now,
         });
-        // Recalculate spark score
+        
+        // Calculate new spark score for this comment
         const comment = await Comment.findById(target_id);
         if (comment) {
           const ageInHours = (now.getTime() - comment.created_at.getTime()) / (1000 * 60 * 60);
@@ -101,6 +102,53 @@ router.post('/', validateReaction, async (req: Request, res: Response) => {
           const numerator = (comment.reply_count * 2.0) + (currentFireCount * 0.5) + 3;
           const sparkScore = Math.max(0, numerator / Math.pow(ageInHours + 1, gamma));
           await Comment.findByIdAndUpdate(target_id, { spark_score: sparkScore });
+          
+          // Propagate engagement to ancestors
+          if (comment.parent_comment_id) {
+            let currentParentId = comment.parent_comment_id.toString();
+            const visited = new Set<string>();
+            
+            while (currentParentId && !visited.has(currentParentId)) {
+              visited.add(currentParentId);
+              
+              // Update parent with engagement pulse
+              const parent = await Comment.findById(currentParentId);
+              if (!parent) break;
+              
+              const parentNow = new Date();
+              const parentAgeInHours = (parentNow.getTime() - parent.created_at.getTime()) / (1000 * 60 * 60);
+              
+              // Get children's totals
+              const children = await Comment.find({ parent_comment_id: currentParentId });
+              let childFires = 0;
+              let childReplies = 0;
+              for (const child of children) {
+                childFires += child.fire_count || 0;
+                childReplies += child.reply_count || 0;
+              }
+              
+              // Parent base + child contributions
+              const parentBase = (parent.reply_count * 2.0) + (parent.fire_count * 0.5) + 3;
+              const childContribution = (childFires * 0.25) + (childReplies * 1.0);
+              const parentNumerator = parentBase + childContribution;
+              
+              const totalReplies = parent.reply_count + childReplies;
+              const totalFires = parent.fire_count + childFires;
+              const parentDenominator = totalReplies + totalFires + 1;
+              const parentRatio = totalReplies / parentDenominator;
+              const parentGamma = Math.max(1.1, 2.0 - parentRatio);
+              
+              const parentSparkScore = Math.max(0, parentNumerator / Math.pow(parentAgeInHours + 1, parentGamma));
+              
+              await Comment.findByIdAndUpdate(currentParentId, { 
+                spark_score: parentSparkScore,
+                last_engaged_at: parentNow
+              });
+              
+              if (!parent.parent_comment_id) break;
+              currentParentId = parent.parent_comment_id.toString();
+            }
+          }
         }
         break;
       }

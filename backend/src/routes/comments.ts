@@ -20,7 +20,7 @@ const getRedisClient = async () => {
   return client;
 };
 
-// Calculate Spark Score
+// Calculate Spark Score for a comment
 // Rank = ((Replies × 2.0) + (Fires × 0.5) + 3) / ((Age_In_Hours + 1)^γ)
 // γ = max(1.1, 2.0 - Replies/(Replies + Fires + 1))
 const calculateSparkScore = (fireCount: number, replyCount: number, createdAt: Date, _lastEngagedAt: Date): number => {
@@ -41,6 +41,49 @@ const calculateSparkScore = (fireCount: number, replyCount: number, createdAt: D
   return Math.max(0, rank);
 };
 
+// Calculate Spark Score for parent comment with weighted child contributions
+// Total_Score = Parent_Base_Score + (SUM(All_Child_Fires) * 0.25) + (SUM(All_Child_Replies) * 1.0)
+// Parent_Base_Score = (Parent_Replies * 2) + (Parent_Fires * 0.5) + 3
+const calculateParentSparkScore = async (commentId: string): Promise<number> => {
+  const comment = await Comment.findById(commentId);
+  if (!comment) return 0;
+  
+  const now = new Date();
+  const ageInHours = (now.getTime() - comment.created_at.getTime()) / (1000 * 60 * 60);
+  
+  // Get all direct children of this comment
+  const children = await Comment.find({ parent_comment_id: commentId });
+  
+  // Sum up children's fires and replies
+  let childFires = 0;
+  let childReplies = 0;
+  for (const child of children) {
+    childFires += child.fire_count || 0;
+    childReplies += child.reply_count || 0;
+  }
+  
+  // Parent base score
+  const parentBase = (comment.reply_count * 2.0) + (comment.fire_count * 0.5) + 3;
+  
+  // Weighted child contributions
+  const childContribution = (childFires * 0.25) + (childReplies * 1.0);
+  
+  // Total numerator before decay
+  const numerator = parentBase + childContribution;
+  
+  // Calculate gravity
+  const totalReplies = comment.reply_count + childReplies;
+  const totalFires = comment.fire_count + childFires;
+  const denominator = totalReplies + totalFires + 1;
+  const ratio = totalReplies / denominator;
+  const gamma = Math.max(1.1, 2.0 - ratio);
+  
+  // Apply time decay
+  const sparkScore = numerator / Math.pow(ageInHours + 1, gamma);
+  
+  return Math.max(0, sparkScore);
+};
+
 // Update spark score for a comment
 const updateSparkScore = async (commentId: string) => {
   const comment = await Comment.findById(commentId);
@@ -55,6 +98,35 @@ const updateSparkScore = async (commentId: string) => {
   
   await Comment.findByIdAndUpdate(commentId, { spark_score: sparkScore });
   return sparkScore;
+};
+
+// Update parent's spark score with weighted child contributions and engagement pulse
+const updateParentSparkScore = async (parentId: string) => {
+  const now = new Date();
+  const sparkScore = await calculateParentSparkScore(parentId);
+  await Comment.findByIdAndUpdate(parentId, { 
+    spark_score: sparkScore,
+    last_engaged_at: now
+  });
+  return sparkScore;
+};
+
+// Propagate engagement pulse to all ancestors
+const propagateEngagementToAncestors = async (commentId: string) => {
+  const comment = await Comment.findById(commentId);
+  if (!comment || !comment.parent_comment_id) return;
+  
+  let currentParentId = comment.parent_comment_id.toString();
+  const visited = new Set<string>();
+  
+  while (currentParentId && !visited.has(currentParentId)) {
+    visited.add(currentParentId);
+    await updateParentSparkScore(currentParentId);
+    
+    const parent = await Comment.findById(currentParentId);
+    if (!parent || !parent.parent_comment_id) break;
+    currentParentId = parent.parent_comment_id.toString();
+  }
 };
 
 // Start cron job for time-decay updates
@@ -349,25 +421,16 @@ router.post('/posts/:id/comments', validateComment, async (req: Request, res: Re
       last_engaged_at: now,
     });
 
-    // Update parent's reply_count, last_engaged_at, and spark_score if this is a reply
+    // Update parent's reply_count, last_engaged_at, and spark_score with weighted children
     if (parent_comment_id) {
-      const parent = await Comment.findByIdAndUpdate(
+      await Comment.findByIdAndUpdate(
         parent_comment_id,
-        { 
-          $inc: { reply_count: 1 },
-          last_engaged_at: now,
-        },
-        { new: true }
+        { $inc: { reply_count: 1 } }
       );
-      if (parent) {
-        const newSparkScore = calculateSparkScore(
-          parent.fire_count,
-          parent.reply_count,
-          parent.created_at,
-          now
-        );
-        await Comment.findByIdAndUpdate(parent_comment_id, { spark_score: newSparkScore });
-      }
+      // Update parent with engagement pulse and weighted child calculation
+      await updateParentSparkScore(parent_comment_id);
+      // Propagate engagement to all ancestors
+      await propagateEngagementToAncestors(comment._id.toString());
     }
 
     // Update post's comment_count
@@ -469,23 +532,13 @@ router.delete('/comments/:id', async (req: Request, res: Response) => {
       return res.status(403).json({ error: 'You can only delete your own comments' });
     }
 
-    // Update parent's reply_count if this is a reply
+    // Update parent's reply_count and spark_score if this is a reply
     if (comment.parent_comment_id) {
-      const parent = await Comment.findByIdAndUpdate(
+      await Comment.findByIdAndUpdate(
         comment.parent_comment_id,
-        { $inc: { reply_count: -1 } },
-        { new: true }
+        { $inc: { reply_count: -1 } }
       );
-      if (parent) {
-        const now = new Date();
-        const newSparkScore = calculateSparkScore(
-          parent.fire_count,
-          parent.reply_count,
-          parent.created_at,
-          now
-        );
-        await Comment.findByIdAndUpdate(comment.parent_comment_id, { spark_score: newSparkScore });
-      }
+      await updateParentSparkScore(comment.parent_comment_id.toString());
     }
 
     // Update post's comment_count
