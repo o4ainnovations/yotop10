@@ -40,7 +40,7 @@ const commentSchema = new Schema<IComment>(
       required: true,
       default: 0,
       min: 0,
-      max: 3,
+      max: 10,
     },
     author_id: {
       type: String,

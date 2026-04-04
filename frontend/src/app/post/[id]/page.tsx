@@ -216,14 +216,17 @@ commentsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' 
   };
 
   const renderComment = (comment: Comment, depth: number = 0) => {
-    if (depth >= 3) return null;
-    
     const isReplying = replyTo === comment.id;
     const replyForm = replyForms[comment.id] || { content: '', submitting: false };
     const itemRank = comment.list_item_id ? getItemRank(comment.list_item_id) : null;
     
+    // Cap indentation at 48px for depth >= 3
+    const cappedIndent = Math.min(depth, 3) * 16;
+    const showThreadIndicator = depth > 3;
+    
     return (
-      <div key={comment.id} style={{ marginLeft: depth * 20 + 'px', borderLeft: '2px solid #ccc', paddingLeft: '10px', marginTop: '10px' }}>
+      <div key={comment.id} style={{ marginLeft: cappedIndent + 'px', borderLeft: '2px solid #ccc', paddingLeft: '10px', marginTop: '10px' }}>
+        {showThreadIndicator && <span style={{ marginLeft: '-16px', color: '#888', position: 'absolute' }}>↳</span>}
         <div style={{ backgroundColor: '#f5f5f5', padding: '10px', borderRadius: '5px', fontSize: depth > 0 ? '14px' : '16px' }}>
           <div>
             <strong>{comment.author_display_name}</strong>

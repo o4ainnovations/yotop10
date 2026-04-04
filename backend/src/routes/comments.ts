@@ -493,8 +493,8 @@ router.post('/posts/:id/comments', validateComment, async (req: Request, res: Re
       if (!parentComment) {
         return res.status(404).json({ error: 'Parent comment not found' });
       }
-      if (parentComment.depth >= 3) {
-        return res.status(400).json({ error: 'Maximum reply depth is 3 levels' });
+      if (parentComment.depth >= 10) {
+        return res.status(400).json({ error: 'Maximum reply depth is 10 levels' });
       }
       depth = parentComment.depth + 1;
     }
