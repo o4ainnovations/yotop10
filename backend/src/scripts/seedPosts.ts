@@ -13,6 +13,7 @@ const samplePosts = [
     title: 'Top 10 Greatest Football Players Ever',
     post_type: 'top_list',
     intro: 'A definitive ranking of the greatest footballers in history based on individual skill, achievements, and impact on the sport.',
+    category_slug: 'sports/football-soccer',
     items: [
       { rank: 1, title: 'Lionel Messi', justification: 'Widely considered the greatest of all time with 8 Ballon d\'Or awards and countless records. His dribbling, vision, and goal-scoring ability are unmatched.' },
       { rank: 2, title: 'Cristiano Ronaldo', justification: 'The ultimate competitor with 5 Champions League titles, all-time leading scorer in football, and unmatched physical attributes and work ethic.' },
@@ -25,6 +26,24 @@ const samplePosts = [
       { rank: 9, title: 'Zinedine Zidane', justification: 'The graceful playmaker who delivered in every major tournament for France and Real Madrid. Pure artistry on the ball.' },
       { rank: 10, title: 'Ronaldo Nazário', justification: 'The most complete striker ever, combining pace, skill, and finishing like no one else. Before injuries, he was unstoppable.' }
     ]
+  },
+  {
+    title: 'Top 10 Richest Men In The World Of All Time',
+    post_type: 'top_list',
+    intro: 'A definitive ranking of the wealthiest individuals in human history, adjusted for inflation and modern purchasing power.',
+    category_slug: 'business/entrepreneurship',
+    items: [
+      { rank: 1, title: 'Mansa Musa', justification: 'Mali Empire ruler considered the richest person ever. Estimated net worth $400B+ in adjusted dollars. His lavish pilgrimage to Mecca crashed gold prices in Egypt for a decade.' },
+      { rank: 2, title: 'John D. Rockefeller', justification: 'Standard Oil founder. First American billionaire. Peak net worth ~$418B adjusted for inflation. Gave away over half his fortune in philanthropy.' },
+      { rank: 3, title: 'Andrew Carnegie', justification: 'Steel magnate. Sold Carnegie Steel for $480M in 1901 (~$14B today). Gave away 90% of his fortune ($350M) to libraries and education.' },
+      { rank: 4, title: 'Elon Musk', justification: 'Peak net worth $340B (2022) during Tesla\'s market high. Founder of Tesla, SpaceX, X (Twitter), Neuralink, and The Boring Company.' },
+      { rank: 5, title: 'Jeff Bezos', justification: 'Amazon founder. Peak net worth $212B. Built Amazon from online bookstore into everything store. Owns Washington Post and Blue Origin.' },
+      { rank: 6, title: 'Bernard Arnault', justification: 'LVMH Chairman. World\'s richest man 2023-2024. Peak net worth $237B. Controls Louis Vuitton, Dior, Moet Hennessy, 70+ luxury brands.' },
+      { rank: 7, title: 'Bill Gates', justification: 'Microsoft founder. Net worth peaked at $149B in 1999. Stepped down in 2020 to focus on philanthropy through the Bill & Melinda Gates Foundation.' },
+      { rank: 8, title: 'Augustus Caesar', justification: 'Roman Emperor. Controlled the entire Roman Empire (~25-30% of global GDP). Personal fortune estimated at ~$4.6T in modern purchasing power.' },
+      { rank: 9, title: 'Josef Stalin', justification: 'Soviet Premier. Controlled entire Soviet economy from 1924-1953. Estimated personal control over ~$7.5T worth of resources at peak.' },
+      { rank: 10, title: 'Akbar I', justification: 'Mughal Emperor. Ruled India 1556-1605. Empire produced ~25% of global GDP. Personal fortune estimated at ~$21T in modern dollars.' }
+    ]
   }
 ];
 
@@ -35,79 +54,77 @@ async function seedPosts() {
     await mongoose.connect(mongoUri);
     console.log('Connected to MongoDB');
     
-    // Get the Football (Soccer) child category under Sports & Athletics
-    const footballCategory = await Category.findOne({ name: 'Football (Soccer)' });
-    if (!footballCategory) {
-      console.log('Football category not found. Run seed:categories first!');
-      console.log('Looking for Sports & Athletics parent...');
-      
-      const sportsParent = await Category.findOne({ slug: 'sports-athletics' });
-      if (sportsParent) {
-        console.log(`Found Sports & Athletics parent: ${sportsParent._id}`);
-        console.log('Children:', await Category.find({ parent_id: sportsParent._id }).select('name'));
-      }
-      return;
-    }
-    console.log(`Using category: ${footballCategory.name} (${footballCategory._id})`);
-    
     // Create sample user
-    let user = await User.findOne({ username: 'any_sport' });
+    let user = await User.findOne({ username: 'any_seed' });
     if (!user) {
       user = await User.create({
         user_id: crypto.randomBytes(4).toString('hex'),
-        username: 'any_sport',
-        custom_display_name: 'FootballFan',
-        device_fingerprint: 'seed_fp_sport',
+        username: 'any_seed',
+        custom_display_name: 'ContentCurator',
+        device_fingerprint: 'seed_fp_general',
         is_admin: false,
       });
       console.log(`Created user: ${user.username}`);
     }
     
-    // Check if post already exists
-    const existingPost = await Post.findOne({ title: samplePosts[0].title });
-    if (existingPost) {
-      console.log(`Post already exists: ${existingPost.title}`);
-      console.log('To re-seed, delete the post first or update the seed script to allow overwrites.');
-      console.log('\n✅ Seed already done!');
-      return;
-    }
+    let createdCount = 0;
     
-    const postData = samplePosts[0];
-    
-    const post = await Post.create({
-      author_id: user.user_id,
-      author_username: user.username,
-      author_display_name: user.custom_display_name || user.username,
-      title: postData.title,
-      post_type: postData.post_type,
-      intro: postData.intro,
-      status: 'approved',
-      category_id: footballCategory._id,
-      fire_count: 42,
-      comment_count: 0,
-      view_count: 156,
-      published_at: new Date(),
-    });
-    
-    console.log(`Created post: ${post.title}`);
-    console.log(`  Category: ${footballCategory.name} (child of Sports & Athletics)`);
-    
-    // Create list items
-    for (const item of postData.items) {
-      await ListItem.create({
-        post_id: post._id,
-        rank: item.rank,
-        title: item.title,
-        justification: item.justification,
-        fire_count: Math.floor(Math.random() * 20),
+    // Create each sample post
+    for (const postData of samplePosts) {
+      // Check if post already exists
+      const existingPost = await Post.findOne({ title: postData.title });
+      if (existingPost) {
+        console.log(`Post already exists: ${existingPost.title}`);
+        console.log(`  Slug: ${existingPost.slug}`);
+        console.log(`  View at: /${existingPost.slug}`);
+        continue;
+      }
+      
+      // Find category by slug
+      const category = await Category.findOne({ slug: postData.category_slug });
+      if (!category) {
+        console.log(`Category not found for ${postData.title}: ${postData.category_slug}`);
+        continue;
+      }
+      
+      // Create post
+      const post = await Post.create({
+        author_id: user.user_id,
+        author_username: user.username,
+        author_display_name: user.custom_display_name || user.username,
+        title: postData.title,
+        post_type: postData.post_type,
+        intro: postData.intro,
+        status: 'approved',
+        category_id: category._id,
+        fire_count: Math.floor(Math.random() * 100),
+        comment_count: 0,
+        view_count: Math.floor(Math.random() * 3000),
+        published_at: new Date(),
+        slug: '', // Will be auto-generated by pre-save hook
       });
+      
+      // Create list items
+      for (const item of postData.items) {
+        await ListItem.create({
+          post_id: post._id,
+          rank: item.rank,
+          title: item.title,
+          justification: item.justification,
+          fire_count: Math.floor(Math.random() * 50),
+        });
+      }
+      
+      console.log(`Created post: ${post.title}`);
+      console.log(`  Slug: ${post.slug}`);
+      console.log(`  Category: ${category.name}`);
+      console.log(`  View at: /${post.slug}`);
+      createdCount++;
     }
-    console.log(`  Added ${postData.items.length} list items`);
     
-    console.log('\n✅ Seed completed successfully!');
-    console.log(`Created 1 post: "${post.title}"`);
-    console.log(`Category: ${footballCategory.name} → Sports & Athletics`);
-    console.log('\nView at: /post/' + post._id.toString() + ' or /c/football-soccer');
+    console.log(`\n✅ Seed completed successfully!`);
+    console.log(`Created ${createdCount} new posts`);
+
     
   } catch (error) {
     console.error('Seed error:', error);

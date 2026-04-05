@@ -64,7 +64,8 @@ const postSchema = new Schema<IPost>(
       type: String,
       unique: true,
       index: true,
-      required: true,
+      required: false,
+      default: null,
     },
     post_type: {
       type: String,
@@ -115,11 +116,29 @@ const postSchema = new Schema<IPost>(
   }
 );
 
+// Auto-generate slug before saving
+postSchema.pre('save', function(next) {
+  if (this.isNew || this.isModified('title')) {
+    this.slug = generateUniqueSlug(this.title, this._id.toString());
+  }
+  next();
+});
+
+// Add a validator that runs after slug generation
+postSchema.pre('validate', function(next) {
+  if (this.isNew) {
+    // Generate slug early for validation
+    this.slug = generateUniqueSlug(this.title, this._id.toString());
+  }
+  next();
+});
+
 // Indexes for efficient queries
 postSchema.index({ status: 1, created_at: -1 });
 postSchema.index({ category_id: 1, status: 1 });
 postSchema.index({ author_id: 1, status: 1 });
 postSchema.index({ post_type: 1, status: 1 });
 postSchema.index({ title: 'text', intro: 'text' });
+postSchema.index({ slug: 1 }, { unique: true });
 
 export const Post = mongoose.model<IPost>('Post', postSchema);
