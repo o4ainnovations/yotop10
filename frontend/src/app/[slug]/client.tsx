@@ -89,7 +89,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
   }
 
   const fetchComments = useCallback(async () => {
-    if (!slug) return;
+    if (!slug || slug === 'undefined') return;
     setLoading(true);
     
     try {
@@ -103,7 +103,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
   }, [slug]);
 
   useEffect(() => {
-    if (!slug) return;
+    if (!slug || slug === 'undefined') return;
     
     API.getPost(slug)
       .then((data) => {

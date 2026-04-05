@@ -60,7 +60,7 @@ export default async function PostDetailPage({ params }: PageProps) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
         />
       )}
-      <PostDetailClient slug={resolvedParams.slug} />
+      <PostDetailClient slug={String(resolvedParams.slug)} />
     </>
   );
 }
