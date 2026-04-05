@@ -321,7 +321,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
             <button onClick={() => handleReaction('post', post.id)} disabled={reacting} style={{ background: 'none', border: 'none', cursor: 'pointer', marginRight: '10px' }}>
               🔥 {post.fire_count}
             </button>
-            <Link href={`/${postId}/history`}>View History</Link>
+            <Link href={`/${post.slug}/history`}>View History</Link>
           </p>
         </article>
         

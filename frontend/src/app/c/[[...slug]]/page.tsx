@@ -17,6 +17,7 @@ interface Category {
 
 interface Post {
   id: string;
+  slug: string;
   title: string;
   post_type: string;
   intro: string;
@@ -107,7 +108,7 @@ export default function CategoryFeedPage() {
           <div>
             {posts.map(post => (
               <div key={post.id} style={{ marginBottom: '20px', border: '1px solid #ccc', padding: '10px' }}>
-                <h3><Link href={`/post/${post.id}`}>{post.title}</Link></h3>
+                <h3><Link href={`/${post.slug}`}>{post.title}</Link></h3>
                 <p>{post.post_type} | Fire: {post.fire_count} | Comments: {post.comment_count}</p>
                 <p>By {post.author_display_name} - {new Date(post.created_at).toLocaleDateString()}</p>
                 <p>{post.intro.substring(0, 200)}...</p>

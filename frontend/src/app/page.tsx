@@ -13,16 +13,6 @@ const pages = [
     title: 'Category Feed (Example)',
     description: 'View posts filtered by a specific category (e.g., Movies)',
   },
-  {
-    path: '/post/1',
-    title: 'Post Detail',
-    description: 'View a full post with ranked list items and comments',
-  },
-  {
-    path: '/post/1/history',
-    title: 'Post History',
-    description: 'View the edit history/changelog of a post',
-  },
 ];
 
 export default function Home() {
