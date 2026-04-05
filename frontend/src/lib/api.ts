@@ -140,7 +140,7 @@ export const API = {
     }
     return apiFetch(`/posts?page=${page || 1}`);
   },
-  getPost: (idOrSlug: string): Promise<{ post: Post; items: any[] }> => 
+  getPost: (idOrSlug: string): Promise<{ post: Post; items: Array<{ id: string; rank: number; title: string; justification: string; image_url?: string; source_url?: string; fire_count: number }> }> => 
     apiFetch(`/posts/${idOrSlug}`),
   getPostHistory: (idOrSlug: string): Promise<PostHistoryResponse> => 
     apiFetch(`/posts/${idOrSlug}/history`),

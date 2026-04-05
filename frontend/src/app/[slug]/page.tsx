@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function PostDetailPage({ params }: PageProps) {
   const resolvedParams = await params;
-  let items = [];
+  let items: Array<{ id: string; rank: number; title: string; justification: string; image_url?: string; source_url?: string; fire_count: number }> = [];
   
   try {
     const data = await API.getPost(resolvedParams.slug);
@@ -35,10 +35,16 @@ export default async function PostDetailPage({ params }: PageProps) {
     // Items will be fetched client-side
   }
   
+  interface ListItemSchema {
+    rank: number;
+    title: string;
+    justification: string;
+  }
+  
   const itemListSchema = items.length > 0 ? {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "itemListElement": items.map((item: any) => ({
+    "itemListElement": items.map((item: ListItemSchema) => ({
       "@type": "ListItem",
       "position": item.rank,
       "name": item.title,
