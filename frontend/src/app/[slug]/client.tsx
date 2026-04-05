@@ -65,7 +65,6 @@ interface ReplyFormState {
 
 export default function PostDetailClient({ slug }: { slug: string }) {
   const searchParams = useSearchParams();
-  const postId = slug;
   const itemParam = searchParams?.get('item');
   const commentsSectionRef = useRef<HTMLDivElement>(null);
   const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -85,28 +84,28 @@ export default function PostDetailClient({ slug }: { slug: string }) {
   const [reacting, setReacting] = useState(false);
 
   // Route guard - reserved routes should not be treated as posts
-  if (RESERVED_ROUTES.includes(postId)) {
+  if (RESERVED_ROUTES.includes(slug)) {
     notFound();
   }
 
   const fetchComments = useCallback(async () => {
-    if (!postId) return;
+    if (!slug) return;
     setLoading(true);
     
     try {
-      const data = await API.getComments(postId);
+      const data = await API.getComments(slug);
       setComments(data.comments || []);
     } catch (err) {
       console.error('Failed to load comments:', err);
     } finally {
       setLoading(false);
     }
-  }, [postId]);
+  }, [slug]);
 
   useEffect(() => {
-    if (!postId) return;
+    if (!slug) return;
     
-    API.getPost(postId)
+    API.getPost(slug)
       .then((data) => {
         const typedData = data as { post: Post; items: ListItem[] };
         setPost(typedData.post);
@@ -116,7 +115,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
       .finally(() => setLoading(false));
       
     fetchComments();
-  }, [postId, fetchComments]);
+  }, [slug, fetchComments]);
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,7 +124,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
     setSubmitting(true);
     
     try {
-      await API.addComment(postId, commentContent, undefined, selectedItemId || undefined);
+      await API.addComment(slug, commentContent, undefined, selectedItemId || undefined);
       setCommentContent('');
       setSelectedItemId(null);
       setPost(prev => prev ? { ...prev, comment_count: prev.comment_count + 1 } : null);
@@ -155,7 +154,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
     }));
     
     try {
-      await API.addComment(postId, formState.content, parentCommentId, undefined);
+      await API.addComment(slug, formState.content, parentCommentId, undefined);
       setReplyForms(prev => ({
         ...prev,
         [parentCommentId]: { content: '', submitting: false }
@@ -321,7 +320,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
             <button onClick={() => handleReaction('post', post.id)} disabled={reacting} style={{ background: 'none', border: 'none', cursor: 'pointer', marginRight: '10px' }}>
               🔥 {post.fire_count}
             </button>
-            <Link href={`/${post.slug}/history`}>View History</Link>
+            <Link href={`/${slug}/history`}>View History</Link>
           </p>
         </article>
         
