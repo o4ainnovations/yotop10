@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { Category } from './Category';
 
 export interface IPost extends Document {
   author_id: string;
@@ -131,6 +132,30 @@ postSchema.pre('validate', function(next) {
     this.slug = generateUniqueSlug(this.title, this._id.toString());
   }
   next();
+});
+
+// Auto-increment category post count when post is approved and created
+postSchema.post('save', async function(doc, next) {
+  // Increment count when post is newly approved
+  if (doc.status === 'approved') {
+    await Category.findByIdAndUpdate(doc.category_id, { $inc: { post_count: 1 } });
+  }
+  next();
+});
+
+// Auto-decrement category post count when post is removed or rejected
+postSchema.post('findOneAndUpdate', async function(doc) {
+  // If post was approved and now rejected/removed
+  if (doc && doc.status === 'rejected') {
+    await Category.findByIdAndUpdate(doc.category_id, { $inc: { post_count: -1 } });
+  }
+});
+
+// Auto-decrement category post count when post is deleted
+postSchema.post('findOneAndDelete', async function(doc) {
+  if (doc && doc.status === 'approved') {
+    await Category.findByIdAndUpdate(doc.category_id, { $inc: { post_count: -1 } });
+  }
 });
 
 // Indexes for efficient queries

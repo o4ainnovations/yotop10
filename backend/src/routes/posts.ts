@@ -209,9 +209,10 @@ router.get('/', async (req: Request, res: Response) => {
       Post.countDocuments(query),
     ]);
 
-    // Format posts
+// Format posts
     const formattedPosts = posts.map((post) => ({
       id: post._id,
+      slug: post.slug,
       title: post.title,
       post_type: post.post_type,
       intro: post.intro,
@@ -220,6 +221,8 @@ router.get('/', async (req: Request, res: Response) => {
       view_count: post.view_count,
       author_username: post.author_username,
       author_display_name: post.author_display_name,
+      created_at: post.created_at,
+      published_at: post.published_at,
       category: post.category_id
         ? {
             id: (post.category_id as unknown as { _id: string })._id,
@@ -228,8 +231,6 @@ router.get('/', async (req: Request, res: Response) => {
             icon: (post.category_id as unknown as { icon?: string }).icon,
           }
         : null,
-      created_at: post.created_at,
-      published_at: post.published_at,
     }));
 
     res.json({
