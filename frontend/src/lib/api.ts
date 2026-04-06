@@ -136,7 +136,7 @@ export const API = {
   getPosts: (page?: number | { category?: string; page?: number; limit?: number }): Promise<PostsResponse> => {
     if (typeof page === 'object') {
       const { category, page: p = 1, limit = 20 } = page;
-      return apiFetch(`/posts?page=${p}&limit=${limit}${category ? `&category_id=${category}` : ''}`);
+      return apiFetch(`/posts?page=${p}&limit=${limit}${category ? `&category=${category}` : ''}`);
     }
     return apiFetch(`/posts?page=${page || 1}`);
   },
