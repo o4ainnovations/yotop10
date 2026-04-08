@@ -133,7 +133,7 @@ const updateSparkScore = async (commentId: string) => {
   const comment = await Comment.findById(commentId);
   if (!comment) return;
   
-  const sparkScore = calculateSparkScore(
+  const sparkScore = await calculateSparkScore(
     comment.fire_count,
     comment.reply_count,
     comment.created_at,
@@ -391,11 +391,24 @@ const validateComment = [
 // GET /api/posts/:id/comments - Get comments for a post
 router.get('/posts/:id/comments', async (req: Request, res: Response) => {
   try {
-    const postId = req.params.id;
+    const idOrSlug = req.params.id;
     const { list_item_id } = req.query;
 
-    if (!mongoose.Types.ObjectId.isValid(postId)) {
-      return res.status(400).json({ error: 'Invalid post ID' });
+    // Resolve post - try both ObjectID and slug
+    let postId: string | null = null;
+    
+    if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
+      const post = await Post.findOne({ _id: idOrSlug, status: 'approved' });
+      if (post) postId = post._id.toString();
+    }
+    
+    if (!postId) {
+      const post = await Post.findOne({ slug: idOrSlug, status: 'approved' });
+      if (post) postId = post._id.toString();
+    }
+
+    if (!postId) {
+      return res.status(404).json({ error: 'Post not found' });
     }
 
     // Build query
@@ -455,17 +468,25 @@ router.post('/posts/:id/comments', validateComment, async (req: Request, res: Re
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const postId = req.params.id;
+    const idOrSlug = req.params.id;
     const { content, list_item_id, parent_comment_id } = req.body;
     const deviceFingerprint = req.headers['x-device-fingerprint'] as string || req.body.device_fingerprint || 'unknown';
 
-    if (!mongoose.Types.ObjectId.isValid(postId)) {
-      return res.status(400).json({ error: 'Invalid post ID' });
+    // Resolve post - try both ObjectID and slug
+    let postId: string | null = null;
+    let post: any = null;
+    
+    if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
+      post = await Post.findOne({ _id: idOrSlug, status: 'approved' });
+      if (post) postId = post._id.toString();
+    }
+    
+    if (!postId) {
+      post = await Post.findOne({ slug: idOrSlug, status: 'approved' });
+      if (post) postId = post._id.toString();
     }
 
-    // Check if post exists
-    const post = await Post.findById(postId);
-    if (!post) {
+    if (!postId || !post) {
       return res.status(404).json({ error: 'Post not found' });
     }
 
@@ -511,7 +532,7 @@ router.post('/posts/:id/comments', validateComment, async (req: Request, res: Re
     }
 
     const now = new Date();
-    const initialSparkScore = calculateSparkScore(0, 0, now, now);
+    const initialSparkScore = await calculateSparkScore(0, 0, now, now);
 
     // Create comment
     const comment = await Comment.create({
