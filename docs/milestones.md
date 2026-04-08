@@ -136,6 +136,58 @@ Track anonymous users using:
 [ ] **Part E: Internal Link Refactor**
 - [ ] Update all `<Link href={"/post/" + post.id}>` components across the app to use `href={"/" + post.slug}`
 
+### M5.6 — The Arena (Counter-List System)
+The Arena is what transforms YoTop10 from a static list site into a competitive debate platform. It allows users to challenge any existing "Top 10" with their own version, triggering a "Battle" between the two perspectives.
+
+M5.6.1 — Counter-List Data Architecture
+[ ] POST /api/posts/:id/counter — Create a rebuttal post
+
+Request: { title, intro, items: [], parentId }
+
+Logic:
+
+Validate parentId exists.
+
+Copy original items to the new post but allow reordering/replacement.
+
+Set post_type to counter.
+
+Spark Boost: Add +10 to parentId.spark_score immediately.
+
+[ ] GET /api/posts/:id/counters — Fetch all challenges for a post
+
+Query params: sort (spark_score, newest), page, limit
+
+[ ] SEO Independence Logic:
+
+Middleware/Hook: Compare counter.spark_score vs parent.spark_score.
+
+If counter > parent: set robots: "index, follow".
+
+Else: set robots: "noindex, follow".
+
+### M5.6.2 — Comparison Engine (The "Diff" Logic)
+[ ] GET /api/posts/compare/:originalId/:counterId — Get delta data
+
+Returns a mapped object showing:
+
+Matches: Items in the same rank.
+
+Moved: Items present in both but different ranks (with +/- offset).
+
+Replaced: Items in original removed by challenger.
+
+New: Items added by challenger not in original.
+
+[ ] POST /api/posts/compare/:originalId/:counterId/vote — Community "Better List" Vote
+
+Increments Spark score for the winner of the comparison view.
+
+Integration Note:
+The "Comparison Engine" (VS View) uses the Query Parameter Strategy (?vs=...) as we discussed. This keeps your URL structure clean and flat, ensuring the Counter-Post gets the main SEO authority while the VS View remains a powerful utility for the community to settle arguments.
+
+---
+
 ### M6 — Categories System
 - [ ] `GET /api/categories` — All categories
 - [ ] `GET /api/categories/:slug` — Single category
@@ -829,9 +881,85 @@ GET    /api/admin/audit-logs          # Audit logs
 
 ---
 
+#### 11. The Challenger Editor — /[slug]/challenge
+Description: A specialized version of the submission page pre-loaded with the parent post’s data.
+
+Features:
+
+Split-Screen Layout: Left side displays the "Enemy List" (Read-only); Right side is the "Your List" (Editable).
+
+Auto-Fill: One-click "Clone All Items" to start.
+
+Drag-and-Drop: Users can drag items from the original list into their own to change positions.
+
+Diff-Tracker: Real-time indicators showing "You moved this from #1 to #5."
+
+Submit Button: Links the new post to the parentId.
+
+API Calls: GET /api/posts/:slug, POST /api/posts/counter
+
+#### 12. The Counter-Post Detail — /[counter-slug]
+Description: The standalone page for the rebuttal, utilizing the flat SEO route.
+
+Features:
+
+Rebuttal Banner: A high-visibility header: "CHALLENGE: [User] claims [Parent Author] is WRONG."
+
+Parent Link: Direct link back to the original list.
+
+Battle Stats: Side-by-side Spark score comparison widget (e.g., "This list is 20% as popular as the original").
+
+Call to Action: "Think they're both wrong? Create your own Counter-List."
+
+API Calls: GET /api/posts/:slug
+
+#### 13. The "VS" Comparison View — /[slug]?vs=[counter-slug]
+Description: A dedicated comparison utility for side-by-side analysis.
+
+Features:
+
+Dual Column Layout: Original (Left) vs. Counter (Right).
+
+Visual Connectors: SVG "thread" lines connecting the same items across both lists to show rank changes.
+
+Change Highlighting:
+
+Red strike-through for removed items.
+
+Green glow for new items.
+
+Yellow arrows for reordered items.
+
+Verdict Section: A public poll: "Who has the better taste?" (Awards Spark points to winner).
+
+Mobile UX: Swipable cards to toggle between the two lists if the screen is too narrow for side-by-side.
+
+API Calls: GET /api/posts/compare/:originalId/:counterId
+
+#### 14. The Challenges Gallery — /[slug]/challenges
+Description: A sub-directory of all rebuttals made against a specific post.
+
+Features:
+
+The "Battlefield" Feed: List of all counter-posts sorted by Spark Score.
+
+Leaderboard: Highlights the #1 Counter-List (The "Top Contender").
+
+Comparison Entry: Quick "VS" buttons on each card to launch the Comparison View.
+
+Metric Tally: "Total Challenges: 42" | "Community Verdict: Contested".
+
+API Calls: GET /api/posts/:slug/counters
+
+
+Integration Note:
+The "Comparison Engine" (VS View) uses the Query Parameter Strategy (?vs=...) as we discussed. This keeps your URL structure clean and flat, ensuring the Counter-Post gets the main SEO authority while the VS View remains a powerful utility for the community to settle arguments.
+
+---
+
 ### Admin Pages
 
-#### 11. Admin Login Page — `/admin/login`
+#### 15. Admin Login Page — `/admin/login`
 **Description**: Admin authentication page.
 - **Features**:
   - YoTop10 logo/branding
@@ -845,7 +973,7 @@ GET    /api/admin/audit-logs          # Audit logs
 
 ---
 
-#### 12. Admin Dashboard — `/admin/dashboard`
+#### 16. Admin Dashboard — `/admin/dashboard`
 **Description**: Overview of platform statistics.
 - **Features**:
   - Sidebar navigation (collapsible)
@@ -868,7 +996,7 @@ GET    /api/admin/audit-logs          # Audit logs
 
 ---
 
-#### 13. Review Queue — `/admin/posts/pending`
+#### 17. Review Queue — `/admin/posts/pending`
 **Description**: List of posts awaiting approval.
 - **Features**:
   - Header: "Pending Reviews", count badge
@@ -893,7 +1021,7 @@ GET    /api/admin/audit-logs          # Audit logs
 
 ---
 
-#### 14. All Posts Management — `/admin/posts`
+#### 18. All Posts Management — `/admin/posts`
 **Description**: Complete posts management table.
 - **Features**:
   - Header: "All Posts", search input
@@ -920,7 +1048,7 @@ GET    /api/admin/audit-logs          # Audit logs
 
 ---
 
-#### 15. Comments Management — `/admin/comments`
+#### 19. Comments Management — `/admin/comments`
 **Description**: All comments management with moderation tools.
 - **Features**:
   - Header: "Comments", search input
@@ -946,7 +1074,7 @@ GET    /api/admin/audit-logs          # Audit logs
 
 ---
 
-#### 16. Users Management — `/admin/users`
+#### 20. Users Management — `/admin/users`
 **Description**: Anonymous users management.
 - **Features**:
   - Header: "Users", search by username or fingerprint
@@ -968,7 +1096,7 @@ GET    /api/admin/audit-logs          # Audit logs
 
 ---
 
-#### 17. Categories Management — `/admin/categories`
+#### 21. Categories Management — `/admin/categories`
 **Description**: CRUD for categories with tree view.
 - **Features**:
   - Header: "Categories", "Add Category" button
@@ -992,7 +1120,7 @@ GET    /api/admin/audit-logs          # Audit logs
 
 ---
 
-#### 18. Hall of Fame Management — `/admin/hall-of-fame`
+#### 21. Hall of Fame Management — `/admin/hall-of-fame`
 **Description**: Manage featured posts.
 - **Features**:
   - Header: "Hall of Fame Management"
@@ -1013,7 +1141,7 @@ GET    /api/admin/audit-logs          # Audit logs
 
 ---
 
-#### 19. Reactions Management — `/admin/reactions`
+#### 22. Reactions Management — `/admin/reactions`
 **Description**: Overview of all fire reactions with anti-fraud.
 - **Features**:
   - Header: "Reactions"
@@ -1036,7 +1164,7 @@ GET    /api/admin/audit-logs          # Audit logs
 
 ---
 
-#### 20. Search Management — `/admin/search`
+#### 23. Search Management — `/admin/search`
 **Description**: Elasticsearch management and reindexing.
 - **Features**:
   - Header: "Search Management"
@@ -1061,7 +1189,7 @@ GET    /api/admin/audit-logs          # Audit logs
 
 ---
 
-#### 21. Settings Page — `/admin/settings`
+#### 24. Settings Page — `/admin/settings`
 **Description**: Rate limits and trust score configuration.
 - **Features**:
   - Header: "Settings"
@@ -1080,7 +1208,7 @@ GET    /api/admin/audit-logs          # Audit logs
 
 ---
 
-#### 22. Audit Logs — `/admin/audit`
+#### 25. Audit Logs — `/admin/audit`
 **Description**: History of all admin actions.
 - **Features**:
   - Header: "Audit Logs"

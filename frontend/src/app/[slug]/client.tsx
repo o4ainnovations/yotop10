@@ -73,6 +73,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
   const [items, setItems] = useState<ListItem[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshingComments, setRefreshingComments] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   const [commentContent, setCommentContent] = useState('');
@@ -90,7 +91,13 @@ export default function PostDetailClient({ slug }: { slug: string }) {
 
   const fetchComments = useCallback(async () => {
     if (!slug || slug === 'undefined') return;
-    setLoading(true);
+    
+    // Only show full page loading on initial load, not on refresh
+    if (comments.length === 0) {
+      setLoading(true);
+    } else {
+      setRefreshingComments(true);
+    }
     
     try {
       const data = await API.getComments(slug);
@@ -99,8 +106,9 @@ export default function PostDetailClient({ slug }: { slug: string }) {
       console.error('Failed to load comments:', err);
     } finally {
       setLoading(false);
+      setRefreshingComments(false);
     }
-  }, [slug]);
+  }, [slug, comments.length]);
 
   useEffect(() => {
     if (!slug || slug === 'undefined') return;
@@ -348,7 +356,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
         </section>
         
         <section ref={commentsSectionRef}>
-          <h2>Comments ({post.comment_count})</h2>
+          <h2>Comments ({post.comment_count}) {refreshingComments && <span style={{ fontSize: '14px', color: '#666' }}>⟳</span>}</h2>
           
           <div style={{ marginBottom: '15px' }}>
             <label>Filter: </label>
