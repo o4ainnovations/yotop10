@@ -482,19 +482,30 @@ Reasoning: This keeps your site "High-Quality" in the eyes of Google by hiding "
 
 #### M10.11 — Rate Limiting & Trust Scores
 - [ ] `GET /api/admin/rate-limits` — View rate limit settings
-- [ ] `PATCH /api/admin/rate-limits` — Adjust rate limits
+- [ ] `PATCH /api/admin/rate-limits` — Adjust global base rate limits
   - General comments per hour
   - Item-anchored comments per hour
   - Posts per hour
   - Burst limit
+- [ ] `PATCH /api/admin/rate-limits/tiers` — Set tier-specific rate limit multipliers
+  - Troll multiplier: Default 0.5x
+  - Neutral multiplier: Default 1.0x  
+  - Scholar multiplier: Default 2.0x
+  - Admins can adjust each tier's multiplier independently
 - [ ] `GET /api/admin/trust-scores` — View trust score distribution
   - Count of Scholars
   - Count of Neutrals
   - Count of Trolls
   - Recently flagged users
-- [ ] Manual trust score override:
-  - `PATCH /api/admin/users/:fingerprint/trust` — Set trust level manually
-  - Options: scholar, neutral, troll
+- [ ] Manual user trust level locking:
+  - `PATCH /api/admin/users/:user_id/trust` — Lock user to specific trust level
+  - Options: scholar, neutral, troll, automatic (default)
+  - When locked, automatic trust score calculation is permanently disabled for this user
+  - User will always remain at the assigned level until manually changed
+- [ ] Per-user rate limit overrides:
+  - `PATCH /api/admin/users/:user_id/rate-limits` — Set custom rate limits for individual users
+  - Admins can set custom post/comment limits for any user, bypassing tier multipliers
+  - Overrides persist permanently until removed
 
 #### M10.12 — Audit Logs
 - [ ] `GET /api/admin/audit-logs` — All admin actions
@@ -546,12 +557,148 @@ Reasoning: This keeps your site "High-Quality" in the eyes of Google by hiding "
 
 ---
 
-### M11 — User Profiles
-- [ ] `GET /api/users/:username` — Profile data
-- [ ] `GET /api/users/:username/posts` — User's posts
-- [ ] `PATCH /api/users/:username` — Update display name
-- [ ] Frontend: `/any_XXXX` — Profile page
-- [ ] Show Approved/Rejected/Pending posts with badges
+## M11 — Anonymous User System (FINAL COMPLETION)
+
+✅ **COMPLETION BLOCKER**: This is the final foundation milestone. Nothing else can be built until M11 is 100% complete. Every other feature (rate limiting, moderation, trust scores, identity portability) depends directly on these 5 parts.
+
+---
+
+### 🔴 M11.A: GET /api/users/me Endpoint
+**Purpose**: Returns the full current user context for the authenticated fingerprint.
+
+**Specification**:
+- [ ] Endpoint: `GET /api/users/me`
+- [ ] Authentication: Uses `X-Device-Fingerprint` header only. No other auth required.
+- [ ] Response format:
+  ```typescript
+  {
+    user_id: string;
+    username: string;
+    custom_display_name: string | null;
+    trust_score: number;
+    trust_level: 'troll' | 'neutral' | 'scholar';
+    post_count: number;
+    comment_count: number;
+    posts_approved: number;
+    posts_rejected: number;
+    created_at: ISO8601;
+    first_seen_at: ISO8601;
+  }
+  ```
+- [ ] Calculated fields are computed on the fly, not stored:
+  - `post_count`: Total posts submitted (all statuses)
+  - `comment_count`: Total comments submitted
+  - `posts_approved`: Number of posts with status `approved`
+  - `posts_rejected`: Number of posts with status `rejected`
+- [ ] Trust level mapping:
+  - < 0.5 → `troll`
+  - 0.5 - 1.8 → `neutral`
+  - ≥ 1.8 → `scholar`
+- [ ] Returns 404 if fingerprint is not recognized
+
+---
+
+### 🔴 M11.B: PATCH /api/users/me Endpoint
+**Purpose**: Username customization endpoint.
+
+**Specification**:
+- [ ] Endpoint: `PATCH /api/users/me`
+- [ ] Authentication: Uses `X-Device-Fingerprint` header only.
+- [ ] Request body: `{ display_name: string }`
+- [ ] Rules:
+  1.  **Mandatory Prefix**: Display name MUST start with `a_` for all users below Scholar level
+  2.  **Scholar Exception**: Users with `trust_score ≥ 1.8` MAY omit the `a_` prefix completely
+  3.  **Length**: Minimum 3 characters total (`a_x` is allowed), maximum 32 characters
+  4.  **Allowed characters**: Alphanumeric only (a-z, 0-9). No spaces, no symbols, no underscores except the mandatory prefix
+  5.  **Uniqueness**: Display name must be globally unique across all users
+  6.  **Immutable Prefix**: Non-scholar users CANNOT change or remove the `a_` prefix. Any attempt to submit a name without `a_` will be automatically prefixed server side.
+- [ ] Success response: 200 OK with updated user object
+- [ ] Error responses:
+  - 400: Invalid characters or length
+  - 409: Display name already taken
+
+---
+
+### 🔴 M11.C: Trust Score Calculation Engine
+**Purpose**: The core reputation system that powers all rate limits, permissions, and privileges.
+
+**Specification**:
+- [ ] **Calculation formula**:
+  ```
+  approval_rate = posts_approved / max(posts_approved + posts_rejected, 1)
+  
+  base_score = 1.0
+  
+  if (posts_approved + posts_rejected) >= 5:
+    if approval_rate >= 0.85:
+      base_score = min(base_score + 0.1 * posts_approved, 2.0)
+    elif approval_rate <= 0.3:
+      base_score = max(base_score - 0.2 * posts_rejected, 0.1)
+  
+  trust_score = clamp(base_score, 0.1, 2.0)
+  ```
+- [ ] **Automatic recalculation**:
+  - Runs automatically **every time a post is approved or rejected**
+  - Never recalculated on read operations
+  - Stored permanently on User document
+- [ ] **Trust Level Tiers**:
+  | Score | Level | Rate Multiplier | Prefix |
+  |-------|-------|-----------------|--------|
+  | 0.1 - 0.49 | Troll | 0.1x | `a_` (required) |
+  | 0.5 - 1.79 | Neutral | 1.0x | `a_` (required) |
+  | 1.8 - 2.0 | Scholar | 2.0x | None (optional) |
+
+---
+
+### 🔴 M11.D: Trust-Aware Rate Limiting
+**Purpose**: All rate limits are dynamically adjusted based on user trust score.
+
+**Specification**:
+- [ ] **Base limits remain exactly as specified**:
+  - Posts: 4 per hour
+  - General comments: 50 per hour
+  - Item-anchored comments: 45 per hour
+- [ ] **Multiplier application**:
+  ```
+  effective_limit = floor(base_limit * user.trust_score)
+  ```
+- [ ] **Edge cases**:
+  - Trolls (0.5x): 2 posts/hour, 25 comments/hour
+  - Neutrals (1.0x): Standard limits
+  - Scholars (2.0x): 8 posts/hour, 100 comments/hour
+- [ ] **Implementation**:
+  - Trust multiplier applied **at the very beginning** of every rate limit check
+  - Trust score cached with rate limit entry
+  - No database lookups during rate limit enforcement
+
+---
+
+### 🔴 M11.E: User Profile Page /a_[username]
+**Purpose**: Public anonymous profile page.
+
+**Specification**:
+- [ ] Route: `/a_[username]`
+- [ ] Publicly accessible to everyone, no auth required
+- [ ] Page contents:
+  - Username (large header)
+  - Trust score badge (Scholar/Neutral/Troll)
+  - Stats: Member since, total posts, total comments, approval rate
+  - Tab navigation: Posts | Comments
+  - Posts tab: All posts by user with status badges (Approved/Pending/Rejected)
+  - Comments tab: All comments by user (public only, no deleted)
+- [ ] **Privacy rules**:
+  - Only the user themselves can see their own Pending/Rejected posts
+  - All other users only see Approved posts
+  - Device fingerprint is NEVER exposed publicly
+- [ ] For authenticated user viewing their own profile:
+  - Add "Edit Display Name" button
+  - Add "Secure My Authority" section (for M15 seed phrase)
+  - Show exact trust score number
+
+---
+
+✅ **M11 DEFINITION OF DONE**:
+All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M11 is complete, the user system is FINISHED FOREVER. You will never need to modify it again for the entire lifetime of the platform.
 
 ### M12 — Search & Discovery
 - [ ] Elasticsearch indexes for posts + comments

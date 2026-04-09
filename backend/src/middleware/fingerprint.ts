@@ -11,6 +11,11 @@ declare global {
         username: string;
         device_fingerprint: string;
         trust_score: number;
+        trust_locked: boolean;
+        rate_limit_override?: {
+          posts_per_hour?: number | null;
+          comments_per_hour?: number | null;
+        };
         is_admin: boolean;
       };
     }
@@ -26,6 +31,7 @@ export const fingerprintMiddleware = async (req: Request, res: Response, next: N
     '/api/categories',
     '/api/posts',
     '/api/comments',
+    '/api/users',
     '/api/search'
   ];
   
@@ -70,6 +76,8 @@ export const fingerprintMiddleware = async (req: Request, res: Response, next: N
       username: user.username,
       device_fingerprint: user.device_fingerprint,
       trust_score: (user as any).trust_score,
+      trust_locked: (user as any).trust_locked,
+      rate_limit_override: (user as any).rate_limit_override,
       is_admin: user.is_admin,
     };
     

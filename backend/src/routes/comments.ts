@@ -293,12 +293,13 @@ const startThresholdCron = () => {
 
 
 // Check rate limit for comments (50 per hour per fingerprint)
-const checkCommentRateLimit = async (fingerprint: string): Promise<{ allowed: boolean; remaining: number; resetTime: number }> => {
+const checkCommentRateLimit = async (fingerprint: string, trustScore: number = 1.0): Promise<{ allowed: boolean; remaining: number; resetTime: number }> => {
   try {
     const redis = await getRedisClient();
     const key = `rate_limit:comments:${fingerprint}`;
     const windowMs = 60 * 60 * 1000; // 1 hour
-    const limit = 50; // 50 comments per hour
+    const baseLimit = 50; // 50 comments per hour base
+    const limit = Math.floor(baseLimit * trustScore);
 
     const current = await redis.get(key);
     const now = Date.now();
@@ -323,7 +324,7 @@ const checkCommentRateLimit = async (fingerprint: string): Promise<{ allowed: bo
     };
   } catch (error) {
     console.error('Rate limit check error:', error);
-    return { allowed: true, remaining: 50, resetTime: Date.now() + 3600000 };
+    return { allowed: true, remaining: Math.floor(50 * trustScore), resetTime: Date.now() + 3600000 };
   }
 };
 
@@ -443,8 +444,16 @@ router.post('/posts/:id/comments', validateComment, async (req: Request, res: Re
       return res.status(404).json({ error: 'Post not found' });
     }
 
-    // Check rate limit
-    const rateLimit = await checkCommentRateLimit(deviceFingerprint);
+    // Apply per-user rate limit override if set
+    let effectiveTrustScore = req.user?.trust_score || 1.0;
+    
+    // Check for admin override
+    if (req.user?.rate_limit_override?.comments_per_hour) {
+      effectiveTrustScore = req.user.rate_limit_override.comments_per_hour / 50;
+    }
+    
+    // Check rate limit with trust score multiplier
+    const rateLimit = await checkCommentRateLimit(deviceFingerprint, effectiveTrustScore);
     if (!rateLimit.allowed) {
       return res.status(429).json({ 
         error: 'Rate limit exceeded', 

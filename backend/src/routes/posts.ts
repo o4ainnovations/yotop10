@@ -54,12 +54,13 @@ const generateUserId = (): string => {
 };
 
 // Check rate limit (4 posts per hour per fingerprint)
-const checkRateLimit = async (fingerprint: string): Promise<{ allowed: boolean; remaining: number; resetTime: number }> => {
+const checkRateLimit = async (fingerprint: string, trustScore: number = 1.0): Promise<{ allowed: boolean; remaining: number; resetTime: number }> => {
   try {
     const redis = await getRedisClient();
     const key = `rate_limit:posts:${fingerprint}`;
     const windowMs = 60 * 60 * 1000; // 1 hour
-    const maxRequests = 4;
+    const baseMaxRequests = 4;
+    const maxRequests = Math.floor(baseMaxRequests * trustScore);
 
     const now = Date.now();
     const windowStart = now - windowMs;
@@ -86,7 +87,7 @@ const checkRateLimit = async (fingerprint: string): Promise<{ allowed: boolean; 
   } catch (error) {
     console.error('Rate limit check failed:', error);
     // If Redis fails, allow the request (fail open)
-    return { allowed: true, remaining: 3, resetTime: Date.now() + 60 * 60 * 1000 };
+    return { allowed: true, remaining: Math.floor(3 * trustScore), resetTime: Date.now() + 60 * 60 * 1000 };
   }
 };
 
@@ -358,8 +359,16 @@ router.post('/', validatePostSubmission, async (req: Request, res: Response) => 
       device_fingerprint,
     } = req.body;
 
-    // Check rate limit
-    const rateLimitResult = await checkRateLimit(device_fingerprint);
+    // Apply per-user rate limit override if set
+    let effectiveTrustScore = req.user?.trust_score || 1.0;
+    
+    // Check for admin override
+    if (req.user?.rate_limit_override?.posts_per_hour) {
+      effectiveTrustScore = req.user.rate_limit_override.posts_per_hour / 4;
+    }
+    
+    // Check rate limit with trust score multiplier
+    const rateLimitResult = await checkRateLimit(device_fingerprint, effectiveTrustScore);
     if (!rateLimitResult.allowed) {
       return res.status(429).json({
         error: 'Rate limit exceeded. You can submit 4 posts per hour.',

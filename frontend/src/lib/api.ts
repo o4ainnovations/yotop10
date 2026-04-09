@@ -169,4 +169,13 @@ export const API = {
       method: 'POST',
       body: JSON.stringify({ target_type, target_id, device_fingerprint }),
     }),
+  
+  // User endpoints
+  getCurrentUser: () => apiFetch('/users/me'),
+  updateDisplayName: (display_name: string) => 
+    apiFetch('/users/me', {
+      method: 'PATCH',
+      body: JSON.stringify({ display_name }),
+    }),
+  getUserProfile: (username: string) => apiFetch(`/users/${username}`),
 };

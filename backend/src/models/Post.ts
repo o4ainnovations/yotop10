@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { Category } from './Category';
+import { updateUserTrustScore } from '../lib/trustScore';
 
 export interface IPost extends Document {
   author_id: string;
@@ -155,6 +156,13 @@ postSchema.post('findOneAndUpdate', async function(doc) {
 postSchema.post('findOneAndDelete', async function(doc) {
   if (doc && doc.status === 'approved') {
     await Category.findByIdAndUpdate(doc.category_id, { $inc: { post_count: -1 } });
+  }
+});
+
+// Auto-update user trust score when post status changes
+postSchema.post('findOneAndUpdate', async function(doc) {
+  if (doc && doc.author_id) {
+    await updateUserTrustScore(doc.author_id);
   }
 });
 

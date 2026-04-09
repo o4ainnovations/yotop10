@@ -6,7 +6,12 @@ export interface IUser extends Document {
   custom_display_name?: string;
   device_fingerprint: string;
   trust_score: number;
+  trust_locked: boolean;
   is_admin: boolean;
+  rate_limit_override?: {
+    posts_per_hour?: number | null;
+    comments_per_hour?: number | null;
+  };
   created_at: Date;
   updated_at: Date;
 }
@@ -44,6 +49,14 @@ const userSchema = new Schema<IUser>(
       default: 1.0,
       min: 0.1,
       max: 2.0,
+    },
+    trust_locked: {
+      type: Boolean,
+      default: false,
+    },
+    rate_limit_override: {
+      posts_per_hour: { type: Number, default: null },
+      comments_per_hour: { type: Number, default: null },
     },
   },
   {
