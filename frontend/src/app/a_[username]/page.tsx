@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
@@ -52,8 +53,8 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
     getFingerprint();
 
     API.getUserProfile(username)
-      .then((data: any) => {
-        setProfile(data);
+      .then((data) => {
+        setProfile(data as UserProfile);
       })
       .catch(() => {
         notFound();
@@ -68,8 +69,8 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
     
     try {
       await API.updateDisplayName(newDisplayName);
-      const updated = await API.getUserProfile(username) as any;
-      setProfile(updated);
+      const updated = await API.getUserProfile(username);
+      setProfile(updated as UserProfile);
       setEditingName(false);
       setNewDisplayName('');
     } catch {

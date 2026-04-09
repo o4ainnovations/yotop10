@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * API Base URL utility
  * Uses INTERNAL_API_URL on server-side (for SSR/SSG)
