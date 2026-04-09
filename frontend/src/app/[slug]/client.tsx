@@ -5,6 +5,7 @@ import { useSearchParams, notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { API } from '@/lib/api';
+import { getFingerprint } from '@/lib/fingerprint';
 
 const RESERVED_ROUTES = ['admin', 'api', 'login', 'search', 'settings', 'profile', 'categories', 'c', 'auth'];
 
@@ -179,20 +180,13 @@ export default function PostDetailClient({ slug }: { slug: string }) {
     }
   };
 
-  const getOrCreateFingerprint = (): string => {
-    let fp = localStorage.getItem('yotop10_fp');
-    if (!fp) {
-      fp = 'fp_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
-      localStorage.setItem('yotop10_fp', fp);
-    }
-    return fp;
-  };
+
 
   const handleReaction = async (targetType: 'post' | 'list_item' | 'comment', targetId: string) => {
     if (reacting) return;
     setReacting(true);
     
-    const fingerprint = getOrCreateFingerprint();
+    const fingerprint = await getFingerprint();
     
     try {
       const data = await API.toggleReaction(targetType, targetId, fingerprint) as { fire_count: number; user_reacted: boolean };

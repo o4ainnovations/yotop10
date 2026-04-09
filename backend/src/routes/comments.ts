@@ -290,36 +290,7 @@ const startThresholdCron = () => {
   console.log('[SparkEngine] Threshold cron started (every 6 hours)');
 };
 
-// Generate unique random username (fully anonymous)
-const generateRandomUsername = async (): Promise<string> => {
-  let isUnique = false;
-  let username = '';
-  let attempts = 0;
-  const maxAttempts = 10;
 
-  while (!isUnique && attempts < maxAttempts) {
-    const randomPart = crypto.randomBytes(2).toString('hex');
-    username = `any_${randomPart}`;
-    
-    const existingUser = await User.findOne({ username });
-    if (!existingUser) {
-      isUnique = true;
-    }
-    attempts++;
-  }
-
-  if (!isUnique) {
-    const counter = Date.now() % 10000;
-    username = `any_${crypto.randomBytes(2).toString('hex')}${counter}`;
-  }
-
-  return username;
-};
-
-// Generate unique user ID
-const generateUserId = (): string => {
-  return crypto.randomBytes(4).toString('hex');
-};
 
 // Check rate limit for comments (50 per hour per fingerprint)
 const checkCommentRateLimit = async (fingerprint: string): Promise<{ allowed: boolean; remaining: number; resetTime: number }> => {
@@ -356,26 +327,7 @@ const checkCommentRateLimit = async (fingerprint: string): Promise<{ allowed: bo
   }
 };
 
-// Get or create anonymous user by device fingerprint
-const getOrCreateUser = async (deviceFingerprint: string): Promise<{ user_id: string; username: string; display_name: string }> => {
-  let user = await User.findOne({ device_fingerprint: deviceFingerprint });
-  
-  if (!user) {
-    const username = await generateRandomUsername();
-    user = await User.create({
-      user_id: generateUserId(),
-      username,
-      device_fingerprint: deviceFingerprint,
-      is_admin: false,
-    });
-  }
 
-  return {
-    user_id: user.user_id,
-    username: user.username,
-    display_name: user.custom_display_name || user.username,
-  };
-};
 
 // Start cron on module load
 startSparkScoreCron();
@@ -470,7 +422,8 @@ router.post('/posts/:id/comments', validateComment, async (req: Request, res: Re
 
     const idOrSlug = req.params.id;
     const { content, list_item_id, parent_comment_id } = req.body;
-    const deviceFingerprint = req.headers['x-device-fingerprint'] as string || req.body.device_fingerprint || 'unknown';
+    // Use fingerprint from middleware user context
+    const deviceFingerprint = req.user?.device_fingerprint || 'unknown';
 
     // Resolve post - try both ObjectID and slug
     let postId: string | null = null;
@@ -501,8 +454,8 @@ router.post('/posts/:id/comments', validateComment, async (req: Request, res: Re
       });
     }
 
-    // Get or create user
-    const user = await getOrCreateUser(deviceFingerprint);
+    // Use user from middleware context
+    const user = req.user!;
 
     // Determine depth
     let depth = 0;
@@ -542,7 +495,7 @@ router.post('/posts/:id/comments', validateComment, async (req: Request, res: Re
       depth,
       author_id: user.user_id,
       author_username: user.username,
-      author_display_name: user.display_name,
+      author_display_name: user.username,
       content,
       fire_count: 0,
       reply_count: 0,

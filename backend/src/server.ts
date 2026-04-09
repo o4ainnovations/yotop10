@@ -23,6 +23,10 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Fingerprint middleware - runs on all API routes
+import { fingerprintMiddleware } from './middleware/fingerprint';
+app.use('/api', fingerprintMiddleware);
+
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

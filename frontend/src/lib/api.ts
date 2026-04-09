@@ -24,12 +24,25 @@ export async function apiFetch<T>(
   const baseUrl = getBaseUrl();
   const url = `${baseUrl}${endpoint}`;
 
+  // Get fingerprint if available (client-side only)
+  let deviceFingerprint: string | null = null;
+  if (typeof window !== 'undefined') {
+    deviceFingerprint = localStorage.getItem('yotop10_fp');
+  }
+
+  const headers: any = {
+    'Content-Type': 'application/json',
+    ...options?.headers,
+  };
+
+  // Add fingerprint header to all requests if available
+  if (deviceFingerprint) {
+    headers['X-Device-Fingerprint'] = deviceFingerprint;
+  }
+
   const response = await fetch(url, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
+    headers,
   });
 
   if (!response.ok) {

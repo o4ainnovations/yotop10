@@ -28,7 +28,6 @@ const getThresholds = async () => {
 const validateReaction = [
   body('target_type').isIn(['post', 'list_item', 'comment']).withMessage('Invalid target type'),
   body('target_id').isMongoId().withMessage('Invalid target ID'),
-  body('device_fingerprint').notEmpty().withMessage('Device fingerprint is required'),
 ];
 
 // Helper to get fingerprint from request
@@ -45,7 +44,7 @@ router.post('/', validateReaction, async (req: Request, res: Response) => {
     }
 
     const { target_type, target_id } = req.body;
-    const device_fingerprint = getFingerprint(req);
+    const device_fingerprint = req.user?.device_fingerprint || 'unknown';
 
     // Verify target exists and get current fire count
     let target;

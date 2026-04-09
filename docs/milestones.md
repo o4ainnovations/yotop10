@@ -22,12 +22,14 @@ This is the simplified roadmap based on the [revert.md](./revert.md) plan. The p
 ## CORE SPECIFICATIONS
 
 ### Anonymous User Identity
-- **Username Format**: `any_XXXX` (e.g., `any_9Gh7`)
-  - `any_` + last 4 characters of 8-character alphanumeric user ID
-  - Example: User ID `xyza1b2c3d4` → Username `any_1b2c`
-- **Display Name Customization**: Users can change last 4 characters
-  - Example: `any_9Gh7` → `any_nekw` (must be unique, keep `any_` prefix)
-- **Profile Page**: `/any_XXXX` shows all posts (Approved/Rejected/Pending with badges)
+- **Username Format**: `a_XXXX` (e.g., `a_9Gh7`)
+  - `a_` + last 4 characters of 8-character alphanumeric user ID
+  - Example: User ID `xyza1b2c3d4` → Username `a_1b2c`
+- **Display Name Customization**: Users can change **any suffix after the `a_` prefix** (unlimited length)
+  - Example: `a_9Gh7` → `a_gojominitia`, `a_alphax5`, `a_z` (any length, alphanumeric only)
+  - Only the `a_` prefix is mandatory
+- **Scholar Status Upgrade**: Users with Trust Score ≥ 1.8 automatically lose the `a_` prefix completely. Usernames become fully custom.
+- **Profile Page**: `/a_XXXX` shows all posts (Approved/Rejected/Pending with badges)
 
 ### Device Fingerprinting
 Track anonymous users using:
@@ -590,8 +592,31 @@ Reasoning: This keeps your site "High-Quality" in the eyes of Google by hiding "
 - [ ] Elasticsearch search with autocomplete
 - [ ] Arguments page (hot debates)
 - [ ] Hall of Fame
-- [ ] User profiles at `/any_XXXX`
+- [ ] User profiles at `/a_XXXX`
 - [ ] Deployed and verified
+
+---
+
+## M15 — Identity Portability
+
+✅ **Philosophy**: Crypto wallet style identity. No passwords, no emails. User owns their reputation completely.
+
+### Implementation:
+- [ ] `POST /api/identity/generate-key` — Generate 12-word seed phrase for authenticated user
+- [ ] `POST /api/identity/claim` — Claim identity on new device using seed phrase
+- [ ] `POST /api/identity/link` — Link additional device fingerprint to existing identity
+- [ ] User cluster system: Multiple fingerprints can map to single authority ID
+- [ ] Seed phrases are NOT stored on server - only bcrypt hash of public key
+- [ ] No recovery system. If seed is lost, identity is permanently lost.
+- [ ] **Trust Score Prefix Removal**: Users with Scholar trust score (>1.8) automatically lose the `a_` prefix. Usernames become completely custom.
+
+### UX:
+- [ ] Profile page section: "Secure My Authority"
+- [ ] "This is your only key. We do not store this. If you lose it, your reputation is gone forever."
+- [ ] 12 word BIP39 standard seed phrase
+- [ ] Optional JSON identity file download
+- [ ] Claim identity page for new devices
+- [ ] Username customization: Only `a_` prefix is mandatory for new users. Suffix can be any alphanumeric string of any length (minimum 1 character).
 
 ---
 

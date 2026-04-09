@@ -5,6 +5,7 @@ export interface IUser extends Document {
   username: string;
   custom_display_name?: string;
   device_fingerprint: string;
+  trust_score: number;
   is_admin: boolean;
   created_at: Date;
   updated_at: Date;
@@ -37,6 +38,12 @@ const userSchema = new Schema<IUser>(
     is_admin: {
       type: Boolean,
       default: false,
+    },
+    trust_score: {
+      type: Number,
+      default: 1.0,
+      min: 0.1,
+      max: 2.0,
     },
   },
   {
