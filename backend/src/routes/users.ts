@@ -141,9 +141,10 @@ router.get('/:username', async (req: Request, res: Response) => {
   try {
     const { username } = req.params;
     
-    // Find user by username
+    // Find user by user_id, username, or custom_display_name
     const user = await User.findOne({ 
       $or: [
+        { user_id: username },
         { username },
         { custom_display_name: username }
       ]

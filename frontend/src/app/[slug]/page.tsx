@@ -10,13 +10,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const resolvedParams = await params;
   const slug = String(resolvedParams.slug);
   
-  // User profiles have a_ prefix
-  if (slug.startsWith('a_')) {
-    return {
-      title: `User ${slug}`,
-    };
-  }
-  
   try {
     const data = await API.getPost(slug);
     return {

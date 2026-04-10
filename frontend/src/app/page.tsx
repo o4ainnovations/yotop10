@@ -38,11 +38,11 @@ export default function Home() {
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 20px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h1>YoTop10 Platform</h1>
-        {user && (
-          <Link href={`/${user.username}`} style={{ padding: '8px 16px', backgroundColor: '#f0f0f0', borderRadius: '5px', textDecoration: 'none', color: '#333' }}>
-            {user.username}
-          </Link>
-        )}
+         {user && (
+           <Link href={`/a/${user.user_id}`} style={{ padding: '8px 16px', backgroundColor: '#f0f0f0', borderRadius: '5px', textDecoration: 'none', color: '#333' }}>
+             {user.username}
+           </Link>
+         )}
       </div>
       <p style={{ marginBottom: '30px' }}>
         An open Wikipedia-style platform for top 10 lists with a social UI.

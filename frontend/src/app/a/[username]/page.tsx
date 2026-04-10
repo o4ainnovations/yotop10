@@ -54,7 +54,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
     const fetchProfile = async () => {
       const { username } = await params;
       try {
-      const data = await API.getUserProfile(`a_${username}`) as any;
+      const data = await API.getUserProfile(username) as any;
       setProfile(data);
       } catch {
         notFound();
@@ -72,7 +72,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
     try {
       await API.updateDisplayName(newDisplayName);
       const { username } = await params;
-      const updated = await API.getUserProfile(`a_${username}`) as any;
+      const updated = await API.getUserProfile(username) as any;
       setProfile(updated);
       setEditingName(false);
       setNewDisplayName('');
