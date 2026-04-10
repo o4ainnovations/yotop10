@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-import { redirect } from 'next/navigation';
+
 
 export default async function PostDetailPage({ params }: PageProps) {
   const resolvedParams = await params;
