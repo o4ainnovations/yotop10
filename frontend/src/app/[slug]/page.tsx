@@ -8,8 +8,17 @@ type PageProps = {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const resolvedParams = await params;
+  const slug = String(resolvedParams.slug);
+  
+  // User profiles have a_ prefix
+  if (slug.startsWith('a_')) {
+    return {
+      title: `User ${slug}`,
+    };
+  }
+  
   try {
-    const data = await API.getPost(resolvedParams.slug);
+    const data = await API.getPost(slug);
     return {
       title: data.post.title,
       description: data.post.intro.substring(0, 160),
@@ -24,8 +33,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
+import { redirect } from 'next/navigation';
+
 export default async function PostDetailPage({ params }: PageProps) {
   const resolvedParams = await params;
+  const slug = String(resolvedParams.slug);
+  
+  // User profiles have a_ prefix - redirect to profile route
+  if (slug.startsWith('a_')) {
+    redirect(`/${slug}`);
+  }
+
   let items: Array<{ id: string; rank: number; title: string; justification: string; image_url?: string; source_url?: string; fire_count: number }> = [];
   
   try {
