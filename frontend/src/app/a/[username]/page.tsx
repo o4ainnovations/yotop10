@@ -1,7 +1,6 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { API } from '@/lib/api';
@@ -41,7 +40,6 @@ interface UserProfile {
 }
 
 export default function UserProfilePage({ params }: { params: Promise<{ username: string }> }) {
-  const { username } = use(params);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'posts' | 'comments'>('posts');
@@ -52,25 +50,29 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
     // Initialize fingerprint for auth check
     getFingerprint();
 
-    API.getUserProfile(username)
-      .then((data) => {
-        setProfile(data as UserProfile);
-      })
-      .catch(() => {
+    const fetchProfile = async () => {
+      const { username } = await params;
+      try {
+      const data = await API.getUserProfile(`a_${username}`) as any;
+      setProfile(data);
+      } catch {
         notFound();
-      })
-      .finally(() => {
+      } finally {
         setLoading(false);
-      });
-  }, [username]);
+      }
+    };
+
+    fetchProfile();
+  }, [params]);
 
   const handleUpdateDisplayName = async () => {
     if (!newDisplayName.trim()) return;
     
     try {
       await API.updateDisplayName(newDisplayName);
-      const updated = await API.getUserProfile(username);
-      setProfile(updated as UserProfile);
+      const { username } = await params;
+      const updated = await API.getUserProfile(`a_${username}`) as any;
+      setProfile(updated);
       setEditingName(false);
       setNewDisplayName('');
     } catch {
