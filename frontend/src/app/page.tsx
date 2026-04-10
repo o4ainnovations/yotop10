@@ -1,6 +1,9 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { API } from '@/lib/api';
+import { getFingerprint } from '@/lib/fingerprint';
 
 const pages = [
   {
@@ -13,12 +16,32 @@ const pages = [
     title: 'Category Feed (Example)',
     description: 'View posts filtered by a specific category (e.g., Movies)',
   },
+  {
+    path: '/a_test',
+    title: 'User Profile',
+    description: 'Example user profile page - demonstrates the anonymous profile system',
+  },
 ];
 
 export default function Home() {
+  const [user, setUser] = useState<any>(null);
+  
+  useEffect(() => {
+    getFingerprint().then(() => {
+      API.getCurrentUser().then(setUser).catch(() => {});
+    });
+  }, []);
+
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 20px' }}>
-      <h1>YoTop10 Platform</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h1>YoTop10 Platform</h1>
+        {user && (
+          <Link href={`/${user.username}`} style={{ padding: '8px 16px', backgroundColor: '#f0f0f0', borderRadius: '5px', textDecoration: 'none', color: '#333' }}>
+            {user.username}
+          </Link>
+        )}
+      </div>
       <p style={{ marginBottom: '30px' }}>
         An open Wikipedia-style platform for top 10 lists with a social UI.
         Anyone can browse, submit, and comment without creating an account.
