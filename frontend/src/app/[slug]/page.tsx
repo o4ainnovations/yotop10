@@ -39,10 +39,8 @@ export default async function PostDetailPage({ params }: PageProps) {
   const resolvedParams = await params;
   const slug = String(resolvedParams.slug);
   
-  // User profiles have a_ prefix - redirect to profile route
-  if (slug.startsWith('a_')) {
-    redirect(`/${slug}`);
-  }
+  // User profiles have a_ prefix - they are handled by the dedicated a_[username] route
+  // Next.js will automatically route to the more specific route
 
   let items: Array<{ id: string; rank: number; title: string; justification: string; image_url?: string; source_url?: string; fire_count: number }> = [];
   
