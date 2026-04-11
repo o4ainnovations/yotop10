@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import { API } from '@/lib/api';
 import { getFingerprint } from '@/lib/fingerprint';
 
@@ -41,6 +41,7 @@ interface UserProfile {
 }
 
 export default function UserProfilePage({ params }: { params: Promise<{ username: string }> }) {
+  const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'posts' | 'comments'>('posts');
@@ -65,7 +66,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
         
         // Handle canonical redirects
         if (data.redirect) {
-          window.location.replace(data.redirect);
+          router.push(data.redirect);
           return;
         }
         

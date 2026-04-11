@@ -39,7 +39,7 @@ export default function Home() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h1>YoTop10 Platform</h1>
          {user && (
-           <Link href={`/a/${user.username}`}>
+           <Link href={`/a/${user.username.replace(/^a_/, '')}`}>
              {user.username}
            </Link>
          )}
