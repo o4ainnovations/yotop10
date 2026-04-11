@@ -86,9 +86,8 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
     
     try {
       await API.updateDisplayName(newDisplayName);
-      const { username } = await params;
-      const updated = await API.getUserProfile(username) as any;
-      setProfile(updated);
+      // Refresh user data on homepage by reloading after name change
+      window.location.reload();
       setEditingName(false);
       setNewDisplayName('');
     } catch {

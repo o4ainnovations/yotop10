@@ -142,13 +142,15 @@ router.get('/:username', async (req: Request, res: Response) => {
     const { username } = req.params;
     
     // Find user by user_id, username, or custom_display_name - automatically handle a_ prefix
+    const cleanUsername = username.replace(/^a_/, '');
     const user = await User.findOne({ 
       $or: [
         { user_id: username },
+        { user_id: cleanUsername },
         { username },
-        { username: `a_${username}` },
+        { username: `a_${cleanUsername}` },
         { custom_display_name: username },
-        { custom_display_name: `a_${username}` }
+        { custom_display_name: `a_${cleanUsername}` }
       ]
     });
     
