@@ -81,24 +81,8 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
     }
   };
 
-    switch (level) {
-      case 'scholar': return { bg: '#e6f7ed', text: '#0e6245' };
-      case 'troll': return { bg: '#ffebee', text: '#c62828' };
-      default: return { bg: '#f5f5f5', text: '#666' };
-    }
-  };
-
-    switch (status) {
-      case 'approved': return { bg: '#e6f7ed', text: '#0e6245' };
-      case 'pending_review': return { bg: '#fff3e0', text: '#ef6c00' };
-      case 'rejected': return { bg: '#ffebee', text: '#c62828' };
-      default: return { bg: '#f5f5f5', text: '#666' };
-    }
-  };
-
-  if (loading) return <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>Loading...</div>;
+  if (loading) return <div>Loading...</div>;
   if (!profile) return null;
-
 
   return (
     <div>
