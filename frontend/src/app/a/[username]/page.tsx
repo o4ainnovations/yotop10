@@ -64,10 +64,9 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
         
         const data = await res.json();
         
-        // Handle canonical redirects
-        if (data.redirect) {
-          router.push(data.redirect);
-          return;
+        // Handle canonical URL replacement - NO REDIRECTS, NO PAGE RELOAD
+        if (data.canonical_url && data.canonical_url !== `/a/${username}`) {
+          router.replace(data.canonical_url, { scroll: false });
         }
         
         setProfile(data);

@@ -231,29 +231,15 @@ router.get('/:username', async (req: Request, res: Response) => {
       .limit(100)
       .select('content post_id fire_count reply_count created_at');
 
-    // Canonical redirect logic
+    // Canonical URL logic - NO REDIRECTS
     const accessedUsername = req.params.username;
     const currentUsername = (user as any).custom_display_name || user.username;
     const cleanCurrentUsername = currentUsername.replace(/^a_/, '');
     
-    // Redirect logic for all cases:
-    // 1. Accessing via user_id → redirect to current username
-    // 2. Accessing via old username → redirect to current username
-    // 3. Accessing via username with a_ prefix → redirect to clean version without a_
-    if (
-      accessedUsername === user.user_id || 
-      accessedUsername !== cleanCurrentUsername ||
-      accessedUsername.startsWith('a_')
-    ) {
-      return res.status(301).json({ 
-        redirect: `/a/${cleanCurrentUsername}`,
-        message: 'This user has changed their display name'
-      });
-    }
-
     // Return public profile data
     res.json({
       username: currentUsername,
+      canonical_url: `/a/${cleanCurrentUsername}`,
       trust_score: isOwnProfile ? user.trust_score : undefined,
       trust_level: trustLevel,
       created_at: user.created_at,
