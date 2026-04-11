@@ -54,11 +54,18 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
     const fetchProfile = async () => {
       const { username } = await params;
       try {
-        const data = await API.getUserProfile(username) as any;
+        const res = await fetch(`/api/users/${username}`, {
+          credentials: 'include',
+          headers: {
+            'X-Device-Fingerprint': localStorage.getItem('yotop10_fp') || '',
+          }
+        });
+        
+        const data = await res.json();
         
         // Handle canonical redirects
         if (data.redirect) {
-          window.location.href = data.redirect;
+          window.location.replace(data.redirect);
           return;
         }
         
