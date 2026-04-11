@@ -81,7 +81,6 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
     }
   };
 
-  const getTrustBadgeColor = (level: string) => {
     switch (level) {
       case 'scholar': return { bg: '#e6f7ed', text: '#0e6245' };
       case 'troll': return { bg: '#ffebee', text: '#c62828' };
@@ -89,7 +88,6 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
     }
   };
 
-  const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'approved': return { bg: '#e6f7ed', text: '#0e6245' };
       case 'pending_review': return { bg: '#fff3e0', text: '#ef6c00' };
@@ -101,7 +99,6 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   if (loading) return <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>Loading...</div>;
   if (!profile) return null;
 
-  const trustColors = getTrustBadgeColor(profile.trust_level);
 
   return (
     <div>
