@@ -207,16 +207,27 @@ router.get('/:username', async (req: Request, res: Response) => {
       .limit(100)
       .select('content post_id fire_count reply_count created_at');
 
+    // Canonical redirect: if accessing via old username/id and user has custom display name
+    const accessedUsername = req.params.username;
+    const currentUsername = (user as any).custom_display_name || user.username;
+    
+    if (accessedUsername !== currentUsername && accessedUsername === user.user_id) {
+      return res.status(301).json({ 
+        redirect: `/a/${currentUsername}`,
+        message: 'This user has changed their display name'
+      });
+    }
+
     // Return public profile data
     res.json({
-      username: (user as any).custom_display_name || user.username,
+      username: currentUsername,
       trust_score: isOwnProfile ? user.trust_score : undefined,
       trust_level: trustLevel,
       created_at: user.created_at,
       stats: {
         member_since: user.created_at,
         total_posts: isOwnProfile ? postCount : postsApproved,
-        total_comments: await Comment.countDocuments({ author_id: user.user_id }),
+        total_comments: userComments.length,
         approval_rate: Math.round(approvalRate * 100),
       },
       posts: userPosts.map((post: any) => ({
