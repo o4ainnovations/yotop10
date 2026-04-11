@@ -141,12 +141,14 @@ router.get('/:username', async (req: Request, res: Response) => {
   try {
     const { username } = req.params;
     
-    // Find user by user_id, username, or custom_display_name
+    // Find user by user_id, username, or custom_display_name - automatically handle a_ prefix
     const user = await User.findOne({ 
       $or: [
         { user_id: username },
         { username },
-        { custom_display_name: username }
+        { username: `a_${username}` },
+        { custom_display_name: username },
+        { custom_display_name: `a_${username}` }
       ]
     });
     
@@ -207,13 +209,22 @@ router.get('/:username', async (req: Request, res: Response) => {
       .limit(100)
       .select('content post_id fire_count reply_count created_at');
 
-    // Canonical redirect: if accessing via old username/id and user has custom display name
+    // Canonical redirect logic
     const accessedUsername = req.params.username;
     const currentUsername = (user as any).custom_display_name || user.username;
+    const cleanCurrentUsername = currentUsername.replace(/^a_/, '');
     
-    if (accessedUsername !== currentUsername && accessedUsername === user.user_id) {
+    // Redirect logic for all cases:
+    // 1. Accessing via user_id → redirect to current username
+    // 2. Accessing via old username → redirect to current username
+    // 3. Accessing via username with a_ prefix → redirect to clean version without a_
+    if (
+      accessedUsername === user.user_id || 
+      accessedUsername !== cleanCurrentUsername ||
+      accessedUsername.startsWith('a_')
+    ) {
       return res.status(301).json({ 
-        redirect: `/a/${currentUsername}`,
+        redirect: `/a/${cleanCurrentUsername}`,
         message: 'This user has changed their display name'
       });
     }

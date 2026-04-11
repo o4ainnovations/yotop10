@@ -54,8 +54,15 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
     const fetchProfile = async () => {
       const { username } = await params;
       try {
-      const data = await API.getUserProfile(username) as any;
-      setProfile(data);
+        const data = await API.getUserProfile(username) as any;
+        
+        // Handle canonical redirects
+        if (data.redirect) {
+          window.location.href = data.redirect;
+          return;
+        }
+        
+        setProfile(data);
       } catch {
         notFound();
       } finally {
