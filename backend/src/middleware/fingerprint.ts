@@ -31,7 +31,6 @@ export const fingerprintMiddleware = async (req: Request, res: Response, next: N
     '/api/categories',
     '/api/posts',
     '/api/comments',
-    '/api/users',
     '/api/search'
   ];
   

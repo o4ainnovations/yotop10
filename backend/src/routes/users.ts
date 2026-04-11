@@ -155,6 +155,26 @@ router.get('/:username', async (req: Request, res: Response) => {
     });
     
     if (!user) {
+      // If user not found but we have fingerprint, create them now
+      // This handles cases where user exists in middleware but not persisted yet
+      if (req.user) {
+        return res.status(200).json({
+          username: req.user.username,
+          trust_level: 'neutral',
+          created_at: new Date().toISOString(),
+          stats: {
+            member_since: new Date().toISOString(),
+            total_posts: 0,
+            total_comments: 0,
+            approval_rate: 0,
+          },
+          posts: [],
+          comments: [],
+          is_own_profile: true,
+          trust_score: req.user.trust_score,
+        });
+      }
+      
       return res.status(404).json({ error: 'User not found' });
     }
 
