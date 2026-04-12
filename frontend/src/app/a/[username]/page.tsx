@@ -9,6 +9,7 @@ import { getFingerprint } from '@/lib/fingerprint';
 
 interface UserProfile {
   username: string;
+  canonical_url?: string;
   trust_level: 'troll' | 'neutral' | 'scholar';
   created_at: string;
   stats: {
@@ -57,24 +58,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
       console.log(`[PROFILE] Fetching user profile for: ${username}`);
       
       try {
-        const fp = localStorage.getItem('yotop10_fp') || '';
-        console.log(`[PROFILE] Using fingerprint: ${fp}`);
-        
-        const res = await fetch(`/api/users/${username}`, {
-          credentials: 'include',
-          headers: {
-            'X-Device-Fingerprint': fp,
-          }
-        });
-        
-        console.log(`[PROFILE] Response status: ${res.status}`);
-        
-        if (!res.ok) {
-          console.error(`[PROFILE] API Error: ${res.status}`);
-          throw new Error(`HTTP ${res.status}`);
-        }
-        
-        const data = await res.json();
+        const data = await API.getUserProfile(username) as UserProfile;
         console.log(`[PROFILE] Received data:`, data);
         
         // Handle canonical URL replacement - NO REDIRECTS, NO PAGE RELOAD

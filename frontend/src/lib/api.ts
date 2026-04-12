@@ -12,10 +12,13 @@ export function getBaseUrl(): string {
     return process.env.INTERNAL_API_URL || 'http://localhost:8000/api';
   }
   // Client-side: detect if running locally or production
+  console.log('[getBaseUrl] hostname:', window.location.hostname);
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    console.log('[getBaseUrl] Using localhost API: http://localhost:8100/api');
     return 'http://localhost:8100/api';
   }
   // Production: use relative URL
+  console.log('[getBaseUrl] Using production API: /api');
   return '/api';
 }
 
