@@ -113,12 +113,13 @@ export default function PostDetailClient({ slug }: { slug: string }) {
       setError(null);
 
       // Load user reaction states
-      const fingerprint = await getFingerprint();
       const allTargets = commentsData.comments.map((c: Comment) => ({ type: 'comment', id: c.id }));
 
       try {
-        const reactionState: any = await API.getReactionState(allTargets);
-        const reactedIds = new Set<string>(reactionState.targets.filter((t: any) => t.user_reacted).map((t: any) => String(t.id)));
+        const reactionState = await API.getReactionState(allTargets) as {
+          targets: Array<{ type: string; id: string; user_reacted: boolean }>
+        };
+        const reactedIds = new Set<string>(reactionState.targets.filter(t => t.user_reacted).map(t => String(t.id)));
         setUserReactions(reactedIds);
       } catch (reactionErr) {
         console.error('Failed to load reaction states:', reactionErr);
