@@ -188,4 +188,5 @@ export const API = {
       body: JSON.stringify({ display_name }),
     }),
   getUserProfile: (username: string) => apiFetch(`/users/${username}`),
+  getUsernameHistory: () => apiFetch('/users/me/history'),
 };

@@ -311,4 +311,26 @@ router.get('/', (req: Request, res: Response) => res.json({ message: 'Users endp
 router.put('/:id', (req: Request, res: Response) => res.json({ message: 'Update user' }));
 router.delete('/:id', (req: Request, res: Response) => res.json({ message: 'Delete user' }));
 
+/**
+ * GET /api/users/me/history
+ * Get username history for current user
+ */
+router.get('/me/history', async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+
+  try {
+    const { UsernameHistory } = await import('../models/UsernameHistory');
+    const history = await UsernameHistory.find({ 
+      user_id: req.user.user_id 
+    }).sort({ created_at: -1 });
+
+    res.json({ history });
+  } catch (error) {
+    console.error('GET /users/me/history error:', error);
+    res.status(500).json({ error: 'Failed to fetch username history' });
+  }
+});
+
 export default router;

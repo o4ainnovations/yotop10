@@ -114,10 +114,11 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
       </p>
 
       {profile.is_own_profile && (
-        <div>
+        <div style={{ marginBottom: '20px' }}>
           <button onClick={() => setEditingName(true)}>Edit Display Name</button>
+          <button onClick={() => window.location.href = '/username-history'} style={{ marginLeft: '10px' }}>Username History</button>
           {editingName && (
-            <div>
+            <div style={{ marginTop: '10px' }}>
               <input
                 value={newDisplayName}
                 onChange={(e) => setNewDisplayName(e.target.value)}
