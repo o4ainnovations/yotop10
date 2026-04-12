@@ -25,25 +25,15 @@ declare global {
 export const fingerprintMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   const deviceFingerprint = req.headers['x-device-fingerprint'] as string;
   
-  // Skip middleware for public endpoints that don't require user context
-  const publicEndpoints = [
-    '/api/health',
-    '/api/categories',
-    '/api/posts',
-    '/api/comments',
-    '/api/search'
-  ];
+  // ✅ ALL ENDPOINTS ARE PUBLIC - NEVER REJECT ANY REQUEST
+  // This middleware only attaches user context when fingerprint is available
+  // It will never block, reject, or return an error for ANY request
   
-  const isPublic = publicEndpoints.some(endpoint => req.path.startsWith(endpoint));
+  console.log(`[FINGERPRINT] ${req.method} ${req.path} - Fingerprint: ${deviceFingerprint ? 'PRESENT' : 'NOT PRESENT'}`);
   
-  // If no fingerprint provided and public endpoint, continue without user
-  if (!deviceFingerprint && isPublic) {
-    return next();
-  }
-  
-  // If no fingerprint provided and not public, reject
   if (!deviceFingerprint) {
-    return res.status(400).json({ error: 'Device fingerprint required' });
+    console.log(`[FINGERPRINT] ${req.method} ${req.path} - Continuing anonymously`);
+    return next();
   }
 
   try {

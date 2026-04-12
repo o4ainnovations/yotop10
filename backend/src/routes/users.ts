@@ -141,8 +141,13 @@ router.get('/:username', async (req: Request, res: Response) => {
   try {
     const { username } = req.params;
     
+    console.log(`[USER PROFILE] Requested: ${username} - User from middleware: ${req.user ? req.user.username : 'NO USER'}`);
+    
     // Find user by user_id (full or partial), username, or custom_display_name
     const cleanUsername = username.replace(/^a_/, '');
+    
+    console.log(`[USER PROFILE] Search variations: ${username}, ${cleanUsername}, a_${cleanUsername}`);
+    
     const user = await User.findOne({ 
       $or: [
         { user_id: username },
@@ -155,6 +160,8 @@ router.get('/:username', async (req: Request, res: Response) => {
         { custom_display_name: `a_${cleanUsername}` }
       ]
     });
+    
+    console.log(`[USER PROFILE] Query result: ${user ? 'FOUND' : 'NOT FOUND'} - ${user ? user.username : 'none'}`);
     
     if (!user) {
       // If user not found but we have fingerprint, create them now

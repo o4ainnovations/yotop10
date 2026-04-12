@@ -54,23 +54,38 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
 
     const fetchProfile = async () => {
       const { username } = await params;
+      console.log(`[PROFILE] Fetching user profile for: ${username}`);
+      
       try {
+        const fp = localStorage.getItem('yotop10_fp') || '';
+        console.log(`[PROFILE] Using fingerprint: ${fp}`);
+        
         const res = await fetch(`/api/users/${username}`, {
           credentials: 'include',
           headers: {
-            'X-Device-Fingerprint': localStorage.getItem('yotop10_fp') || '',
+            'X-Device-Fingerprint': fp,
           }
         });
         
+        console.log(`[PROFILE] Response status: ${res.status}`);
+        
+        if (!res.ok) {
+          console.error(`[PROFILE] API Error: ${res.status}`);
+          throw new Error(`HTTP ${res.status}`);
+        }
+        
         const data = await res.json();
+        console.log(`[PROFILE] Received data:`, data);
         
         // Handle canonical URL replacement - NO REDIRECTS, NO PAGE RELOAD
         if (data.canonical_url && data.canonical_url !== `/a/${username}`) {
+          console.log(`[PROFILE] Replacing URL with canonical: ${data.canonical_url}`);
           router.replace(data.canonical_url, { scroll: false });
         }
         
         setProfile(data);
-      } catch {
+      } catch (error) {
+        console.error(`[PROFILE] Fetch failed:`, error);
         notFound();
       } finally {
         setLoading(false);
