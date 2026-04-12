@@ -3,6 +3,7 @@ import { body, validationResult } from 'express-validator';
 import { Post } from '../models/Post';
 import { Comment } from '../models/Comment';
 import { User } from '../models/User';
+import { isUsernameAvailable, recordUsernameChange } from '../lib/usernameService';
 
 const router: Router = Router();
 
@@ -104,21 +105,29 @@ router.patch('/me', validateDisplayName, async (req: Request, res: Response) => 
       displayName = `a_${displayName}`;
     }
 
-    // Check for uniqueness
-    const existingUser = await User.findOne({ 
-      username: displayName, 
-      user_id: { $ne: req.user.user_id } 
-    });
+    // Check availability with cooldown - admins bypass cooldown
+    const availability = await isUsernameAvailable(displayName, req.user.user_id, req.user.is_admin);
     
-    if (existingUser) {
+    if (!availability.available) {
+      if (availability.cooldown_remaining) {
+        return res.status(409).json({ 
+          error: `Display name was recently released. Please try again in ${availability.cooldown_remaining} minutes.` 
+        });
+      }
       return res.status(409).json({ error: 'Display name already taken' });
     }
 
     // Update user
+    const currentUser = await User.findOne({ user_id: req.user.user_id });
+    const oldUsername = currentUser?.custom_display_name || currentUser?.username || null;
+    
     await User.findOneAndUpdate(
       { user_id: req.user.user_id },
       { custom_display_name: displayName }
     );
+    
+    // Record the change in history
+    await recordUsernameChange(req.user.user_id, displayName, oldUsername);
 
     // Return updated user
     res.json({
@@ -148,7 +157,7 @@ router.get('/:username', async (req: Request, res: Response) => {
     
     console.log(`[USER PROFILE] Search variations: ${username}, ${cleanUsername}, a_${cleanUsername}`);
     
-    const user = await User.findOne({ 
+    let user = await User.findOne({ 
       $or: [
         { user_id: username },
         { user_id: { $regex: `^${username}` } },
@@ -160,6 +169,16 @@ router.get('/:username', async (req: Request, res: Response) => {
         { custom_display_name: `a_${cleanUsername}` }
       ]
     });
+
+    // If not found, try historical username resolution
+    if (!user) {
+      const { resolveUsername } = await import('../lib/usernameService');
+      const resolvedUserId = await resolveUsername(username);
+      
+      if (resolvedUserId) {
+        user = await User.findOne({ user_id: resolvedUserId });
+      }
+    }
     
     console.log(`[USER PROFILE] Query result: ${user ? 'FOUND' : 'NOT FOUND'} - ${user ? user.username : 'none'}`);
     
