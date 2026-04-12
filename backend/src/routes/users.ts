@@ -264,7 +264,6 @@ router.get('/:username', async (req: Request, res: Response) => {
         slug: post.slug,
         status: isOwnProfile ? post.status : 'approved',
         post_type: post.post_type,
-        fire_count: post.fire_count,
         comment_count: post.comment_count,
         created_at: post.created_at,
         category: post.category_id ? {

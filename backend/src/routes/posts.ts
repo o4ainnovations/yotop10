@@ -193,8 +193,6 @@ router.get('/', async (req: Request, res: Response) => {
     let sortOption: Record<string, 1 | -1> = { created_at: -1 }; // newest first
     if (sort === 'oldest') {
       sortOption = { created_at: 1 };
-    } else if (sort === 'most_fired') {
-      sortOption = { fire_count: -1 };
     } else if (sort === 'most_commented') {
       sortOption = { comment_count: -1 };
     }
@@ -217,7 +215,6 @@ router.get('/', async (req: Request, res: Response) => {
       title: post.title,
       post_type: post.post_type,
       intro: post.intro,
-      fire_count: post.fire_count,
       comment_count: post.comment_count,
       view_count: post.view_count,
       author_username: post.author_username,
@@ -295,7 +292,6 @@ router.get('/:idOrSlug', async (req: Request, res: Response) => {
         title: post.title,
         post_type: post.post_type,
         intro: post.intro,
-        fire_count: post.fire_count,
         comment_count: post.comment_count,
         view_count: post.view_count + 1,
         author_id: post.author_id,
@@ -320,7 +316,6 @@ router.get('/:idOrSlug', async (req: Request, res: Response) => {
         justification: item.justification,
         image_url: item.image_url,
         source_url: item.source_url,
-        fire_count: item.fire_count,
       })),
       comments: comments.map((comment) => ({
         id: comment._id,
