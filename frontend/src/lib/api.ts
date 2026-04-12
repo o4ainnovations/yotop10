@@ -11,8 +11,12 @@ export function getBaseUrl(): string {
     // Server-side: use internal URL for Docker network
     return process.env.INTERNAL_API_URL || 'http://localhost:8000/api';
   }
-  // Client-side: use public URL for external access
-  return process.env.NEXT_PUBLIC_API_URL || 'https://yotop10.fun/api';
+  // Client-side: detect if running locally or production
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://localhost:8100/api';
+  }
+  // Production: use relative URL
+  return '/api';
 }
 
 /**
