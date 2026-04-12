@@ -105,15 +105,10 @@ router.patch('/me', validateDisplayName, async (req: Request, res: Response) => 
       displayName = `a_${displayName}`;
     }
 
-    // Check availability with cooldown - admins bypass cooldown
-    const availability = await isUsernameAvailable(displayName, req.user.user_id, req.user.is_admin);
+    // Check availability
+    const availability = await isUsernameAvailable(displayName, req.user.user_id);
     
     if (!availability.available) {
-      if (availability.cooldown_remaining) {
-        return res.status(409).json({ 
-          error: `Display name was recently released. Please try again in ${availability.cooldown_remaining} minutes.` 
-        });
-      }
       return res.status(409).json({ error: 'Display name already taken' });
     }
 
@@ -170,15 +165,7 @@ router.get('/:username', async (req: Request, res: Response) => {
       ]
     });
 
-    // If not found, try historical username resolution
-    if (!user) {
-      const { resolveUsername } = await import('../lib/usernameService');
-      const resolvedUserId = await resolveUsername(username);
-      
-      if (resolvedUserId) {
-        user = await User.findOne({ user_id: resolvedUserId });
-      }
-    }
+
     
     console.log(`[USER PROFILE] Query result: ${user ? 'FOUND' : 'NOT FOUND'} - ${user ? user.username : 'none'}`);
     
