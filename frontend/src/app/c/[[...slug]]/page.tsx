@@ -21,7 +21,6 @@ interface Post {
   title: string;
   post_type: string;
   intro: string;
-  fire_count: number;
   comment_count: number;
   author_username: string;
   author_display_name: string;
@@ -109,7 +108,7 @@ export default function CategoryFeedPage() {
             {posts.map(post => (
               <div key={post.id} style={{ marginBottom: '20px', border: '1px solid #ccc', padding: '10px' }}>
                 <h3><Link href={`/${post.slug}`}>{post.title}</Link></h3>
-                <p>{post.post_type} | Fire: {post.fire_count} | Comments: {post.comment_count}</p>
+                <p>{post.post_type} | Comments: {post.comment_count}</p>
                 <p>By {post.author_display_name} - {new Date(post.created_at).toLocaleDateString()}</p>
                 <p>{post.intro.substring(0, 200)}...</p>
               </div>

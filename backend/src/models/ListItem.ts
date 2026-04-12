@@ -7,7 +7,6 @@ export interface IListItem extends Document {
   justification: string;
   image_url?: string;
   source_url?: string;
-  fire_count: number;
   created_at: Date;
   updated_at: Date;
 }
@@ -37,10 +36,6 @@ const listItemSchema = new Schema<IListItem>(
     },
     source_url: {
       type: String,
-    },
-    fire_count: {
-      type: Number,
-      default: 0,
     },
   },
   {

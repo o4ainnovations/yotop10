@@ -2,7 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IReaction extends Document {
   user_device_fingerprint: string;
-  target_type: 'post' | 'list_item' | 'comment';
+  target_type: 'comment';
   target_id: mongoose.Types.ObjectId;
   reaction_type: 'fire';
   created_at: Date;
@@ -18,7 +18,7 @@ const reactionSchema = new Schema<IReaction>(
     target_type: {
       type: String,
       required: true,
-      enum: ['post', 'list_item', 'comment'],
+      enum: ['comment'],
       index: true,
     },
     target_id: {

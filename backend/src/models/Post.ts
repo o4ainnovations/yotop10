@@ -12,7 +12,6 @@ export interface IPost extends Document {
   intro: string;
   status: 'pending_review' | 'approved' | 'rejected';
   category_id: mongoose.Types.ObjectId;
-  fire_count: number;
   comment_count: number;
   view_count: number;
   is_public: boolean;
@@ -91,10 +90,6 @@ const postSchema = new Schema<IPost>(
       ref: 'Category',
       required: true,
       index: true,
-    },
-    fire_count: {
-      type: Number,
-      default: 0,
     },
     comment_count: {
       type: Number,

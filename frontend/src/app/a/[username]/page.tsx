@@ -24,7 +24,6 @@ interface UserProfile {
     slug: string;
     status: string;
     post_type: string;
-    fire_count: number;
     comment_count: number;
     created_at: string;
     category: { name: string; slug: string } | null;
@@ -161,7 +160,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
                 <h3><Link href={`/${post.slug}`}>{post.title}</Link></h3>
                 <p>
                   {post.category?.name || 'Uncategorized'} | 
-                  🔥 {post.fire_count} | 
+
                   💬 {post.comment_count} | 
                   {new Date(post.created_at).toLocaleDateString()}
                   {profile.is_own_profile && <> | Status: {post.status.replace('_', ' ')}</>}

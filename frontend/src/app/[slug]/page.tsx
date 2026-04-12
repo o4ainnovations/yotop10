@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function PostDetailPage({ params }: PageProps) {
   const resolvedParams = await params;
 
-  let items: Array<{ id: string; rank: number; title: string; justification: string; image_url?: string; source_url?: string; fire_count: number }> = [];
+  let items: Array<{ id: string; rank: number; title: string; justification: string; image_url?: string; source_url?: string }> = [];
   
   try {
     const data = await API.getPost(resolvedParams.slug);

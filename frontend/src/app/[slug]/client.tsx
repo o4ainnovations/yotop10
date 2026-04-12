@@ -16,7 +16,6 @@ interface ListItem {
   justification: string;
   image_url?: string;
   source_url?: string;
-  fire_count: number;
 }
 
 interface Category {
@@ -32,7 +31,6 @@ interface Post {
   title: string;
   post_type: string;
   intro: string;
-  fire_count: number;
   comment_count: number;
   view_count: number;
   author_username: string;
@@ -108,7 +106,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
       ]);
       
       setPost(postData.post);
-      setItems(postData.items);
+      setItems(postData.items as ListItem[]);
       setComments(commentsData.comments);
       setError(null);
 
