@@ -172,11 +172,14 @@ export const API = {
       method: 'POST',
       body: JSON.stringify({ content, parent_comment_id, list_item_id }),
     }),
-  toggleReaction: (target_type: 'post' | 'list_item' | 'comment', target_id: string, device_fingerprint: string) => 
+  toggleReaction: (target_type: 'comment', target_id: string, device_fingerprint: string) => 
     apiFetch('/reactions', {
       method: 'POST',
       body: JSON.stringify({ target_type, target_id, device_fingerprint }),
     }),
+
+  getReactionState: (targets: Array<{ type: string; id: string }>) => 
+    apiFetch(`/reactions/state?targets=${encodeURIComponent(JSON.stringify(targets))}`),
   
   // User endpoints
   getCurrentUser: () => apiFetch('/users/me'),

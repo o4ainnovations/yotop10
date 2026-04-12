@@ -84,6 +84,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(itemParam);
   
   const [reacting, setReacting] = useState(false);
+  const [userReactions, setUserReactions] = useState<Set<string>>(new Set());
 
   // Route guard - reserved routes should not be treated as posts
   if (RESERVED_ROUTES.includes(slug)) {
@@ -99,12 +100,32 @@ export default function PostDetailClient({ slug }: { slug: string }) {
     } else {
       setRefreshingComments(true);
     }
-    
+
     try {
-      const data = await API.getComments(slug);
-      setComments(data.comments || []);
+      const [postData, commentsData] = await Promise.all([
+        API.getPost(slug),
+        API.getComments(slug),
+      ]);
+      
+      setPost(postData.post);
+      setItems(postData.items);
+      setComments(commentsData.comments);
+      setError(null);
+
+      // Load user reaction states
+      const fingerprint = await getFingerprint();
+      const allTargets = commentsData.comments.map((c: Comment) => ({ type: 'comment', id: c.id }));
+
+      try {
+        const reactionState: any = await API.getReactionState(allTargets);
+        const reactedIds = new Set<string>(reactionState.targets.filter((t: any) => t.user_reacted).map((t: any) => String(t.id)));
+        setUserReactions(reactedIds);
+      } catch (reactionErr) {
+        console.error('Failed to load reaction states:', reactionErr);
+      }
     } catch (err) {
-      console.error('Failed to load comments:', err);
+      console.error('Failed to load post:', err);
+      setError('Failed to load post');
     } finally {
       setLoading(false);
       setRefreshingComments(false);
@@ -182,7 +203,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
 
 
 
-  const handleReaction = async (targetType: 'post' | 'list_item' | 'comment', targetId: string) => {
+  const handleReaction = async (targetType: 'comment', targetId: string) => {
     if (reacting) return;
     setReacting(true);
     
@@ -191,11 +212,21 @@ export default function PostDetailClient({ slug }: { slug: string }) {
     try {
       const data = await API.toggleReaction(targetType, targetId, fingerprint) as { fire_count: number; user_reacted: boolean };
       
+      // Update fire counts
       if (targetType === 'comment') {
         setComments(prev => updateCommentFireCount(prev, targetId, data.fire_count));
-      } else if (targetType === 'post') {
-        setPost(prev => prev ? { ...prev, fire_count: data.fire_count } : null);
       }
+
+      // Update user reaction state
+      setUserReactions(prev => {
+        const next = new Set(prev);
+        if (data.user_reacted) {
+          next.add(targetId);
+        } else {
+          next.delete(targetId);
+        }
+        return next;
+      });
     } catch (err) {
       console.error('Failed to react:', err);
       alert('Failed to react');
@@ -257,7 +288,15 @@ export default function PostDetailClient({ slug }: { slug: string }) {
           <div style={{ fontSize: '12px', color: '#666' }}>
             <button 
               onClick={() => handleReaction('comment', comment.id)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', marginRight: '10px' }}
+              style={{ 
+                background: userReactions.has(comment.id) ? '#fff3e0' : 'none', 
+                border: userReactions.has(comment.id) ? '1px solid #ff9800' : 'none', 
+                cursor: 'pointer', 
+                marginRight: '10px',
+                borderRadius: '3px',
+                padding: '2px 6px',
+                fontWeight: userReactions.has(comment.id) ? 'bold' : 'normal',
+              }}
               disabled={reacting}
             >
               🔥 {comment.fire_count}
@@ -319,9 +358,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
           <p>By {post.author_display_name}</p>
           <p>{post.intro}</p>
           <p>
-            <button onClick={() => handleReaction('post', post.id)} disabled={reacting} style={{ background: 'none', border: 'none', cursor: 'pointer', marginRight: '10px' }}>
-              🔥 {post.fire_count}
-            </button>
+            
             <Link href={`/${slug}/history`}>View History</Link>
           </p>
         </article>
