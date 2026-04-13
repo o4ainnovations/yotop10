@@ -67,10 +67,13 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
         }
         
         setProfile(data);
-      } catch (error) {
-        console.error(`[PROFILE] Fetch failed:`, error);
+    } catch (error: any) {
+      console.error(`[PROFILE] Fetch failed:`, error);
+      if (error.message?.includes('404')) {
         notFound();
-      } finally {
+      }
+      throw error;
+    } finally {
         setLoading(false);
       }
     };
