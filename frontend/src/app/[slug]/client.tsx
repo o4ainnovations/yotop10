@@ -84,11 +84,6 @@ export default function PostDetailClient({ slug }: { slug: string }) {
   const [reacting, setReacting] = useState(false);
   const [userReactions, setUserReactions] = useState<Set<string>>(new Set());
 
-  // Route guard - reserved routes should not be treated as posts
-  if (RESERVED_ROUTES.includes(slug)) {
-    return <NotFound />;
-  }
-
   const fetchComments = useCallback(async () => {
     if (!slug || slug === 'undefined') return;
     
@@ -144,6 +139,11 @@ export default function PostDetailClient({ slug }: { slug: string }) {
       
     fetchComments();
   }, [slug, fetchComments]);
+
+  // Route guard - reserved routes should not be treated as posts
+  if (RESERVED_ROUTES.includes(slug)) {
+    return <NotFound />;
+  }
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
