@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { API, SingleCategoryResponse, PostsResponse, getBaseUrl } from '@/lib/api';
 
@@ -52,8 +52,8 @@ export default function CategoryFeedPage() {
         setHasMore((postsData.pagination?.totalPages ?? 1) > 1);
       })
       .catch(err => {
-        setError('Failed to load category');
         console.error(err);
+        notFound();
       })
       .finally(() => setLoading(false));
   }, [slug]);

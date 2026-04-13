@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import PostDetailClient from './client';
 import { API } from '@/lib/api';
 
@@ -37,7 +38,7 @@ export default async function PostDetailPage({ params }: PageProps) {
     const data = await API.getPost(resolvedParams.slug);
     items = data.items || [];
   } catch {
-    // Items will be fetched client-side
+    notFound();
   }
   
   interface ListItemSchema {

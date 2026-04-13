@@ -73,7 +73,6 @@ export default function PostDetailClient({ slug }: { slug: string }) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshingComments, setRefreshingComments] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   
   const [commentContent, setCommentContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -108,7 +107,6 @@ export default function PostDetailClient({ slug }: { slug: string }) {
       setPost(postData.post);
       setItems(postData.items as ListItem[]);
       setComments(commentsData.comments);
-      setError(null);
 
       // Load user reaction states
       const allTargets = commentsData.comments.map((c: Comment) => ({ type: 'comment', id: c.id }));
@@ -124,7 +122,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
       }
     } catch (err) {
       console.error('Failed to load post:', err);
-      setError('Failed to load post');
+      notFound();
     } finally {
       setLoading(false);
       setRefreshingComments(false);
@@ -140,7 +138,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
         setPost(typedData.post);
         setItems(typedData.items || []);
       })
-      .catch(() => setError('Failed to load post'))
+      .catch(() => notFound())
       .finally(() => setLoading(false));
       
     fetchComments();
@@ -335,7 +333,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
   };
 
   if (loading) return <div>Loading...</div>;
-  if (error || !post) return <div>{error || 'Post not found'}</div>;
+  if (!post) return null;
 
   const rootComments = comments.filter(c => c.depth === 0);
 
