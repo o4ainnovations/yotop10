@@ -2,6 +2,7 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { createClient } from 'redis';
@@ -15,6 +16,7 @@ const PORT = process.env.PORT || 8000;
 
 // Middleware
 app.use(helmet());
+app.use(cookieParser());
 app.use(cors({
   origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:3100', 'http://127.0.0.1:3100'],
   credentials: true,
@@ -42,6 +44,7 @@ import searchRoutes from './routes/search';
 import reviewsRoutes from './routes/reviews';
 import commentsRoutes from './routes/comments';
 import reactionsRoutes from './routes/reactions';
+import adminRoutes from './routes/admin';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
@@ -52,6 +55,7 @@ app.use('/api/search', searchRoutes);
 app.use('/api/reviews', reviewsRoutes);
 app.use('/api', commentsRoutes);
 app.use('/api/reactions', reactionsRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {

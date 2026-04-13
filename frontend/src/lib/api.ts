@@ -189,4 +189,25 @@ export const API = {
     }),
   getUserProfile: (username: string) => apiFetch(`/users/${username}`),
   getUsernameHistory: () => apiFetch('/users/me/history'),
+
+  // Admin endpoints
+  adminLogin: (username: string, password: string) => 
+    apiFetch('/admin/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    }),
+
+  adminLogout: () => 
+    apiFetch('/admin/logout', { method: 'POST' }),
+
+  adminGetMe: () => apiFetch('/admin/me'),
+
+  adminSetup: (token: string, username: string, password: string) => 
+    apiFetch('/admin/setup', {
+      method: 'POST',
+      body: JSON.stringify({ token, username, password }),
+    }),
+
+  adminValidateSetupToken: (token: string) => 
+    apiFetch(`/admin/setup/validate?token=${token}`),
 };
