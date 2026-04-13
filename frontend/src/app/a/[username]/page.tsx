@@ -3,9 +3,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { notFound, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { API } from '@/lib/api';
 import { getFingerprint } from '@/lib/fingerprint';
+import NotFound from '../../not-found';
 
 interface UserProfile {
   username: string;
@@ -69,7 +70,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
         setProfile(data);
     } catch (error: any) {
       console.error(`[PROFILE] Fetch failed:`, error);
-      notFound();
+      setProfile(null);
     } finally {
         setLoading(false);
       }
@@ -93,7 +94,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   };
 
   if (loading) return <div>Loading...</div>;
-  if (!profile) return null;
+  if (!profile) return <NotFound />;
 
   return (
     <div>
