@@ -35,9 +35,8 @@ export default function CategoryFeedPage() {
   const [category, setCategory] = useState<Category | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     if (!slug) return;
@@ -72,7 +71,7 @@ export default function CategoryFeedPage() {
   };
 
   if (loading) return <div>Loading...</div>;
-  if (error || !category) return <div>{error || 'Category not found'}</div>;
+  if (!category) return null;
 
   return (
     <div>
