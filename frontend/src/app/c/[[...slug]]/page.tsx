@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, notFound } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { API, SingleCategoryResponse, PostsResponse, getBaseUrl } from '@/lib/api';
+import NotFound from '../../not-found';
 
 interface Category {
   id: string;
@@ -52,7 +53,7 @@ export default function CategoryFeedPage() {
       })
       .catch(err => {
         console.error(err);
-        notFound();
+        setCategory(null);
       })
       .finally(() => setLoading(false));
   }, [slug]);
@@ -71,7 +72,7 @@ export default function CategoryFeedPage() {
   };
 
   if (loading) return <div>Loading...</div>;
-  if (!category) return null;
+  if (!category) return <NotFound />;
 
   return (
     <div>

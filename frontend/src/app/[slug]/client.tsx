@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useSearchParams, notFound } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import NotFound from '../not-found';
 import Link from 'next/link';
 import Image from 'next/image';
 import { API } from '@/lib/api';
@@ -85,7 +86,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
 
   // Route guard - reserved routes should not be treated as posts
   if (RESERVED_ROUTES.includes(slug)) {
-    notFound();
+    return <NotFound />;
   }
 
   const fetchComments = useCallback(async () => {
@@ -122,7 +123,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
       }
     } catch (err) {
       console.error('Failed to load post:', err);
-      notFound();
+      setPost(null);
     } finally {
       setLoading(false);
       setRefreshingComments(false);
@@ -138,7 +139,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
         setPost(typedData.post);
         setItems(typedData.items || []);
       })
-      .catch(() => notFound())
+      .catch(() => setPost(null))
       .finally(() => setLoading(false));
       
     fetchComments();
@@ -333,7 +334,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
   };
 
   if (loading) return <div>Loading...</div>;
-  if (!post) return null;
+  if (!post) return <NotFound />;
 
   const rootComments = comments.filter(c => c.depth === 0);
 
