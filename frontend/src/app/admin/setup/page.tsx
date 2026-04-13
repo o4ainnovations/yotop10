@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { API } from '@/lib/api';
 
-export default function AdminSetupPage() {
+function AdminSetupContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams?.get('token') || '';
@@ -25,7 +25,7 @@ export default function AdminSetupPage() {
       }
 
       try {
-        const result = await API.adminValidateSetupToken(token);
+        const result = await API.adminValidateSetupToken(token) as { valid: boolean };
         setValidToken(result.valid);
       } catch {
         setValidToken(false);
@@ -124,5 +124,13 @@ export default function AdminSetupPage() {
         </button>
       </form>
     </div>
+  );
+}
+
+export default function AdminSetupPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AdminSetupContent />
+    </Suspense>
   );
 }

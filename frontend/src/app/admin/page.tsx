@@ -12,7 +12,7 @@ export default function AdminHomePage() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const adminData = await API.adminGetMe();
+        const adminData = await API.adminGetMe() as { id: string; username: string };
         setAdmin(adminData);
       } catch {
         router.push('/admin/login');
