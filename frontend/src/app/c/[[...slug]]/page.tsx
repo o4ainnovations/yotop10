@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { API, SingleCategoryResponse, PostsResponse, getBaseUrl } from '@/lib/api';
-import NotFound from '../../not-found';
+import NotFound from '@/components/NotFound';
 
 interface Category {
   id: string;
@@ -72,7 +72,7 @@ export default function CategoryFeedPage() {
   };
 
   if (loading) return <div>Loading...</div>;
-  if (!category) return <NotFound />;
+  if (!category) return <NotFound message="Category does not exist." />;
 
   return (
     <div>

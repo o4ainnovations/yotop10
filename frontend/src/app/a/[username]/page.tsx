@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { API } from '@/lib/api';
 import { getFingerprint } from '@/lib/fingerprint';
-import NotFound from '../../not-found';
+import NotFound from '@/components/NotFound';
 
 interface UserProfile {
   username: string;
@@ -94,7 +94,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   };
 
   if (loading) return <div>Loading...</div>;
-  if (!profile) return <NotFound />;
+  if (!profile) return <NotFound message="User does not exist." />;
 
   return (
     <div>

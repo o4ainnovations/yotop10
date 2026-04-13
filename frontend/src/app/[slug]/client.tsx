@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import NotFound from '../not-found';
+import NotFound from '@/components/NotFound';
 import Link from 'next/link';
 import Image from 'next/image';
 import { API } from '@/lib/api';
@@ -334,7 +334,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
   };
 
   if (loading) return <div>Loading...</div>;
-  if (!post) return <NotFound />;
+  if (!post) return <NotFound message="Page does not exist." />;
 
   const rootComments = comments.filter(c => c.depth === 0);
 
