@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { Request, Response, NextFunction } from 'express';
 import { AdminUser } from '../models/AdminUser';
 
@@ -52,7 +53,7 @@ export const adminAuthMiddleware = async (req: AdminAuthRequest, res: Response, 
  * Generate one-time setup token
  */
 export const generateSetupToken = (): { token: string; expiresAt: Date } => {
-  const token = require('crypto').randomBytes(8).toString('hex');
+  const token = crypto.randomBytes(8).toString('hex');
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
   
   return { token, expiresAt };

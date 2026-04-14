@@ -152,7 +152,7 @@ router.get('/:username', async (req: Request, res: Response) => {
     
     console.log(`[USER PROFILE] Search variations: ${username}, ${cleanUsername}, a_${cleanUsername}`);
     
-    let user = await User.findOne({ 
+    const user = await User.findOne({ 
       $or: [
         { user_id: username },
         { user_id: { $regex: `^${username}` } },

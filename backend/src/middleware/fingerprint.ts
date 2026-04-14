@@ -3,22 +3,20 @@ import { User } from '../models/User';
 import crypto from 'crypto';
 
 // Extend Express Request type
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        user_id: string;
-        username: string;
-        device_fingerprint: string;
-        trust_score: number;
-        trust_locked: boolean;
-        rate_limit_override?: {
-          posts_per_hour?: number | null;
-          comments_per_hour?: number | null;
-        };
-        is_admin: boolean;
+declare module 'express' {
+  interface Request {
+    user?: {
+      user_id: string;
+      username: string;
+      device_fingerprint: string;
+      trust_score: number;
+      trust_locked: boolean;
+      rate_limit_override?: {
+        posts_per_hour?: number | null;
+        comments_per_hour?: number | null;
       };
-    }
+      is_admin: boolean;
+    };
   }
 }
 

@@ -46,17 +46,14 @@ router.post('/', validateReaction, async (req: Request, res: Response) => {
     const { target_type, target_id } = req.body;
     const device_fingerprint = req.user?.device_fingerprint || 'unknown';
 
-    // Verify target exists and get current fire count
-    let target;
-    let targetModel: 'Comment' | 'Post' | 'ListItem' = 'Comment';
-    
     // Only allow comments
     if (target_type !== 'comment') {
       return res.status(400).json({ error: 'Invalid target type - reactions are only allowed on comments' });
     }
     
-    target = await Comment.findById(target_id);
-    targetModel = 'Comment';
+    // Verify target exists and get current fire count
+    const target = await Comment.findById(target_id);
+    const targetModel = 'Comment';
 
     if (!target) {
       return res.status(404).json({ error: `${target_type} not found` });
