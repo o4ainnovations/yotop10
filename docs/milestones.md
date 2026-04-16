@@ -698,12 +698,35 @@ This is the standard industry solution for this exact problem. There is no "bett
     elif approval_rate <= 0.3:
       base_score = max(base_score - 0.2 * posts_rejected, 0.1)
   
-  trust_score = clamp(base_score, 0.1, 2.0)
-  ```
+trust_score = clamp(base_score, 0.1, 2.0)
+   ```
 - [ ] **Automatic recalculation**:
   - Runs automatically **every time a post is approved or rejected**
   - Never recalculated on read operations
   - Stored permanently on User document
+
+---
+
+### 🔴 M11.C.1: Non-Negotiable Defensive Patterns
+These patterns are required to prevent catastrophic failure modes at scale. Must be implemented alongside core formula.
+
+- [ ] **Hysteresis Thresholds**:
+  - Enter Scholar status: **≥ 1.85**
+  - Lose Scholar status: **≤ 1.70**
+  - Eliminates cliff edge gaming and status flickering
+- [ ] **Optimistic Concurrency Control**:
+  - `version` number field on User document
+  - All trust updates: `UPDATE users SET trust_score = X, version = version + 1 WHERE id = Y AND version = expected_version`
+  - Eliminates double counting on database failover/replication lag
+- [ ] **50 Post Rolling Window Only**:
+  - Trust score **only ever considers the last 50 reviews**
+  - Old actions expire automatically
+  - No permanent lifetime penalties
+  - Eliminates death spiral feedback loops
+- [ ] **Double-Blind Moderation**:
+  - Moderators **never see** username, user_id, or trust score during review
+  - Only content is visible
+  - Eliminates moderator bias feedback loops
 - [ ] **Trust Level Tiers**:
   | Score | Level | Rate Multiplier | Prefix |
   |-------|-------|-----------------|--------|
