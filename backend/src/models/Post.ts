@@ -74,10 +74,6 @@ const postSchema = new Schema<IPost>(
     enum: ['top_list', 'this_vs_that', 'who_is_better', 'fact_drop', 'best_of', 'worst_of', 'hidden_gems', 'counter_list'],
     index: true,
   },
-    trust_score_updated: {
-      type: Boolean,
-      default: false,
-    },
     intro: {
       type: String,
       required: true,
@@ -94,8 +90,7 @@ const postSchema = new Schema<IPost>(
       default: false,
     },
     category_id: {
-      type: Schema.Types.ObjectId,
-      ref: 'Category',
+      type: String,
       required: true,
       index: true,
     },

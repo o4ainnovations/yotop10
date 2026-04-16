@@ -45,7 +45,7 @@ class TrustScoreWorker {
       await calculateTrustScore(job.userId, job.postId, job.action);
     } catch (error) {
       // Retry version conflicts with exponential backoff
-      if (job.attempt < this.maxRetries && error.message.includes('Version conflict')) {
+      if (job.attempt < this.maxRetries && error instanceof Error && error.message.includes('Version conflict')) {
         job.attempt++;
         await new Promise(resolve => setTimeout(resolve, this.retryDelay * Math.pow(2, job.attempt)));
         this.queue.unshift(job);
