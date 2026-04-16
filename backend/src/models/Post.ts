@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { Category } from './Category';
-import { updateUserTrustScore } from '../lib/trustScore';
+// import { updateUserTrustScore } from '../lib/trustScore';
 
 export interface IPost extends Document {
   author_id: string;
@@ -16,6 +16,7 @@ export interface IPost extends Document {
   view_count: number;
   comment_count: number;
   trust_score_updated: boolean;
+  is_public: boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -158,11 +159,12 @@ postSchema.post('findOneAndDelete', async function(doc) {
 });
 
 // Auto-update user trust score when post status changes
-postSchema.post('findOneAndUpdate', async function(doc) {
-  if (doc && doc.author_id) {
-    await updateUserTrustScore(doc.author_id);
-  }
-});
+// DEPRECATED: Trust score updates are now handled via background worker
+// postSchema.post('findOneAndUpdate', async function(doc) {
+//   if (doc && doc.author_id) {
+//     await updateUserTrustScore(doc.author_id);
+//   }
+// });
 
 // Indexes for efficient queries
 postSchema.index({ status: 1, created_at: -1 });

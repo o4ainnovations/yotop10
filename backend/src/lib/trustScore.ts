@@ -94,14 +94,4 @@ export const calculateTrustScore = async (userId: string, postId: string, action
   return newScore;
 };
 
-/**
- * Hook to be called after any post is approved or rejected
- */
-export const updateUserTrustScore = async (userId: string) => {
-  try {
-    await calculateTrustScore(userId);
-    console.log(`[TrustScore] Updated trust score for user ${userId}`);
-  } catch (error) {
-    console.error('[TrustScore] Failed to update trust score:', error);
-  }
-};
+
