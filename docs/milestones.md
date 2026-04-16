@@ -338,6 +338,18 @@ This is the standard industry solution for this exact problem. There is no "bett
 - [ ] Quick actions: Go to review queue, Create category
 
 #### M10.3 — Review Queue (Pending Posts)
+
+> **Moderation Scaling Roadmap**:
+> 
+> A strictly manual review queue is the "Gold Standard" for quality, but it is also a classic linear bottleneck. The Trust Score System is the secret weapon to solving this:
+> 
+> **Phase 1 (Current):** Strict manual review only
+> **Phase 2:** AI Pre-Filtering - LLM sanity check auto-rejects obvious spam/gibberish
+> **Phase 3:** Scholar Fast-Track - Posts from Scholar trust tier (1.8+) bypass review queue automatically (with 5% spot checks)
+> **Phase 4:** Community Sovereignty - Scholar users can vote to approve pending posts
+
+---
+
 - [ ] `GET /api/admin/posts/pending` — List pending posts
   - Query params: `page`, `limit`, `category`, `post_type`, `date_from`, `date_to`, `sort`
   - Default sort: oldest first (oldest submissions first)
@@ -546,6 +558,13 @@ This is the standard industry solution for this exact problem. There is no "bett
   - Options: scholar, neutral, troll, automatic (default)
   - When locked, automatic trust score calculation is permanently disabled for this user
   - User will always remain at the assigned level until manually changed
+- [ ] Trust Score History Tracking:
+  - All trust score changes are permanently logged
+  - `GET /api/admin/users/:user_id/trust-history` — Full audit trail of trust score changes
+  - Fields: timestamp, previous_score, new_score, reason (approval/rejection/manual)
+  - Source: auto-calculated vs manual admin override
+  - Viewable on user admin profile page
+  - Retention: Permanent record
 - [ ] Per-user rate limit overrides:
   - `PATCH /api/admin/users/:user_id/rate-limits` — Set custom rate limits for individual users
   - Admins can set custom post/comment limits for any user, bypassing tier multipliers
@@ -749,7 +768,7 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 - [ ] `GET /api/search` — Full search
 - [ ] `GET /api/search/autocomplete` — Autocomplete
 - [ ] Filters: category, post type, author, date range
-- [ ] Sort: relevance, newest, most fired
+- [ ] Sort: relevance, newest, most comments, most argued (counterlists), most liked (fires) 
 - [ ] Frontend: `/search`
 
 ### M13 — Arguments Page
