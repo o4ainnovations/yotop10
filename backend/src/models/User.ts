@@ -6,12 +6,17 @@ export interface IUser extends Document {
   custom_display_name?: string;
   device_fingerprint: string;
   trust_score: number;
+  trust_version: number;
   trust_locked: boolean;
   is_admin: boolean;
   rate_limit_override?: {
     posts_per_hour?: number | null;
     comments_per_hour?: number | null;
   };
+  last_50_reviews: Array<{
+    status: 'approved' | 'rejected';
+    timestamp: Date;
+  }>;
   created_at: Date;
   updated_at: Date;
 }
@@ -50,9 +55,20 @@ const userSchema = new Schema<IUser>(
       min: 0.1,
       max: 2.0,
     },
+    trust_version: {
+      type: Number,
+      default: 0,
+    },
     trust_locked: {
       type: Boolean,
       default: false,
+    },
+    last_50_reviews: {
+      type: [{
+        status: { type: String, enum: ['approved', 'rejected'] },
+        timestamp: { type: Date },
+      }],
+      default: [],
     },
     rate_limit_override: {
       posts_per_hour: { type: Number, default: null },

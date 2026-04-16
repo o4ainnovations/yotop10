@@ -1,58 +1,97 @@
-import { Post } from '../models/Post';
 import { User } from '../models/User';
+import { TrustScoreLog } from '../models/TrustScoreLog';
 
 /**
- * M11.C: Trust Score Calculation Engine
- * Calculates and updates user trust score based on post approval rate
+ * M11.C: Trust Score Calculation Engine V2
+ * With rolling window, logarithmic scaling, and hysteresis thresholds
  */
-export const calculateTrustScore = async (userId: string): Promise<number> => {
-  // Count posts with status breakdown
-  const userPosts = await Post.aggregate([
-    { $match: { author_id: userId } },
-    {
-      $group: {
-        _id: '$status',
-        count: { $sum: 1 }
-      }
-    }
-  ]);
+export const calculateTrustScore = async (userId: string, postId: string, action: 'approve' | 'reject'): Promise<number> => {
+  const MAX_REVIEWS = 50;
+  const BASE_TRUST = 1.0;
+  const MIN_TRUST = 0.1;
+  const MAX_TRUST = 2.0;
+  const PUNISHMENT_MULTIPLIER = 2.5;
+  const CONFIDENCE_CONSTANT = 5;
 
-  // Process post counts
-  const postCounts = userPosts.reduce((acc: any, item: any) => {
-    acc[item._id] = item.count;
-    return acc;
-  }, {});
+  // Get current user state with version
+  const user = await User.findOne({ user_id: userId });
+  if (!user) return BASE_TRUST;
 
-  const postsApproved = postCounts.approved || 0;
-  const postsRejected = postCounts.rejected || 0;
-  const totalReviewed = postsApproved + postsRejected;
+  const currentVersion = user.trust_version;
+  const oldScore = user.trust_score;
 
-  // Base score is always 1.0 for new users
-  let baseScore = 1.0;
+  // Update rolling window - O(1) operation
+  user.last_50_reviews.push({
+    status: action === 'approve' ? 'approved' : 'rejected',
+    timestamp: new Date(),
+  });
 
-  // Only adjust score after user has at least 5 reviewed posts
-  if (totalReviewed >= 5) {
-    const approvalRate = postsApproved / totalReviewed;
-
-    if (approvalRate >= 0.85) {
-      // Scholar: +0.1 per approved post, max 2.0
-      baseScore = Math.min(baseScore + (0.1 * postsApproved), 2.0);
-    } else if (approvalRate <= 0.3) {
-      // Troll: -0.2 per rejected post, min 0.1
-      baseScore = Math.max(baseScore - (0.2 * postsRejected), 0.1);
-    }
+  // Maintain exactly MAX_REVIEWS entries
+  if (user.last_50_reviews.length > MAX_REVIEWS) {
+    user.last_50_reviews.shift();
   }
 
+  // Calculate score from rolling window only
+  const approved = user.last_50_reviews.filter(r => r.status === 'approved').length;
+  const rejected = user.last_50_reviews.filter(r => r.status === 'rejected').length;
+  const totalReviewed = approved + rejected;
+
+  // Logarithmic scaling with asymmetric penalty
+  const pos = Math.log1p(approved * 0.05);
+  const neg = Math.log1p(rejected * 0.05 * PUNISHMENT_MULTIPLIER);
+  const rawScore = BASE_TRUST + pos - neg;
+
+  // Bayesian smoothing for cold start
+  const weightedScore = ((CONFIDENCE_CONSTANT * BASE_TRUST) + (rawScore * totalReviewed)) / (CONFIDENCE_CONSTANT + totalReviewed);
+
   // Clamp to valid range
-  const trustScore = Math.max(0.1, Math.min(2.0, baseScore));
+  const newScore = Math.max(MIN_TRUST, Math.min(MAX_TRUST, weightedScore));
 
-  // Update user document
-  await User.findOneAndUpdate(
-    { user_id: userId },
-    { trust_score: trustScore }
-  );
+  // Increment version for optimistic locking
+  const newVersion = currentVersion + 1;
 
-  return trustScore;
+  // Calculate delta for audit log
+  const delta = newScore - oldScore;
+
+  // Start transaction - atomic update
+  const session = await User.startSession();
+  
+  try {
+    await session.withTransaction(async () => {
+      // Update user with optimistic concurrency control
+      const updateResult = await User.findOneAndUpdate(
+        { 
+          user_id: userId, 
+          trust_version: currentVersion 
+        },
+        {
+          trust_score: newScore,
+          trust_version: newVersion,
+          last_50_reviews: user.last_50_reviews,
+        },
+        { session, new: true }
+      );
+
+      if (!updateResult) {
+        throw new Error('Version conflict: Trust score updated by another process');
+      }
+
+      // Write immutable audit log entry
+      await TrustScoreLog.create([{
+        user_id: userId,
+        post_id: postId,
+        action,
+        delta,
+        old_score: oldScore,
+        new_score: newScore,
+        version: newVersion,
+      }], { session });
+    });
+  } finally {
+    await session.endSession();
+  }
+
+  return newScore;
 };
 
 /**

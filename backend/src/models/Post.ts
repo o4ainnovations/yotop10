@@ -11,11 +11,11 @@ export interface IPost extends Document {
   post_type: string;
   intro: string;
   status: 'pending_review' | 'approved' | 'rejected';
-  category_id: mongoose.Types.ObjectId;
-  comment_count: number;
-  view_count: number;
-  is_public: boolean;
+  category_id: string;
   published_at?: Date;
+  view_count: number;
+  comment_count: number;
+  trust_score_updated: boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -68,11 +68,15 @@ const postSchema = new Schema<IPost>(
       required: false,
       default: null,
     },
-    post_type: {
-      type: String,
-      required: true,
-      enum: ['top_list', 'this_vs_that', 'who_is_better', 'fact_drop', 'best_of', 'worst_of', 'hidden_gems', 'counter_list'],
-      index: true,
+  post_type: {
+    type: String,
+    required: true,
+    enum: ['top_list', 'this_vs_that', 'who_is_better', 'fact_drop', 'best_of', 'worst_of', 'hidden_gems', 'counter_list'],
+    index: true,
+  },
+    trust_score_updated: {
+      type: Boolean,
+      default: false,
     },
     intro: {
       type: String,
@@ -84,6 +88,10 @@ const postSchema = new Schema<IPost>(
       enum: ['pending_review', 'approved', 'rejected'],
       default: 'pending_review',
       index: true,
+    },
+    trust_score_updated: {
+      type: Boolean,
+      default: false,
     },
     category_id: {
       type: Schema.Types.ObjectId,
