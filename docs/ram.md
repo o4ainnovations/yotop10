@@ -1,79 +1,76 @@
+# BEFORE DOING ANYTHING: FIRST READ AGENTS.md IN FULL
+
+
 # 🚀 RAM.md - Current Highest Priority Task
 
-## CURRENT HIGHEST PRIORITY: **M10.3 Review Queue Endpoints**
+## CURRENT HIGHEST PRIORITY: **M10.3 Admin UI Pages for Review Queue**
 🔴 **CRITICAL PUBLIC LAUNCH BLOCKER.**
 
 ---
 
-## Task: Implement M10.3 Review Queue Endpoints
-All trust score infrastructure is complete. Now implement the admin endpoints to approve/reject posts.
+## Task: Implement M10.3 Frontend Admin UI
+All backend endpoints are complete. Now implement the frontend pages required to review and moderate pending posts.
 
 ---
 
 ### ✅ Pre-Requisites Complete
-- ✅ Trust Score V2 100% implemented
-- ✅ All defensive patterns integrated
-- ✅ Background worker queue ready
-- ✅ Audit logging and idempotency guarantees active
+- ✅ All 4 backend endpoints fully implemented
+- ✅ Trust score integration working
+- ✅ Admin authentication system complete
+- ✅ Category post count auto increment/decrement working
 
 ---
 
-### 📋 Required Endpoints to Implement
+### 📋 Required Pages & Components to Implement
 
-#### 1. `GET /api/admin/posts/pending`
-**Purpose**: List all pending posts for admin review
-- **Auth**: Admin only
-- **Query params**: `page`, `limit`, `category`, `post_type`, `date_from`, `date_to`, `sort`
+#### 1. `/admin/posts/pending` - Review Queue List Page
+**Purpose**: List all pending posts for moderation
+- **Layout**: Data table with pending posts
+- **Columns**: Title, Author, Category, Post Type, Submitted Date
 - **Default sort**: Oldest first (FIFO)
-- **Response**: Full post metadata with author info, no list items
+- **Actions per row**: Preview, Approve, Reject
+- **Pagination**: 20 per page
+- **Features**:
+  - Quick inline preview expand
+  - Keyboard shortcuts: A=Approve, R=Reject
+  - Bulk actions disabled per requirements
 
-#### 2. `GET /api/admin/posts/pending/:id`
-**Purpose**: Full preview of a single pending post
-- **Auth**: Admin only
-- **Response**: Complete post including all list items
+#### 2. `/admin/posts/pending/[id]` - Full Pending Post Preview
+**Purpose**: Complete review of individual pending post
+- **Layout**: Exact same display as public post view
+- **Full content**: All list items visible
+- **Actions**: Approve / Reject buttons
+- **Navigation**: Previous/Next between pending posts
+- **Rejection modal**: Requires reason selection + custom text
 
-#### 3. `PATCH /api/admin/posts/:id/approve`
-**Purpose**: Approve a post and publish it to public feed
-- **Auth**: Admin only
-- **Actions when executed**:
-  1. Set status to `approved`
-  2. Set `published_at` timestamp to now
-  3. Generate final unique slug from title
-  4. Increment category post count
-  5. **Call trust score worker**: `trustScoreWorker.queueUpdate(author_id, postId, 'approve')`
-  6. Add Elasticsearch index stub (empty implementation for now)
-  7. Post becomes visible on public feed immediately
-
-#### 4. `PATCH /api/admin/posts/:id/reject`
-**Purpose**: Reject a pending post
-- **Auth**: Admin only
-- **Required body**: `{ reason: string }`
-- **Actions when executed**:
-  1. Set status to `rejected`
-  2. Store rejection reason permanently
-  3. Decrement category post count if previously approved
-  4. **Call trust score worker**: `trustScoreWorker.queueUpdate(author_id, postId, 'reject')`
-  5. Post remains invisible to public
+#### 3. Required Shared Components
+- `ReviewCard` - Pending post preview component
+- `ApprovalModal` - Confirm approve action
+- `RejectionModal` - Reject with reason dropdown + custom input
+- `DataTable` - Sortable/filterable/paginated table
+- `Toast` - Success/error notifications
 
 ---
 
 ### ⚠️ **DO NOT implement** at this stage:
 - ❌ Bulk actions
-- ❌ Request changes endpoint
+- ❌ Request changes endpoint / UI
 - ❌ Filters and search
-- ❌ Keyboard shortcuts
-- ❌ Admin UI pages (these come after endpoints work)
+- ❌ Keyboard shortcuts (implement as final step)
+- ❌ Styling / design - minimal unstyled HTML only
 
 ---
 
 ### ✅ Implementation Order
-1. Implement `GET /api/admin/posts/pending`
-2. Implement `GET /api/admin/posts/pending/:id`
-3. Implement `PATCH /api/admin/posts/:id/approve`
-4. Implement `PATCH /api/admin/posts/:id/reject`
+1. Implement base admin route authentication guard
+2. Implement `/admin/posts/pending` list page
+3. Implement `/admin/posts/pending/[id]` preview page
+4. Implement approval modal flow
+5. Implement rejection modal flow
+6. Implement toast notifications
 
 ---
 
-**Blockers**: None. All dependencies are complete. This can be implemented immediately.
+**Blockers**: None. All backend dependencies are complete. Can be implemented immediately.
 
-**Estimated effort**: 4-6 hours total.
+**Estimated effort**: 3-4 hours total.

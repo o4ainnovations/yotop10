@@ -11,6 +11,7 @@ export interface IPost extends Document {
   post_type: string;
   intro: string;
   status: 'pending_review' | 'approved' | 'rejected';
+  rejection_reason?: string;
   category_id: string;
   published_at?: Date;
   view_count: number;
@@ -85,6 +86,10 @@ const postSchema = new Schema<IPost>(
       enum: ['pending_review', 'approved', 'rejected'],
       default: 'pending_review',
       index: true,
+    },
+    rejection_reason: {
+      type: String,
+      required: false,
     },
     trust_score_updated: {
       type: Boolean,
