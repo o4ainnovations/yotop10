@@ -6,14 +6,12 @@ import { API } from '@/lib/api';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [admin, setAdmin] = useState<{ id: string; username: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const adminData = await API.adminGetMe() as { id: string; username: string };
-        setAdmin(adminData);
+        await API.adminGetMe();
       } catch {
         router.push('/admin/login');
       } finally {
