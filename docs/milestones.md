@@ -586,8 +586,6 @@ This is the standard industry solution for this exact problem. There is no "bett
 - [ ] `/admin/login` — Login page
   - Username input
   - Password input
-  - "Remember me" checkbox
-  - Forgot password link (future)
 - [ ] `/admin/dashboard` — Overview with stats cards and charts
 - [ ] `/admin/posts/pending` — Review queue
 - [ ] `/admin/posts` — All posts management
