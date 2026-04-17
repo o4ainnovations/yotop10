@@ -16,7 +16,7 @@ export default function RootLayout({
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col">{children}</body>
       <Script src="//cdn.jsdelivr.net/npm/eruda" onLoad={() => {
-        // @ts-expect-error
+        // @ts-expect-error Eruda types are not available
         window.eruda.init();
       }} />
     </html>
