@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,11 +14,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased">
-      <head>
-        <script src="//cdn.jsdelivr.net/npm/eruda"></script>
-        <script>eruda.init();</script>
-      </head>
       <body className="min-h-full flex flex-col">{children}</body>
+      <Script src="//cdn.jsdelivr.net/npm/eruda" onLoad={() => {
+        // @ts-ignore
+        window.eruda.init();
+      }} />
     </html>
   );
 }
