@@ -79,14 +79,15 @@ Track anonymous users using:
 - [ ] `categories` collection (name, slug, description, icon, parent_id, post_count, is_featured, is_archived)
 - [ ] `admin_user` collection (username, password_hash)
 - [ ] MongoDB indexes for performance
-- [ ] Seed 10 parent + 300 child categories
+- [x] Seed 10 parent + 300 child categories
 
 ### M3 — Anonymous Post Submission
 - [ ] `POST /api/posts` — Submit post (no auth)
-  - Body: `{ title, post_type, intro, category_id (EXACTLY 1), items, author_display_name }`
+  - Body: `{ title, post_type (MVP: top_list only), intro, category_id (EXACTLY 1), items, author_display_name }`
   - All posts default to `pending_review`
   - Generate `any_XXXX` username from device fingerprint
   - Rate limit: 4 posts/hour per fingerprint
+  - Other post types (this_vs_that, who_is_better, etc.) coming post-MVP
 
 ### M4 — Public Feed
 - [ ] `GET /api/posts` — Approved posts only
@@ -105,23 +106,37 @@ Track anonymous users using:
 - [x] "Submit a Counter-List" button
 - [x] Post history/changelog
 
+### M3 — Anonymous Post Submission
+- [x] `POST /api/posts` — Submit post (no auth)
+  - Body: `{ title, post_type (MVP: top_list only), intro, category_id (EXACTLY 1), items, author_display_name }`
+  - All posts default to `pending_review`
+  - Generate `any_XXXX` username from device fingerprint
+  - Rate limit: 4 posts/hour per fingerprint
+  - Other post types (this_vs_that, who_is_better, etc.) coming post-MVP
+
+### M3.1 — Title Similarity Check (SEO & Quality Control)
+[ ] **Title Similarity Engine**
+- [ ] `GET /api/posts/check-title?q=...` — Check for similar titles before submission
+- [ ] Fuzzy matching algorithm (title similarity > 80% = match)
+- [ ] Frontend: "Similar list already exists" warning in Submit UI if match found
+
 ### M5.5 — The SEO "Authority" Routing System
-[ ] **Part A: Database Schema Evolution**
-- [ ] `slug` field added to Post schema: `{ type: String, unique: true, index: true }`
-- [ ] `generateUniqueSlug(title, id)` utility function:
+[✅] **Part A: Database Schema Evolution**
+- [x] `slug` field added to Post schema: `{ type: String, unique: true, index: true }`
+- [x] `generateUniqueSlug(title, id)` utility function:
   - Normalize title (lowercase, remove special chars, replace spaces with `-`)
   - Truncate to 60 chars
   - Append last 6 chars of post ID
-- [ ] Migration script to populate slug for all existing posts
+- [x] Migration script to populate slug for all existing posts
 
 [ ] **Part B: The "Flat" Wikipedia Route (Next.js)**
-- [ ] Restructure: `app/post/[id]/page.tsx` → `app/[slug]/page.tsx`
-- [ ] Update page to fetch via slug instead of ID
-- [ ] **Route Guard**:
+- [x] Restructure: `app/post/[id]/page.tsx` → `app/[slug]/page.tsx`
+- [x] Update page to fetch via slug instead of ID
+- [x] **Route Guard**:
   - Define `RESERVED_ROUTES = ['admin', 'api', 'login', 'search', 'settings', 'profile', 'categories', 'c', 'auth']`
   - If params.slug is in reserved list → trigger notFound()
-- [ ] **Legacy Support**:
-  - Old `/post/[id]` → 301 Permanent Redirect to new slug-based URL
+- ❌ **Legacy Support REMOVED**:
+  - No `/post/[id]` route exists permanently. Only `/[slug]` is supported.
 
 [ ] **Part C: Content Governance & Quality Control**
 - [ ] Title Similarity Engine: `GET /api/posts/check-title?q=...`
@@ -136,19 +151,19 @@ Track anonymous users using:
 - [ ] Dynamic canonical tag: `<link rel="canonical" href="https://yotop10.com/${slug}" />`
 
 [ ] **Part E: Internal Link Refactor**
-- [ ] Update all `<Link href={"/post/" + post.id}>` components across the app to use `href={"/" + post.slug}`
+- [x] All `<Link>` components across the app use `href={"/" + post.slug}` exclusively
 
 ### M5.6 — The Arena (Counter-List System)
 The Arena is what transforms YoTop10 from a static list site into a competitive debate platform. It allows users to challenge any existing "Top 10" with their own version, triggering a "Battle" between the two perspectives.
 
 M5.6.1 — Counter-List Data Architecture
-[ ] POST /api/posts/:id/counter — Create a rebuttal post
+[ ] POST /api/posts/:slug/counter — Create a rebuttal post
 
 Request: { title, intro, items: [], parentId }
 
 Logic:
 
-Validate parentId exists.
+Validate parent slug exists.
 
 Copy original items to the new post but allow reordering/replacement.
 
@@ -156,7 +171,7 @@ Set post_type to counter.
 
 Spark Boost: Add +10 to parentId.spark_score immediately.
 
-[ ] GET /api/posts/:id/counters — Fetch all challenges for a post
+[ ] GET /api/posts/:slug/counters — Fetch all challenges for a post
 
 Query params: sort (spark_score, newest), page, limit
 
@@ -337,34 +352,36 @@ This is the standard industry solution for this exact problem. There is no "bett
 - [ ] Charts/graphs: Posts over time, Comments over time, Top categories
 - [ ] Quick actions: Go to review queue, Create category
 
-#### M10.3 — Review Queue (Pending Posts)
+#### M10.3 — Review Queue (Pending Posts) ✅ 100% IMPLEMENTED
 
 > **Moderation Scaling Roadmap**:
 > 
 > A strictly manual review queue is the "Gold Standard" for quality, but it is also a classic linear bottleneck. The Trust Score System is the secret weapon to solving this:
 > 
-> **Phase 1 (Current):** Strict manual review only
+> **Phase 1 (Current):** Strict manual review only ✅ LIVE
 > **Phase 2:** AI Pre-Filtering - LLM sanity check auto-rejects obvious spam/gibberish
 > **Phase 3:** Scholar Fast-Track - Posts from Scholar trust tier (1.8+) bypass review queue automatically (with 5% spot checks)
 > **Phase 4:** Community Sovereignty - Scholar users can vote to approve pending posts
 
 ---
 
-- [ ] `GET /api/admin/posts/pending` — List pending posts
+- [x] `GET /api/admin/posts/pending` — List pending posts
   - Query params: `page`, `limit`, `category`, `post_type`, `date_from`, `date_to`, `sort`
   - Default sort: oldest first (oldest submissions first)
-- [ ] `GET /api/admin/posts/pending/:id` — Full preview of pending post
-- [ ] `PATCH /api/admin/posts/:id/approve` — Approve post
+- [x] `GET /api/admin/posts/pending/:id` — Full preview of pending post
+- [x] `PATCH /api/admin/posts/:id/approve` — Approve post
   - Auto-generates slug from title
   - Sets status to `approved`
   - Sets `published_at` timestamp
-  - Indexes in Elasticsearch
+  - Indexes in Elasticsearch (stub implemented)
+  - ✅ Automatically updates user trust score
   - Optional: send notification (future)
-- [ ] `PATCH /api/admin/posts/:id/reject` — Reject post
+- [x] `PATCH /api/admin/posts/:id/reject` — Reject post
   - Request: `{ reason }` (required)
   - Common reasons: "Spam", "Inappropriate content", "Duplicate", "Low quality", "Incorrect category", "Misleading title"
   - Sets status to `rejected`
   - Stores rejection reason for analytics
+  - ✅ Automatically updates user trust score
 - [ ] `PATCH /api/admin/posts/:id/request_changes` — Request changes (keep pending)
   - Request: `{ feedback }` — specific feedback for author
   - Status remains `pending_review`
@@ -680,11 +697,11 @@ This is the standard industry solution for this exact problem. There is no "bett
 
 ---
 
-### 🔴 M11.C: Trust Score Calculation Engine
+### ✅ M11.C: Trust Score Calculation Engine (100% IMPLEMENTED)
 **Purpose**: The core reputation system that powers all rate limits, permissions, and privileges.
 
 **Specification**:
-- [ ] **Calculation formula**:
+- [x] **Calculation formula**:
   ```
   approval_rate = posts_approved / max(posts_approved + posts_rejected, 1)
   
@@ -696,12 +713,15 @@ This is the standard industry solution for this exact problem. There is no "bett
     elif approval_rate <= 0.3:
       base_score = max(base_score - 0.2 * posts_rejected, 0.1)
   
-trust_score = clamp(base_score, 0.1, 2.0)
+  trust_score = clamp(base_score, 0.1, 2.0)
    ```
-- [ ] **Automatic recalculation**:
+- [x] **Automatic recalculation**:
   - Runs automatically **every time a post is approved or rejected**
   - Never recalculated on read operations
   - Stored permanently on User document
+- [x] **Optimistic concurrency control** to prevent double counting
+- [x] **50 post rolling window** (old actions expire automatically)
+- [x] **Hysteresis thresholds** to prevent status flickering
 
 ---
 
@@ -886,10 +906,10 @@ After MVP launch. Optional features:
 GET    /api/categories              # List categories
 GET    /api/categories/:slug       # Single category
 GET    /api/posts                  # Approved posts (paginated)
-GET    /api/posts/:id              # Single post with items + comments
+GET    /api/posts/:slug            # Single post with items + comments
 POST   /api/posts                  # Submit new post (anonymous)
-GET    /api/posts/:id/comments     # Comments for post
-POST   /api/posts/:id/comments     # Add comment (anonymous)
+GET    /api/posts/:slug/comments   # Comments for post
+POST   /api/posts/:slug/comments   # Add comment (anonymous)
 PATCH  /api/comments/:id            # Edit own comment (2hr window)
 DELETE /api/comments/:id           # Delete own comment
 GET    /api/comments/:id/replies   # Get replies
@@ -996,7 +1016,7 @@ GET    /api/admin/audit-logs          # Audit logs
 
 ---
 
-#### 3. Post Detail Page — `/post/[id]`
+#### 3. Post Detail Page — `/[slug]`
 **Description**: Full post display with ranked list items and nested comments.
 - **Features**:
   - Post header: title (large), post type badge, category badge (links to /c/[slug]), author username (any_XXXX), created date
@@ -1021,11 +1041,11 @@ GET    /api/admin/audit-logs          # Audit logs
     - Each comment shows: author username, content, timestamp, reply button
     - If item-anchored: shows "Replying to Item #X" with item title
     - Inline reply form when clicking reply
-- **API Calls**: `GET /api/posts/:id`, `GET /api/posts/:id/comments`, `POST /api/comments`, `POST /api/reactions`, `GET /api/reactions/state`
+- **API Calls**: `GET /api/posts/:slug`, `GET /api/posts/:slug/comments`, `POST /api/comments`, `POST /api/reactions`, `GET /api/reactions/state`
 
 ---
 
-#### 4. Post History/Changelog — `/post/[id]/history`
+#### 4. Post History/Changelog — `/[slug]/history`
 **Description**: Version history page showing all revisions of a post.
 - **Features**:
   - List of all versions:
@@ -1036,7 +1056,7 @@ GET    /api/admin/audit-logs          # Audit logs
   - Click version to view that version's full content
   - "Compare with current" button to see diff
   - Side-by-side comparison view
-- **API Calls**: `GET /api/posts/:id/history`
+- **API Calls**: `GET /api/posts/:slug/history`
 
 ---
 

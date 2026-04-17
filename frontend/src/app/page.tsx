@@ -68,7 +68,7 @@ export default function Home() {
         <li><code>GET /api/categories</code> — List all categories</li>
         <li><code>GET /api/categories/:slug</code> — Get single category</li>
         <li><code>GET /api/posts</code> — List approved posts</li>
-        <li><code>GET /api/posts/:id</code> — Get single post with items and comments</li>
+        <li><code>GET /api/posts/:slug</code> — Get single post with items and comments</li>
       </ul>
     </div>
   );

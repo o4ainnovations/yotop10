@@ -153,10 +153,10 @@ export const API = {
     }
     return apiFetch(`/posts?page=${page || 1}`);
   },
-  getPost: (idOrSlug: string): Promise<{ post: Post; items: Array<{ id: string; rank: number; title: string; justification: string; image_url?: string; source_url?: string }> }> => 
-    apiFetch(`/posts/${idOrSlug}`),
-  getPostHistory: (idOrSlug: string): Promise<PostHistoryResponse> => 
-    apiFetch(`/posts/${idOrSlug}/history`),
+  getPost: (slug: string): Promise<{ post: Post; items: Array<{ id: string; rank: number; title: string; justification: string; image_url?: string; source_url?: string }> }> => 
+    apiFetch(`/posts/${slug}`),
+  getPostHistory: (slug: string): Promise<PostHistoryResponse> => 
+    apiFetch(`/posts/${slug}/history`),
   getComments: (postId: string): Promise<CommentsResponse> => 
     apiFetch(`/posts/${postId}/comments`),
   addComment: (postId: string, content: string, parent_comment_id?: string, list_item_id?: string) => 
