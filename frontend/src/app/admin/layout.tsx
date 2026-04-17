@@ -1,9 +1,30 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { API } from '@/lib/api';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const [admin, setAdmin] = useState<{ id: string; username: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const adminData = await API.adminGetMe() as { id: string; username: string };
+        setAdmin(adminData);
+      } catch {
+        router.push('/admin/login');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [router]);
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
@@ -14,6 +35,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
           <div>
             <button onClick={() => router.push('/admin/profile')} style={{ marginRight: '10px' }}>Profile</button>
+            <button onClick={() => router.push('/admin/posts/pending')} style={{ marginRight: '10px' }}>Pending Posts</button>
             <button onClick={() => router.push('/admin')}>Dashboard</button>
           </div>
         </div>

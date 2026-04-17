@@ -34,7 +34,7 @@ export default function AdminHomePage() {
       <div style={{ marginTop: '30px' }}>
         <h3>Quick Links</h3>
         <ul>
-          <li>Pending Posts</li>
+          <li><button onClick={() => router.push('/admin/posts/pending')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Pending Posts</button></li>
           <li>All Posts</li>
           <li>Comments</li>
           <li>Categories</li>
