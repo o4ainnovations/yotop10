@@ -26,7 +26,7 @@ const getThresholds = async () => {
 
 // Validation middleware
 const validateReaction = [
-  body('target_type').isIn(['post', 'list_item', 'comment']).withMessage('Invalid target type'),
+  body('target_type').isIn(['comment']).withMessage('Invalid target type'),
   body('target_id').isMongoId().withMessage('Invalid target ID'),
 ];
 
