@@ -148,10 +148,6 @@ const validatePostSubmission = [
     .trim()
     .isLength({ max: 50 })
     .withMessage('Display name must be less than 50 characters'),
-  body('device_fingerprint')
-    .trim()
-    .notEmpty()
-    .withMessage('Device fingerprint is required'),
 ];
 
 // GET /api/posts — Approved posts with filtering, sorting, pagination
@@ -362,8 +358,8 @@ router.post('/', validatePostSubmission, async (req: Request, res: Response) => 
       effectiveTrustScore = req.user.rate_limit_override.posts_per_hour / 4;
     }
     
-    // Check rate limit with trust score multiplier
-    const rateLimitResult = await checkRateLimit(device_fingerprint, effectiveTrustScore);
+    // Check rate limit with trust score multiplier - use authenticated fingerprint from header
+    const rateLimitResult = await checkRateLimit(req.user!.device_fingerprint, effectiveTrustScore);
     if (!rateLimitResult.allowed) {
       return res.status(429).json({
         error: 'Rate limit exceeded. You can submit 4 posts per hour.',
