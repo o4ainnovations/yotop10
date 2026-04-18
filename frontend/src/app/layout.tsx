@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import "./globals.css";
+import Eruda from "./Eruda";
 
 export const metadata: Metadata = {
   title: "YoTop10 - Top 10 Lists Platform",
@@ -15,10 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col">{children}</body>
-      <Script src="//cdn.jsdelivr.net/npm/eruda" onLoad={() => {
-        // @ts-expect-error Eruda types are not available
-        window.eruda.init();
-      }} />
+      <Eruda />
     </html>
   );
 }
