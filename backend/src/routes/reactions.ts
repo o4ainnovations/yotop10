@@ -6,6 +6,7 @@ import { Comment } from '../models/Comment';
 import { Post } from '../models/Post';
 import { ListItem } from '../models/ListItem';
 import { SparkThreshold, getFloorMultiplier } from '../models/SparkThreshold';
+import { grantBoost, BoostType } from '../lib/ladderSystem';
 
 const router: Router = Router();
 
@@ -92,6 +93,14 @@ router.post('/', validateReaction, async (req: Request, res: Response) => {
       fire_count: currentFireCount,
       last_engaged_at: now,
     });
+    
+    // Grant boost if comment reaches exactly 3 fires
+    if (currentFireCount === 3 && action === 'added') {
+      const comment = await Comment.findById(target_id);
+      if (comment) {
+        await grantBoost(comment.author_id.toString(), BoostType.COMMENT_THREE_FIRES);
+      }
+    }
     
     // Calculate new spark score for this comment
     const comment = await Comment.findById(target_id);

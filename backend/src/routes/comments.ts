@@ -9,6 +9,7 @@ import { ListItem } from '../models/ListItem';
 import { SparkThreshold, getFloorMultiplier, FLOOR_MULTIPLIERS } from '../models/SparkThreshold';
 import { createClient } from 'redis';
 import { calculateEffectiveCommentLimit } from '../lib/rateLimit';
+import { getActiveBoost, grantBoost, BoostType } from '../lib/ladderSystem';
 
 const router: Router = Router();
 
@@ -294,12 +295,21 @@ const startThresholdCron = () => {
 
 
 // Check rate limit for comments (20 per hour per fingerprint)
-const checkCommentRateLimit = async (fingerprint: string, trustScore: number = 1.0): Promise<{ allowed: boolean; remaining: number; resetTime: number }> => {
+const checkCommentRateLimit = async (fingerprint: string, trustScore: number = 1.0, userId?: string): Promise<{ allowed: boolean; remaining: number; resetTime: number }> => {
   try {
     const redis = await getRedisClient();
     const key = `rate_limit:comments:${fingerprint}`;
     const windowMs = 60 * 60 * 1000; // 1 hour
-    const limit = calculateEffectiveCommentLimit(trustScore);
+    
+    let limit = calculateEffectiveCommentLimit(trustScore);
+    
+    // Add active boost if available
+    if (userId) {
+      const activeBoost = await getActiveBoost(userId);
+      if (activeBoost) {
+        limit += activeBoost.comments;
+      }
+    }
 
     const current = await redis.get(key);
     const now = Date.now();
@@ -453,7 +463,7 @@ router.post('/posts/:id/comments', validateComment, async (req: Request, res: Re
     }
     
     // Check rate limit with trust score multiplier
-    const rateLimit = await checkCommentRateLimit(deviceFingerprint, effectiveTrustScore);
+    const rateLimit = await checkCommentRateLimit(deviceFingerprint, effectiveTrustScore, req.user?.user_id);
     if (!rateLimit.allowed) {
       return res.status(429).json({ 
         error: 'Rate limit exceeded', 
@@ -514,10 +524,17 @@ router.post('/posts/:id/comments', validateComment, async (req: Request, res: Re
 
     // Update parent's reply_count, last_engaged_at, and spark_score with weighted children
     if (parent_comment_id) {
-      await Comment.findByIdAndUpdate(
+      const updatedParent = await Comment.findByIdAndUpdate(
         parent_comment_id,
-        { $inc: { reply_count: 1 } }
+        { $inc: { reply_count: 1 } },
+        { new: true }
       );
+      
+      // Grant boost if parent comment reaches exactly 2 replies
+      if (updatedParent && updatedParent.reply_count === 2) {
+        await grantBoost(updatedParent.author_id.toString(), BoostType.COMMENT_TWO_REPLIES);
+      }
+      
       // Update parent with engagement pulse and weighted child calculation
       await updateParentSparkScore(parent_comment_id);
       // Propagate engagement to all ancestors

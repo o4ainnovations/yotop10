@@ -224,6 +224,10 @@ router.patch('/posts/:id/approve', adminAuthMiddleware, async (req: AdminAuthReq
 
     // Queue trust score update
     await trustScoreWorker.queueUpdate(post.author_id, post._id.toString(), 'approve');
+    
+    // Grant post approval boost
+    const { grantBoost, BoostType } = await import('../lib/ladderSystem');
+    await grantBoost(post.author_id.toString(), BoostType.POST_APPROVED);
 
     // Elasticsearch index stub - no implementation yet
     // TODO: Implement Elasticsearch indexing

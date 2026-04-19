@@ -325,8 +325,16 @@ router.get('/me/rate-limits', async (req: Request, res: Response) => {
     const now = Date.now();
 
     // Calculate total limits
-    const postLimit = calculateEffectivePostLimit(req.user.trust_score);
-    const commentLimit = calculateEffectiveCommentLimit(req.user.trust_score);
+    let postLimit = calculateEffectivePostLimit(req.user.trust_score);
+    let commentLimit = calculateEffectiveCommentLimit(req.user.trust_score);
+    
+    // Add active boost if available
+    const { getActiveBoost } = await import('../lib/ladderSystem');
+    const activeBoost = await getActiveBoost(req.user.user_id);
+    if (activeBoost) {
+      postLimit += activeBoost.posts;
+      commentLimit += activeBoost.comments;
+    }
 
     // Get current counts
     const postKey = `rate_limit:posts:${req.user.device_fingerprint}`;

@@ -13,6 +13,12 @@ export interface IUser extends Document {
     posts_per_hour?: number | null;
     comments_per_hour?: number | null;
   };
+  active_boost?: {
+    posts: number;
+    comments: number;
+    expires_at: Date;
+  };
+  last_boost_granted_at?: Date;
   last_50_reviews: Array<{
     status: 'approved' | 'rejected';
     timestamp: Date;
@@ -74,6 +80,12 @@ const userSchema = new Schema<IUser>(
       posts_per_hour: { type: Number, default: null },
       comments_per_hour: { type: Number, default: null },
     },
+    active_boost: {
+      posts: { type: Number },
+      comments: { type: Number },
+      expires_at: { type: Date },
+    },
+    last_boost_granted_at: { type: Date },
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

@@ -9,6 +9,7 @@ import { Category } from '../models/Category';
 import { Comment } from '../models/Comment';
 import { createClient } from 'redis';
 import { calculateEffectivePostLimit } from '../lib/rateLimit';
+import { getActiveBoost } from '../lib/ladderSystem';
 
 const router: Router = Router();
 
@@ -55,12 +56,21 @@ const generateUserId = (): string => {
 };
 
 // Check rate limit (4 posts per hour per fingerprint)
-const checkRateLimit = async (fingerprint: string, trustScore: number = 1.0, postType?: string): Promise<{ allowed: boolean; remaining: number; resetTime: number; maxRequests: number }> => {
+const checkRateLimit = async (fingerprint: string, trustScore: number = 1.0, postType?: string, userId?: string): Promise<{ allowed: boolean; remaining: number; resetTime: number; maxRequests: number }> => {
   try {
     const redis = await getRedisClient();
     const key = `rate_limit:posts:${fingerprint}`;
     const windowMs = 60 * 60 * 1000; // 1 hour
-    const maxRequests = calculateEffectivePostLimit(trustScore, postType);
+    
+    let maxRequests = calculateEffectivePostLimit(trustScore, postType);
+    
+    // Add active boost if available
+    if (userId) {
+      const activeBoost = await getActiveBoost(userId);
+      if (activeBoost) {
+        maxRequests += activeBoost.posts;
+      }
+    }
 
     const now = Date.now();
     const windowStart = now - windowMs;
@@ -360,7 +370,7 @@ router.post('/', validatePostSubmission, async (req: Request, res: Response) => 
     }
     
     // Check rate limit with trust score multiplier - use authenticated fingerprint from header
-    const rateLimitResult = await checkRateLimit(req.user!.device_fingerprint, effectiveTrustScore, post_type);
+    const rateLimitResult = await checkRateLimit(req.user!.device_fingerprint, effectiveTrustScore, post_type, req.user!.user_id);
     if (!rateLimitResult.allowed) {
       return res.status(429).json({
         error: `Rate limit exceeded. You can submit ${rateLimitResult.maxRequests ?? 4} posts per hour.`,
