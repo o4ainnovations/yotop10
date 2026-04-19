@@ -306,6 +306,40 @@ This is the exact system used by Wordpress, Ghost, Discourse and every self-host
 
 This is the standard industry solution for this exact problem. There is no "better" or "more secure" way to do this.
 
+---
+
+### M9.1 — Global Notification System
+
+Single unified notification system that handles all user feedback across the entire platform. Implemented once, reused everywhere.
+
+#### Core System Requirements:
+- Minimal zero dependency toast component
+- Singleton pattern, no context/redux required
+- Auto dismiss after 4 seconds
+- Stack up to 3 notifications at once
+- Only positive actions trigger notifications. Never notify for failures/limits.
+
+#### All Use Cases Handled:
+| Event | Notification Message |
+|-------|----------------------|
+| Post submitted successfully | ✅ Post submitted! It's now pending review. |
+| Post approved | ✅ Your post was approved. +3 post boost for 90 minutes. |
+| Post rejected | ❌ Your post was rejected. |
+| Display name updated | ✅ Display name updated successfully. |
+| Comment received 3+ fires | ✅ Your comment was well received. +1 post boost for 90 minutes. |
+| Comment received 2+ replies | ✅ People are replying to your comment. +1 post boost for 90 minutes. |
+| Counter list submitted | ✅ Counter list received. +2 post boost for 90 minutes. |
+| Admin action completed | ✅ Action completed successfully. |
+| Category saved / deleted | ✅ Category updated successfully. |
+
+#### Implementation Status:
+- [ ] Toast component implementation
+- [ ] Global notification state management
+- [ ] Integration with submit page
+- [ ] Integration with admin dashboard
+- [ ] Integration with Ladder boost system
+
+---
 
 ### M10 — Admin Dashboard (Industry Standard)
 
@@ -370,7 +404,7 @@ This is the standard industry solution for this exact problem. There is no "bett
   - Sets `published_at` timestamp
   - Indexes in Elasticsearch (stub implemented)
   - ✅ Automatically updates user trust score
-  - Optional: send notification (future)
+
 - [x] `PATCH /api/admin/posts/:id/reject` — Reject post
   - Request: `{ reason }` (required)
   - Common reasons: "Spam", "Inappropriate content", "Duplicate", "Low quality", "Incorrect category", "Misleading title"
@@ -625,7 +659,7 @@ This is the standard industry solution for this exact problem. There is no "bett
 - [ ] `SearchInput` — Global admin search
 - [ ] `DateRangePicker` — Filter by date
 - [ ] `ExportButton` — CSV/Excel export
-- [ ] `Toast` — Success/error notifications
+
 - [ ] `ConfirmDialog` — Destructive action confirmation
 
 ---
@@ -897,7 +931,7 @@ After MVP launch. Optional features:
 
 ### V2.4 — Email Notifications
 - [ ] Post approval/rejection
-- [ ] Reply notifications
+
 
 ### V2.5 — PWA & Mobile
 - [ ] Progressive Web App manifest
@@ -1017,8 +1051,7 @@ GET    /api/admin/audit-logs          # Audit logs
   - Author display name input (required, 3-50 chars)
   - Device fingerprint auto-generated and hidden
   - Submit button with loading state
-  - Success toast: "Post submitted! It's now pending review."
-  - Error handling with toast notifications
+
   - Form validation before submit
 - **API Calls**: `GET /api/categories`, `POST /api/posts`
 
@@ -1388,8 +1421,7 @@ We treat the site as a permanent encyclopedia. Indexing is earned through qualit
   - Password input
   - "Remember me" checkbox
   - Login button
-  - Error messages for invalid credentials
-  - Rate limit message if too many attempts
+
 - **API Calls**: `POST /api/admin/login`
 
 ---
@@ -1624,7 +1656,7 @@ We treat the site as a permanent encyclopedia. Indexing is earned through qualit
     - Distribution stats: Scholars count, Neutrals count, Trolls count
     - Recent flagged users list
     - Manual override: select user, set trust level
-  - Save confirmation toast
+
 - **API Calls**: `GET /api/admin/rate-limits`, `PATCH /api/admin/rate-limits`, `GET /api/admin/trust-scores`
 
 ---

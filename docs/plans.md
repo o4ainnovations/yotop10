@@ -61,7 +61,7 @@ Also fully public and documented:
 ### At Exactly 1.2 Trust
 - If a user has an active boost when they cross 1.2 trust: the boost remains active until it expires
 - Once expired: the system is permanently disabled for that user
-- They will never see another boost, notification, or reference to the system ever again
+- They will never see another boost or reference to the system ever again
 
 ### Boost Eligibility
 - You can earn a boost even if you are currently at your rate limit
@@ -104,8 +104,6 @@ Boosts are always added, never multiplied.
 
 ### Notification Requirements
 When a user earns a boost:
-- Real time toast notification:
-  > ✅ Your comment received 3 fires. You earned +1 post boost for 90 minutes.
 - Countdown timer visible on profile stats tab
 - Exact remaining time always displayed
 
@@ -190,3 +188,43 @@ This change is successful if after 30 days:
 - Approval rate remains within 5% of previous levels
 - Fewer than 1% of users hit the 12 hour boost cooldown
 - Zero complaints about the system feeling unfair
+
+---
+
+## 📋 Phase 4: Profile Stats Tab
+**Status**: ✅ Backend 100% Complete | ❌ Frontend 0% Implemented
+**Estimated Effort**: 15 minutes
+**Priority**: Immediate after Phase 3
+
+### Overview
+Adds real time rate limit and trust score status to user profile page. Uses exactly the same unstyled pattern as existing Posts/Comments tabs. No new styling required.
+
+### Exact UI
+```
+[ Posts ] [ Comments ] [ ⭐ Stats ]
+
+Trust Score: 0.72 / 2.0
+Tier: Neutral
+
+📊 Current Limits:
+✅ Posts: 2 / 3 remaining
+✅ Comments: 31 / 36 remaining
+✅ Counter Lists: Unlimited
+
+🔄 Resets in: 35 minutes 42 seconds
+
+💡 Next tier at 1.0 trust: 4 posts/hour
+```
+
+### Implementation Requirements
+1. Add 3rd "Stats" tab button to existing tab bar
+2. Add 60 second auto-refresh interval
+3. Simple countdown timer display
+4. Uses exactly same unstyled plain HTML as existing tabs
+5. Only visible when viewing your own profile
+
+### Technical Notes
+- Backend API endpoint `/api/users/me/rate-limits` is already fully implemented
+- All calculations are done server side
+- No new state management required
+- Reuses existing profile page data fetching pattern
