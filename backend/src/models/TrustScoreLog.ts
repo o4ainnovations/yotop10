@@ -8,6 +8,8 @@ export interface ITrustScoreLog extends Document {
   old_score: number;
   new_score: number;
   version: number;
+  multiplier: number;
+  base_delta: number;
   created_at: Date;
 }
 
@@ -40,6 +42,14 @@ const trustScoreLogSchema = new Schema<ITrustScoreLog>(
       required: true,
     },
     version: {
+      type: Number,
+      required: true,
+    },
+    multiplier: {
+      type: Number,
+      required: true,
+    },
+    base_delta: {
       type: Number,
       required: true,
     },

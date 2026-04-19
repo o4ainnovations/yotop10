@@ -1,89 +1,119 @@
-# Implementation Plan: Phase 2 - Asymmetric Trust Score Weighting
+# Implementation Plan: Phase 3 - The Ladder Temporary Boost System
 **Date**: 2026-04-19
-**Status**: ⏳ Pending Implementation
-**Estimated Effort**: 1.5 hours
+**Status**: ✅ Phase 1 Complete | ✅ Phase 2 Complete | ⏳ Phase 3 Pending
+**Estimated Effort**: 2 hours
 
 ---
 
 ## Core Principles & Rationale
-This change fixes the single most fundamental flaw in the current trust system: the incentive paradox where the optimal strategy for users below 1.0 trust is to stop posting entirely.
+Even with asymmetric weighting, users at low trust still feel stuck. They see the low rate limit and give up before they ever get a chance to prove they can contribute good content.
 
-This is not a balance change. This is a behavioural correction. The system must always reward participation and never punish users for trying.
+The Ladder System is a temporary training wheels mechanism that gives users a clear, transparent, guaranteed path to earn more posting capacity immediately, without having to wait weeks for trust score increases. It vanishes completely and permanently once users become established.
 
 | Design Goal | Non-Negotiable Specification |
 |--------------|---------------|
-| ✅ No death spirals | It must always be mathematically possible to recover from any trust score |
-| ✅ No permanent elite | No user can stay at maximum trust forever |
-| ✅ Natural gravity | All users are pulled towards neutral over time |
-| ✅ Incentive alignment | At every possible trust value, the optimal strategy is to post the highest quality content you can |
+| ✅ No permanent advantages | Boosts are temporary and expire. No permanent rewards. |
+| ✅ Zero risk | Nothing done during a boost can ever affect base trust score. Not up, not down. |
+| ✅ Absolute transparency | Every trigger, every rule, every value is published and public. |
+| ✅ No gaming possible | System cannot be farmed faster than 1 boost per 12 hours. |
+| ✅ Vanishing act | System is 100% invisible to users above 1.2 trust. |
 
 ---
 
-## Exact Weighting Specification
-All delta values remain exactly 0.1 base. Only the multipliers change based on current trust score.
+## Exact System Specification
+The entire system is hardcoded. No algorithms. No machine learning. No secrets.
 
-| Trust Score Range | Approval Multiplier | Rejection Multiplier | Operating Mode |
-|-------------------|---------------------|----------------------|----------------|
-| **0.000 → 0.999** | 2.0x | 0.5x | ✅ Forgiving Training Mode |
-| **1.000 → 1.499** | 1.0x | 1.0x | ⚖️ Fair Neutral Mode |
-| **1.500 → 2.000** | 0.5x | 2.0x | 🔒 Strict Trusted Mode |
+### Boundary Rule (Non Negotiable)
+| Trust Score Range | Ladder System Status |
+|--------------------|----------------------|
+| 0.000 → 1.199 | ✅ Fully active, fully visible |
+| 1.200 → 2.000 | ❌ 100% disabled, completely invisible |
+
+Users will never know this system exists once they cross 1.2 trust.
+
+---
+
+### Exact Hardcoded Boost Triggers
+All values are public. All values are permanent.
+
+| Action | Boost Granted | Notes |
+|--------|---------------|-------|
+| ✅ Your comment receives 3+ fire reactions | +1 post, +5 comments | Works at any user count. 3 is a very low bar that works even on launch day. |
+| ✅ You receive 2+ replies to your comment | +1 post, +5 comments | Cannot be farmed by yourself. Requires actual engagement from other users. |
+| ✅ You submit a counter list | +2 posts, +10 comments | **Always granted immediately**. No approval required. No votes needed. |
+| ✅ Your post is approved by admin | +3 posts, +15 comments | Granted the exact millisecond approval happens. |
+| ❌ Post gets views | Never | Too easy to farm |
+| ❌ Post gets fires | Never | Too easy to farm |
+
+---
+
+### Anti-Farming Rules
+Also fully public and documented:
+1. **Maximum one boost per 12 hours per user**. No stacking. No exceptions.
+2. Boosts are purely additive to your base rate limit. They never multiply.
+3. Boosts expire after exactly 90 minutes. No rollover. No extensions.
+4. **Zero trust score impact**: Nothing you do during a boost ever affects your base trust score. Not positive. Not negative. No exceptions.
 
 ---
 
 ## Edge Case Behaviour Requirements
-These are non negotiable requirements that must be tested.
 
-### At Exactly 1.0
-- When moving **up** into 1.0: use 1.0x weights immediately
-- When moving **down** into 1.0: use 2.0/0.5 weights immediately
-- No hysteresis at this boundary
+### At Exactly 1.2 Trust
+- If a user has an active boost when they cross 1.2 trust: the boost remains active until it expires
+- Once expired: the system is permanently disabled for that user
+- They will never see another boost, notification, or reference to the system ever again
 
-### At Exactly 1.5
-- When moving **up** into 1.5: use 0.5/2.0 weights immediately
-- When moving **down** into 1.5: use 1.0x weights immediately
-- No hysteresis at this boundary
+### Boost Eligibility
+- You can earn a boost even if you are currently at your rate limit
+- Boosts are added immediately. If you were blocked you can immediately post again
+- You cannot earn another boost until your current active boost expires
 
-### At Minimum Trust (0.1)
-- A user at 0.1 can never go lower than 0.1, no matter how many rejections they get
-- 4 approved posts will take them from 0.1 → 0.9
-- 16 rejected posts will take them from 0.9 → 0.1
-
-### At Maximum Trust (2.0)
-- A user at 2.0 can never go higher than 2.0, no matter how many approvals they get
-- 4 approved posts will take them from 1.5 → 1.7
-- 4 rejected posts will take them from 2.0 → 1.2
-
-### Rolling Window Behaviour
-All weighting rules apply equally to every single action in the rolling 50 post window. This means:
-- A user who was at 0.2 when they got a rejection will only take 0.05 penalty, even if they later rise to 2.0 trust
-- Weights are applied at the time the action happens. They are never retroactively changed.
+### Troll Behaviour
+Trolls will farm this. This is intentional.
+- The absolute maximum any troll can ever get is +3 posts once every 12 hours
+- To earn that boost they must produce at least one comment that 3 other people actually liked
+- You get one decent comment from them for every 3 spam posts. This is an acceptable tradeoff.
 
 ---
 
 ## Technical Implementation Requirements
-No database schema changes. No migrations. No API changes.
 
-1. **Backwards Compatibility Guarantee**:
-   - All existing trust score values remain completely valid
-   - No recalculation of historical trust scores is required
-   - The change only affects actions that happen after deployment
+### Data Model Changes
+Add these 3 fields to the User model:
+```
+active_boost: {
+  posts: number,
+  comments: number,
+  expires_at: Date
+}
+last_boost_granted_at: Date
+```
 
-2. **Atomicity Requirements**:
-   - The entire weighting calculation must happen inside the same database transaction as the trust score update
-   - No partial updates allowed
-   - Optimistic concurrency control must remain fully functional
+No other schema changes required. No migrations required.
 
-3. **Audit Log Requirements**:
-   - Every trust score delta must be logged with the multiplier that was applied
-   - Audit log must include: currentTrust, action, multiplier, delta, newTrust
-   - No exceptions. All changes must be fully auditable.
+### Rate Limit Integration
+Boost calculation happens at the very end of rate limit calculation:
+```
+base_limit = calculateEffectivePostLimit(trust_score)
+active_boost = getActiveBoostIfAny(user)
 
-4. **Zero User Visibility**:
-   - This change must be completely invisible to users
-   - No notifications
-   - No UI changes
-   - No announcements
-   - Users must only notice that the system now feels fair
+final_limit = base_limit + active_boost.posts
+```
+
+Boosts are always added, never multiplied.
+
+### Notification Requirements
+When a user earns a boost:
+- Real time toast notification:
+  > ✅ Your comment received 3 fires. You earned +1 post boost for 90 minutes.
+- Countdown timer visible on profile stats tab
+- Exact remaining time always displayed
+
+### Transparency Requirements
+1. Full list of all triggers and values visible on profile stats tab
+2. Exact countdown timer until next boost eligibility
+3. Public immutable log of all boosts granted at `/boosts`
+4. No admin controls. No manual boosts. No secret adjustments.
 
 ---
 
@@ -92,83 +122,71 @@ Every single one of these must be tested before deployment:
 
 | Test Case | Starting Trust | Action | Expected Result |
 |-----------|----------------|--------|-----------------|
-| 1 | 0.1 | Approve | 0.3 |
-| 2 | 0.1 | Reject | 0.075 → clamped to 0.1 |
-| 3 | 0.5 | Approve | 0.7 |
-| 4 | 0.5 | Reject | 0.45 |
-| 5 | 0.9 | Approve | 1.1 |
-| 6 | 0.9 | Reject | 0.85 |
-| 7 | 1.0 | Approve | 1.1 |
-| 8 | 1.0 | Reject | 0.9 |
-| 9 | 1.4 | Approve | 1.5 |
-| 10 | 1.4 | Reject | 1.3 |
-| 11 | 1.5 | Approve | 1.55 |
-| 12 | 1.5 | Reject | 1.3 |
-| 13 | 2.0 | Approve | 2.0 |
-| 14 | 2.0 | Reject | 1.8 |
+| 1 | 0.5 | Comment gets 3 fires | +1 post boost granted for 90 minutes |
+| 2 | 0.5 | Comment gets 2 replies | +1 post boost granted for 90 minutes |
+| 3 | 0.5 | Submit counter list | +2 post boost granted immediately |
+| 4 | 0.5 | Post gets approved | +3 post boost granted immediately |
+| 5 | 0.5 | Earn boost, then earn second boost 1 hour later | Second boost rejected |
+| 6 | 0.5 | Earn boost, then get post rejected during boost | Trust score remains completely unchanged |
+| 7 | 1.199 | Earn boost | Boost granted normally |
+| 8 | 1.201 | Perform all boost actions | No boost granted. System completely invisible. |
+| 9 | 1.199 with active boost | Cross 1.2 trust | Boost continues until expiry, then system vanishes forever |
 
 ---
 
 ## Rollout & Deployment Strategy
 1. **Pre Deployment**:
-   - Run all unit tests
-   - Run full production database snapshot simulation
-   - Verify no existing user's trust score would be negatively affected by this change
+   - Deploy database schema change first
+   - All new fields nullable, default null
+   - System disabled by default
 
-2. **Deployment**:
-   - Deploy during low traffic period
-   - No feature flag required. Deploy live immediately.
-   - This is a server side only change. No frontend deployment required.
+2. **Gradual Rollout**:
+   - Deploy with 10% sample of users for 24 hours
+   - Monitor boost grant rate
+   - Monitor submission rate
+   - If no issues: enable for 100% of users
 
-3. **Canary Period**:
-   - Monitor for 24 hours
-   - Check for any version conflict errors
-   - Check audit log for correct delta calculation
+3. **Zero User Announcement**:
+   - Users will discover the system naturally
+   - No blog post. No changelog entry.
+   - The system speaks for itself.
 
 ---
 
 ## Post Deployment Monitoring
-For 7 days after deployment monitor:
-1. **Trust score distribution graph**
-   - Expected: Users will start moving up from the 0.1-0.3 range
-   - Expected: Fewer users permanently stuck at minimum trust
-   - Expected: Fewer users permanently stuck at maximum trust
-
-2. **Submission rate**:
-   - Expected: 20-30% increase in post submission volume from low trust users
-   - If this goes higher than 50% roll back immediately
-
-3. **Approval rate**:
-   - Expected: Approval rate should stay approximately the same
-   - If approval rate drops by more than 10% roll back immediately
+For 14 days after deployment monitor:
+1. **Boost grant rate**: Expected ~5-10 boosts per 100 active users
+2. **Submission rate increase**: Expected 20-30% increase from low trust users
+3. **Approval rate**: Should stay within 10% of previous levels
+4. **Trust score migration**: Users should start moving past 1.2 trust faster
 
 ---
 
 ## Acceptance Criteria
-✅ All unit tests pass  
-✅ All 14 edge case tests pass  
-✅ Trust score calculation remains perfectly accurate  
-✅ No user visible changes  
-✅ Audit logs correctly record all multipliers  
-✅ Optimistic concurrency control continues to work  
+✅ All 9 test cases pass  
+✅ No user visible changes for users above 1.2  
+✅ No trust score changes from actions taken during boosts  
+✅ No way to earn more than one boost per 12 hours  
+✅ All triggers work exactly as specified  
+✅ Full audit log of all boosts granted  
 ✅ No increase in spam volume  
-✅ Zero support tickets about trust score changes
+✅ Zero support tickets about the system
 
 ---
 
 ## Failure Rollback Plan
 If any issues are detected:
-1. Revert the single commit
-2. Deploy immediately
-3. No data corruption possible
-4. All trust scores will automatically return to previous behaviour
-5. No data loss. No permanent changes.
+1. Change single config flag to disable system globally
+2. All active boosts expire normally
+3. No permanent changes made to any user state
+4. Can be disabled in 10 seconds without deployment
 
 ---
 
 ## Success Metrics
 This change is successful if after 30 days:
-- 70% fewer users are permanently stuck below 0.3 trust
-- Post submission rate from new users increases by 20%
+- 30% more users cross the 1.2 trust threshold per week
+- Post submission rate from new users increases by 25%
 - Approval rate remains within 5% of previous levels
-- Zero support tickets about unfair trust score changes
+- Fewer than 1% of users hit the 12 hour boost cooldown
+- Zero complaints about the system feeling unfair

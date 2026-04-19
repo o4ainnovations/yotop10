@@ -42,16 +42,37 @@ export const calculateTrustScore = async (userId: string, postId: string, action
   const rawScore = BASE_TRUST + pos - neg;
 
   // Bayesian smoothing for cold start
-  const weightedScore = ((CONFIDENCE_CONSTANT * BASE_TRUST) + (rawScore * totalReviewed)) / (CONFIDENCE_CONSTANT + totalReviewed);
+  const rawWeighted = ((CONFIDENCE_CONSTANT * BASE_TRUST) + (rawScore * totalReviewed)) / (CONFIDENCE_CONSTANT + totalReviewed);
 
+  // Calculate base delta from raw calculation
+  const baseDelta = rawWeighted - oldScore;
+  
+  // Apply asymmetric weighting based on current trust score
+  let multiplier: number;
+  let delta: number;
+  
+  if (oldScore < 1.0) {
+    // Forgiving mode: approvals count double, rejections count half
+    multiplier = action === 'approve' ? 2.0 : 0.5;
+    delta = baseDelta * multiplier;
+  } else if (oldScore >= 1.0 && oldScore < 1.5) {
+    // Neutral mode: equal weight
+    multiplier = 1.0;
+    delta = baseDelta;
+  } else {
+    // Strict mode: approvals count half, rejections count double
+    multiplier = action === 'approve' ? 0.5 : 2.0;
+    delta = baseDelta * multiplier;
+  }
+  
+  // Calculate final score with weighted delta
+  const adjustedScore = oldScore + delta;
+  
   // Clamp to valid range
-  const newScore = Math.max(MIN_TRUST, Math.min(MAX_TRUST, weightedScore));
+  const finalScore = Math.max(MIN_TRUST, Math.min(MAX_TRUST, adjustedScore));
 
   // Increment version for optimistic locking
   const newVersion = currentVersion + 1;
-
-  // Calculate delta for audit log
-  const delta = newScore - oldScore;
 
   // Start transaction - atomic update
   const session = await User.startSession();
@@ -65,7 +86,7 @@ export const calculateTrustScore = async (userId: string, postId: string, action
           trust_version: currentVersion 
         },
         {
-          trust_score: newScore,
+          trust_score: finalScore,
           trust_version: newVersion,
           last_50_reviews: user.last_50_reviews,
         },
@@ -83,15 +104,17 @@ export const calculateTrustScore = async (userId: string, postId: string, action
         action,
         delta,
         old_score: oldScore,
-        new_score: newScore,
+        new_score: finalScore,
         version: newVersion,
+        multiplier,
+        base_delta: baseDelta,
       }], { session });
     });
   } finally {
     await session.endSession();
   }
 
-  return newScore;
+  return finalScore;
 };
 
 
