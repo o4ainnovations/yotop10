@@ -11,7 +11,8 @@
     "seed:categories": "tsx src/scripts/seedCategories.ts",
     "seed:posts": "tsx src/scripts/seedPosts.ts",
     "generate-admin-token": "node dist/scripts/generateAdminToken.js",
-    "seed-categories": "tsx src/scripts/seedCategories.ts"
+    "seed-categories": "tsx src/scripts/seedCategories.ts",
+    "test:routes": "jest test/routes.test.ts"
   },
   "dependencies": {
     "@elastic/elasticsearch": "^8.11.0",

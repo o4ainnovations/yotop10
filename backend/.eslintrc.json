@@ -17,6 +17,12 @@
       {
         "argsIgnorePattern": "^_"
       }
-    ]
+    ],
+    "no-restricted-imports": ["error", {
+      "patterns": [{
+        "group": ["**/routes/*"],
+        "message": "Routes directory may only contain express router files"
+      }]
+    }]
   }
 }

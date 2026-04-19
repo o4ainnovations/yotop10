@@ -34,28 +34,70 @@ app.get('/api/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// API Routes (to be implemented)
-import authRoutes from './routes/auth';
-import usersRoutes from './routes/users';
-import postsRoutes from './routes/posts';
-import listingsRoutes from './routes/listings';
-import categoriesRoutes from './routes/categories';
-import searchRoutes from './routes/search';
-import reviewsRoutes from './routes/reviews';
-import commentsRoutes from './routes/comments';
-import reactionsRoutes from './routes/reactions';
-import adminRoutes from './routes/admin';
+/*****************************************************************************
+ * IF YOU ARE HERE AT 3AM DEBUGGING A ROUTE THAT WONT LOAD:
+ *
+ * ADD YOUR NEW ROUTE TO THE ROUTE_ORDER ARRAY BELOW.
+ *
+ * THIS IS THE ONLY PLACE YOU EVER NEED TO DO THIS.
+ *
+ * IF YOU DO NOT ADD IT HERE IT WILL NOT BE MOUNTED.
+ *
+ ****************************************************************************/
 
-app.use('/api/auth', authRoutes);
-app.use('/api/users', usersRoutes);
-app.use('/api/posts', postsRoutes);
-app.use('/api/listings', listingsRoutes);
-app.use('/api/categories', categoriesRoutes);
-app.use('/api/search', searchRoutes);
-app.use('/api/reviews', reviewsRoutes);
-app.use('/api', commentsRoutes);
-app.use('/api/reactions', reactionsRoutes);
-app.use('/api/admin', adminRoutes);
+import fs from 'fs';
+import path from 'path';
+import { adminAuthMiddleware } from './lib/adminAuth';
+
+// EXPLICIT MOUNT ORDER. NEW ROUTES ARE ADDED HERE.
+// This is the ONLY manual step ever required.
+const ROUTE_ORDER = [
+  'auth',
+  'categories',
+  'comments',
+  'listings',
+  'posts',
+  'reactions',
+  'reviews',
+  'search',
+  'users',
+  'admin', // Admin always mounted last
+];
+
+const VALID_ROUTE_FILENAME = /^[a-z_]+\.ts$/;
+
+// Validate all declared routes exist on filesystem (works for both .ts and .js)
+const routesDir = path.join(__dirname, 'routes');
+for (const routeName of ROUTE_ORDER) {
+  if (!fs.existsSync(path.join(routesDir, `${routeName}.ts`)) && !fs.existsSync(path.join(routesDir, `${routeName}.js`))) {
+    throw new Error(`Route declared but not found: ${routeName}`);
+  }
+}
+
+// Validate no extra routes exist in filesystem that are not mounted
+const files = fs.readdirSync(routesDir);
+for (const file of files) {
+  if (!VALID_ROUTE_FILENAME.test(file)) continue;
+  const routeName = path.basename(file, '.ts');
+  if (!ROUTE_ORDER.includes(routeName)) {
+    throw new Error(`Route file exists but not declared: ${file}`);
+  }
+}
+
+// Mount routes in explicit order
+for (const routeName of ROUTE_ORDER) {
+  const router = require(`./routes/${routeName}`).default;
+  
+  if (routeName === 'admin') {
+    app.use(`/api/${routeName}`, adminAuthMiddleware, router);
+  } else {
+    app.use(`/api/${routeName}`, router);
+  }
+  
+  console.log(`✅ Mounted route: /api/${routeName}`);
+}
+
+console.log('\n🚀 All routes mounted successfully\n');
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
