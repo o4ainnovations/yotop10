@@ -86,6 +86,7 @@ for (const file of files) {
 
 // Mount routes in explicit order
 for (const routeName of ROUTE_ORDER) {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const router = require(`./routes/${routeName}`).default;
   
   if (routeName === 'admin') {
