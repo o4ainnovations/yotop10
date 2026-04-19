@@ -8,6 +8,7 @@ import { Post } from '../models/Post';
 import { ListItem } from '../models/ListItem';
 import { SparkThreshold, getFloorMultiplier, FLOOR_MULTIPLIERS } from '../models/SparkThreshold';
 import { createClient } from 'redis';
+import { calculateEffectiveCommentLimit } from '../lib/rateLimit';
 
 const router: Router = Router();
 
@@ -292,14 +293,13 @@ const startThresholdCron = () => {
 
 
 
-// Check rate limit for comments (50 per hour per fingerprint)
+// Check rate limit for comments (20 per hour per fingerprint)
 const checkCommentRateLimit = async (fingerprint: string, trustScore: number = 1.0): Promise<{ allowed: boolean; remaining: number; resetTime: number }> => {
   try {
     const redis = await getRedisClient();
     const key = `rate_limit:comments:${fingerprint}`;
     const windowMs = 60 * 60 * 1000; // 1 hour
-    const baseLimit = 50; // 50 comments per hour base
-    const limit = Math.floor(baseLimit * trustScore);
+    const limit = calculateEffectiveCommentLimit(trustScore);
 
     const current = await redis.get(key);
     const now = Date.now();

@@ -8,6 +8,7 @@ import { User } from '../models/User';
 import { Category } from '../models/Category';
 import { Comment } from '../models/Comment';
 import { createClient } from 'redis';
+import { calculateEffectivePostLimit } from '../lib/rateLimit';
 
 const router: Router = Router();
 
@@ -54,13 +55,12 @@ const generateUserId = (): string => {
 };
 
 // Check rate limit (4 posts per hour per fingerprint)
-const checkRateLimit = async (fingerprint: string, trustScore: number = 1.0): Promise<{ allowed: boolean; remaining: number; resetTime: number }> => {
+const checkRateLimit = async (fingerprint: string, trustScore: number = 1.0, postType?: string): Promise<{ allowed: boolean; remaining: number; resetTime: number; maxRequests: number }> => {
   try {
     const redis = await getRedisClient();
     const key = `rate_limit:posts:${fingerprint}`;
     const windowMs = 60 * 60 * 1000; // 1 hour
-    const baseMaxRequests = 4;
-    const maxRequests = Math.floor(baseMaxRequests * trustScore);
+    const maxRequests = calculateEffectivePostLimit(trustScore, postType);
 
     const now = Date.now();
     const windowStart = now - windowMs;
@@ -75,7 +75,7 @@ const checkRateLimit = async (fingerprint: string, trustScore: number = 1.0): Pr
       // Calculate reset time as now + windowMs (since we can't easily get the oldest entry)
       const resetTime = now + windowMs;
       await redis.disconnect();
-      return { allowed: false, remaining: 0, resetTime };
+      return { allowed: false, remaining: 0, resetTime, maxRequests };
     }
 
     // Add current request
@@ -83,11 +83,12 @@ const checkRateLimit = async (fingerprint: string, trustScore: number = 1.0): Pr
     await redis.expire(key, Math.ceil(windowMs / 1000));
 
     await redis.disconnect();
-    return { allowed: true, remaining: maxRequests - requestCount - 1, resetTime: now + windowMs };
+    return { allowed: true, remaining: maxRequests - requestCount - 1, resetTime: now + windowMs, maxRequests };
   } catch (error) {
     console.error('Rate limit check failed:', error);
     // If Redis fails, allow the request (fail open)
-    return { allowed: true, remaining: Math.floor(3 * trustScore), resetTime: Date.now() + 60 * 60 * 1000 };
+    const fallbackLimit = Math.floor(3 * trustScore);
+    return { allowed: true, remaining: fallbackLimit, resetTime: Date.now() + 60 * 60 * 1000, maxRequests: fallbackLimit };
   }
 };
 
@@ -359,10 +360,10 @@ router.post('/', validatePostSubmission, async (req: Request, res: Response) => 
     }
     
     // Check rate limit with trust score multiplier - use authenticated fingerprint from header
-    const rateLimitResult = await checkRateLimit(req.user!.device_fingerprint, effectiveTrustScore);
+    const rateLimitResult = await checkRateLimit(req.user!.device_fingerprint, effectiveTrustScore, post_type);
     if (!rateLimitResult.allowed) {
       return res.status(429).json({
-        error: 'Rate limit exceeded. You can submit 4 posts per hour.',
+        error: `Rate limit exceeded. You can submit ${rateLimitResult.maxRequests ?? 4} posts per hour.`,
         resetTime: rateLimitResult.resetTime,
       });
     }

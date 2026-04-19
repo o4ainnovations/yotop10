@@ -1,241 +1,174 @@
-# Implementation Plan: Rate Limit Trust Score Fix
+# Implementation Plan: Phase 2 - Asymmetric Trust Score Weighting
 **Date**: 2026-04-19
-**Target**: Production deployment 2026-04-19
-**Approach**: 2D Rate Limiting with Soft Gradient Floor
+**Status**: ⏳ Pending Implementation
+**Estimated Effort**: 1.5 hours
 
 ---
 
-## Problem Statement
-Current implementation allows users with trust score < 0.25 to get 0 posts/hour, effectively permanently and silently banned. This violates documented behavior and creates poor user experience.
+## Core Principles & Rationale
+This change fixes the single most fundamental flaw in the current trust system: the incentive paradox where the optimal strategy for users below 1.0 trust is to stop posting entirely.
+
+This is not a balance change. This is a behavioural correction. The system must always reward participation and never punish users for trying.
+
+| Design Goal | Non-Negotiable Specification |
+|--------------|---------------|
+| ✅ No death spirals | It must always be mathematically possible to recover from any trust score |
+| ✅ No permanent elite | No user can stay at maximum trust forever |
+| ✅ Natural gravity | All users are pulled towards neutral over time |
+| ✅ Incentive alignment | At every possible trust value, the optimal strategy is to post the highest quality content you can |
 
 ---
 
-## Selected Approach
-Combination of **soft gradient floor** + **hard minimum guarantee** (2D rate limiting) to produce exactly this behavior:
+## Exact Weighting Specification
+All delta values remain exactly 0.1 base. Only the multipliers change based on current trust score.
 
-| Raw Trust | Effective Trust | Rate Limit |
-|-----------|-----------------|------------|
-| 0.1       | 0.55            | 2 posts/hr |
-| 0.3       | 0.65            | 2 posts/hr |
-| 0.5       | 0.75            | 3 posts/hr |
-| 0.7       | 0.85            | 3 posts/hr |
-| 0.9       | 0.95            | 3 posts/hr |
-| 1.0       | 1.0             | 4 posts/hr |
-| 2.0       | 2.0             | 8 posts/hr |
+| Trust Score Range | Approval Multiplier | Rejection Multiplier | Operating Mode |
+|-------------------|---------------------|----------------------|----------------|
+| **0.000 → 0.999** | 2.0x | 0.5x | ✅ Forgiving Training Mode |
+| **1.000 → 1.499** | 1.0x | 1.0x | ⚖️ Fair Neutral Mode |
+| **1.500 → 2.000** | 0.5x | 2.0x | 🔒 Strict Trusted Mode |
 
 ---
 
-## Implementation Steps
+## Edge Case Behaviour Requirements
+These are non negotiable requirements that must be tested.
 
-### Phase 1: Core Library Creation (30 mins)
-1. **Create new file**: `backend/src/lib/rateLimit.ts`
-2. Implement `calculateEffectivePostLimit()` function
-3. Implement `calculateEffectiveCommentLimit()` function
-4. Implement `getCurrentRateLimitStatus()` function for profile
-5. Export all constants and functions
-6. Add unit tests
+### At Exactly 1.0
+- When moving **up** into 1.0: use 1.0x weights immediately
+- When moving **down** into 1.0: use 2.0/0.5 weights immediately
+- No hysteresis at this boundary
 
-### Phase 2: Integration (15 mins)
-1. Update `posts.ts:63` to use the new function
-2. Update `comments.ts:302` to use the new function
-3. **Add exception**: Counter-list post type has NO rate limit
-4. Verify admin overrides are applied **after** this calculation
-5. Update rate limit error messages to show actual limit
+### At Exactly 1.5
+- When moving **up** into 1.5: use 0.5/2.0 weights immediately
+- When moving **down** into 1.5: use 1.0x weights immediately
+- No hysteresis at this boundary
 
-### Phase 3: Profile Stats Endpoint (20 mins)
-1. Add GET `/api/users/me/rate-limits` endpoint
-2. Returns real-time remaining counts for all actions
-3. Calculates remaining posts, comments, reactions
-4. Returns reset timestamps and current trust score
+### At Minimum Trust (0.1)
+- A user at 0.1 can never go lower than 0.1, no matter how many rejections they get
+- 4 approved posts will take them from 0.1 → 0.9
+- 16 rejected posts will take them from 0.9 → 0.1
 
-### Phase 4: Frontend Profile Stats Tab (25 mins)
-1. Add "Stats" tab to user profile page
-2. Real-time auto-updating counters:
-   - Posts remaining this hour
-   - Comments remaining this hour
-   - Reactions remaining this hour
-3. Shows current trust score and tier
-4. Shows reset countdown timer
+### At Maximum Trust (2.0)
+- A user at 2.0 can never go higher than 2.0, no matter how many approvals they get
+- 4 approved posts will take them from 1.5 → 1.7
+- 4 rejected posts will take them from 2.0 → 1.2
 
-### Phase 5: Validation & Testing (20 mins)
-1. Manual test all trust score tiers
-2. Verify admin overrides still work correctly
-3. Verify edge cases (trust 0.0, trust 0.249, trust 0.251)
-4. Verify counter lists are 100% unlimited
-5. Verify profile stats update correctly after each action
-6. Run full test suite
-
-### Phase 6: Deployment (10 mins)
-1. Deploy to staging
-2. Monitor rate limit metrics for 1 hour
-3. Deploy to production
-4. Add monitoring alert for users hitting rate limit floor
+### Rolling Window Behaviour
+All weighting rules apply equally to every single action in the rolling 50 post window. This means:
+- A user who was at 0.2 when they got a rejection will only take 0.05 penalty, even if they later rise to 2.0 trust
+- Weights are applied at the time the action happens. They are never retroactively changed.
 
 ---
 
-## Exact Code Changes
+## Technical Implementation Requirements
+No database schema changes. No migrations. No API changes.
 
-### 1. backend/src/lib/rateLimit.ts
-```typescript
-/**
- * 2D Rate Limiting with Soft Gradient Floor
- * 
- * Two independent constraints:
- * 1. Soft gradient mapping for trust < 1.0
- * 2. Hard minimum guarantee that never goes below 2 posts/hour
- * 
- * No silent bans, no hard discontinuities, preserves full incentive gradient.
- */
+1. **Backwards Compatibility Guarantee**:
+   - All existing trust score values remain completely valid
+   - No recalculation of historical trust scores is required
+   - The change only affects actions that happen after deployment
 
-export const BASE_POSTS_PER_HOUR = 4;
-export const BASE_COMMENTS_PER_HOUR = 50;
-export const MINIMUM_POSTS_PER_HOUR = 2;
-export const MINIMUM_COMMENTS_PER_HOUR = 10;
+2. **Atomicity Requirements**:
+   - The entire weighting calculation must happen inside the same database transaction as the trust score update
+   - No partial updates allowed
+   - Optimistic concurrency control must remain fully functional
 
-export function calculateEffectivePostLimit(trustScore: number, postType?: string): number {
-  // Counter lists are ALWAYS UNLIMITED for all users
-  if (postType === 'counter_list') {
-    return 9999; // Effectively unlimited
-  }
+3. **Audit Log Requirements**:
+   - Every trust score delta must be logged with the multiplier that was applied
+   - Audit log must include: currentTrust, action, multiplier, delta, newTrust
+   - No exceptions. All changes must be fully auditable.
 
-  // Soft gradient mapping for low trust users
-  const effectiveTrust = trustScore < 1.0 
-    ? 0.5 + (trustScore * 0.5)
-    : trustScore;
-
-  const proportional = BASE_POSTS_PER_HOUR * effectiveTrust;
-  
-  // 2nd dimension: hard floor guarantee
-  return Math.max(MINIMUM_POSTS_PER_HOUR, Math.round(proportional));
-}
-
-export function calculateEffectiveCommentLimit(trustScore: number): number {
-  const effectiveTrust = trustScore < 1.0 
-    ? 0.5 + (trustScore * 0.5)
-    : trustScore;
-
-  const proportional = BASE_COMMENTS_PER_HOUR * effectiveTrust;
-  
-  return Math.max(MINIMUM_COMMENTS_PER_HOUR, Math.round(proportional));
-}
-```
-
-### 2. backend/src/routes/posts.ts
-```typescript
-import { calculateEffectivePostLimit } from '../lib/rateLimit';
-
-const checkRateLimit = async (fingerprint: string, trustScore: number = 1.0): Promise<{ allowed: boolean; remaining: number; resetTime: number }> => {
-  // ... existing setup ...
-  
-  const maxRequests = calculateEffectivePostLimit(trustScore);
-  
-  // ... rest of existing logic ...
-}
-```
-
-### 3. backend/src/routes/comments.ts
-```typescript
-import { calculateEffectiveCommentLimit } from '../lib/rateLimit';
-
-const checkCommentRateLimit = async (fingerprint: string, trustScore: number = 1.0): Promise<{ allowed: boolean; remaining: number; resetTime: number }> => {
-  // ... existing setup ...
-  
-  const limit = calculateEffectiveCommentLimit(trustScore);
-  
-  // ... rest of existing logic ...
-}
-```
-
-### 4. Error Message Fix
-Update posts.ts:365 error message to:
-```typescript
-error: `Rate limit exceeded. You can submit ${maxRequests} posts per hour.`,
-```
+4. **Zero User Visibility**:
+   - This change must be completely invisible to users
+   - No notifications
+   - No UI changes
+   - No announcements
+   - Users must only notice that the system now feels fair
 
 ---
 
-## Acceptance Criteria
-✅ No user ever gets 0 posts/hour for any trust score > 0
-✅ Users at trust 0.1 get exactly 2 posts/hour
-✅ Users at trust 0.5 get exactly 3 posts/hour
-✅ Users at trust 1.0 get exactly 4 posts/hour
-✅ Users at trust 2.0 get exactly 8 posts/hour
-✅ Admin rate limit overrides work exactly as before
-✅ All existing tests pass
-✅ Rate limit error messages show correct limit
+## Verification Test Plan
+Every single one of these must be tested before deployment:
+
+| Test Case | Starting Trust | Action | Expected Result |
+|-----------|----------------|--------|-----------------|
+| 1 | 0.1 | Approve | 0.3 |
+| 2 | 0.1 | Reject | 0.075 → clamped to 0.1 |
+| 3 | 0.5 | Approve | 0.7 |
+| 4 | 0.5 | Reject | 0.45 |
+| 5 | 0.9 | Approve | 1.1 |
+| 6 | 0.9 | Reject | 0.85 |
+| 7 | 1.0 | Approve | 1.1 |
+| 8 | 1.0 | Reject | 0.9 |
+| 9 | 1.4 | Approve | 1.5 |
+| 10 | 1.4 | Reject | 1.3 |
+| 11 | 1.5 | Approve | 1.55 |
+| 12 | 1.5 | Reject | 1.3 |
+| 13 | 2.0 | Approve | 2.0 |
+| 14 | 2.0 | Reject | 1.8 |
 
 ---
 
-## Rollback Plan
-If any issues are detected after deployment:
-1. Revert commit
-2. No data migration required
-3. All behavior returns to previous state immediately
+## Rollout & Deployment Strategy
+1. **Pre Deployment**:
+   - Run all unit tests
+   - Run full production database snapshot simulation
+   - Verify no existing user's trust score would be negatively affected by this change
 
----
+2. **Deployment**:
+   - Deploy during low traffic period
+   - No feature flag required. Deploy live immediately.
+   - This is a server side only change. No frontend deployment required.
 
-## User Profile Stats Feature
-### Endpoint Response Format
-`GET /api/users/me/rate-limits`
-```json
-{
-  "trust_score": 0.72,
-  "current_tier": "Neutral",
-  "limits": {
-    "posts": {
-      "total": 3,
-      "remaining": 2,
-      "reset_in_seconds": 2145
-    },
-    "comments": {
-      "total": 36,
-      "remaining": 31,
-      "reset_in_seconds": 2145
-    },
-    "counter_lists": {
-      "total": "Unlimited",
-      "remaining": "Unlimited",
-      "reset_in_seconds": null
-    }
-  }
-}
-```
-
-### Frontend Display
-Profile page tabs:
-1. Posts
-2. Comments
-3. ⭐ **Stats** (new)
-
-Stats tab shows:
-- Current trust score with progress bar to next tier
-- Live countdown timers for rate limit resets
-- Real-time remaining counts that update automatically after each action
-- Clear explanation of what each tier means
-
----
-
-## Unlimited Counter Lists Confirmation
-✅ **ALL USERS CAN SUBMIT UNLIMITED COUNTER LISTS**
-- No rate limit applies to counter_list post type
-- Works for every trust tier: Troll, Neutral, Scholar
-- No exceptions, no overrides
-- This is an explicit platform design decision
+3. **Canary Period**:
+   - Monitor for 24 hours
+   - Check for any version conflict errors
+   - Check audit log for correct delta calculation
 
 ---
 
 ## Post Deployment Monitoring
-- Monitor count of users hitting minimum rate limit
-- Monitor support tickets for rate limit complaints
-- Check trust score distribution changes after 7 days
-- Verify no increase in spam volume
-- Monitor counter list submission rate
-- Track profile stats page usage
+For 7 days after deployment monitor:
+1. **Trust score distribution graph**
+   - Expected: Users will start moving up from the 0.1-0.3 range
+   - Expected: Fewer users permanently stuck at minimum trust
+   - Expected: Fewer users permanently stuck at maximum trust
+
+2. **Submission rate**:
+   - Expected: 20-30% increase in post submission volume from low trust users
+   - If this goes higher than 50% roll back immediately
+
+3. **Approval rate**:
+   - Expected: Approval rate should stay approximately the same
+   - If approval rate drops by more than 10% roll back immediately
 
 ---
 
-## Long Term Improvements (Post 2.0)
-1. Add per-endpoint configurable limits
-2. Add trust score tier indicator in UI
-3. Add transparent rate limit status in user profile
-4. Add gradual warning system as users approach limits
+## Acceptance Criteria
+✅ All unit tests pass  
+✅ All 14 edge case tests pass  
+✅ Trust score calculation remains perfectly accurate  
+✅ No user visible changes  
+✅ Audit logs correctly record all multipliers  
+✅ Optimistic concurrency control continues to work  
+✅ No increase in spam volume  
+✅ Zero support tickets about trust score changes
+
+---
+
+## Failure Rollback Plan
+If any issues are detected:
+1. Revert the single commit
+2. Deploy immediately
+3. No data corruption possible
+4. All trust scores will automatically return to previous behaviour
+5. No data loss. No permanent changes.
+
+---
+
+## Success Metrics
+This change is successful if after 30 days:
+- 70% fewer users are permanently stuck below 0.3 trust
+- Post submission rate from new users increases by 20%
+- Approval rate remains within 5% of previous levels
+- Zero support tickets about unfair trust score changes

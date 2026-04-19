@@ -4,6 +4,8 @@ import { Post } from '../models/Post';
 import { Comment } from '../models/Comment';
 import { User } from '../models/User';
 import { isUsernameAvailable, recordUsernameChange } from '../lib/usernameService';
+import { calculateEffectivePostLimit, calculateEffectiveCommentLimit, RateLimitStatus } from '../lib/rateLimit';
+import { createClient } from 'redis';
 
 const router: Router = Router();
 
@@ -297,6 +299,86 @@ router.get('/me/history', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('GET /users/me/history error:', error);
     res.status(500).json({ error: 'Failed to fetch username history' });
+  }
+});
+
+/**
+ * GET /api/users/me/rate-limits
+ * Get current user rate limit status
+ */
+router.get('/me/rate-limits', async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+
+  try {
+    // Initialize Redis client locally
+    const getRedisClient = async () => {
+      const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+      const client = createClient({ url: redisUrl });
+      await client.connect();
+      return client;
+    };
+    
+    const redis = await getRedisClient();
+    const windowMs = 60 * 60 * 1000; // 1 hour
+    const now = Date.now();
+
+    // Calculate total limits
+    const postLimit = calculateEffectivePostLimit(req.user.trust_score);
+    const commentLimit = calculateEffectiveCommentLimit(req.user.trust_score);
+
+    // Get current counts
+    const postKey = `rate_limit:posts:${req.user.device_fingerprint}`;
+    const commentKey = `rate_limit:comments:${req.user.device_fingerprint}`;
+
+    const windowStart = now - windowMs;
+    
+    const [postEntries, commentEntries] = await Promise.all([
+      redis.zRangeByScore(postKey, windowStart.toString(), now.toString()),
+      redis.zRangeByScore(commentKey, windowStart.toString(), now.toString()),
+    ]);
+
+    // Determine tier
+    let currentTier: 'troll' | 'neutral' | 'scholar';
+    if (req.user.trust_score < 0.5) {
+      currentTier = 'troll';
+    } else if (req.user.trust_score >= 1.8) {
+      currentTier = 'scholar';
+    } else {
+      currentTier = 'neutral';
+    }
+
+    // Calculate reset times (next hour boundary)
+    const nextHour = Math.ceil(now / windowMs) * windowMs;
+    const resetInSeconds = Math.ceil((nextHour - now) / 1000);
+
+    const result: RateLimitStatus = {
+      trust_score: req.user.trust_score,
+      current_tier: currentTier,
+      limits: {
+        posts: {
+          total: postLimit,
+          remaining: Math.max(0, postLimit - postEntries.length),
+          reset_in_seconds: resetInSeconds,
+        },
+        comments: {
+          total: commentLimit,
+          remaining: Math.max(0, commentLimit - commentEntries.length),
+          reset_in_seconds: resetInSeconds,
+        },
+        counter_lists: {
+          total: 'Unlimited',
+          remaining: 'Unlimited',
+          reset_in_seconds: null,
+        },
+      },
+    };
+
+    res.json(result);
+  } catch (error) {
+    console.error('Error fetching rate limit status:', error);
+    res.status(500).json({ error: 'Failed to fetch rate limit status' });
   }
 });
 
