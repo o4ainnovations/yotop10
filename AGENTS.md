@@ -185,3 +185,4 @@ If context window resets or state is lost:
 4. EXPLICITLY STATE: "Recovered state. Completed X, working on Y next"
 5. Never rely on chat history as source of truth
 6. Never restart work from scratch without confirming existing changes
+7. ALWAYS use `git add .` when staging changes. Never specify individual files.

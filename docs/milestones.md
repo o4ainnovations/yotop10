@@ -29,7 +29,7 @@ This is the simplified roadmap based on the [revert.md](./revert.md) plan. The p
   - Example: `a_9Gh7` → `a_gojominitia`, `a_alphax5`, `a_z` (any length, alphanumeric only)
   - Only the `a_` prefix is mandatory
 - **Scholar Status Upgrade**: Users with Trust Score ≥ 1.8 automatically lose the `a_` prefix completely. Usernames become fully custom.
-- **Profile Page**: `/a_XXXX` shows all posts (Approved/Rejected/Pending with badges)
+- **Profile Page**: `/a/[username]` shows all posts (Approved/Rejected/Pending with badges)
 
 ### Device Fingerprinting
 Track anonymous users using:
@@ -42,19 +42,21 @@ Track anonymous users using:
 - Installed fonts (font detection)
 
 ### Rate Limiting (Per User, Not IP)
-| Action | Limit |
-|-------|-------|
-| General Comments | 50 per hour per user |
-| Item-Anchored Comments | 45 per hour per user |
-| Posts | 4 posts per hour per user |
-| Burst Protection | Max 5 comments per 5 minutes |
+All limits use 2D soft gradient floor algorithm:
+| Action | Base Limit | Guaranteed Minimum | Trust Multiplier Range |
+|-------|-------|---------------------|------------------------|
+| General Comments | 20 per hour | 10 per hour | 0.5x - 2.0x |
+| Item-Anchored Comments | 25 per hour | 12 per hour | 0.5x - 2.0x |
+| Posts | 4 per hour | 2 per hour | 0.5x - 2.0x |
+| Counter Lists | Unlimited | Unlimited | Always unlimited |
+| Burst Protection | Max 5 comments per 5 minutes | | |
 
 ### Shadow Trust Score
-| User Type | Last 5 Posts | Comment Limit Multiplier |
-|-----------|--------------|------------------------|
-| Scholar | ≥7 approved | 2x (40/hr) |
-| Neutral | Mixed | 1x (20/hr) |
-| Troll | ≤3 rejected | 0.1x (2/hr) |
+| User Type | Trust Score Range | Rate Limit Multiplier |
+|-----------|-------------------|------------------------|
+| Scholar | 1.8 - 2.0 | 2x |
+| Neutral | 0.5 - 1.79 | 1x |
+| Troll | 0.1 - 0.49 | 0.5x (minimum guaranteed) |
 
 ---
 
@@ -81,14 +83,6 @@ Track anonymous users using:
 - [ ] MongoDB indexes for performance
 - [x] Seed 10 parent + 300 child categories
 
-### M3 — Anonymous Post Submission
-- [ ] `POST /api/posts` — Submit post (no auth)
-  - Body: `{ title, post_type (MVP: top_list only), intro, category_id (EXACTLY 1), items, author_display_name }`
-  - All posts default to `pending_review`
-  - Generate `any_XXXX` username from device fingerprint
-  - Rate limit: 4 posts/hour per fingerprint
-  - Other post types (this_vs_that, who_is_better, etc.) coming post-MVP
-
 ### M4 — Public Feed
 - [ ] `GET /api/posts` — Approved posts only
   - Filter: `status=approved`
@@ -110,9 +104,10 @@ Track anonymous users using:
 - [x] `POST /api/posts` — Submit post (no auth)
   - Body: `{ title, post_type (MVP: top_list only), intro, category_id (EXACTLY 1), items, author_display_name }`
   - All posts default to `pending_review`
-  - Generate `any_XXXX` username from device fingerprint
-  - Rate limit: 4 posts/hour per fingerprint
+  - Generate `a_XXXX` username from device fingerprint
+  - Rate limit: 2-8 posts/hour per fingerprint (trust score based)
   - Other post types (this_vs_that, who_is_better, etc.) coming post-MVP
+  - ✅ Counter lists are UNLIMITED for all users
 
 ### M3.1 — Title Similarity Check (SEO & Quality Control)
 [ ] **Title Similarity Engine**
@@ -352,7 +347,7 @@ This is the standard industry solution for this exact problem. There is no "bett
 - [ ] Charts/graphs: Posts over time, Comments over time, Top categories
 - [ ] Quick actions: Go to review queue, Create category
 
-#### M10.3 — Review Queue (Pending Posts) ✅ 100% IMPLEMENTED
+#### M10.3 — Review Queue (Pending Posts) ✅ 100% COMPLETE
 
 > **Moderation Scaling Roadmap**:
 > 
@@ -754,42 +749,51 @@ These patterns are required to prevent catastrophic failure modes at scale. Must
 
 ---
 
-### 🔴 M11.D: Trust-Aware Rate Limiting
+### ✅ M11.D: Trust-Aware Rate Limiting
 **Purpose**: All rate limits are dynamically adjusted based on user trust score.
 
 **Specification**:
-- [ ] **Base limits remain exactly as specified**:
-  - Posts: 4 per hour
-  - General comments: 50 per hour
-  - Item-anchored comments: 45 per hour
-- [ ] **Multiplier application**:
+- [x] **Base limits**:
+  - Posts: 4 per hour base
+  - General comments: 20 per hour base
+  - Item-anchored comments: 25 per hour base
+- [x] **2D Soft Gradient Algorithm**:
+  ```javascript
+  effective_trust = trust < 1.0 
+    ? 0.5 + (trust * 0.5)    // Soft gradient mapping
+    : trust
+
+  effective_limit = max(MINIMUM_GUARANTEE, round(base_limit * effective_trust))
   ```
-  effective_limit = floor(base_limit * user.trust_score)
-  ```
-- [ ] **Edge cases**:
-  - Trolls (0.5x): 2 posts/hour, 25 comments/hour
-  - Neutrals (1.0x): Standard limits
-  - Scholars (2.0x): 8 posts/hour, 100 comments/hour
-- [ ] **Implementation**:
-  - Trust multiplier applied **at the very beginning** of every rate limit check
-  - Trust score cached with rate limit entry
-  - No database lookups during rate limit enforcement
+- [x] **Guaranteed Minimum Limits**:
+  - All users: minimum 2 posts/hour
+  - All users: minimum 10 comments/hour
+  - Counter lists: UNLIMITED for everyone
+- [x] **Edge cases**:
+  - Trolls (0.1 trust): 2 posts/hour, 10 comments/hour
+  - Neutrals (1.0 trust): Standard limits
+  - Scholars (2.0 trust): 8 posts/hour, 40 comments/hour
+- [x] **Rate Limit Status Endpoint**:
+  - `GET /api/users/me/rate-limits` - Returns real-time remaining counts
+  - Shows current trust score, tier, limits, and reset times
+  - Updates automatically after every action
 
 ---
 
-### 🔴 M11.E: User Profile Page /a_[username]
+### 🔴 M11.E: User Profile Page /a/[username]
 **Purpose**: Public anonymous profile page.
 
 **Specification**:
-- [ ] Route: `/a_[username]`
+- [x] Route: `/a/[username]`
 - [ ] Publicly accessible to everyone, no auth required
 - [ ] Page contents:
   - Username (large header)
   - Trust score badge (Scholar/Neutral/Troll)
   - Stats: Member since, total posts, total comments, approval rate
-  - Tab navigation: Posts | Comments
+  - Tab navigation: Posts | Comments | Stats
   - Posts tab: All posts by user with status badges (Approved/Pending/Rejected)
   - Comments tab: All comments by user (public only, no deleted)
+  - Stats tab: Real-time rate limit status, remaining counts, reset timers, trust score details
 - [ ] **Privacy rules**:
   - Only the user themselves can see their own Pending/Rejected posts
   - All other users only see Approved posts
@@ -838,8 +842,10 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 - [ ] Review queue: approve/reject posts
 - [ ] Submit page: create posts with dynamic list items
 - [ ] Device fingerprinting tracks anonymous users
-- [ ] Smart rate limiting (per user, not IP)
-- [ ] Shadow Trust Score system
+- [x] Smart rate limiting (per user, not IP)
+- [x] Shadow Trust Score system
+- [x] ✅ Counter Lists are UNLIMITED for all users
+- [x] ✅ Counter Lists are UNLIMITED for all users
 - [ ] Elasticsearch search with autocomplete
 - [ ] Arguments page (hot debates)
 - [ ] Hall of Fame
@@ -919,9 +925,11 @@ GET    /api/search                 # Full search
 GET    /api/search/autocomplete    # Autocomplete
 GET    /api/arguments              # Hot debates
 GET    /api/hall-of-fame           # Featured lists
+GET    /api/users/me               # Current user context
+GET    /api/users/me/rate-limits   # Current user rate limit status
 GET    /api/users/:username        # User profile
 GET    /api/users/:username/posts  # User posts
-PATCH  /api/users/:username        # Update display name
+PATCH  /api/users/me/display-name  # Update display name
 ```
 
 ### Admin (Auth Required)
@@ -1207,6 +1215,20 @@ GET    /api/admin/audit-logs          # Audit logs
 
 
 
+
+---
+
+## ⚠️ UNCONFIRMED / SILENT IMPLEMENTATION CHANGES
+These features are implemented and working in production but not yet formally documented:
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Counter List Post Type | ✅ Implemented | Core platform feature |
+| Post Edit Window | ✅ Implemented | 2 hour window to edit own posts |
+| Trust Score Hysteresis | ✅ Implemented | Prevents trust level flickering |
+| Optimistic Concurrency Control | ✅ Implemented | Prevents double counting trust score changes |
+| Trust Score Audit Log | ✅ Implemented | Permanent immutable log of all trust score changes |
+| Redis Sliding Window Rate Limiting | ✅ Implemented | Full production ready rate limiting |
 
 ---
 

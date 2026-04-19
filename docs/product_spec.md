@@ -61,19 +61,19 @@ YoTop10 is an **open publishing platform** centered on:
 All users are **anonymous** with this format:
 
 ```
-Username: any_XXXX
-Example: any_9Gh7, any_abc1, any_k4m9
+Username: a_XXXX
+Example: a_9Gh7, a_abc1, a_k4m9
 ```
 
-- **Format**: `any_` + last 4 characters of 8-character alphanumeric user ID
+- **Format**: `a_` + last 4 characters of 8-character alphanumeric user ID
 - **User ID**: 8-character alphanumeric (e.g., `a1b2c3d4`)
 
 ### Username Customization
 
 Users can **customize** their display name in their profile page:
-- Keep `any_` prefix
+- Keep `a_` prefix
 - Change last 4 characters to anything they want
-- Example: `any_9Gh7` → `any_nekw` (if available)
+- Example: `a_9Gh7` → `a_nekw` (if available)
 - **Must be unique** - check availability before saving
 
 ### Device Fingerprinting
@@ -94,13 +94,26 @@ Combine all signals into a **unique device fingerprint hash**.
 
 ### Profile Page
 
-Each anonymous user has a public profile at `/any_XXXX`:
+Each anonymous user has a public profile at `/a/[username]`:
 - Shows all posts made by user
 - Shows **approved** posts (public)
 - Shows **rejected** posts (with "Rejected" badge - only visible to author)
 - Shows **pending** posts (with "Pending" badge - only visible to author)
 - Display name customization option
 - No password/email needed - identity is device-based
+
+#### Profile Stats Tab (Authenticated User Only)
+When viewing your own profile, an additional "Stats" tab is available showing real-time system status:
+- Current trust score and tier (Troll/Neutral/Scholar)
+- Real-time remaining rate limits:
+  - Posts remaining this hour
+  - Comments remaining this hour
+  - Reactions remaining this hour
+- Countdown timer until rate limits reset
+- Exact current limits based on trust score
+- Counter lists are always shown as "Unlimited"
+
+All counters update automatically after each action.
 
 ---
 
@@ -161,10 +174,10 @@ draft → pending_review → [approved / rejected]
 - Use case: "Great list! What about..."
 
 ### Nested Replies
-- Support **nested replies** (max **3 levels**)
+- Support **nested replies** (max **10 levels**)
 - Level 1: Direct comment on post/item
 - Level 2: Reply to Level 1 comment
-- Level 3: Reply to Level 2 comment
+- Levels 3-10: Deep nested replies
 - No further nesting allowed
 
 ### Comment Features
@@ -179,10 +192,24 @@ draft → pending_review → [approved / rejected]
 | Edit Window | 2-hour edit window after posting |
 
 ### Rate Limiting
-- **General Comments: 50 per hour per user** (by device fingerprint)
-- **Item-Anchored Comments: 45 per hour per user** (by device fingerprint)
-- **Posts: 4 per hour per user** (by device fingerprint)
-- **Burst Protection: Max 5 comments per 5 minutes**
+All rate limits use 2D soft gradient floor algorithm with guaranteed minimums:
+
+| Action | Base Limit | Absolute Minimum | Trust Multiplier |
+|--------|------------|------------------|------------------|
+| **General Comments** | 20 per hour | 10 per hour | 0.5x - 2.0x |
+| **Item-Anchored Comments** | 25 per hour | 12 per hour | 0.5x - 2.0x |
+| **Posts** | 4 per hour | 2 per hour | 0.5x - 2.0x |
+| **Counter Lists** | Unlimited | Unlimited | Always unlimited |
+| **Burst Protection** | Max 5 comments per 5 minutes | | |
+
+#### Rate Limit Transparency
+Every user can view their exact rate limit status in real-time on their profile Stats tab:
+- Remaining posts/comments this hour
+- Countdown timer until reset
+- Current trust score and tier
+- Exact limits they are subject to
+- All counters update automatically after every action
+
 - No rate limit for browsing (only authenticated actions are limited)
 
 ---
@@ -540,31 +567,45 @@ Different limits for different comment types:
 
 Since we use Device Fingerprinting, track a **"Success Rate"** per device:
 
-| User History | Comment Limit Multiplier |
-|--------------|-------------------------|
-| **Scholar** (last 5 posts approved) | 2x (40 comments/hour) |
-| **Neutral** (mixed history) | 1x (20 comments/hour) |
-| **Troll** (recent posts rejected) | 0.1x (2 comments/hour) |
+| User History | Trust Score Range | Comment Limit Multiplier |
+|--------------|-------------------|-------------------------|
+| **Scholar** (last 10 posts ≥7 approved) | 1.8 - 2.0 | 2x |
+| **Neutral** (mixed history) | 0.5 - 1.79 | 1x |
+| **Troll** (last 10 posts ≤3 approved) | 0.1 - 0.49 | 0.5x |
 
-**Calculation**:
-- Check last 10 posts from this fingerprint
-- If ≥7 approved → Scholar
-- If ≤3 approved → Troll
-- Otherwise → Neutral
+#### 2D Soft Gradient Rate Limiting Algorithm
+All rate limits use this exact formula to guarantee minimum limits while preserving incentive gradients:
 
-**Why**:
-- Rewards "scholars" who contribute quality content
-- Chokes "trolls" without requiring login
-- Automatic - no manual intervention needed
+```javascript
+effective_trust = trust < 1.0 
+  ? 0.5 + (trust * 0.5)    // Soft gradient mapping
+  : trust
+
+limit = max(MINIMUM_GUARANTEE, floor(BASE_LIMIT * effective_trust))
+```
+
+⚠️ **Implementation Note**: Currently uses `Math.floor()`. Planned change to `Math.round()` documented in implementation plan.
+
+This produces:
+- No user ever gets 0 for any action
+- Guaranteed minimums: 2 posts/hour, 10 comments/hour
+- Smooth gradient - every trust score improvement matters
+- No hard discontinuities
+- No silent bans
+
+**Counter List Exception**:
+✅ **Counter Lists are 100% unlimited for all users**. No rate limit ever applies. This is a core platform guarantee.
 
 ### Implementation Summary
 
-| User Type | Post Comments/hr | Item-Anchored/hr | Scholar? |
-|-----------|------------------|------------------|-----------|
-| **New User** | 5 | 25 | No history |
-| **Scholar** | 10 | 50 | 7+ approved |
-| **Neutral** | 5 | 25 | Mixed |
-| **Troll** | 1 | 5 | 3+ rejected |
+| User Type | Regular Posts/hr | Counter Lists/hr | Post Comments/hr | Item-Anchored/hr | Scholar? |
+|-----------|------------------|------------------|------------------|------------------|-----------|
+| **New User** | 4 | **UNLIMITED** | 5 | 25 | No history |
+| **Scholar** | 8 | **UNLIMITED** | 10 | 50 | 7+ approved |
+| **Neutral** | 4 | **UNLIMITED** | 5 | 25 | Mixed |
+| **Troll** | 2 | **UNLIMITED** | 1 | 5 | 3+ rejected |
+
+✅ **Counter Lists are unlimited for everyone, always. No exceptions.**
 
 ---
 
@@ -572,11 +613,28 @@ Since we use Device Fingerprinting, track a **"Success Rate"** per device:
 
 When you're ready, you can re-enable:
 - User accounts (email/Google OAuth)
-- Reactions (Fire)
 - Follow/Connection system
 - Communities
 - Badge system
 - Custom profiles (HTML/CSS)
+- **M15 Identity Portability / Seed Phrases**
+- **M3.1 Title Similarity Check**
 - And more...
 
 All the disabled code is still there - just commented out.
+
+---
+
+## ⚠️ UNCONFIRMED / SILENT IMPLEMENTATION CHANGES
+These features are implemented and working in production but not yet formally documented:
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Counter List Post Type | ✅ Implemented | Core platform feature |
+| Post Edit Window | ✅ Implemented | 2 hour window to edit own posts |
+| Trust Score Hysteresis | ✅ Implemented | Prevents trust level flickering |
+| Optimistic Concurrency Control | ✅ Implemented | Prevents double counting trust score changes |
+| Trust Score Audit Log | ✅ Implemented | Permanent immutable log of all trust score changes |
+| Redis Sliding Window Rate Limiting | ✅ Implemented | Full production ready rate limiting |
+
+These features are fully functional but have not yet been added to formal API documentation.
