@@ -8,6 +8,28 @@ import { API } from '@/lib/api';
 import { getFingerprint } from '@/lib/fingerprint';
 import NotFound from '@/components/NotFound';
 
+interface RateLimitStatus {
+  trust_score: number;
+  current_tier: 'troll' | 'neutral' | 'scholar';
+  limits: {
+    posts: {
+      total: number;
+      remaining: number;
+      reset_in_seconds: number;
+    };
+    comments: {
+      total: number;
+      remaining: number;
+      reset_in_seconds: number;
+    };
+    counter_lists: {
+      total: string;
+      remaining: string;
+      reset_in_seconds: null;
+    };
+  };
+}
+
 interface UserProfile {
   username: string;
   canonical_url?: string;
@@ -44,8 +66,9 @@ interface UserProfile {
 export default function UserProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [rateLimitStatus, setRateLimitStatus] = useState<RateLimitStatus | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'posts' | 'comments'>('posts');
+  const [activeTab, setActiveTab] = useState<'posts' | 'comments' | 'stats'>('posts');
   const [editingName, setEditingName] = useState(false);
   const [newDisplayName, setNewDisplayName] = useState('');
 
@@ -78,6 +101,27 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
 
   fetchProfile();
 }, [params, router]);
+
+// Fetch rate limit status only for own profile
+useEffect(() => {
+  if (!profile?.is_own_profile || activeTab !== 'stats') return;
+
+  const fetchRateLimitStatus = async () => {
+    try {
+      const data = await fetch('/api/users/me/rate-limits');
+      if (data.ok) {
+        const status = await data.json();
+        setRateLimitStatus(status);
+      }
+    } catch (error) {
+      console.error('Failed to fetch rate limit status:', error);
+    }
+  };
+
+  fetchRateLimitStatus();
+  const interval = setInterval(fetchRateLimitStatus, 60000); // Refresh every 60 seconds
+  return () => clearInterval(interval);
+}, [profile?.is_own_profile, activeTab]);
 
   const handleUpdateDisplayName = async () => {
     if (!newDisplayName.trim()) return;
@@ -148,6 +192,14 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
         >
           Comments ({profile.comments.length})
         </button>
+        {profile.is_own_profile && (
+          <button 
+            onClick={() => setActiveTab('stats')}
+            style={{ fontWeight: activeTab === 'stats' ? 'bold' : 'normal', marginLeft: '10px' }}
+          >
+            ⭐ Stats
+          </button>
+        )}
       </div>
 
       <hr />
@@ -190,6 +242,26 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
                 <hr />
               </div>
             ))
+          )}
+        </div>
+      )}
+
+      {activeTab === 'stats' && profile.is_own_profile && rateLimitStatus && (
+        <div>
+          <p>
+            Trust Score: {rateLimitStatus.trust_score.toFixed(2)} / 2.0
+          </p>
+          <p>Tier: {rateLimitStatus.current_tier}</p>
+          
+          <h3>📊 Current Limits:</h3>
+          <p>✅ Posts: {rateLimitStatus.limits.posts.remaining} / {rateLimitStatus.limits.posts.total} remaining</p>
+          <p>✅ Comments: {rateLimitStatus.limits.comments.remaining} / {rateLimitStatus.limits.comments.total} remaining</p>
+          <p>✅ Counter Lists: {rateLimitStatus.limits.counter_lists.remaining}</p>
+          
+          <p>🔄 Resets in: {Math.floor(rateLimitStatus.limits.posts.reset_in_seconds / 60)} minutes {rateLimitStatus.limits.posts.reset_in_seconds % 60} seconds</p>
+          
+          {rateLimitStatus.trust_score < 1.0 && (
+            <p>💡 Next tier at 1.0 trust: 4 posts/hour</p>
           )}
         </div>
       )}
