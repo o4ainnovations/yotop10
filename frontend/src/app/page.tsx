@@ -23,12 +23,17 @@ const pages = [
   },
 ];
 
+interface User {
+  username: string;
+  trust_score?: number;
+}
+
 export default function Home() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   
   useEffect(() => {
     getFingerprint().then(() => {
-      API.getCurrentUser().then(setUser).catch(() => {});
+      API.getCurrentUser().then(data => setUser(data as User)).catch(() => {});
     });
   }, []);
 
