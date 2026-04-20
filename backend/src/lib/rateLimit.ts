@@ -43,6 +43,7 @@ export function calculateEffectiveCommentLimit(trustScore: number): number {
 export interface RateLimitStatus {
   trust_score: number;
   current_tier: 'troll' | 'neutral' | 'scholar';
+  server_time?: number;
   limits: {
     posts: {
       total: number;

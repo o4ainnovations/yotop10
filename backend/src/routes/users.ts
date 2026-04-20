@@ -308,7 +308,11 @@ router.get('/me/history', async (req: Request, res: Response) => {
  */
 router.get('/me/rate-limits', async (req: Request, res: Response) => {
   if (!req.user) {
-    return res.status(404).json({ error: 'User not found' });
+    // Return 425 instead of 404 during initialization
+    return res.status(425).json({ 
+      error: 'User identity still initializing', 
+      retry_after: 0.5 
+    });
   }
 
   try {
@@ -361,9 +365,10 @@ router.get('/me/rate-limits', async (req: Request, res: Response) => {
     const nextHour = Math.ceil(now / windowMs) * windowMs;
     const resetInSeconds = Math.ceil((nextHour - now) / 1000);
 
-    const result: RateLimitStatus = {
+    const result: RateLimitStatus & { server_time: number } = {
       trust_score: req.user.trust_score,
       current_tier: currentTier,
+      server_time: now,
       limits: {
         posts: {
           total: postLimit,
