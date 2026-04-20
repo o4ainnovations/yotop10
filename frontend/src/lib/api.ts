@@ -46,6 +46,12 @@ export async function apiFetch<T>(
     headers,
   });
 
+  // Automatic retry for 425 Too Early responses - per plans.md specification
+  if (response.status === 425) {
+    await new Promise(r => setTimeout(r, 500));
+    return apiFetch(endpoint, options);
+  }
+
   if (!response.ok) {
     const errorText = await response.text();
     console.error('[apiFetch] Error response:', errorText);

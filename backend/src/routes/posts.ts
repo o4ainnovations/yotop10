@@ -369,8 +369,11 @@ router.post('/', validatePostSubmission, async (req: Request, res: Response) => 
       effectiveTrustScore = req.user.rate_limit_override.posts_per_hour / 4;
     }
     
-    // Check rate limit with trust score multiplier - use authenticated fingerprint from header
-    const rateLimitResult = await checkRateLimit(req.user!.device_fingerprint, effectiveTrustScore, post_type, req.user!.user_id);
+    // Check rate limit with trust score multiplier
+    // Use fingerprint from middleware - works for both authenticated and grace period users
+    const fingerprint = req.user?.device_fingerprint || req.fingerprint || device_fingerprint;
+    const userId = req.user?.user_id;
+    const rateLimitResult = await checkRateLimit(fingerprint, effectiveTrustScore, post_type, userId);
     if (!rateLimitResult.allowed) {
       return res.status(429).json({
         error: `Rate limit exceeded. You can submit ${rateLimitResult.maxRequests ?? 4} posts per hour.`,
