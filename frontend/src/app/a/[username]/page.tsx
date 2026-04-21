@@ -129,7 +129,7 @@ const fetchRateLimits = useCallback(async () => {
     
     setCountdown(data.limits.posts.reset_in_seconds);
     
-  } catch (err: any) {
+  } catch (_err: any) {
     const newErrorCount = rateLimitData.errorCount + 1;
     const backoffMs = Math.min(1000 * Math.pow(2, newErrorCount), 10000);
     
