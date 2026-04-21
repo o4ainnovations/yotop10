@@ -1,10 +1,10 @@
 'use client';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { API } from '@/lib/api';
+import { API, apiFetch } from '@/lib/api';
 import { getFingerprint } from '@/lib/fingerprint';
 import NotFound from '@/components/NotFound';
 
@@ -66,7 +66,6 @@ interface UserProfile {
 export default function UserProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [rateLimitStatus, setRateLimitStatus] = useState<RateLimitStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'posts' | 'comments' | 'stats'>('posts');
   const [editingName, setEditingName] = useState(false);
@@ -102,26 +101,55 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   fetchProfile();
 }, [params, router]);
 
+// Single source of truth - no duplicate state
+const [rateLimitData, setRateLimitData] = useState<{
+  status: RateLimitStatus | null;
+  fetchedAt: number;
+  errorCount: number;
+}>({
+  status: null,
+  fetchedAt: 0,
+  errorCount: 0
+});
+
+const [countdown, setCountdown] = useState<number | null>(null);
+
+// Fetch rate limits with exponential backoff
+const fetchRateLimits = useCallback(async () => {
+  if (!profile?.is_own_profile) return;
+  
+  try {
+    const data = await apiFetch<RateLimitStatus>('/users/me/rate-limits');
+    
+    setRateLimitData({
+      status: data,
+      fetchedAt: Date.now(),
+      errorCount: 0
+    });
+    
+    setCountdown(data.limits.posts.reset_in_seconds);
+    
+  } catch (err: any) {
+    const newErrorCount = rateLimitData.errorCount + 1;
+    const backoffMs = Math.min(1000 * Math.pow(2, newErrorCount), 10000);
+    
+    setRateLimitData(prev => ({ ...prev, errorCount: newErrorCount }));
+    
+    // Automatic retry with backoff
+    setTimeout(fetchRateLimits, backoffMs);
+  }
+}, [profile?.is_own_profile, rateLimitData.errorCount]);
+
 // Fetch rate limit status only for own profile
 useEffect(() => {
   if (!profile?.is_own_profile || activeTab !== 'stats') return;
 
-  const fetchRateLimitStatus = async () => {
-    try {
-      const data = await fetch('/api/users/me/rate-limits');
-      if (data.ok) {
-        const status = await data.json();
-        setRateLimitStatus(status);
-      }
-    } catch (error) {
-      console.error('Failed to fetch rate limit status:', error);
-    }
-  };
-
-  fetchRateLimitStatus();
-  const interval = setInterval(fetchRateLimitStatus, 60000); // Refresh every 60 seconds
-  return () => clearInterval(interval);
-}, [profile?.is_own_profile, activeTab]);
+  fetchRateLimits();
+  
+  // NOTE: 60s interval COMPLETELY REMOVED per plans.md specification
+  // No double timers. No race conditions.
+  
+}, [profile?.is_own_profile, activeTab, fetchRateLimits]);
 
   const handleUpdateDisplayName = async () => {
     if (!newDisplayName.trim()) return;
@@ -246,21 +274,21 @@ useEffect(() => {
         </div>
       )}
 
-      {activeTab === 'stats' && profile.is_own_profile && rateLimitStatus && (
+      {activeTab === 'stats' && profile.is_own_profile && rateLimitData.status && (
         <div>
           <p>
-            Trust Score: {rateLimitStatus.trust_score.toFixed(2)} / 2.0
+            Trust Score: {rateLimitData.status.trust_score.toFixed(2)} / 2.0
           </p>
-          <p>Tier: {rateLimitStatus.current_tier}</p>
+          <p>Tier: {rateLimitData.status.current_tier}</p>
           
           <h3>📊 Current Limits:</h3>
-          <p>✅ Posts: {rateLimitStatus.limits.posts.remaining} / {rateLimitStatus.limits.posts.total} remaining</p>
-          <p>✅ Comments: {rateLimitStatus.limits.comments.remaining} / {rateLimitStatus.limits.comments.total} remaining</p>
-          <p>✅ Counter Lists: {rateLimitStatus.limits.counter_lists.remaining}</p>
+          <p>✅ Posts: {rateLimitData.status.limits.posts.remaining} / {rateLimitData.status.limits.posts.total} remaining</p>
+          <p>✅ Comments: {rateLimitData.status.limits.comments.remaining} / {rateLimitData.status.limits.comments.total} remaining</p>
+          <p>✅ Counter Lists: {rateLimitData.status.limits.counter_lists.remaining}</p>
           
-          <p>🔄 Resets in: {Math.floor(rateLimitStatus.limits.posts.reset_in_seconds / 60)} minutes {rateLimitStatus.limits.posts.reset_in_seconds % 60} seconds</p>
+          <p>🔄 Resets in: {countdown !== null ? `${Math.floor(countdown / 60)} minutes ${countdown % 60} seconds` : 'Calculating...'}</p>
           
-          {rateLimitStatus.trust_score < 1.0 && (
+          {rateLimitData.status.trust_score < 1.0 && (
             <p>💡 Next tier at 1.0 trust: 4 posts/hour</p>
           )}
         </div>
