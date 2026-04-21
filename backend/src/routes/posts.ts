@@ -21,39 +21,7 @@ const getRedisClient = async () => {
   return client;
 };
 
-// Generate unique random username (fully anonymous)
-const generateRandomUsername = async (): Promise<string> => {
-  let isUnique = false;
-  let username = '';
-  let attempts = 0;
-  const maxAttempts = 10;
 
-  while (!isUnique && attempts < maxAttempts) {
-    // Generate random 4-character suffix
-    const randomPart = crypto.randomBytes(2).toString('hex');
-    username = `any_${randomPart}`;
-    
-    // Check if username already exists
-    const existingUser = await User.findOne({ username });
-    if (!existingUser) {
-      isUnique = true;
-    }
-    attempts++;
-  }
-
-  // If we couldn't find a unique username after 10 attempts, add a counter
-  if (!isUnique) {
-    const counter = Date.now() % 10000;
-    username = `any_${crypto.randomBytes(2).toString('hex')}${counter}`;
-  }
-
-  return username;
-};
-
-// Generate unique user ID
-const generateUserId = (): string => {
-  return crypto.randomBytes(4).toString('hex'); // 8-character alphanumeric
-};
 
 // Check rate limit (4 posts per hour per fingerprint)
 const checkRateLimit = async (fingerprint: string, trustScore: number = 1.0, postType?: string, userId?: string): Promise<{ allowed: boolean; remaining: number; resetTime: number; maxRequests: number }> => {
@@ -387,19 +355,8 @@ router.post('/', validatePostSubmission, async (req: Request, res: Response) => 
       return res.status(400).json({ error: 'Category not found' });
     }
 
-    // Generate or get user
-    let user = await User.findOne({ device_fingerprint });
-    if (!user) {
-      const userId = generateUserId();
-      const username = await generateRandomUsername();
-      user = await User.create({
-        user_id: userId,
-        username,
-        custom_display_name: author_display_name || username,
-        device_fingerprint,
-        is_admin: false,
-      });
-    }
+    // User is guaranteed to exist by fingerprint middleware
+    const user = req.user!;
 
     // Create post
     let post = await Post.create({
