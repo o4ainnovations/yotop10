@@ -129,9 +129,14 @@ const fetchRateLimits = useCallback(async () => {
     
     setCountdown(data.limits.posts.reset_in_seconds);
     
-  } catch (_err: any) {
+  } catch (err: any) {
     const newErrorCount = rateLimitData.errorCount + 1;
     const backoffMs = Math.min(1000 * Math.pow(2, newErrorCount), 10000);
+    
+    console.debug('[RateLimit] Grace period retry backoff', {
+      attempt: newErrorCount,
+      backoff: backoffMs
+    });
     
     setRateLimitData(prev => ({ ...prev, errorCount: newErrorCount }));
     
