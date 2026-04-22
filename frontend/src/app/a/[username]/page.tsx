@@ -325,9 +325,9 @@ useEffect(() => {
           <p>Tier: {rateLimitData.status.current_tier}</p>
           
           <h3>📊 Current Limits:</h3>
-          <p>✅ Posts: {rateLimitData.status.limits.posts.remaining} / {rateLimitData.status.limits.posts.total} remaining</p>
-          <p>✅ Comments: {rateLimitData.status.limits.comments.remaining} / {rateLimitData.status.limits.comments.total} remaining</p>
-          <p>✅ Counter Lists: {rateLimitData.status.limits.counter_lists.remaining}</p>
+          <p>✅ Posts: {rateLimitData.status.limits.posts.remaining ?? 4} / {rateLimitData.status.limits.posts.total ?? 4} remaining</p>
+          <p>✅ Comments: {rateLimitData.status.limits.comments.remaining ?? 20} / {rateLimitData.status.limits.comments.total ?? 20} remaining</p>
+          <p>✅ Counter Lists: {rateLimitData.status.limits.counter_lists.remaining ?? 'Unlimited'}</p>
           
           <p>🔄 Resets in: {countdown !== null ? `${Math.floor(countdown / 60)} minutes ${countdown % 60} seconds` : 'Calculating...'}</p>
           

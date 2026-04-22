@@ -351,6 +351,10 @@ router.get('/me/rate-limits', async (req: Request, res: Response) => {
       redis.zRangeByScore(commentKey, windowStart.toString(), now.toString()),
     ]);
 
+    // Add null safety for new users with zero history
+    const postCount = (postEntries || []).length || 0;
+    const commentCount = (commentEntries || []).length || 0;
+
     // Determine tier
     let currentTier: 'troll' | 'neutral' | 'scholar';
     if (req.user.trust_score < 0.5) {
@@ -372,12 +376,12 @@ router.get('/me/rate-limits', async (req: Request, res: Response) => {
       limits: {
         posts: {
           total: postLimit,
-          remaining: Math.max(0, postLimit - postEntries.length),
+          remaining: Math.max(0, postLimit - postCount),
           reset_in_seconds: resetInSeconds,
         },
         comments: {
           total: commentLimit,
-          remaining: Math.max(0, commentLimit - commentEntries.length),
+          remaining: Math.max(0, commentLimit - commentCount),
           reset_in_seconds: resetInSeconds,
         },
         counter_lists: {
