@@ -156,6 +156,44 @@ useEffect(() => {
   
 }, [profile?.is_own_profile, activeTab, fetchRateLimits]);
 
+// Safe countdown timer implementation with strict boundary checking
+useEffect(() => {
+  if (!rateLimitData.status || activeTab !== 'stats') return;
+  
+  const interval = setInterval(() => {
+    setCountdown(prev => {
+      // Strict boundary checking - never go below zero
+      if (prev === null || prev <= 0) {
+        clearInterval(interval);
+        // Auto-refresh exactly when timer hits zero
+        fetchRateLimits();
+        return 0;
+      }
+      return prev - 1;
+    });
+  }, 1000);
+  
+  // Explicit cleanup on ALL state changes
+  return () => {
+    clearInterval(interval);
+  };
+  
+  // Re-run effect if user navigates away/back, switches tabs, or new data arrives
+}, [rateLimitData.status, activeTab, fetchRateLimits]);
+
+// Tab visibility detection for background tab drift correction
+useEffect(() => {
+  const onVisibilityChange = () => {
+    if (document.visibilityState === 'visible' && activeTab === 'stats') {
+      // Full refresh when tab comes back to foreground
+      fetchRateLimits();
+    }
+  };
+  
+  document.addEventListener('visibilitychange', onVisibilityChange);
+  return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+}, [activeTab, fetchRateLimits]);
+
   const handleUpdateDisplayName = async () => {
     if (!newDisplayName.trim()) return;
     
