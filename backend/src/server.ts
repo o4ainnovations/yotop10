@@ -55,6 +55,7 @@ const ROUTE_ORDER = [
   'auth',
   'categories',
   'comments',
+  'fingerprint',
   'listings',
   'posts',
   'reactions',
