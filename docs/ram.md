@@ -14,6 +14,7 @@ These must be completed before Submit Page (M3) will work correctly.
 | # | Task | Status | Impact if skipped |
 |---|---|---|---|
 | 1 | ⛔ Fix double rate limiting count | `pending` | Users get rate limited at half the documented limit |
+| 2 | ✅ Title Similarity System | `completed` |
 
 **Total estimated effort**: 15 minutes
 

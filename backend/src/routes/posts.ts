@@ -10,8 +10,90 @@ import { Comment } from '../models/Comment';
 import { createClient } from 'redis';
 import { calculateEffectivePostLimit } from '../lib/rateLimit';
 import { getActiveBoost } from '../lib/ladderSystem';
+import { checkTitleMatch } from '../lib/titleSimilarity';
+import { normalizeTitle } from '../lib/titleNormalization';
 
 const router: Router = Router();
+
+// GET /api/posts/check-title
+// Check for similar titles before submission
+router.get('/check-title', async (req: Request, res: Response) => {
+  try {
+    const query = req.query.q as string;
+    const categoryId = req.query.categoryId as string;
+
+    if (!query || query.length < 8) {
+      return res.json({
+        allowed: true,
+        blocked: false,
+        warning: false,
+        matches: [],
+      });
+    }
+
+    if (query === 'counter_list') {
+      return res.json({
+        allowed: true,
+        blocked: false,
+        warning: false,
+        matches: [],
+      });
+    }
+
+    // Check posts from last 5 years, same category, approved only
+    const fiveYearsAgo = new Date(Date.now() - 5 * 365 * 24 * 60 * 60 * 1000);
+    
+    const posts = await Post.find({
+      category_id: categoryId,
+      status: 'approved',
+      created_at: { $gt: fiveYearsAgo },
+    }).select('title slug');
+
+    const matches = [];
+    let blocked = false;
+    let warning = false;
+    let suggestion;
+
+    for (const post of posts) {
+      const result = checkTitleMatch(query, post.title);
+      
+      if (result.isYearVariation) {
+        const currentYear = new Date().getFullYear();
+        suggestion = `${query} ${currentYear}`;
+        continue;
+      }
+
+      if (result.isDuplicate) {
+        blocked = true;
+        matches.push({
+          title: post.title,
+          slug: post.slug,
+          similarity: result.similarity,
+        });
+      } else if (result.isWarning) {
+        warning = true;
+      }
+    }
+
+    return res.json({
+      allowed: !blocked,
+      blocked,
+      warning,
+      matches,
+      suggestion,
+      etag: crypto.randomBytes(8).toString('hex'),
+    });
+
+  } catch (error) {
+    // Fail open behaviour - allow everything on any error
+    return res.json({
+      allowed: true,
+      blocked: false,
+      warning: false,
+      matches: [],
+    });
+  }
+});
 
 // Initialize Redis client for rate limiting
 const getRedisClient = async () => {
@@ -357,6 +439,27 @@ router.post('/', validatePostSubmission, async (req: Request, res: Response) => 
 
     // User is guaranteed to exist by fingerprint middleware
     const user = req.user!;
+
+    // Final title similarity check on submit - never trust client side validation
+    if (post_type !== 'counter_list') {
+      const fiveYearsAgo = new Date(Date.now() - 5 * 365 * 24 * 60 * 60 * 1000);
+      
+      const existingPosts = await Post.find({
+        category_id,
+        status: 'approved',
+        created_at: { $gt: fiveYearsAgo },
+      }).select('title');
+
+      for (const existing of existingPosts) {
+        const result = checkTitleMatch(title, existing.title);
+        if (result.isDuplicate && !result.isYearVariation) {
+          return res.status(409).json({
+            error: 'This list already exists.',
+            suggestion: `${title} ${new Date().getFullYear()}`,
+          });
+        }
+      }
+    }
 
     // Create post
     let post = await Post.create({

@@ -7,6 +7,7 @@ export interface IPost extends Document {
   author_username: string;
   author_display_name: string;
   title: string;
+  normalized_title: string;
   slug: string;
   post_type: string;
   intro: string;
@@ -59,6 +60,11 @@ const postSchema = new Schema<IPost>(
       required: true,
     },
     title: {
+      type: String,
+      required: true,
+      index: true,
+    },
+    normalized_title: {
       type: String,
       required: true,
       index: true,
@@ -122,10 +128,23 @@ const postSchema = new Schema<IPost>(
   }
 );
 
-// Auto-generate slug before saving
+// Title normalization utility
+function normalizeTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^\w\s:']/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b(the|and|of|in)\b/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Auto-generate slug and normalized title before saving
 postSchema.pre('save', function(next) {
   if (this.isNew || this.isModified('title')) {
     this.slug = generateUniqueSlug(this.title, this._id.toString());
+    this.normalized_title = normalizeTitle(this.title);
   }
   next();
 });
@@ -173,10 +192,18 @@ postSchema.post('findOneAndDelete', async function(doc) {
 
 // Indexes for efficient queries
 postSchema.index({ status: 1, created_at: -1 });
+postSchema.index({ category_id: 1, created_at: -1, status: 1 });
 postSchema.index({ category_id: 1, status: 1 });
 postSchema.index({ author_id: 1, status: 1 });
 postSchema.index({ post_type: 1, status: 1 });
 postSchema.index({ title: 'text', intro: 'text' });
 postSchema.index({ slug: 1 }, { unique: true });
+postSchema.index({ normalized_title: 1 });
+
+// Unique partial index for pending posts - exactly one pending per normalized title
+postSchema.index({ normalized_title: 1 }, {
+  unique: true,
+  partialFilterExpression: { status: 'pending_review' }
+});
 
 export const Post = mongoose.model<IPost>('Post', postSchema);
