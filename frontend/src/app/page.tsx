@@ -1,77 +1,40 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { API } from '@/lib/api';
 import { getFingerprint } from '@/lib/fingerprint';
 
-const pages = [
-  {
-    path: '/categories',
-    title: 'Categories',
-    description: 'Browse all categories to find top 10 lists on your favorite topics',
-  },
-  {
-    path: '/c/movies',
-    title: 'Category Feed (Example)',
-    description: 'View posts filtered by a specific category (e.g., Movies)',
-  },
-  {
-    path: '/a_test',
-    title: 'User Profile',
-    description: 'Example user profile page - demonstrates the anonymous profile system',
-  },
-];
-
-interface User {
-  username: string;
-  trust_score?: number;
-}
-
 export default function Home() {
-  const [user, setUser] = useState<User | null>(null);
-  
-  useEffect(() => {
-    getFingerprint().then(() => {
-      API.getCurrentUser().then(data => setUser(data as User)).catch(() => {});
-    });
-  }, []);
-
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1>YoTop10 Platform</h1>
-         {user && (
-           <Link href={`/a/${user.username.replace(/^a_/, '')}`}>
-             {user.username}
-           </Link>
-         )}
-      </div>
-      <p style={{ marginBottom: '30px' }}>
-        An open Wikipedia-style platform for top 10 lists with a social UI.
-        Anyone can browse, submit, and comment without creating an account.
-      </p>
+    <div>
+      <h1>YoTop10</h1>
+      <p>An open Wikipedia-style platform for top 10 lists with a social UI. Anyone can browse, submit, and comment without creating an account.</p>
 
-      <h2>Available Pages</h2>
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {pages.map((page) => (
-          <li key={page.path} style={{ marginBottom: '20px', border: '1px solid #ccc', padding: '15px', borderRadius: '4px' }}>
-            <Link href={page.path} style={{ fontSize: '18px', fontWeight: 'bold' }}>
-              {page.path} — {page.title}
-            </Link>
-            <p style={{ margin: '5px 0 0 0', color: '#666' }}>{page.description}</p>
-          </li>
-        ))}
+      <h2>Navigation</h2>
+      <ul>
+        <li><Link href="/submit">Create a Post</Link></li>
+        <li><Link href="/categories">Categories</Link></li>
+        <li><Link href="/a/test">Profile Page</Link></li>
       </ul>
 
-      <hr style={{ margin: '30px 0' }} />
-
-      <h3>API Endpoints (Backend)</h3>
+      <h2>API Endpoints (Backend)</h2>
       <ul>
-        <li><code>GET /api/categories</code> — List all categories</li>
-        <li><code>GET /api/categories/:slug</code> — Get single category</li>
-        <li><code>GET /api/posts</code> — List approved posts</li>
-        <li><code>GET /api/posts/:slug</code> — Get single post with items and comments</li>
+        <li>GET /api/categories - List all categories</li>
+        <li>GET /api/categories/:slug - Get single category</li>
+        <li>GET /api/posts - List approved posts</li>
+        <li>GET /api/posts/:slug - Get single post with items and comments</li>
+        <li>POST /api/posts - Submit new post (anonymous)</li>
+        <li>GET /api/posts/check-title - Check for similar titles</li>
+        <li>GET /api/posts/:slug/comments - Comments for post</li>
+        <li>POST /api/posts/:slug/comments - Add comment (anonymous)</li>
+        <li>PATCH /api/comments/:id - Edit own comment (2hr window)</li>
+        <li>DELETE /api/comments/:id - Delete own comment</li>
+        <li>POST /api/reactions - Toggle fire reaction</li>
+        <li>GET /api/reactions/state - Get reaction states</li>
+        <li>GET /api/users/me - Current user context</li>
+        <li>GET /api/users/me/rate-limits - Current user rate limit status</li>
+        <li>GET /api/arguments - Hot debates</li>
+        <li>GET /api/hall-of-fame - Featured lists</li>
       </ul>
     </div>
   );
