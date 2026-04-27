@@ -1,10 +1,19 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { API } from '@/lib/api';
 import { getFingerprint } from '@/lib/fingerprint';
 
 export default function Home() {
+  const [user, setUser] = useState<{ username: string } | null>(null);
+
+  useEffect(() => {
+    getFingerprint().then(() => {
+      API.getCurrentUser().then(data => setUser(data as any)).catch(() => {});
+    });
+  }, []);
+
   return (
     <div>
       <h1>YoTop10</h1>
@@ -14,7 +23,9 @@ export default function Home() {
       <ul>
         <li><Link href="/submit">Create a Post</Link></li>
         <li><Link href="/categories">Categories</Link></li>
-        <li><Link href="/a/test">Profile Page</Link></li>
+        {user && (
+          <li><Link href={`/a/${user.username.replace(/^a_/, '')}`}>My Profile</Link></li>
+        )}
       </ul>
 
       <h2>API Endpoints (Backend)</h2>
