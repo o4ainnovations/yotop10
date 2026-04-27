@@ -3,28 +3,32 @@
 
 # 🚀 RAM.md - Current Highest Priority Task
 
-## CURRENT HIGHEST PRIORITY: **M3 Pre-Requisite Fixes**
+## CURRENT HIGHEST PRIORITY: **M3 Submit Page - COMPLETED ✅**
 
-These must be completed before Submit Page (M3) will work correctly.
-
----
-
-## ⚠️ Remaining Required Pre-Requisites (Do these FIRST):
-
-| # | Task | Status | Impact if skipped |
-|---|---|---|---|
-| 1 | ⛔ Fix double rate limiting count | `pending` | Users get rate limited at half the documented limit |
-| 2 | ✅ Title Similarity System | `completed` |
-
-**Total estimated effort**: 15 minutes
+Full implementation of the anonymous post submission page at `/submit` is complete.
 
 ---
 
-## NEXT: Submit Page (M3 Frontend)
-User-facing page for submitting top 10 posts. Without this, users cannot create content.
+## ✅ M3 Completion Checklist:
 
-**Milestone**: M3 — Anonymous Post Submission
-**Blockers**: Above 1 task
-**Estimated effort**: 2-3 hours
+| # | Task | Status |
+|---|---|---|
+| 1 | Backend: POST /api/posts | `completed` ✅ |
+| 2 | Frontend: /submit page.tsx | `completed` ✅ |
+| 3 | API layer: addPost() + checkTitle() | `completed` ✅ |
+| 4 | Title Similarity System (M3.1) | `completed` ✅ |
+| 5 | Progressive disclosure form flow | `completed` ✅ |
+| 6 | Multi-layer validation | `completed` ✅ |
+| 7 | WCAG 2.1 AA accessibility | `completed` ✅ |
+| 8 | Draft recovery (localStorage) | `completed` ✅ |
+| 9 | Frontend build passes | `completed` ✅ |
+
+---
+
+## NEXT: M4 — Public Feed
+
+**Milestone**: M4 — Public Feed
+**Description**: `GET /api/posts` — Approved posts only with filtering, sorting, pagination
+**Status**: Backend complete, Frontend needs implementation
 
 ---

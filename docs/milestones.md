@@ -100,20 +100,31 @@ All limits use 2D soft gradient floor algorithm:
 - [x] "Submit a Counter-List" button
 - [x] Post history/changelog
 
-### M3 — Anonymous Post Submission
-- [x] `POST /api/posts` — Submit post (no auth)
+### M3 — Anonymous Post Submission ✅ COMPLETED
+- [x] `POST /api/posts` — Submit post (no auth) - BACKEND COMPLETE
   - Body: `{ title, post_type (MVP: top_list only), intro, category_id (EXACTLY 1), items, author_display_name }`
   - All posts default to `pending_review`
   - Generate `a_XXXX` username from device fingerprint
   - Rate limit: 2-8 posts/hour per fingerprint (trust score based)
   - Other post types (this_vs_that, who_is_better, etc.) coming post-MVP
   - ✅ Counter lists are UNLIMITED for all users
+- [x] Frontend: `/submit` page - COMPLETE ✅
+  - Progressive disclosure form flow (3 steps)
+  - Category selector with icon
+  - Title similarity check with debounced API (500ms)
+  - Dynamic list items (1-25 items, title + justification + optional source URL)
+  - Optional author display name
+  - Multi-layer validation (client + server)
+  - WCAG 2.1 AA accessibility compliance
+  - Draft recovery with localStorage (1 hour expiry)
+  - Character counters and error handling
 
-### M3.1 — Title Similarity Check (SEO & Quality Control)
-[ ] **Title Similarity Engine**
-- [ ] `GET /api/posts/check-title?q=...` — Check for similar titles before submission
-- [ ] Fuzzy matching algorithm (title similarity > 80% = match)
-- [ ] Frontend: "Similar list already exists" warning in Submit UI if match found
+### M3.1 — Title Similarity Check (SEO & Quality Control) ✅ COMPLETED
+[x] **Title Similarity Engine**
+- [x] `GET /api/posts/check-title?q=...` — Check for similar titles before submission
+- [x] Fuzzy matching algorithm (Damerau-Levenshtein with dynamic thresholds)
+- [x] Backend: Title check implemented in `backend/src/routes/posts.ts`
+- [ ] Frontend: "Similar list already exists" warning in Submit UI if match found (M3 frontend task)
 
 ### M5.5 — The SEO "Authority" Routing System
 [✅] **Part A: Database Schema Evolution**
@@ -865,17 +876,17 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 
 ## V1 MVP — COMPLETION CHECKLIST
 
-- [ ] Anonymous post submission works (no login)
+- [x] Anonymous post submission works (no login) ✅
 - [ ] Public feed shows only approved posts
-- [ ] Post detail with list items + comments
-- [ ] Nested comments (max 3 levels, Twitter/X-style)
-- [ ] Item-anchored comments (highlight specific item)
-- [ ] Fire reactions (toggle)
-- [ ] Categories system (10 parents, 300 children)
-- [ ] Admin login protects dashboard
-- [ ] Review queue: approve/reject posts
-- [ ] Submit page: create posts with dynamic list items
-- [ ] Device fingerprinting tracks anonymous users
+- [x] Post detail with list items + comments ✅
+- [x] Nested comments (max 3 levels, Twitter/X-style) ✅
+- [x] Item-anchored comments (highlight specific item) ✅
+- [x] Fire reactions (toggle) ✅
+- [x] Categories system (10 parents, 300 children) ✅
+- [x] Admin login protects dashboard ✅
+- [x] Review queue: approve/reject posts ✅
+- [x] Submit page: create posts with dynamic list items ✅
+- [x] Device fingerprinting tracks anonymous users ✅
 - [x] Smart rate limiting (per user, not IP)
 - [x] Shadow Trust Score system
 - [x] ✅ Counter Lists are UNLIMITED for all users

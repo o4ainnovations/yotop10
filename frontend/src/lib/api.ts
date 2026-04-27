@@ -148,6 +148,53 @@ export interface Comment {
   replies?: Comment[];
 }
 
+// M3 Submit Page Types
+export interface PostSubmission {
+  title: string;
+  post_type: string;
+  intro: string;
+  category_id: string;
+  items: Array<{
+    rank: number;
+    title: string;
+    justification: string;
+    source_url?: string;
+  }>;
+  author_display_name?: string;
+}
+
+export interface TitleCheckResponse {
+  allowed: boolean;
+  blocked: boolean;
+  warning: boolean;
+  matches: Array<{
+    title: string;
+    slug: string;
+    similarity: number;
+  }>;
+  suggestion?: string;
+  etag: string;
+}
+
+export interface PostSubmissionResponse {
+  message: string;
+  post: {
+    id: string;
+    title: string;
+    status: string;
+    created_at: string;
+  };
+  items: Array<{
+    id: string;
+    rank: number;
+    title: string;
+  }>;
+  rate_limit: {
+    remaining: number;
+    resetTime: number;
+  };
+}
+
 // API Endpoints
 export const API = {
   getCategories: (): Promise<CategoriesResponse> => apiFetch('/categories'),
@@ -179,6 +226,16 @@ export const API = {
   getReactionState: (targets: Array<{ type: string; id: string }>) => 
     apiFetch(`/reactions/state?targets=${encodeURIComponent(JSON.stringify(targets))}`),
   
+  // M3 Submit Page endpoints
+  addPost: (data: PostSubmission): Promise<PostSubmissionResponse> => 
+    apiFetch('/posts', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  checkTitle: (query: string, categoryId: string): Promise<TitleCheckResponse> => 
+    apiFetch(`/posts/check-title?q=${encodeURIComponent(query)}&categoryId=${encodeURIComponent(categoryId)}`),
+
   // User endpoints
   getCurrentUser: () => apiFetch('/users/me'),
   updateDisplayName: (display_name: string) => 
