@@ -3,27 +3,11 @@ import { body, validationResult } from 'express-validator';
 import mongoose from 'mongoose';
 import { Reaction } from '../models/Reaction';
 import { Comment } from '../models/Comment';
-import { SparkThreshold, getFloorMultiplier } from '../models/SparkThreshold';
 import { grantBoost, BoostType } from '../lib/ladderSystem';
+import { getThresholds, computeSparkScore, computeParentSparkScore } from '../lib/sparkScore';
 
 const router: Router = Router();
 
-// Get thresholds helper
-const getThresholds = async () => {
-  const threshold = await SparkThreshold.findOne().sort({ calculated_at: -1 });
-  if (threshold) return threshold;
-  
-  const defaultThreshold = new SparkThreshold({
-    percentile_99: 50,
-    percentile_95: 30,
-    percentile_85: 15,
-    percentile_70: 8,
-    calculated_at: new Date(),
-  });
-  return defaultThreshold;
-};
-
-// Validation middleware
 const validateReaction = [
   body('target_type').isIn(['comment']).withMessage('Invalid target type'),
   body('target_id').isMongoId().withMessage('Invalid target ID'),
@@ -105,38 +89,26 @@ router.post('/', validateReaction, async (req: Request, res: Response) => {
     // Calculate new spark score for this comment
     const comment = await Comment.findById(target_id);
     if (comment) {
-      // Calculate base score
-      const baseScore = (comment.reply_count * 2.0) + (currentFireCount * 0.5) + 3;
-      const ageInHours = (now.getTime() - comment.created_at.getTime()) / (1000 * 60 * 60);
-      const denominator = comment.reply_count + currentFireCount + 1;
-      const ratio = comment.reply_count / denominator;
-      const gamma = Math.max(1.1, 2.0 - ratio);
-      const currentDecayRank = baseScore / Math.pow(ageInHours + 1, gamma);
-      
-      // Apply floor
       const thresholds = await getThresholds();
-      const floorMultiplier = getFloorMultiplier(baseScore, thresholds);
-      const floorValue = baseScore * floorMultiplier;
-      const sparkScore = Math.max(currentDecayRank, floorValue);
-      
+      const sparkScore = computeSparkScore(
+        { fireCount: currentFireCount, replyCount: comment.reply_count, createdAt: comment.created_at },
+        thresholds
+      );
+
       await Comment.findByIdAndUpdate(target_id, { spark_score: sparkScore });
-      
+
       // Propagate engagement to ancestors
       if (comment.parent_comment_id) {
         let currentParentId = comment.parent_comment_id.toString();
         const visited = new Set<string>();
-        
+
         while (currentParentId && !visited.has(currentParentId)) {
           visited.add(currentParentId);
-          
-          // Update parent with engagement pulse
+
           const parent = await Comment.findById(currentParentId);
           if (!parent) break;
-          
+
           const parentNow = new Date();
-          const parentAgeInHours = (parentNow.getTime() - parent.created_at.getTime()) / (1000 * 60 * 60);
-          
-          // Get children's totals
           const children = await Comment.find({ parent_comment_id: currentParentId });
           let childFires = 0;
           let childReplies = 0;
@@ -144,30 +116,17 @@ router.post('/', validateReaction, async (req: Request, res: Response) => {
             childFires += child.fire_count || 0;
             childReplies += child.reply_count || 0;
           }
-          
-          // Parent base + child contributions
-          const parentBase = (parent.reply_count * 2.0) + (parent.fire_count * 0.5) + 3;
-          const childContribution = (childFires * 0.25) + (childReplies * 1.0);
-          const parentNumerator = parentBase + childContribution;
-          
-          const totalReplies = parent.reply_count + childReplies;
-          const totalFires = parent.fire_count + childFires;
-          const parentDenominator = totalReplies + totalFires + 1;
-          const parentRatio = totalReplies / parentDenominator;
-          const parentGamma = Math.max(1.1, 2.0 - parentRatio);
-          
-          const parentCurrentDecay = parentNumerator / Math.pow(parentAgeInHours + 1, parentGamma);
-          
-          // Apply floor to parent
-          const parentFloorMultiplier = getFloorMultiplier(parentBase, thresholds);
-          const parentFloorValue = parentBase * parentFloorMultiplier;
-          const parentSparkScore = Math.max(parentCurrentDecay, parentFloorValue);
-          
-          await Comment.findByIdAndUpdate(currentParentId, { 
+
+          const parentSparkScore = computeParentSparkScore(
+            { fireCount: parent.fire_count, replyCount: parent.reply_count, createdAt: parent.created_at, childFires, childReplies },
+            thresholds
+          );
+
+          await Comment.findByIdAndUpdate(currentParentId, {
             spark_score: parentSparkScore,
             last_engaged_at: parentNow
           });
-          
+
           if (!parent.parent_comment_id) break;
           currentParentId = parent.parent_comment_id.toString();
         }

@@ -6,7 +6,6 @@ import NotFound from '@/components/NotFound';
 import Link from 'next/link';
 import Image from 'next/image';
 import { API } from '@/lib/api';
-import { getFingerprint } from '@/lib/fingerprint';
 
 const RESERVED_ROUTES = ['admin', 'api', 'login', 'search', 'settings', 'profile', 'categories', 'c', 'auth'];
 
@@ -83,11 +82,11 @@ export default function PostDetailClient({ slug }: { slug: string }) {
   
   const [reacting, setReacting] = useState(false);
   const [userReactions, setUserReactions] = useState<Set<string>>(new Set());
+  const mountedRef = useRef(true);
 
   const fetchComments = useCallback(async () => {
     if (!slug || slug === 'undefined') return;
-    
-    // Only show full page loading on initial load, not on refresh
+
     if (comments.length === 0) {
       setLoading(true);
     } else {
@@ -99,45 +98,41 @@ export default function PostDetailClient({ slug }: { slug: string }) {
         API.getPost(slug),
         API.getComments(slug),
       ]);
-      
+
+      if (!mountedRef.current) return;
+
       setPost(postData.post);
       setItems(postData.items as ListItem[]);
       setComments(commentsData.comments);
 
-      // Load user reaction states
       const allTargets = commentsData.comments.map((c: Comment) => ({ type: 'comment', id: c.id }));
-
       try {
         const reactionState = await API.getReactionState(allTargets) as {
           targets: Array<{ type: string; id: string; user_reacted: boolean }>
         };
-        const reactedIds = new Set<string>(reactionState.targets.filter(t => t.user_reacted).map(t => String(t.id)));
-        setUserReactions(reactedIds);
-      } catch (reactionErr) {
-        console.error('Failed to load reaction states:', reactionErr);
+        if (mountedRef.current) {
+          const reactedIds = new Set<string>(reactionState.targets.filter(t => t.user_reacted).map(t => String(t.id)));
+          setUserReactions(reactedIds);
+        }
+      } catch {
+        // Non-critical
       }
-    } catch (err) {
-      console.error('Failed to load post:', err);
-      setPost(null);
+    } catch {
+      if (mountedRef.current) setPost(null);
     } finally {
-      setLoading(false);
-      setRefreshingComments(false);
+      if (mountedRef.current) {
+        setLoading(false);
+        setRefreshingComments(false);
+      }
     }
   }, [slug, comments.length]);
 
   useEffect(() => {
+    mountedRef.current = true;
     if (!slug || slug === 'undefined') return;
-    
-    API.getPost(slug)
-      .then((data) => {
-        const typedData = data as { post: Post; items: ListItem[] };
-        setPost(typedData.post);
-        setItems(typedData.items || []);
-      })
-      .catch(() => setPost(null))
-      .finally(() => setLoading(false));
-      
+
     fetchComments();
+    return () => { mountedRef.current = false; };
   }, [slug, fetchComments]);
 
   // Route guard - reserved routes should not be treated as posts
@@ -204,11 +199,9 @@ export default function PostDetailClient({ slug }: { slug: string }) {
   const handleReaction = async (targetType: 'comment', targetId: string) => {
     if (reacting) return;
     setReacting(true);
-    
-    const fingerprint = await getFingerprint();
-    
+
     try {
-      const data = await API.toggleReaction(targetType, targetId, fingerprint) as { fire_count: number; user_reacted: boolean };
+      const data = await API.toggleReaction(targetType, targetId) as { fire_count: number; user_reacted: boolean };
       
       // Update fire counts
       if (targetType === 'comment') {

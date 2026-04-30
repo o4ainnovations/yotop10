@@ -2,11 +2,16 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { Request, Response, NextFunction } from 'express';
 import { AdminUser } from '../models/AdminUser';
+import { getEnv } from './env';
 
-const JWT_SECRET = process.env.JWT_SECRET;
-
-if (!JWT_SECRET) {
-  throw new Error('FATAL: JWT_SECRET environment variable is required but not set.');
+function getJwtSecret(): string {
+  try {
+    return getEnv().JWT_SECRET;
+  } catch {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) throw new Error('FATAL: JWT_SECRET environment variable is required but not set.');
+    return secret;
+  }
 }
 const JWT_EXPIRY = '24h';
 
@@ -21,7 +26,7 @@ export interface AdminAuthRequest extends Request {
  * Generate JWT token for admin
  */
 export const generateAdminToken = (adminId: string, username: string): string => {
-  return jwt.sign({ id: adminId, username }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
+  return jwt.sign({ id: adminId, username }, getJwtSecret(), { expiresIn: JWT_EXPIRY });
 };
 
 /**
@@ -35,7 +40,7 @@ export const adminAuthMiddleware = async (req: AdminAuthRequest, res: Response, 
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; username: string };
+    const decoded = jwt.verify(token, getJwtSecret()) as { id: string; username: string };
     
     const admin = await AdminUser.findById(decoded.id);
     if (!admin) {

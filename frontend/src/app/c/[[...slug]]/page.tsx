@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { API, SingleCategoryResponse, PostsResponse, getBaseUrl } from '@/lib/api';
+import { API, SingleCategoryResponse, PostsResponse } from '@/lib/api';
 import NotFound from '@/components/NotFound';
 
 interface Category {
@@ -41,34 +41,39 @@ export default function CategoryFeedPage() {
 
   useEffect(() => {
     if (!slug) return;
+    let cancelled = false;
 
     Promise.all([
       API.getCategory(slug).then((data: SingleCategoryResponse) => data.category),
       API.getPosts({ category: slug, page: 1, limit: 20 }).then((data: PostsResponse) => data),
     ])
       .then(([catData, postsData]) => {
+        if (cancelled) return;
         setCategory(catData);
         setPosts(postsData.posts || []);
         setHasMore((postsData.pagination?.totalPages ?? 1) > 1);
       })
       .catch(err => {
-        console.error(err);
-        setCategory(null);
+        if (!cancelled) {
+          console.error(err);
+          setCategory(null);
+        }
       })
-      .finally(() => setLoading(false));
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
   }, [slug]);
 
   const loadMore = () => {
     const nextPage = page + 1;
-    const baseUrl = getBaseUrl();
-    
-    fetch(`${baseUrl}/posts?category=${slug}&page=${nextPage}&limit=20`)
-      .then(res => res.json())
-      .then(data => {
+
+    API.getPosts({ category: slug, page: nextPage, limit: 20 })
+      .then((data: PostsResponse) => {
         setPosts(prev => [...prev, ...(data.posts || [])]);
         setPage(nextPage);
-        setHasMore(data.pagination?.page < data.pagination?.totalPages);
-      });
+        setHasMore(data.pagination?.page ? data.pagination.page < (data.pagination.totalPages || 1) : false);
+      })
+      .catch(err => console.error('Load more failed:', err));
   };
 
   if (loading) return <div>Loading...</div>;

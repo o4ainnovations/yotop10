@@ -23,7 +23,7 @@ export default function AdminPendingPostPreviewPage() {
   const router = useRouter();
   const params = useParams();
   const postId = params.id as string;
-  
+
   const [post, setPost] = useState<PendingPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -31,18 +31,24 @@ export default function AdminPendingPostPreviewPage() {
   const [showRejectModal, setShowRejectModal] = useState(false);
 
   useEffect(() => {
+    if (!postId) return;
+    let cancelled = false;
+
     const fetchPost = async () => {
       try {
-        const response = await apiFetch<{ post: PendingPost }>(`/admin/posts/pending/${postId}`);
-        setPost(response.post);
-      } catch (error) {
-        console.error('Failed to fetch pending post:', error);
+        const data = await apiFetch<{ post: PendingPost }>(`/admin/posts/pending/${postId}`);
+        if (!cancelled) {
+          setPost(data.post);
+        }
+      } catch {
+        if (!cancelled) console.error('Failed to fetch pending post');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchPost();
+    return () => { cancelled = true; };
   }, [postId]);
 
   const handleApprove = async () => {
@@ -78,6 +84,7 @@ export default function AdminPendingPostPreviewPage() {
   };
 
   if (loading) return <div>Loading post...</div>;
+  if (!postId) return <div>Invalid post ID</div>;
   if (!post) return <div>Post not found</div>;
 
   return (

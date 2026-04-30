@@ -1,18 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { API } from '@/lib/api';
-import { getFingerprint } from '@/lib/fingerprint';
+import { useAuthStore } from '@/stores/auth';
 
 export default function Home() {
-  const [user, setUser] = useState<{ username: string } | null>(null);
-
-  useEffect(() => {
-    getFingerprint().then(() => {
-      API.getCurrentUser().then(data => setUser(data as { username: string })).catch(() => {});
-    });
-  }, []);
+  const user = useAuthStore((s) => s.user);
 
   return (
     <div>

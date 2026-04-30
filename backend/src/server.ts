@@ -6,10 +6,15 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 
+import { validateEnv } from './lib/env';
 import { redis } from './lib/redis';
 import { es } from './lib/elasticsearch';
+import { adminAuthMiddleware } from './lib/adminAuth';
+import { routes } from './routes';
 
 dotenv.config();
+
+validateEnv();
 
 const app: Application = express();
 const PORT = process.env.PORT || 8000;
@@ -31,64 +36,13 @@ app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-/*****************************************************************************
- * IF YOU ARE HERE AT 3AM DEBUGGING A ROUTE THAT WONT LOAD:
- *
- * ADD YOUR NEW ROUTE TO THE ROUTE_ORDER ARRAY BELOW.
- *
- * THIS IS THE ONLY PLACE YOU EVER NEED TO DO THIS.
- *
- * IF YOU DO NOT ADD IT HERE IT WILL NOT BE MOUNTED.
- *
- ****************************************************************************/
-
-import fs from 'fs';
-import path from 'path';
-import { adminAuthMiddleware } from './lib/adminAuth';
-
-const ROUTE_ORDER = [
-  'auth',
-  'categories',
-  'comments',
-  'fingerprint',
-  'listings',
-  'posts',
-  'reactions',
-  'reviews',
-  'search',
-  'users',
-  'admin',
-];
-
-const VALID_ROUTE_FILENAME = /^[a-z_]+\.ts$/;
-
-const routesDir = path.join(__dirname, 'routes');
-for (const routeName of ROUTE_ORDER) {
-  if (!fs.existsSync(path.join(routesDir, `${routeName}.ts`)) && !fs.existsSync(path.join(routesDir, `${routeName}.js`))) {
-    throw new Error(`Route declared but not found: ${routeName}`);
-  }
-}
-
-const files = fs.readdirSync(routesDir);
-for (const file of files) {
-  if (!VALID_ROUTE_FILENAME.test(file)) continue;
-  const routeName = path.basename(file, '.ts');
-  if (!ROUTE_ORDER.includes(routeName)) {
-    throw new Error(`Route file exists but not declared: ${file}`);
-  }
-}
-
-for (const routeName of ROUTE_ORDER) {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const router = require(`./routes/${routeName}`).default;
-
-  if (routeName === 'admin') {
-    app.use(`/api/${routeName}`, adminAuthMiddleware, router);
+for (const route of routes) {
+  if (route.adminOnly) {
+    app.use(route.path, adminAuthMiddleware, route.router);
   } else {
-    app.use(`/api/${routeName}`, router);
+    app.use(route.path, route.router);
   }
-
-  console.log(`Mounted route: /api/${routeName}`);
+  console.log(`Mounted route: ${route.path}`);
 }
 
 console.log('\nAll routes mounted successfully\n');

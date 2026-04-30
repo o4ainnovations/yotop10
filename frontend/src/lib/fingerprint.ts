@@ -1,6 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
+const webkitAudioContext = typeof window !== 'undefined'
+  ? (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+  : undefined;
+
+const performanceMemory = typeof window !== 'undefined'
+  ? (window.performance as Performance & { memory?: { jsHeapSizeLimit: number } }).memory
+  : undefined;
+
 // Tier 1 Signals: 99.9% stability | Weight: 10x
 interface Tier1Signals {
   webglRenderer: string;
@@ -36,7 +44,7 @@ interface FingerprintData {
 // Generate audio context fingerprint
 const getAudioFingerprint = async (): Promise<number> => {
   try {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const audioContext = new (window.AudioContext || webkitAudioContext)();
     const oscillator = audioContext.createOscillator();
     const analyser = audioContext.createAnalyser();
     const gain = audioContext.createGain();
@@ -119,7 +127,7 @@ const collectAllSignals = async (): Promise<FingerprintData> => {
       webglVendor: webglInfo.vendor,
       audioFingerprint,
       cpuCoreCount: navigator.hardwareConcurrency || 0,
-      maxHeapSize: (window.performance as any).memory?.jsHeapSizeLimit || 0,
+      maxHeapSize: performanceMemory?.jsHeapSizeLimit || 0,
       devicePixelRatio: window.devicePixelRatio,
       canvasHash,
       webglExtensions: webglInfo.extensions,

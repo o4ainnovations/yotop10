@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { API } from '@/lib/api';
+import { useAdminStore } from '@/stores/admin';
 
 export default function AdminLoginPage() {
   const [username, setUsername] = useState('');
@@ -10,18 +10,18 @@ export default function AdminLoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const login = useAdminStore((s) => s.login);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    try {
-      await API.adminLogin(username, password);
+    const success = await login(username, password);
+    if (success) {
       router.push('/admin');
-    } catch {
+    } else {
       setError('Invalid credentials');
-    } finally {
       setLoading(false);
     }
   };
@@ -29,7 +29,7 @@ export default function AdminLoginPage() {
   return (
     <div style={{ maxWidth: '400px', margin: '100px auto', padding: '20px' }}>
       <h1>Admin Login</h1>
-      
+
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
       <form onSubmit={handleSubmit}>
@@ -55,8 +55,8 @@ export default function AdminLoginPage() {
           />
         </div>
 
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           disabled={loading}
           style={{ padding: '10px 20px', width: '100%' }}
         >

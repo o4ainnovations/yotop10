@@ -46,6 +46,9 @@ dependencies:
   uuid:
     specifier: ^9.0.1
     version: 9.0.1
+  zod:
+    specifier: ^4.4.1
+    version: 4.4.1
 
 devDependencies:
   '@types/bcryptjs':
@@ -2394,3 +2397,7 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
     dev: true
+
+  /zod@4.4.1:
+    resolution: {integrity: sha512-a6ENMBBGZBsnlSebQ/eKCguSBeGKSf4O7BPnqVPmYGtpBYI7VSqoVqw+QcB7kPRjbqPwhYTpFbVj/RqNz/CT0Q==}
+    dev: false

@@ -30,18 +30,39 @@ jobs:
         working-directory: ./backend
         run: pnpm install --frozen-lockfile
 
+      - name: Typecheck Backend
+        working-directory: ./backend
+        run: pnpm typecheck
+
+      - name: Typecheck Frontend
+        working-directory: ./frontend
+        run: pnpm typecheck
+
       - name: Lint Frontend
         working-directory: ./frontend
         run: pnpm lint
-
-      - name: Build Frontend
-        working-directory: ./frontend
-        run: pnpm build
 
       - name: Lint Backend
         working-directory: ./backend
         run: pnpm lint
 
+      - name: Test Backend
+        working-directory: ./backend
+        run: pnpm vitest run
+
+      - name: Test Frontend
+        working-directory: ./frontend
+        run: pnpm vitest run
+
+      - name: Build Frontend
+        working-directory: ./frontend
+        run: pnpm build
+
       - name: Build Backend
         working-directory: ./backend
         run: pnpm build
+
+      - name: Security audit
+        run: |
+          cd frontend && pnpm audit --audit-level=high && cd ..
+          cd backend && pnpm audit --audit-level=high && cd ..

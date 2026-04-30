@@ -1,36 +1,33 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { API } from '@/lib/api';
+import { useAdminStore } from '@/stores/admin';
 
 export default function AdminHomePage() {
   const router = useRouter();
-  const [admin, setAdmin] = useState<{ id: string; username: string } | null>(null);
-  const [loading, setLoading] = useState(true);
+  const admin = useAdminStore((s) => s.admin);
+  const loading = useAdminStore((s) => s.loading);
+  const authenticated = useAdminStore((s) => s.authenticated);
+  const initialized = useAdminStore((s) => s.initialized);
+  const checkSession = useAdminStore((s) => s.checkSession);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const adminData = await API.adminGetMe() as { id: string; username: string };
-        setAdmin(adminData);
-      } catch {
-        router.push('/admin/login');
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (!initialized) checkSession();
+  }, [initialized, checkSession]);
 
-    checkAuth();
-  }, [router]);
+  useEffect(() => {
+    if (initialized && !authenticated) {
+      router.push('/admin/login');
+    }
+  }, [initialized, authenticated, router]);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading || !initialized) return <div>Loading...</div>;
 
   return (
     <div>
       <h2>Admin Dashboard</h2>
       <p>Welcome, {admin?.username}</p>
-      
       <div style={{ marginTop: '30px' }}>
         <h3>Quick Links</h3>
         <ul>

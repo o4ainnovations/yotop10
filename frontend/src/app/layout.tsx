@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Eruda from "./Eruda";
+import AuthInitializer from "@/components/AuthInitializer";
 
 export const metadata: Metadata = {
   title: "YoTop10 - Top 10 Lists Platform",
@@ -15,6 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
+        <AuthInitializer />
         {children}
         <Eruda />
       </body>

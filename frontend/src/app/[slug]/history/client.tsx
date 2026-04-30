@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import { API, PostHistoryResponse } from '@/lib/api';
 
 const RESERVED_ROUTES = ['admin', 'api', 'login', 'search', 'settings', 'profile', 'categories', 'c', 'auth'];
@@ -49,7 +50,7 @@ export default function PostHistoryClient({ slug }: { slug: string }) {
       <header style={{ marginBottom: '20px', borderBottom: '1px solid #ccc', paddingBottom: '10px' }}>
         <h1>YoTop10</h1>
         <nav>
-          <a href={`/${postId}`}>Back to Post</a>
+          <Link href={`/${postId}`}>Back to Post</Link>
         </nav>
       </header>
       <main>

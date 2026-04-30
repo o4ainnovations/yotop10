@@ -11,7 +11,7 @@
 This is the simplified roadmap based on the [revert.md](./revert.md) plan. The platform transforms from a full social platform into an open Wikipedia-style platform:
 
 - **Anyone** can submit top 10 lists (anonymous, device fingerprint tracked)
-- **Anyone** can comment with nested threading (up to 3 levels like Twitter/X)
+- **Anyone** can comment with nested threading (up to 10 levels)
 - **Categories** are fully organized (10 parents, 300 children)
 - **Only you** (admin) can approve/reject posts
 - **Smart rate limiting**: 50 comments/hour per user (device fingerprint)
@@ -63,33 +63,33 @@ All limits use 2D soft gradient floor algorithm:
 ## PHASE 1 — MVP LAUNCH (V1)
 
 ### M1 — Project Foundation
-- [ ] Monorepo structure (`/frontend` + `/backend`)
-- [ ] Next.js 14 frontend (App Router)
-- [ ] Express.js backend
-- [ ] MongoDB setup (local + connection)
-- [ ] Elasticsearch setup
-- [ ] Redis setup (rate limiting, caching)
-- [ ] Docker Compose (frontend, backend, MongoDB, Redis, Elasticsearch)
-- [ ] Environment configuration
+- [x] Monorepo structure (`/frontend` + `/backend`)
+- [x] Next.js 14 frontend (App Router)
+- [x] Express.js backend
+- [x] MongoDB setup (local + connection)
+- [x] Elasticsearch setup
+- [x] Redis setup (rate limiting, caching)
+- [x] Docker Compose (frontend, backend, MongoDB, Redis, Elasticsearch)
+- [x] Environment configuration
 
 ### M2 — Database Schema
-- [ ] `users` collection (anonymous: user_id, username, custom_display_name, device_fingerprint, is_admin)
-- [ ] `posts` collection (author_id, author_username, author_display_name, title, post_type, intro, status, category_id, fire_count, comment_count, view_count, created_at, updated_at)
-- [ ] `list_items` collection (post_id, rank, title, justification, image_url, source_url, fire_count)
-- [ ] `comments` collection (post_id, list_item_id, parent_comment_id, depth, author_id, author_username, author_display_name, content, fire_count, reply_count, created_at, updated_at)
-- [ ] `reactions` collection (user_device_fingerprint, target_type, target_id, reaction_type, created_at)
-- [ ] `categories` collection (name, slug, description, icon, parent_id, post_count, is_featured, is_archived)
-- [ ] `admin_user` collection (username, password_hash)
-- [ ] MongoDB indexes for performance
+- [x] `users` collection
+- [x] `posts` collection (author_id, author_username, author_display_name, title, post_type, intro, status, category_id, fire_count, comment_count, view_count, created_at, updated_at)
+- [x] `list_items` collection (post_id, rank, title, justification, image_url, source_url, fire_count)
+- [x] `comments` collection (post_id, list_item_id, parent_comment_id, depth, author_id, author_username, author_display_name, content, fire_count, reply_count, created_at, updated_at)
+- [x] `reactions` collection (user_device_fingerprint, target_type, target_id, reaction_type, created_at)
+- [x] `categories` collection (name, slug, description, icon, parent_id, post_count, is_featured, is_archived)
+- [x] `admin_user` collection (username, password_hash)
+- [x] MongoDB indexes for performance
 - [x] Seed 10 parent + 300 child categories
 
 ### M4 — Public Feed
-- [ ] `GET /api/posts` — Approved posts only
+- [x] `GET /api/posts` — Approved posts only
   - Filter: `status=approved`
   - Sort: newest first
   - Filter by category (exactly 1)
   - Pagination (20 per page)
-- [ ] `GET /api/posts/:id` — Single post with items + comments
+- [x] `GET /api/posts/:id` — Single post with items + comments
 
 ### M5 — Post Detail Page
 - [x] Frontend: `/post/[id]`
@@ -249,10 +249,10 @@ Reasoning: This keeps your site "High-Quality" in the eyes of Google by hiding "
 ---
 
 ### M6 — Categories System
-- [ ] `GET /api/categories` — All categories
-- [ ] `GET /api/categories/:slug` — Single category
-- [ ] Category hierarchy (10 parents, 300 children)
-- [ ] Frontend: `/categories` and `/c/[slug]`
+- [x] `GET /api/categories` — All categories
+- [x] `GET /api/categories/:slug` — Single category
+- [x] Category hierarchy (10 parents, 300 children)
+- [x] Frontend: `/categories` and `/c/[slug]`
 - [ ] Admin CRUD for categories
 
 ### M7 — Comment System
@@ -265,14 +265,14 @@ Reasoning: This keeps your site "High-Quality" in the eyes of Google by hiding "
 - [x] Rate limit: 50 comments/hour per user
 
 ### M8 — Fire Reactions
-- [ ] `POST /api/reactions` — Toggle fire
-- [ ] `GET /api/reactions/state` — Check reaction status
-- [ ] Works on posts, list items, comments
+- [x] `POST /api/reactions` — Toggle fire (comments only)
+- [x] `GET /api/reactions/state` — Check reaction status
+- [ ] Works on posts, list items, comments (currently comments only)
 
 ### M9 — Admin Authentication
-- [ ] `POST /api/admin/login` — Admin login
-- [ ] JWT token for admin only
-- [ ] Protect all `/api/admin/*` routes
+- [x] `POST /api/admin/login` — Admin login
+- [x] JWT token for admin only
+- [x] Protect all `/api/admin/*` routes
 
 **Standard Secure Single-Admin Pattern:**
 
@@ -356,15 +356,13 @@ Single unified notification system that handles all user feedback across the ent
 
 > The admin dashboard is the command center for YoTop10. This is where you control everything. It's designed like a professional CMS.
 
-#### M10.1 — Admin Authentication & Security
-- [ ] `POST /api/admin/login` — Login with username/password
-  - Request: `{ username, password }`
-  - Response: JWT token (httpOnly cookie) + admin user info
-- [ ] `POST /api/admin/logout` — Invalidate session
-- [ ] `GET /api/admin/me` — Get current admin user
+### M10.1 — Admin Authentication & Security
+- [x] `POST /api/admin/login` — Login with username/password
+- [x] `POST /api/admin/logout` — Invalidate session
+- [x] `GET /api/admin/me` — Get current admin user
 - [ ] `POST /api/admin/refresh` — Refresh JWT token
-- [ ] JWT stored in httpOnly, secure cookie
-- [ ] Token expiry: 24 hours
+- [x] JWT stored in httpOnly, secure cookie
+- [x] Token expiry: 24 hours
 - [ ] Rate limit: 5 login attempts per 15 minutes per IP
 - [ ] Audit log: login attempts (success/failed, IP, timestamp)
 
@@ -877,24 +875,23 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 ## V1 MVP — COMPLETION CHECKLIST
 
 - [x] Anonymous post submission works (no login) ✅
-- [ ] Public feed shows only approved posts
+- [x] Public feed shows only approved posts (backend complete, frontend basic)
 - [x] Post detail with list items + comments ✅
-- [x] Nested comments (max 3 levels, Twitter/X-style) ✅
+- [x] Nested comments (up to 10 levels) ✅
 - [x] Item-anchored comments (highlight specific item) ✅
-- [x] Fire reactions (toggle) ✅
+- [x] Fire reactions (toggle, comments only) ✅
 - [x] Categories system (10 parents, 300 children) ✅
 - [x] Admin login protects dashboard ✅
 - [x] Review queue: approve/reject posts ✅
 - [x] Submit page: create posts with dynamic list items ✅
 - [x] Device fingerprinting tracks anonymous users ✅
-- [x] Smart rate limiting (per user, not IP)
-- [x] Shadow Trust Score system
-- [x] ✅ Counter Lists are UNLIMITED for all users
-- [x] ✅ Counter Lists are UNLIMITED for all users
+- [x] Smart rate limiting (per user, not IP) ✅
+- [x] Shadow Trust Score system ✅
+- [x] Counter Lists are UNLIMITED for all users ✅
+- [x] User profiles at `/a/[username]` ✅
 - [ ] Elasticsearch search with autocomplete
 - [ ] Arguments page (hot debates)
 - [ ] Hall of Fame
-- [ ] User profiles at `/a_XXXX`
 - [ ] Deployed and verified
 
 ---

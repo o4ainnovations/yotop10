@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { API, PostSubmission, PostSubmissionResponse, TitleCheckResponse } from '@/lib/api';
+import { useAuthStore } from '@/stores/auth';
 
 const DRAFT_KEY = 'yotop10_submit_draft';
 const DEBOUNCE_MS = 500;
@@ -37,7 +38,6 @@ interface DraftData {
 // Generate unique ID for items
 const generateId = () => Math.random().toString(36).substring(2, 9);
 
-// Debounce utility
 const debounce = <T extends unknown[]>(fn: (...args: T) => void, ms: number) => {
   let timeoutId: NodeJS.Timeout;
   return (...args: T) => {
@@ -55,6 +55,11 @@ export default function SubmitPage() {
     { id: generateId(), rank: 1, title: '', justification: '', source_url: '' }
   ]);
   const [authorName, setAuthorName] = useState('');
+
+  const formDataRef = useRef({ categoryId, title, intro, items, authorName });
+  formDataRef.current = { categoryId, title, intro, items, authorName };
+
+  const saveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // UI state
   const [categories, setCategories] = useState<Array<{ id: string; name: string; icon?: string }>>([]);
@@ -116,31 +121,35 @@ export default function SubmitPage() {
     }
   }, []);
 
-  // Save draft (debounced)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const saveDraft = useCallback(
-    debounce(() => {
+  // Save draft (debounced via ref to avoid stale closures)
+  const saveDraft = useCallback(() => {
+    clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      const { categoryId: cat, title: t, intro: i, items: it, authorName: a } = formDataRef.current;
+      if (!t && !i && !it.some(item => item.title || item.justification) && !a) return;
       const draft: DraftData = {
-        category_id: categoryId || undefined,
-        title: title || undefined,
-        intro: intro || undefined,
-        items: items.map(({ title, justification, source_url }) => ({ title, justification, source_url })),
-        author_display_name: authorName || undefined,
+        category_id: cat || undefined,
+        title: t || undefined,
+        intro: i || undefined,
+        items: it.map(({ title, justification, source_url }) => ({ title, justification, source_url })),
+        author_display_name: a || undefined,
         savedAt: Date.now(),
       };
       localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-    }, 1000),
-    [categoryId, title, intro, items, authorName]
-  );
+    }, 1000);
+  }, []);
 
-  // Trigger draft save on any input change
   useEffect(() => {
-    if (title || intro || items.some(i => i.title || i.justification) || authorName) {
-      saveDraft();
-    }
-  }, [title, intro, items, authorName, saveDraft]);
+    saveDraft();
+  }, [categoryId, title, intro, items, authorName, saveDraft]);
 
-  // Title similarity check (debounced)
+  // Scroll to first error after React re-renders with aria-invalid attributes
+  useEffect(() => {
+    if (Object.keys(errors).length > 0) {
+      const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement;
+      if (firstErrorField) firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [errors]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const checkTitleSimilarity = useCallback(
     debounce(async (titleValue: string, catId: string) => {
@@ -294,9 +303,6 @@ export default function SubmitPage() {
     e.preventDefault();
     
     if (!validateForm()) {
-      // Scroll to first error
-      const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement;
-      if (firstErrorField) firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
@@ -322,13 +328,9 @@ export default function SubmitPage() {
       
       // Clear draft
       localStorage.removeItem(DRAFT_KEY);
-      
-      // Get current user for username
-      let username = '';
-      try {
-        const user = await API.getCurrentUser() as { username?: string };
-        username = user?.username || '';
-      } catch {}
+
+      const authUser = useAuthStore.getState().user;
+      const username = authUser?.username || '';
       
       setSubmitted({
         title: response.post?.title || title,

@@ -1,28 +1,24 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { API } from '@/lib/api';
+import { useAdminStore } from '@/stores/admin';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
+  const { loading, initialized, authenticated, checkSession } = useAdminStore();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        await API.adminGetMe();
-      } catch {
-        router.push('/admin/login');
-      } finally {
-        setLoading(false);
-      }
-    };
+    checkSession();
+  }, [checkSession]);
 
-    checkAuth();
-  }, [router]);
+  useEffect(() => {
+    if (initialized && !authenticated) {
+      router.push('/admin/login');
+    }
+  }, [initialized, authenticated, router]);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading || !initialized) return <div>Loading...</div>;
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>

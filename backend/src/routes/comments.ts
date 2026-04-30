@@ -5,142 +5,54 @@ import { Comment } from '../models/Comment';
 import { User } from '../models/User';
 import { Post } from '../models/Post';
 import { ListItem } from '../models/ListItem';
-import { SparkThreshold, getFloorMultiplier } from '../models/SparkThreshold';
+import { SparkThreshold } from '../models/SparkThreshold';
 import { atomicCheckRateLimit } from '../lib/redis';
 import { calculateEffectiveCommentLimit } from '../lib/rateLimit';
 import { getActiveBoost, grantBoost, BoostType } from '../lib/ladderSystem';
+import {
+  getPercentileValue, getThresholds,
+  computeSparkScore, computeParentSparkScore,
+} from '../lib/sparkScore';
 
 const router: Router = Router();
 
 let cronInterval: NodeJS.Timeout | null = null;
 let thresholdCronInterval: NodeJS.Timeout | null = null;
 
-const getThresholds = async () => {
-  const threshold = await SparkThreshold.findOne().sort({ calculated_at: -1 });
-  if (threshold) return threshold;
-  
-  // Return default thresholds if none exist
-  const defaultThreshold = new SparkThreshold({
-    percentile_99: 50,
-    percentile_95: 30,
-    percentile_85: 15,
-    percentile_70: 8,
-    calculated_at: new Date(),
-  });
-  return defaultThreshold;
-};
-
-// Calculate percentile from sorted array
-const getPercentileValue = (sortedArr: number[], percentile: number): number => {
-  if (sortedArr.length === 0) return 0;
-  const index = Math.ceil((percentile / 100) * sortedArr.length) - 1;
-  return sortedArr[Math.max(0, Math.min(index, sortedArr.length - 1))];
-};
-
-// Calculate Spark Score for a comment
-// Final_Rank = max(Current_Decay_Rank, Base_Score × f)
-// Current_Decay_Rank = Base_Score / (Age_In_Hours + 1)^γ
-// Base_Score = (Replies × 2.0) + (Fires × 0.5) + 3.0
-// f = Floor Multiplier based on percentile rank
-const calculateSparkScore = async (fireCount: number, replyCount: number, createdAt: Date, _lastEngagedAt: Date): Promise<number> => {
-  const now = new Date();
-  const ageInHours = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
-  
-  // Calculate base score
-  const baseScore = (replyCount * 2.0) + (fireCount * 0.5) + 3;
-  
-  // Calculate gravity based on reply-to-fire ratio
-  const denominator = replyCount + fireCount + 1;
-  const ratio = replyCount / denominator;
-  const gamma = Math.max(1.1, 2.0 - ratio);
-  
-  // Calculate current decay rank
-  const currentDecayRank = baseScore / Math.pow(ageInHours + 1, gamma);
-  
-  // Get floor multiplier based on percentile
-  const thresholds = await getThresholds();
-  const floorMultiplier = getFloorMultiplier(baseScore, thresholds);
-  const floorValue = baseScore * floorMultiplier;
-  
-  // Final rank is max of decay rank and floor
-  const finalRank = Math.max(currentDecayRank, floorValue);
-  
-  return Math.max(0, finalRank);
-};
-
-// Calculate Spark Score for parent comment with weighted child contributions
-// Final_Rank = max(Current_Decay_Rank, Base_Score × f)
-// Total_Score = Parent_Base_Score + (SUM(All_Child_Fires) * 0.25) + (SUM(All_Child_Replies) * 1.0)
-// Parent_Base_Score = (Parent_Replies * 2) + (Parent_Fires * 0.5) + 3
-const calculateParentSparkScore = async (commentId: string): Promise<number> => {
+const updateSparkScore = async (commentId: string) => {
   const comment = await Comment.findById(commentId);
-  if (!comment) return 0;
-  
+  if (!comment) return;
+
+  const thresholds = await getThresholds();
+  const sparkScore = computeSparkScore(
+    { fireCount: comment.fire_count, replyCount: comment.reply_count, createdAt: comment.created_at },
+    thresholds
+  );
+
+  await Comment.findByIdAndUpdate(commentId, { spark_score: sparkScore });
+  return sparkScore;
+};
+
+const updateParentSparkScore = async (parentId: string) => {
   const now = new Date();
-  const ageInHours = (now.getTime() - comment.created_at.getTime()) / (1000 * 60 * 60);
-  
-  // Get all direct children of this comment
-  const children = await Comment.find({ parent_comment_id: commentId });
-  
-  // Sum up children's fires and replies
+  const comment = await Comment.findById(parentId);
+  if (!comment) return 0;
+
+  const children = await Comment.find({ parent_comment_id: parentId });
   let childFires = 0;
   let childReplies = 0;
   for (const child of children) {
     childFires += child.fire_count || 0;
     childReplies += child.reply_count || 0;
   }
-  
-  // Parent base score
-  const parentBase = (comment.reply_count * 2.0) + (comment.fire_count * 0.5) + 3;
-  
-  // Weighted child contributions
-  const childContribution = (childFires * 0.25) + (childReplies * 1.0);
-  
-  // Total numerator before decay
-  const numerator = parentBase + childContribution;
-  
-  // Calculate gravity
-  const totalReplies = comment.reply_count + childReplies;
-  const totalFires = comment.fire_count + childFires;
-  const denominator = totalReplies + totalFires + 1;
-  const ratio = totalReplies / denominator;
-  const gamma = Math.max(1.1, 2.0 - ratio);
-  
-  // Calculate current decay rank
-  const currentDecayRank = numerator / Math.pow(ageInHours + 1, gamma);
-  
-  // Get floor multiplier based on base score
+
   const thresholds = await getThresholds();
-  const floorMultiplier = getFloorMultiplier(parentBase, thresholds);
-  const floorValue = parentBase * floorMultiplier;
-  
-  // Final rank is max of decay rank and floor
-  const finalRank = Math.max(currentDecayRank, floorValue);
-  
-  return Math.max(0, finalRank);
-};
-
-// Update spark score for a comment
-const updateSparkScore = async (commentId: string) => {
-  const comment = await Comment.findById(commentId);
-  if (!comment) return;
-  
-  const sparkScore = await calculateSparkScore(
-    comment.fire_count,
-    comment.reply_count,
-    comment.created_at,
-    comment.last_engaged_at
+  const sparkScore = computeParentSparkScore(
+    { fireCount: comment.fire_count, replyCount: comment.reply_count, createdAt: comment.created_at, childFires, childReplies },
+    thresholds
   );
-  
-  await Comment.findByIdAndUpdate(commentId, { spark_score: sparkScore });
-  return sparkScore;
-};
 
-// Update parent's spark score with weighted child contributions and engagement pulse
-const updateParentSparkScore = async (parentId: string) => {
-  const now = new Date();
-  const sparkScore = await calculateParentSparkScore(parentId);
-  await Comment.findByIdAndUpdate(parentId, { 
+  await Comment.findByIdAndUpdate(parentId, {
     spark_score: sparkScore,
     last_engaged_at: now
   });
@@ -182,11 +94,10 @@ const startSparkScoreCron = () => {
       
       let updated = 0;
       for (const comment of comments) {
-        const newScore = await calculateSparkScore(
-          comment.fire_count,
-          comment.reply_count,
-          comment.created_at,
-          comment.last_engaged_at
+        const thresholds = await getThresholds();
+        const newScore = computeSparkScore(
+          { fireCount: comment.fire_count, replyCount: comment.reply_count, createdAt: comment.created_at },
+          thresholds
         );
         
         // Stop recalculating if score is very low and below floor
@@ -475,7 +386,11 @@ router.post('/posts/:id/comments', validateComment, async (req: Request, res: Re
     }
 
     const now = new Date();
-    const initialSparkScore = await calculateSparkScore(0, 0, now, now);
+    const thresholds = await getThresholds();
+    const initialSparkScore = computeSparkScore(
+      { fireCount: 0, replyCount: 0, createdAt: now },
+      thresholds
+    );
 
     // Create comment
     const comment = await Comment.create({

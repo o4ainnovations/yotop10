@@ -312,11 +312,15 @@ Every user can view their exact rate limit status in real-time on their profile 
 
 | Layer | Technology |
 |---|---|
-| **Frontend** | Next.js 14 (App Router) |
-| **Backend** | Python + FastAPI |
-| **Database** | PostgreSQL |
+| **Frontend** | Next.js 15 (App Router) |
+| **Backend** | Node.js + Express |
+| **Database** | MongoDB + Mongoose |
+| **Cache** | Redis |
+| **Search** | Elasticsearch 8 |
 | **Auth** | Device fingerprint (no JWT for users) |
-| **Admin Auth** | Simple JWT (admin only) |
+| **Admin Auth** | JWT + bcrypt (admin only) |
+| **State** | Zustand |
+| **Validation** | Zod (runtime), TypeScript (compile-time) |
 
 ---
 
@@ -327,18 +331,31 @@ Every user can view their exact rate limit status in real-time on their profile 
 - User logins (regular users)
 - Google OAuth
 - JWT for regular users
-- User profiles (replaced with anonymous any_XXXX)
 - Follow system
 - Connection system
-- Reactions (Fire)
 - Strike system
 - Report system
 - Communities
 - Ephemeral threads
 - Badges
 - Multi-account
-- Trust scores
 - NextAuth.js
+
+### Now Implemented (Originally Planned as Disabled)
+- Reactions (Fire) — implemented on comments
+- Trust scores — full Shadow Trust Score system V2
+- User profiles — anonymous `/a/[username]` profiles
+- Anonymous posting (`a_XXXX` usernames)
+- Device fingerprinting — 18-signal Tier 1+2 system
+- Advanced comment system — nested 10-level, item-anchored, SparkScore-ranked
+- Categories — 10 parents, 300 children, full API
+- Admin dashboard — login, setup, review queue
+- Post review queue — approve/reject with trust score updates
+- Smart rate limiting — 2D soft gradient with guaranteed minimums
+- Ladder Boost system — temporary rate limit boosts
+- Zustand state management
+- Zod environment validation
+- Monolithic API split into domain modules
 
 ### What Stays Active
 - Anonymous posting (any_XXXX)
@@ -347,6 +364,9 @@ Every user can view their exact rate limit status in real-time on their profile 
 - Categories (full implementation)
 - Admin dashboard
 - Post review queue
+- Trust Score Engine V2
+- Rate Limiting (trust-aware)
+- SparkScore comment ranking
 
 ---
 
@@ -618,10 +638,7 @@ When you're ready, you can re-enable:
 - Badge system
 - Custom profiles (HTML/CSS)
 - **M15 Identity Portability / Seed Phrases**
-- **M3.1 Title Similarity Check**
 - And more...
-
-All the disabled code is still there - just commented out.
 
 ---
 
@@ -630,11 +647,18 @@ These features are implemented and working in production but not yet formally do
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Counter List Post Type | ✅ Implemented | Core platform feature |
-| Post Edit Window | ✅ Implemented | 2 hour window to edit own posts |
-| Trust Score Hysteresis | ✅ Implemented | Prevents trust level flickering |
-| Optimistic Concurrency Control | ✅ Implemented | Prevents double counting trust score changes |
-| Trust Score Audit Log | ✅ Implemented | Permanent immutable log of all trust score changes |
+| Counter List Post Type | ✅ Confirmed | Core platform feature |
+| Post Edit Window | ✅ Confirmed | 2 hour window to edit own posts |
+| Trust Score Hysteresis | ✅ Confirmed | Prevents trust level flickering |
+| Optimistic Concurrency Control | ✅ Confirmed | Prevents double counting trust score changes |
+| Trust Score Audit Log | ✅ Confirmed | Permanent immutable log of all trust score changes |
+| Redis Sliding Window Rate Limiting | ✅ Confirmed | Atomic Lua script, full production ready |
+| Zod Environment Validation | ✅ Confirmed | All env vars validated at startup |
+| API Client Domain Split | ✅ Confirmed | Monolith split into 5 endpoint modules |
+| SparkScore Pure Functions | ✅ Confirmed | Single canonical formula in lib/sparkScore.ts |
+| Zustand State Management | ✅ Confirmed | Auth, admin, and rate limit stores |
+| Component Library | ✅ Confirmed | 6 reusable UI components |
+| Static Route Barrel | ✅ Confirmed | Metadata-based route mounting |
 | Redis Sliding Window Rate Limiting | ✅ Implemented | Full production ready rate limiting |
 
 These features are fully functional but have not yet been added to formal API documentation.
