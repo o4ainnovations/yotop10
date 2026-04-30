@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { Suspense } from 'react';
 import PostDetailClient from './client';
 import { API } from '@/lib/api';
 
@@ -66,7 +67,9 @@ export default async function PostDetailPage({ params }: PageProps) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema).replace(/<\//gi, '<\\/') }}
         />
       )}
-      <PostDetailClient slug={String(resolvedParams.slug)} />
+      <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center' }}>Loading...</div>}>
+        <PostDetailClient slug={String(resolvedParams.slug)} />
+      </Suspense>
     </>
   );
 }

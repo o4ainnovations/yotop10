@@ -1,0 +1,14 @@
+node_modules/
+.git/
+.env
+.env.*
+*.log
+.next/
+dist/
+coverage/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+ecosystem.config.js
+docker-compose.override.yml

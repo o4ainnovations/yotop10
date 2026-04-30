@@ -119,8 +119,7 @@ const checkRateLimit = async (fingerprint: string, trustScore: number = 1.0, pos
     };
   } catch (error) {
     console.error('Rate limit check failed:', error);
-    const fallbackLimit = Math.floor(3 * trustScore);
-    return { allowed: true, remaining: fallbackLimit, resetTime: Date.now() + 60 * 60 * 1000, maxRequests: fallbackLimit };
+    return { allowed: false, remaining: 0, resetTime: Date.now() + 60 * 60 * 1000, maxRequests: calculateEffectivePostLimit(trustScore) };
   }
 };
 

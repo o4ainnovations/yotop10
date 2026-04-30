@@ -79,7 +79,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyForms, setReplyForms] = useState<ReplyFormState>({});
   const [selectedItemId, setSelectedItemId] = useState<string | null>(itemParam);
-  
+  const [commentError, setCommentError] = useState<string | null>(null);
   const [reacting, setReacting] = useState(false);
   const [userReactions, setUserReactions] = useState<Set<string>>(new Set());
   const mountedRef = useRef(true);
@@ -118,7 +118,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
         // Non-critical
       }
     } catch {
-      if (mountedRef.current) setPost(null);
+      setCommentError('Failed to react. Please try again.');
     } finally {
       if (mountedRef.current) {
         setLoading(false);
@@ -154,7 +154,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
       fetchComments();
       commentsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch {
-      alert('Failed to post comment');
+      setCommentError('Failed to post comment. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -186,7 +186,6 @@ export default function PostDetailClient({ slug }: { slug: string }) {
       setPost(prev => prev ? { ...prev, comment_count: prev.comment_count + 1 } : null);
       fetchComments();
     } catch {
-      alert('Failed to post reply');
       setReplyForms(prev => ({
         ...prev,
         [parentCommentId]: { ...prev[parentCommentId], submitting: false }
@@ -397,6 +396,9 @@ export default function PostDetailClient({ slug }: { slug: string }) {
           </div>
           
           <form onSubmit={handleSubmitComment} style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f9f9f9', borderRadius: '5px' }}>
+            {commentError && (
+              <div role="alert" style={{ color: '#d32f2f', fontSize: '14px', marginBottom: '10px' }}>{commentError}</div>
+            )}
             <textarea
               ref={commentTextareaRef}
               value={commentContent}

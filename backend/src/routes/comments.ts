@@ -219,7 +219,7 @@ const checkCommentRateLimit = async (fingerprint: string, trustScore: number = 1
     };
   } catch (error) {
     console.error('Rate limit check error:', error);
-    return { allowed: true, remaining: Math.floor(50 * trustScore), resetTime: Date.now() + 3600000 };
+    return { allowed: false, remaining: 0, resetTime: Date.now() + 3600000 };
   }
 };
 

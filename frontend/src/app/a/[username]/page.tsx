@@ -48,6 +48,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   const [activeTab, setActiveTab] = useState<'posts' | 'comments' | 'stats'>('posts');
   const [editingName, setEditingName] = useState(false);
   const [newDisplayName, setNewDisplayName] = useState('');
+  const [nameError, setNameError] = useState<string | null>(null);
 
   const authUser = useAuthStore((s) => s.user);
   const fetchAuthUser = useAuthStore((s) => s.fetchUser);
@@ -128,8 +129,9 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
       await fetchAuthUser();
       setEditingName(false);
       setNewDisplayName('');
+      setNameError(null);
     } catch {
-      alert('Failed to update display name');
+      setNameError('Failed to update display name. Please try again.');
     }
   };
 
@@ -160,6 +162,9 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
           <button onClick={() => router.push('/username-history')} style={{ marginLeft: '10px' }}>Username History</button>
           {editingName && (
             <div style={{ marginTop: '10px' }}>
+              {nameError && (
+                <div role="alert" style={{ color: '#d32f2f', fontSize: '14px', marginBottom: '8px' }}>{nameError}</div>
+              )}
               <input
                 value={newDisplayName}
                 onChange={(e) => setNewDisplayName(e.target.value)}

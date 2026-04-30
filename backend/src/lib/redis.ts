@@ -41,10 +41,15 @@ export const atomicCheckRateLimit = async (
       now.toString(),
       Math.ceil(windowMs / 1000).toString(),
     ],
-  }) as [number, number];
+  });
+
+  const values = result as unknown as [number, number];
+  if (!Array.isArray(values) || values.length !== 2 || typeof values[0] !== 'number') {
+    throw new Error('Unexpected Redis response format');
+  }
 
   return {
-    allowed: result[0] === 1,
-    remaining: result[1],
+    allowed: values[0] === 1,
+    remaining: values[1],
   };
 };
