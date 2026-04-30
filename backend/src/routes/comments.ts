@@ -1,13 +1,12 @@
 import { Router, Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
-import crypto from 'crypto';
 import mongoose from 'mongoose';
 import { Comment } from '../models/Comment';
 import { User } from '../models/User';
 import { Post } from '../models/Post';
 import { ListItem } from '../models/ListItem';
-import { SparkThreshold, getFloorMultiplier, FLOOR_MULTIPLIERS } from '../models/SparkThreshold';
-import { createClient } from 'redis';
+import { SparkThreshold, getFloorMultiplier } from '../models/SparkThreshold';
+import { atomicCheckRateLimit } from '../lib/redis';
 import { calculateEffectiveCommentLimit } from '../lib/rateLimit';
 import { getActiveBoost, grantBoost, BoostType } from '../lib/ladderSystem';
 
@@ -16,15 +15,6 @@ const router: Router = Router();
 let cronInterval: NodeJS.Timeout | null = null;
 let thresholdCronInterval: NodeJS.Timeout | null = null;
 
-// Initialize Redis client for rate limiting
-const getRedisClient = async () => {
-  const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-  const client = createClient({ url: redisUrl });
-  await client.connect();
-  return client;
-};
-
-// Get current thresholds or defaults
 const getThresholds = async () => {
   const threshold = await SparkThreshold.findOne().sort({ calculated_at: -1 });
   if (threshold) return threshold;
@@ -297,13 +287,11 @@ const startThresholdCron = () => {
 // Check rate limit for comments (20 per hour per fingerprint)
 const checkCommentRateLimit = async (fingerprint: string, trustScore: number = 1.0, userId?: string): Promise<{ allowed: boolean; remaining: number; resetTime: number }> => {
   try {
-    const redis = await getRedisClient();
     const key = `rate_limit:comments:${fingerprint}`;
-    const windowMs = 60 * 60 * 1000; // 1 hour
-    
+    const windowMs = 60 * 60 * 1000;
+
     let limit = calculateEffectiveCommentLimit(trustScore);
-    
-    // Add active boost if available
+
     if (userId) {
       const activeBoost = await getActiveBoost(userId);
       if (activeBoost) {
@@ -311,26 +299,13 @@ const checkCommentRateLimit = async (fingerprint: string, trustScore: number = 1
       }
     }
 
-    const current = await redis.get(key);
+    const { allowed, remaining } = await atomicCheckRateLimit(key, windowMs, limit);
     const now = Date.now();
-    let count = 0;
-    let windowStart = now;
-
-    if (current) {
-      const data = JSON.parse(current);
-      if (now - data.windowStart < windowMs) {
-        count = data.count;
-        windowStart = data.windowStart;
-      }
-    }
-
-    const remaining = Math.max(0, limit - count);
-    const resetTime = windowStart + windowMs;
 
     return {
-      allowed: count < limit,
+      allowed,
       remaining,
-      resetTime,
+      resetTime: now + windowMs,
     };
   } catch (error) {
     console.error('Rate limit check error:', error);
@@ -339,10 +314,6 @@ const checkCommentRateLimit = async (fingerprint: string, trustScore: number = 1
 };
 
 
-
-// Start cron on module load
-startSparkScoreCron();
-startThresholdCron();
 
 // Validation middleware
 const validateComment = [
@@ -438,7 +409,7 @@ router.post('/posts/:id/comments', validateComment, async (req: Request, res: Re
 
     // Resolve post - try both ObjectID and slug
     let postId: string | null = null;
-    let post: any = null;
+    let post: { _id: { toString(): string }; author_id?: string } | null = null;
     
     if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
       post = await Post.findOne({ _id: idOrSlug, status: 'approved' });
@@ -544,28 +515,6 @@ router.post('/posts/:id/comments', validateComment, async (req: Request, res: Re
     // Update post's comment_count
     await Post.findByIdAndUpdate(postId, { $inc: { comment_count: 1 } });
 
-    // Increment rate limit counter
-    try {
-      const redis = await getRedisClient();
-      const key = `rate_limit:comments:${deviceFingerprint}`;
-      const current = await redis.get(key);
-      const currentTime = Date.now();
-      let count = 1;
-      let windowStart = currentTime;
-
-      if (current) {
-        const data = JSON.parse(current);
-        if (currentTime - data.windowStart < 3600000) {
-          count = data.count + 1;
-          windowStart = data.windowStart;
-        }
-      }
-
-      await redis.set(key, JSON.stringify({ count, windowStart }), { EX: 3600 });
-    } catch (redisError) {
-      console.error('Redis error:', redisError);
-    }
-
     res.status(201).json({ comment });
   } catch (error) {
     console.error('Create comment error:', error);
@@ -649,14 +598,32 @@ router.delete('/comments/:id', async (req: Request, res: Response) => {
       await updateParentSparkScore(comment.parent_comment_id.toString());
     }
 
-    // Update post's comment_count
-    await Post.findByIdAndUpdate(comment.post_id, { $inc: { comment_count: -1 } });
+    // Recursively collect all descendant comment IDs
+    const collectDescendantIds = async (parentId: string): Promise<string[]> => {
+      const children = await Comment.find({ parent_comment_id: parentId }, '_id');
+      const ids: string[] = [];
+      for (const child of children) {
+        const childId = child._id.toString();
+        ids.push(childId);
+        const grandChildren = await collectDescendantIds(childId);
+        ids.push(...grandChildren);
+      }
+      return ids;
+    };
 
-    // Delete the comment
+    const descendantIds = await collectDescendantIds(commentId);
+
+    // Delete all descendants
+    if (descendantIds.length > 0) {
+      await Comment.deleteMany({ _id: { $in: descendantIds } });
+    }
+
+    // Delete the comment itself
     await Comment.findByIdAndDelete(commentId);
 
-    // Also delete all replies to this comment
-    await Comment.deleteMany({ parent_comment_id: commentId });
+    // Decrement post's comment_count by total removed (comment + all descendants)
+    const totalRemoved = 1 + descendantIds.length;
+    await Post.findByIdAndUpdate(comment.post_id, { $inc: { comment_count: -totalRemoved } });
 
     res.json({ message: 'Comment deleted successfully' });
   } catch (error) {
@@ -688,5 +655,5 @@ router.post('/comments/:id/spark', async (req: Request, res: Response) => {
   }
 });
 
-export { router, updateSparkScore, startSparkScoreCron, stopSparkScoreCron };
+export { router, updateSparkScore, startSparkScoreCron, startThresholdCron, stopSparkScoreCron };
 export default router;

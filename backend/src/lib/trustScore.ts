@@ -74,45 +74,34 @@ export const calculateTrustScore = async (userId: string, postId: string, action
   // Increment version for optimistic locking
   const newVersion = currentVersion + 1;
 
-  // Start transaction - atomic update
-  const session = await User.startSession();
-  
-  try {
-    await session.withTransaction(async () => {
-      // Update user with optimistic concurrency control
-      const updateResult = await User.findOneAndUpdate(
-        { 
-          user_id: userId, 
-          trust_version: currentVersion 
-        },
-        {
-          trust_score: finalScore,
-          trust_version: newVersion,
-          last_50_reviews: user.last_50_reviews,
-        },
-        { session, new: true }
-      );
+  const updateResult = await User.findOneAndUpdate(
+    {
+      user_id: userId,
+      trust_version: currentVersion
+    },
+    {
+      trust_score: finalScore,
+      trust_version: newVersion,
+      last_50_reviews: user.last_50_reviews,
+    },
+    { new: true }
+  );
 
-      if (!updateResult) {
-        throw new Error('Version conflict: Trust score updated by another process');
-      }
-
-      // Write immutable audit log entry
-      await TrustScoreLog.create([{
-        user_id: userId,
-        post_id: postId,
-        action,
-        delta,
-        old_score: oldScore,
-        new_score: finalScore,
-        version: newVersion,
-        multiplier,
-        base_delta: baseDelta,
-      }], { session });
-    });
-  } finally {
-    await session.endSession();
+  if (!updateResult) {
+    throw new Error('Version conflict: Trust score updated by another process');
   }
+
+  await TrustScoreLog.create({
+    user_id: userId,
+    post_id: postId,
+    action,
+    delta,
+    old_score: oldScore,
+    new_score: finalScore,
+    version: newVersion,
+    multiplier,
+    base_delta: baseDelta,
+  });
 
   return finalScore;
 };

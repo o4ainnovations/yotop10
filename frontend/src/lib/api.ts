@@ -20,15 +20,17 @@ export function getBaseUrl(): string {
  */
 export async function apiFetch<T>(
   endpoint: string,
-  options?: RequestInit
+  options?: RequestInit,
+  retryCount = 0
 ): Promise<T> {
+  const MAX_RETRIES = 3;
   const baseUrl = getBaseUrl();
   const url = `${baseUrl}${endpoint}`;
 
   // Get fingerprint if available (client-side only)
   let deviceFingerprint: string | null = null;
   if (typeof window !== 'undefined') {
-    deviceFingerprint = localStorage.getItem('yotop10_fp');
+    try { deviceFingerprint = localStorage.getItem('yotop10_fp'); } catch { /* private browsing */ }
   }
 
   const headers: any = {
@@ -48,8 +50,11 @@ export async function apiFetch<T>(
 
   // Automatic retry for 425 Too Early responses - per plans.md specification
   if (response.status === 425) {
+    if (retryCount >= MAX_RETRIES) {
+      throw new Error(`API Error: 425 Too Early - Max retries (${MAX_RETRIES}) exceeded`);
+    }
     await new Promise(r => setTimeout(r, 500));
-    return apiFetch(endpoint, options);
+    return apiFetch(endpoint, options, retryCount + 1);
   }
 
   if (!response.ok) {

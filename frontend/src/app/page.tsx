@@ -10,7 +10,7 @@ export default function Home() {
 
   useEffect(() => {
     getFingerprint().then(() => {
-      API.getCurrentUser().then(data => setUser(data as any)).catch(() => {});
+      API.getCurrentUser().then(data => setUser(data as { username: string })).catch(() => {});
     });
   }, []);
 

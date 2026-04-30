@@ -20,7 +20,7 @@ export function normalizeTitle(title: string): NormalizedTitle {
 
   // Remove filler words, but only if at least 3 words remain after removal
   const wordsBefore = normalized.split(' ').filter(w => w.length > 0);
-  let withoutFillers = wordsBefore
+  const withoutFillers = wordsBefore
     .filter(word => !['the', 'and', 'of', 'in'].includes(word))
     .join(' ');
 
@@ -32,8 +32,7 @@ export function normalizeTitle(title: string): NormalizedTitle {
   normalized = normalized
     .replace(/ies\b/g, 'y')
     .replace(/ves\b/g, 'f')
-    .replace(/es\b/g, '')
-    .replace(/s\b/g, '')
+    .replace(/(?<=[^s])s\b/g, '')
     .replace(/\s+/g, ' ')
     .trim();
 

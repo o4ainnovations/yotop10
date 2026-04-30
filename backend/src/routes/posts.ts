@@ -4,14 +4,10 @@ import crypto from 'crypto';
 import mongoose from 'mongoose';
 import { Post, generateUniqueSlug } from '../models/Post';
 import { ListItem } from '../models/ListItem';
-import { User } from '../models/User';
 import { Category } from '../models/Category';
 import { Comment } from '../models/Comment';
-import { createClient } from 'redis';
+import { atomicCheckRateLimit } from '../lib/redis';
 import { calculateEffectivePostLimit } from '../lib/rateLimit';
-import { getActiveBoost } from '../lib/ladderSystem';
-import { checkTitleMatch } from '../lib/titleSimilarity';
-import { normalizeTitle } from '../lib/titleNormalization';
 
 const router: Router = Router();
 
@@ -81,7 +77,7 @@ router.get('/check-title', async (req: Request, res: Response) => {
       warning,
       matches,
       suggestion,
-      etag: crypto.randomBytes(8).toString('hex'),
+      etag: crypto.createHash('md5').update(JSON.stringify({ allowed: !blocked, blocked, warning, matches, suggestion })).digest('hex'),
     });
 
   } catch (error) {
@@ -95,26 +91,16 @@ router.get('/check-title', async (req: Request, res: Response) => {
   }
 });
 
-// Initialize Redis client for rate limiting
-const getRedisClient = async () => {
-  const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-  const client = createClient({ url: redisUrl });
-  await client.connect();
-  return client;
-};
+import { getActiveBoost } from '../lib/ladderSystem';
+import { checkTitleMatch } from '../lib/titleSimilarity';
 
-
-
-// Check rate limit (4 posts per hour per fingerprint)
 const checkRateLimit = async (fingerprint: string, trustScore: number = 1.0, postType?: string, userId?: string): Promise<{ allowed: boolean; remaining: number; resetTime: number; maxRequests: number }> => {
   try {
-    const redis = await getRedisClient();
     const key = `rate_limit:posts:${fingerprint}`;
-    const windowMs = 60 * 60 * 1000; // 1 hour
-    
+    const windowMs = 60 * 60 * 1000;
+
     let maxRequests = calculateEffectivePostLimit(trustScore, postType);
-    
-    // Add active boost if available
+
     if (userId) {
       const activeBoost = await getActiveBoost(userId);
       if (activeBoost) {
@@ -122,31 +108,17 @@ const checkRateLimit = async (fingerprint: string, trustScore: number = 1.0, pos
       }
     }
 
+    const { allowed, remaining } = await atomicCheckRateLimit(key, windowMs, maxRequests);
     const now = Date.now();
-    const windowStart = now - windowMs;
 
-    // Remove old entries
-    await redis.zRemRangeByScore(key, '0', windowStart.toString());
-
-    // Count current requests
-    const requestCount = await redis.zCard(key);
-
-    if (requestCount >= maxRequests) {
-      // Calculate reset time as now + windowMs (since we can't easily get the oldest entry)
-      const resetTime = now + windowMs;
-      await redis.disconnect();
-      return { allowed: false, remaining: 0, resetTime, maxRequests };
-    }
-
-    // Add current request
-    await redis.zAdd(key, { score: now, value: now.toString() });
-    await redis.expire(key, Math.ceil(windowMs / 1000));
-
-    await redis.disconnect();
-    return { allowed: true, remaining: maxRequests - requestCount - 1, resetTime: now + windowMs, maxRequests };
+    return {
+      allowed,
+      remaining,
+      resetTime: now + windowMs,
+      maxRequests,
+    };
   } catch (error) {
     console.error('Rate limit check failed:', error);
-    // If Redis fails, allow the request (fail open)
     const fallbackLimit = Math.floor(3 * trustScore);
     return { allowed: true, remaining: fallbackLimit, resetTime: Date.now() + 60 * 60 * 1000, maxRequests: fallbackLimit };
   }
@@ -309,7 +281,7 @@ router.get('/:idOrSlug', async (req: Request, res: Response) => {
     const { idOrSlug } = req.params;
 
     // Find approved post - try both _id and slug
-    let post: any;
+    let post: { _id: { toString(): string }; [key: string]: unknown } | null = null;
     if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
       post = await Post.findOne({ _id: idOrSlug, status: 'approved' })
         .populate('category_id', 'name slug icon')
@@ -350,7 +322,7 @@ router.get('/:idOrSlug', async (req: Request, res: Response) => {
         post_type: post.post_type,
         intro: post.intro,
         comment_count: post.comment_count,
-        view_count: post.view_count + 1,
+        view_count: (post.view_count as number) + 1,
         author_id: post.author_id,
         author_username: post.author_username,
         author_display_name: post.author_display_name,
@@ -462,7 +434,7 @@ router.post('/', validatePostSubmission, async (req: Request, res: Response) => 
     }
 
     // Create post
-    let post = await Post.create({
+    const post = await Post.create({
       author_id: user.user_id,
       author_username: user.username,
       author_display_name: author_display_name || user.username,
@@ -474,55 +446,53 @@ router.post('/', validatePostSubmission, async (req: Request, res: Response) => 
       fire_count: 0,
       comment_count: 0,
       view_count: 0,
-      slug: `temp-${crypto.randomBytes(8).toString('hex')}`, // Temporary slug to pass validation
+      slug: `temp-${crypto.randomBytes(8).toString('hex')}`,
     });
-    
-    // Generate final slug with ID
-    const finalSlug = generateUniqueSlug(title, post._id.toString());
-    await Post.findByIdAndUpdate(
-      post._id,
-      { slug: finalSlug }
-    );
-    
-    // Refresh post with slug
-    post = (await Post.findById(post._id))!;
 
-    // Create list items
-    const listItems = await Promise.all(
-      items.map((item: { rank: number; title: string; justification: string; image_url?: string; source_url?: string }) =>
-        ListItem.create({
-          post_id: post._id,
+    try {
+      const listItems = await Promise.all(
+        items.map((item: { rank: number; title: string; justification: string; image_url?: string; source_url?: string }) =>
+          ListItem.create({
+            post_id: post._id,
+            rank: item.rank,
+            title: item.title,
+            justification: item.justification,
+            image_url: item.image_url,
+            source_url: item.source_url,
+            fire_count: 0,
+          })
+        )
+      );
+
+      const finalSlug = generateUniqueSlug(title, post._id.toString());
+      await Post.findByIdAndUpdate(post._id, { slug: finalSlug });
+      const updatedPost = await Post.findById(post._id);
+      if (!updatedPost) throw new Error('Post lost during creation');
+
+      await Category.findByIdAndUpdate(category_id, { $inc: { post_count: 1 } });
+
+      res.status(201).json({
+        message: 'Post submitted successfully. It will be reviewed by an admin.',
+        post: {
+          id: updatedPost._id,
+          title: updatedPost.title,
+          status: updatedPost.status,
+          created_at: updatedPost.created_at,
+        },
+        items: listItems.map((item) => ({
+          id: item._id,
           rank: item.rank,
           title: item.title,
-          justification: item.justification,
-          image_url: item.image_url,
-          source_url: item.source_url,
-          fire_count: 0,
-        })
-      )
-    );
-
-    // Update category post count
-    await Category.findByIdAndUpdate(category_id, { $inc: { post_count: 1 } });
-
-    res.status(201).json({
-      message: 'Post submitted successfully. It will be reviewed by an admin.',
-      post: {
-        id: post._id,
-        title: post.title,
-        status: post.status,
-        created_at: post.created_at,
-      },
-      items: listItems.map((item) => ({
-        id: item._id,
-        rank: item.rank,
-        title: item.title,
-      })),
-      rate_limit: {
-        remaining: rateLimitResult.remaining,
-        resetTime: rateLimitResult.resetTime,
-      },
-    });
+        })),
+        rate_limit: {
+          remaining: rateLimitResult.remaining,
+          resetTime: rateLimitResult.resetTime,
+        },
+      });
+    } catch (itemError) {
+      await Post.findByIdAndDelete(post._id);
+      throw itemError;
+    }
   } catch (error) {
     console.error('Error creating post:', error);
     res.status(500).json({ error: 'Failed to create post' });
@@ -534,7 +504,7 @@ router.get('/:idOrSlug/history', async (req: Request, res: Response) => {
   try {
     const { idOrSlug } = req.params;
 
-    let post: any;
+    let post: { _id: { toString(): string }; [key: string]: unknown } | null = null;
     if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
       post = await Post.findById(idOrSlug).lean();
     }

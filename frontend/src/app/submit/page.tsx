@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { API, PostSubmission, TitleCheckResponse } from '@/lib/api';
+import { API, PostSubmission, PostSubmissionResponse, TitleCheckResponse } from '@/lib/api';
 
 const DRAFT_KEY = 'yotop10_submit_draft';
 const DEBOUNCE_MS = 500;
@@ -38,9 +38,9 @@ interface DraftData {
 const generateId = () => Math.random().toString(36).substring(2, 9);
 
 // Debounce utility
-const debounce = (fn: Function, ms: number) => {
+const debounce = <T extends unknown[]>(fn: (...args: T) => void, ms: number) => {
   let timeoutId: NodeJS.Timeout;
-  return (...args: any[]) => {
+  return (...args: T) => {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => fn(...args), ms);
   };
@@ -58,7 +58,6 @@ export default function SubmitPage() {
 
   // UI state
   const [categories, setCategories] = useState<Array<{ id: string; name: string; icon?: string }>>([]);
-  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [titleCheck, setTitleCheck] = useState<{
@@ -83,7 +82,7 @@ export default function SubmitPage() {
   useEffect(() => {
     API.getCategories()
       .then(data => {
-        setCategories((data as any).categories || []);
+        setCategories((data as { categories?: Array<{ id: string; name: string; icon?: string }> }).categories || []);
       })
       .catch(err => console.error('Failed to load categories:', err));
   }, []);
@@ -118,6 +117,7 @@ export default function SubmitPage() {
   }, []);
 
   // Save draft (debounced)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const saveDraft = useCallback(
     debounce(() => {
       const draft: DraftData = {
@@ -141,6 +141,7 @@ export default function SubmitPage() {
   }, [title, intro, items, authorName, saveDraft]);
 
   // Title similarity check (debounced)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const checkTitleSimilarity = useCallback(
     debounce(async (titleValue: string, catId: string) => {
       if (titleValue.length < 8 || !catId) {
@@ -169,7 +170,7 @@ export default function SubmitPage() {
   );
 
   // Client-side validation
-  const validateField = (field: string, value: any): string | undefined => {
+  const validateField = (field: string, value: string): string | undefined => {
     switch (field) {
       case 'category':
         return !value ? 'Please select a category' : undefined;
@@ -317,7 +318,7 @@ export default function SubmitPage() {
     };
 
     try {
-      const response = await API.addPost(submission) as any;
+      const response = await API.addPost(submission) as PostSubmissionResponse & { post?: { title: string; id: string; status: string }; items?: Array<{ id: string }> };
       
       // Clear draft
       localStorage.removeItem(DRAFT_KEY);
@@ -325,7 +326,7 @@ export default function SubmitPage() {
       // Get current user for username
       let username = '';
       try {
-        const user = await API.getCurrentUser() as any;
+        const user = await API.getCurrentUser() as { username?: string };
         username = user?.username || '';
       } catch {}
       
@@ -336,11 +337,11 @@ export default function SubmitPage() {
         itemCount: response.items?.length || items.length,
         username,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Submit failed:', err);
       
       // Try to parse field errors from response
-      const errorText = err.message || '';
+      const errorText = err instanceof Error ? err.message : '';
       if (errorText.includes('409') || errorText.includes('already exists')) {
         setErrors({ titleSimilarity: 'This list already exists. Please choose a different title.' });
       } else if (errorText.includes('429')) {
@@ -400,9 +401,6 @@ export default function SubmitPage() {
       </div>
     );
   }
-
-  // Loading state
-  if (loading) return <div style={{ padding: '40px', textAlign: 'center' }}>Loading...</div>;
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
@@ -552,7 +550,7 @@ export default function SubmitPage() {
           <h2>List Items</h2>
           <p style={{ color: '#666', marginBottom: '15px' }}>Add at least 1 item (max 25). Each item needs a title and justification.</p>
 
-          {items.map((item, idx) => (
+          {items.map((item) => (
             <fieldset key={item.id} style={{ border: '1px solid #ddd', borderRadius: '5px', padding: '15px', marginBottom: '15px' }}>
               <legend style={{ fontWeight: 'bold', padding: '0 10px' }}>Item #{item.rank}</legend>
               

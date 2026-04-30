@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { AdminUser } from '../models/AdminUser';
 import { SetupToken } from '../models/SetupToken';
 import { Post } from '../models/Post';
-import { adminAuthMiddleware, generateAdminToken, generateSetupToken, AdminAuthRequest } from '../lib/adminAuth';
+import { adminAuthMiddleware, generateAdminToken, AdminAuthRequest } from '../lib/adminAuth';
 import { trustScoreWorker } from '../lib/trustScoreWorker';
 
 const router: Router = Router();

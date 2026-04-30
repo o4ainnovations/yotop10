@@ -220,6 +220,7 @@ async function seedCategories() {
 
     // Create child categories using bulkWrite for upsert
     let childCount = 0;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const childOperations: any[] = [];
 
     for (let i = 0; i < parentCategories.length; i++) {

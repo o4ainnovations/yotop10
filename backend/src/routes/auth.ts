@@ -2,19 +2,8 @@ import { Router, Request, Response } from 'express';
 
 const router: Router = Router();
 
-// Login
-router.post('/login', (req: Request, res: Response) => {
-  res.json({ message: 'Login endpoint' });
-});
-
-// Register
-router.post('/register', (req: Request, res: Response) => {
-  res.json({ message: 'Register endpoint' });
-});
-
-// Logout
-router.post('/logout', (req: Request, res: Response) => {
-  res.json({ message: 'Logout endpoint' });
-});
+router.post('/login', (_req: Request, res: Response) => res.status(501).json({ error: 'Not implemented' }));
+router.post('/register', (_req: Request, res: Response) => res.status(501).json({ error: 'Not implemented' }));
+router.post('/logout', (_req: Request, res: Response) => res.status(501).json({ error: 'Not implemented' }));
 
 export default router;

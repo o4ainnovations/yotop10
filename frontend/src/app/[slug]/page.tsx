@@ -63,7 +63,7 @@ export default async function PostDetailPage({ params }: PageProps) {
       {itemListSchema && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema).replace(/<\//g, '<\\/') }}
         />
       )}
       <PostDetailClient slug={String(resolvedParams.slug)} />

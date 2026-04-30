@@ -1,10 +1,12 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+type FingerprintSignals = Record<string, string | number | boolean>;
+
 export interface IFingerprintObservation extends Document {
   user_id: string;
   fingerprint_hash: string;
-  tier1: Record<string, any>;
-  tier2: Record<string, any>;
+  tier1: FingerprintSignals;
+  tier2: FingerprintSignals;
   observed_at: Date;
 }
 

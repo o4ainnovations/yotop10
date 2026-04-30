@@ -1,5 +1,5 @@
-const levenshtein = require('fast-levenshtein');
-import { normalizeTitle, NormalizedTitle, isYearVariation } from './titleNormalization';
+import levenshtein from 'fast-levenshtein';
+import { normalizeTitle, isYearVariation } from './titleNormalization';
 
 /**
  * Dynamic threshold calculation based on title length

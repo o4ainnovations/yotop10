@@ -3,8 +3,6 @@ import { body, validationResult } from 'express-validator';
 import mongoose from 'mongoose';
 import { Reaction } from '../models/Reaction';
 import { Comment } from '../models/Comment';
-import { Post } from '../models/Post';
-import { ListItem } from '../models/ListItem';
 import { SparkThreshold, getFloorMultiplier } from '../models/SparkThreshold';
 import { grantBoost, BoostType } from '../lib/ladderSystem';
 
@@ -31,9 +29,10 @@ const validateReaction = [
   body('target_id').isMongoId().withMessage('Invalid target ID'),
 ];
 
-// Helper to get fingerprint from request
-const getFingerprint = (req: Request): string => {
-  return req.headers['x-device-fingerprint'] as string || req.body.device_fingerprint || 'unknown';
+const getFingerprint = (req: Request): string | undefined => {
+  const fp = req.user?.device_fingerprint || req.fingerprint;
+  if (!fp || fp === 'unknown') return undefined;
+  return fp;
 };
 
 // POST /api/reactions - Toggle fire reaction
@@ -45,7 +44,10 @@ router.post('/', validateReaction, async (req: Request, res: Response) => {
     }
 
     const { target_type, target_id } = req.body;
-    const device_fingerprint = req.user?.device_fingerprint || 'unknown';
+    const device_fingerprint = req.user?.device_fingerprint || req.fingerprint;
+    if (!device_fingerprint || device_fingerprint === 'unknown') {
+      return res.status(401).json({ error: 'Device identity required for reactions' });
+    }
 
     // Only allow comments
     if (target_type !== 'comment') {
@@ -54,8 +56,6 @@ router.post('/', validateReaction, async (req: Request, res: Response) => {
     
     // Verify target exists and get current fire count
     const target = await Comment.findById(target_id);
-    const targetModel = 'Comment';
-
     if (!target) {
       return res.status(404).json({ error: `${target_type} not found` });
     }

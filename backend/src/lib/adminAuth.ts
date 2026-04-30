@@ -3,7 +3,11 @@ import crypto from 'crypto';
 import { Request, Response, NextFunction } from 'express';
 import { AdminUser } from '../models/AdminUser';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'default-dev-secret-change-me-in-production';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error('FATAL: JWT_SECRET environment variable is required but not set.');
+}
 const JWT_EXPIRY = '24h';
 
 export interface AdminAuthRequest extends Request {

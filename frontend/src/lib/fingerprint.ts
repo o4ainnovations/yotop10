@@ -157,17 +157,23 @@ const generateHash = (data: FingerprintData): string => {
 };
 
 // Exported function to get fingerprint
+const safeGetItem = (key: string): string | null => {
+  try { return localStorage.getItem(key); } catch { return null; }
+};
+
+const safeSetItem = (key: string, value: string): void => {
+  try { localStorage.setItem(key, value); } catch { /* private browsing */ }
+};
+
 export const getFingerprint = async (): Promise<string> => {
-  // Return cached if available
-  const cached = localStorage.getItem('yotop10_fp');
+  const cached = safeGetItem('yotop10_fp');
   if (cached) return cached;
 
   const data = await collectAllSignals();
   data.hash = generateHash(data);
   
-  // Store permanently
-  localStorage.setItem('yotop10_fp', data.hash);
-  localStorage.setItem('yotop10_fp_full', JSON.stringify(data));
+  safeSetItem('yotop10_fp', data.hash);
+  safeSetItem('yotop10_fp_full', JSON.stringify(data));
   
   return data.hash;
 };

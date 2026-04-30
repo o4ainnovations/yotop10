@@ -1,6 +1,7 @@
 import { FingerprintObservation } from '../models/FingerprintObservation';
 
-// Signal definitions with weights
+type FingerprintSignals = Record<string, string | number | boolean>;
+
 const SIGNALS = {
   tier1: [
     { name: 'webglRenderer', weight: 10 },
@@ -39,7 +40,7 @@ function getSignalAgeWeight(ageDays: number): number {
 /**
  * Tiered similarity score calculation
  */
-function calculateSimilarityScore(signalA: Record<string, any>, signalB: Record<string, any>): number {
+function calculateSimilarityScore(signalA: FingerprintSignals, signalB: FingerprintSignals): number {
   let score = 0;
   let maximum = 0;
 
@@ -66,7 +67,7 @@ function calculateSimilarityScore(signalA: Record<string, any>, signalB: Record<
  * Negative matching logic
  * If 6 out of 7 Tier 1 signals match exactly and one differs: it is still the same device
  */
-function applyNegativeMatching(similarity: number, signalA: Record<string, any>, signalB: Record<string, any>): number {
+function applyNegativeMatching(similarity: number, signalA: FingerprintSignals, signalB: FingerprintSignals): number {
   let tier1Matches = 0;
   
   for (const signal of SIGNALS.tier1) {
@@ -86,7 +87,7 @@ function applyNegativeMatching(similarity: number, signalA: Record<string, any>,
 /**
  * Find existing user match for new fingerprint observation
  */
-export async function findMatchingUser(tier1: Record<string, any>, tier2: Record<string, any>): Promise<string | null> {
+export async function findMatchingUser(tier1: FingerprintSignals, tier2: FingerprintSignals): Promise<string | null> {
   // Get all observations from last 90 days
   const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
   
@@ -103,8 +104,8 @@ export async function findMatchingUser(tier1: Record<string, any>, tier2: Record
 
     if (ageWeight === 0) continue;
 
-    const observedTier1 = observation.tier1 as unknown as Record<string, any>;
-    const observedTier2 = observation.tier2 as unknown as Record<string, any>;
+    const observedTier1 = observation.tier1 as unknown as FingerprintSignals;
+    const observedTier2 = observation.tier2 as unknown as FingerprintSignals;
     
     let similarity = calculateSimilarityScore(
       { ...tier1, ...tier2 },
@@ -136,8 +137,8 @@ export async function findMatchingUser(tier1: Record<string, any>, tier2: Record
 export async function storeFingerprintObservation(
   userId: string,
   fingerprintHash: string,
-  tier1: Record<string, any>,
-  tier2: Record<string, any>
+  tier1: FingerprintSignals,
+  tier2: FingerprintSignals
 ): Promise<void> {
   await FingerprintObservation.create({
     user_id: userId,

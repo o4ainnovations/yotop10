@@ -5,7 +5,7 @@ import { Comment } from '../models/Comment';
 import { User } from '../models/User';
 import { isUsernameAvailable, recordUsernameChange } from '../lib/usernameService';
 import { calculateEffectivePostLimit, calculateEffectiveCommentLimit, RateLimitStatus } from '../lib/rateLimit';
-import { createClient } from 'redis';
+import { redis } from '../lib/redis';
 
 const router: Router = Router();
 
@@ -34,10 +34,10 @@ router.get('/me', async (req: Request, res: Response) => {
     const commentCount = await Comment.countDocuments({ author_id: req.user.user_id });
 
     // Process post counts
-    const postCounts = userPosts.reduce((acc: any, item: any) => {
+    const postCounts = userPosts.reduce((acc: Record<string, number>, item: { _id: string; count: number }) => {
       acc[item._id] = item.count;
       return acc;
-    }, {});
+    }, {} as Record<string, number>);
 
     const postsApproved = postCounts.approved || 0;
     const postsRejected = postCounts.rejected || 0;
@@ -56,16 +56,16 @@ router.get('/me', async (req: Request, res: Response) => {
     // Return full user context
     res.json({
       user_id: req.user.user_id,
-      username: (req.user as any).custom_display_name || req.user.username,
-      custom_display_name: (req.user as any).custom_display_name || null,
+      username: req.user.custom_display_name || req.user.username,
+      custom_display_name: req.user.custom_display_name || null,
       trust_score: req.user.trust_score,
       trust_level: trustLevel,
       post_count: postCount,
       comment_count: commentCount,
       posts_approved: postsApproved,
       posts_rejected: postsRejected,
-      created_at: (req.user as any).created_at,
-      first_seen_at: (req.user as any).created_at,
+      created_at: req.user.created_at,
+      first_seen_at: req.user.created_at,
     });
 
   } catch (error) {
@@ -114,16 +114,24 @@ router.patch('/me', validateDisplayName, async (req: Request, res: Response) => 
       return res.status(409).json({ error: 'Display name already taken' });
     }
 
-    // Update user
-    const currentUser = await User.findOne({ user_id: req.user.user_id });
-    const oldUsername = currentUser?.custom_display_name || currentUser?.username || null;
-    
-    await User.findOneAndUpdate(
-      { user_id: req.user.user_id },
-      { custom_display_name: displayName }
+    const oldUsername = req.user.custom_display_name || req.user.username || null;
+
+    const updatedUser = await User.findOneAndUpdate(
+      {
+        user_id: req.user.user_id,
+        $or: [
+          { custom_display_name: oldUsername },
+          { custom_display_name: { $exists: false }, username: oldUsername },
+        ],
+      },
+      { custom_display_name: displayName },
+      { new: true }
     );
-    
-    // Record the change in history
+
+    if (!updatedUser) {
+      return res.status(409).json({ error: 'Display name was changed by another request. Please try again.' });
+    }
+
     await recordUsernameChange(req.user.user_id, displayName, oldUsername);
 
     // Return updated user
@@ -154,12 +162,9 @@ router.get('/:username', async (req: Request, res: Response) => {
     
     console.log(`[USER PROFILE] Search variations: ${username}, ${cleanUsername}, a_${cleanUsername}`);
     
-    const user = await User.findOne({ 
+    const user = await User.findOne({
       $or: [
         { user_id: username },
-        { user_id: { $regex: `^${username}` } },
-        { user_id: cleanUsername },
-        { user_id: { $regex: `^${cleanUsername}` } },
         { username },
         { username: `a_${cleanUsername}` },
         { custom_display_name: username },
@@ -189,7 +194,7 @@ router.get('/:username', async (req: Request, res: Response) => {
     const isOwnProfile = req.user && req.user.user_id === user.user_id;
 
     // Query posts with privacy rules
-    const postQuery: any = { author_id: user.user_id };
+    const postQuery: Record<string, unknown> = { author_id: user.user_id };
     
     // Only show pending/rejected posts to user themselves
     if (!isOwnProfile) {
@@ -212,15 +217,18 @@ router.get('/:username', async (req: Request, res: Response) => {
       }
     ]);
 
-    const countMap = postCounts.reduce((acc: any, item: any) => {
+    const countMap = postCounts.reduce((acc: Record<string, number>, item: { _id: string; count: number }) => {
       acc[item._id] = item.count;
       return acc;
-    }, {});
+    }, {} as Record<string, number>);
 
     const postsApproved = countMap.approved || 0;
     const postsRejected = countMap.rejected || 0;
     const postCount = postsApproved + postsRejected + (countMap.pending_review || 0);
     const approvalRate = postCount > 0 ? postsApproved / postCount : 0;
+
+    const currentUsername = user.custom_display_name || user.username;
+    const cleanCurrentUsername = currentUsername.replace(/^a_/, '');
 
     // Get user comments
     const userComments = await Comment.find({ author_id: user.user_id })
@@ -228,11 +236,6 @@ router.get('/:username', async (req: Request, res: Response) => {
       .limit(100)
       .select('content post_id fire_count reply_count created_at');
 
-    // Canonical URL logic - NO REDIRECTS
-    const accessedUsername = req.params.username;
-    const currentUsername = (user as any).custom_display_name || user.username;
-    const cleanCurrentUsername = currentUsername.replace(/^a_/, '');
-    
     // Return public profile data
     res.json({
       username: currentUsername,
@@ -246,7 +249,7 @@ router.get('/:username', async (req: Request, res: Response) => {
         total_comments: userComments.length,
         approval_rate: Math.round(approvalRate * 100),
       },
-      posts: userPosts.map((post: any) => ({
+      posts: userPosts.map((post) => ({
         id: post._id,
         title: post.title,
         slug: post.slug,
@@ -255,11 +258,11 @@ router.get('/:username', async (req: Request, res: Response) => {
         comment_count: post.comment_count,
         created_at: post.created_at,
         category: post.category_id ? {
-          name: post.category_id.name,
-          slug: post.category_id.slug
+          name: (post.category_id as unknown as { name: string; slug: string }).name,
+          slug: (post.category_id as unknown as { name: string; slug: string }).slug
         } : null,
       })),
-      comments: userComments.map((comment: any) => ({
+      comments: userComments.map((comment) => ({
         id: comment._id,
         content: comment.content,
         post_id: comment.post_id,
@@ -276,9 +279,9 @@ router.get('/:username', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/', (req: Request, res: Response) => res.json({ message: 'Users endpoint' }));
-router.put('/:id', (req: Request, res: Response) => res.json({ message: 'Update user' }));
-router.delete('/:id', (req: Request, res: Response) => res.json({ message: 'Delete user' }));
+router.get('/', (_req: Request, res: Response) => res.status(501).json({ error: 'Not implemented' }));
+router.put('/:id', (_req: Request, res: Response) => res.status(501).json({ error: 'Not implemented' }));
+router.delete('/:id', (_req: Request, res: Response) => res.status(501).json({ error: 'Not implemented' }));
 
 /**
  * GET /api/users/me/history
@@ -316,16 +319,7 @@ router.get('/me/rate-limits', async (req: Request, res: Response) => {
   }
 
   try {
-    // Initialize Redis client locally
-    const getRedisClient = async () => {
-      const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-      const client = createClient({ url: redisUrl });
-      await client.connect();
-      return client;
-    };
-    
-    const redis = await getRedisClient();
-    const windowMs = 60 * 60 * 1000; // 1 hour
+    const windowMs = 60 * 60 * 1000;
     const now = Date.now();
 
     // Calculate total limits
