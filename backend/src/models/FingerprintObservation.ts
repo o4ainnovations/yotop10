@@ -32,6 +32,11 @@ const fingerprintObservationSchema = new Schema<IFingerprintObservation>(
       of: Schema.Types.Mixed,
       required: true,
     },
+    observed_at: {
+      type: Date,
+      default: Date.now,
+      index: true,
+    },
   },
   {
     timestamps: false,
@@ -40,5 +45,6 @@ const fingerprintObservationSchema = new Schema<IFingerprintObservation>(
 
 fingerprintObservationSchema.index({ user_id: 1, observed_at: -1 });
 fingerprintObservationSchema.index({ fingerprint_hash: 1, observed_at: -1 });
+fingerprintObservationSchema.index({ observed_at: 1 }, { expireAfterSeconds: 90 * 24 * 3600 });
 
 export const FingerprintObservation = mongoose.model<IFingerprintObservation>('FingerprintObservation', fingerprintObservationSchema);

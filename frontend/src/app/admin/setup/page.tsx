@@ -7,8 +7,10 @@ import { API } from '@/lib/api';
 function AdminSetupContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const token = searchParams?.get('token') || '';
+  const urlToken = searchParams?.get('token') || '';
 
+  const [token, setToken] = useState(urlToken);
+  const [tokenSubmitted, setTokenSubmitted] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -27,6 +29,10 @@ function AdminSetupContent() {
       try {
         const result = await API.adminValidateSetupToken(token) as { valid: boolean };
         setValidToken(result.valid);
+        if (result.valid) {
+          setTokenSubmitted(true);
+          router.replace('/admin/setup');
+        }
       } catch {
         setValidToken(false);
       } finally {
@@ -34,8 +40,30 @@ function AdminSetupContent() {
       }
     };
 
-    validateToken();
-  }, [token]);
+    if (urlToken) {
+      validateToken();
+    } else {
+      setChecking(false);
+    }
+  }, [urlToken, token, router]);
+
+  const handleTokenSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setChecking(true);
+
+    try {
+      const result = await API.adminValidateSetupToken(token) as { valid: boolean };
+      setValidToken(result.valid);
+      setTokenSubmitted(true);
+      if (result.valid) router.replace('/admin/setup');
+    } catch {
+      setError('Invalid or expired token');
+      setValidToken(false);
+    } finally {
+      setChecking(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,6 +93,32 @@ function AdminSetupContent() {
 
   if (checking) return <div>Loading...</div>;
 
+  if (!urlToken && !tokenSubmitted) {
+    return (
+      <div style={{ maxWidth: '400px', margin: '100px auto', padding: '20px' }}>
+        <h1>Admin Setup</h1>
+        <p>Enter the setup token generated from the server command line.</p>
+        {error && <p style={{ color: 'red' }}>{error}</p>}
+        <form onSubmit={handleTokenSubmit}>
+          <div style={{ marginBottom: '15px' }}>
+            <label>Setup Token:</label>
+            <input
+              type="text"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+              required
+              autoComplete="off"
+            />
+          </div>
+          <button type="submit" disabled={checking} style={{ padding: '10px 20px', width: '100%' }}>
+            Validate Token
+          </button>
+        </form>
+      </div>
+    );
+  }
+
   if (!validToken) {
     return (
       <div style={{ maxWidth: '400px', margin: '100px auto', padding: '20px' }}>
@@ -78,7 +132,7 @@ function AdminSetupContent() {
   return (
     <div style={{ maxWidth: '400px', margin: '100px auto', padding: '20px' }}>
       <h1>Setup Admin Account</h1>
-      
+
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
       <form onSubmit={handleSubmit}>
@@ -90,6 +144,7 @@ function AdminSetupContent() {
             onChange={(e) => setUsername(e.target.value)}
             style={{ width: '100%', padding: '8px', marginTop: '5px' }}
             required
+            autoComplete="username"
           />
         </div>
 
@@ -101,6 +156,7 @@ function AdminSetupContent() {
             onChange={(e) => setPassword(e.target.value)}
             style={{ width: '100%', padding: '8px', marginTop: '5px' }}
             required
+            autoComplete="new-password"
           />
         </div>
 
@@ -112,11 +168,12 @@ function AdminSetupContent() {
             onChange={(e) => setConfirmPassword(e.target.value)}
             style={{ width: '100%', padding: '8px', marginTop: '5px' }}
             required
+            autoComplete="new-password"
           />
         </div>
 
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           disabled={loading}
           style={{ padding: '10px 20px', width: '100%' }}
         >

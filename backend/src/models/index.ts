@@ -5,3 +5,8 @@ export { Comment } from './Comment';
 export { Reaction } from './Reaction';
 export { Category } from './Category';
 export { AdminUser } from './AdminUser';
+export { TrustScoreLog } from './TrustScoreLog';
+export { SetupToken } from './SetupToken';
+export { UsernameHistory } from './UsernameHistory';
+export { FingerprintObservation } from './FingerprintObservation';
+export { SparkThreshold } from './SparkThreshold';

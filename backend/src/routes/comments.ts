@@ -2,7 +2,6 @@ import { Router, Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
 import mongoose from 'mongoose';
 import { Comment } from '../models/Comment';
-import { User } from '../models/User';
 import { Post } from '../models/Post';
 import { ListItem } from '../models/ListItem';
 import { SparkThreshold } from '../models/SparkThreshold';
@@ -315,8 +314,11 @@ router.post('/posts/:id/comments', validateComment, async (req: Request, res: Re
 
     const idOrSlug = req.params.id;
     const { content, list_item_id, parent_comment_id } = req.body;
-    // Use fingerprint from middleware user context
-    const deviceFingerprint = req.user?.device_fingerprint || 'unknown';
+    // Use fingerprint from middleware user context — never trust request body/header
+    const deviceFingerprint = req.user?.device_fingerprint;
+    if (!deviceFingerprint || deviceFingerprint === 'unknown') {
+      return res.status(401).json({ error: 'Device identity required' });
+    }
 
     // Resolve post - try both ObjectID and slug
     let postId: string | null = null;
@@ -448,7 +450,7 @@ router.patch('/comments/:id',
     }
 
     const commentId = req.params.id;
-    const { content, device_fingerprint } = req.body;
+    const { content } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(commentId)) {
       return res.status(400).json({ error: 'Invalid comment ID' });
@@ -459,9 +461,8 @@ router.patch('/comments/:id',
       return res.status(404).json({ error: 'Comment not found' });
     }
 
-    // Verify ownership via device fingerprint
-    const user = await User.findOne({ device_fingerprint: device_fingerprint || 'unknown' });
-    if (!user || comment.author_id !== user.user_id) {
+    // Verify ownership via middleware context
+    if (!req.user || comment.author_id !== req.user.user_id) {
       return res.status(403).json({ error: 'You can only edit your own comments' });
     }
 
@@ -487,7 +488,10 @@ router.patch('/comments/:id',
 router.delete('/comments/:id', async (req: Request, res: Response) => {
   try {
     const commentId = req.params.id;
-    const deviceFingerprint = req.headers['x-device-fingerprint'] as string || req.body.device_fingerprint || 'unknown';
+    const deviceFingerprint = req.user?.device_fingerprint;
+    if (!deviceFingerprint || deviceFingerprint === 'unknown') {
+      return res.status(401).json({ error: 'Device identity required' });
+    }
 
     if (!mongoose.Types.ObjectId.isValid(commentId)) {
       return res.status(400).json({ error: 'Invalid comment ID' });
@@ -498,9 +502,8 @@ router.delete('/comments/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Comment not found' });
     }
 
-    // Verify ownership
-    const user = await User.findOne({ device_fingerprint: deviceFingerprint });
-    if (!user || comment.author_id !== user.user_id) {
+    // Verify ownership via middleware context
+    if (!req.user || comment.author_id !== req.user.user_id) {
       return res.status(403).json({ error: 'You can only delete your own comments' });
     }
 

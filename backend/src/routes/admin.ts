@@ -5,6 +5,7 @@ import { SetupToken } from '../models/SetupToken';
 import { Post } from '../models/Post';
 import { adminAuthMiddleware, generateAdminToken, AdminAuthRequest } from '../lib/adminAuth';
 import { trustScoreWorker } from '../lib/trustScoreWorker';
+import { redis } from '../lib/redis';
 
 const router: Router = Router();
 
@@ -15,6 +16,16 @@ const router: Router = Router();
 router.post('/login', async (req: Request, res: Response) => {
   try {
     const { username, password } = req.body;
+    const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+    const rateLimitKey = `admin_login:${clientIp}`;
+    const maxAttempts = 5;
+    const windowSeconds = 15 * 60;
+
+    const attempts = await redis.incr(rateLimitKey);
+    if (attempts === 1) await redis.expire(rateLimitKey, windowSeconds);
+    if (attempts > maxAttempts) {
+      return res.status(429).json({ error: 'Too many login attempts. Try again in 15 minutes.' });
+    }
 
     const admin = await AdminUser.findOne({ username });
     if (!admin) {

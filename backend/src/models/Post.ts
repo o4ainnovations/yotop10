@@ -149,33 +149,26 @@ postSchema.pre('save', function(next) {
   next();
 });
 
-// Add a validator that runs after slug generation
-postSchema.pre('validate', function(next) {
-  if (this.isNew) {
-    // Generate slug early for validation
-    this.slug = generateUniqueSlug(this.title, this._id.toString());
-  }
-  next();
-});
-
-// Auto-increment category post count when post is approved and created
+// Auto-increment category post count ONLY when transitioning to approved
 postSchema.post('save', async function(doc, next) {
-  // Increment count when post is newly approved
-  if (doc.status === 'approved') {
+  if (doc.status === 'approved' && doc.isModified('status')) {
     await Category.findByIdAndUpdate(doc.category_id, { $inc: { post_count: 1 } });
   }
   next();
 });
 
-// Auto-decrement category post count when post is removed or rejected
-postSchema.post('findOneAndUpdate', async function(doc) {
-  // If post was approved and now rejected/removed
-  if (doc && doc.status === 'rejected') {
-    await Category.findByIdAndUpdate(doc.category_id, { $inc: { post_count: -1 } });
+// Auto-decrement category post count when post transitions FROM approved
+postSchema.pre('findOneAndUpdate', async function() {
+  const update = this.getUpdate() as Record<string, unknown>;
+  if (update.status === 'rejected') {
+    const doc = await this.model.findOne(this.getQuery());
+    if (doc && doc.status === 'approved') {
+      await Category.findByIdAndUpdate(doc.category_id, { $inc: { post_count: -1 } });
+    }
   }
 });
 
-// Auto-decrement category post count when post is deleted
+// Auto-decrement category post count when deleting approved post
 postSchema.post('findOneAndDelete', async function(doc) {
   if (doc && doc.status === 'approved') {
     await Category.findByIdAndUpdate(doc.category_id, { $inc: { post_count: -1 } });

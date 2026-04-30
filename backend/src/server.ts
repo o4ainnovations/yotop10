@@ -98,4 +98,22 @@ const startServer = async () => {
 
 startServer();
 
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received. Shutting down gracefully...');
+  const { stopSparkScoreCron } = await import('./routes/comments');
+  stopSparkScoreCron();
+  await redis.quit();
+  await mongoose.connection.close();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('SIGINT received. Shutting down gracefully...');
+  const { stopSparkScoreCron } = await import('./routes/comments');
+  stopSparkScoreCron();
+  await redis.quit();
+  await mongoose.connection.close();
+  process.exit(0);
+});
+
 export default app;

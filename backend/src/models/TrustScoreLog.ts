@@ -61,5 +61,6 @@ const trustScoreLogSchema = new Schema<ITrustScoreLog>(
 
 // Unique index to guarantee idempotency
 trustScoreLogSchema.index({ user_id: 1, post_id: 1 }, { unique: true });
+trustScoreLogSchema.index({ created_at: 1 }, { expireAfterSeconds: 90 * 24 * 3600 });
 
 export const TrustScoreLog = mongoose.model<ITrustScoreLog>('TrustScoreLog', trustScoreLogSchema);

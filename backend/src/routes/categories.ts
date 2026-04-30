@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { Category } from '../models/Category';
+import { adminAuthMiddleware } from '../lib/adminAuth';
 
 const router: Router = Router();
 
@@ -105,7 +106,7 @@ router.get('/:slug(*)', async (req: Request, res: Response) => {
 });
 
 // POST /api/categories — Create category (admin)
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', adminAuthMiddleware, async (req: Request, res: Response) => {
   try {
     const { name, slug, description, icon, parent_id, is_featured } = req.body;
 
@@ -137,7 +138,7 @@ router.post('/', async (req: Request, res: Response) => {
 });
 
 // PATCH /api/categories/:id — Update category (admin)
-router.patch('/:id', async (req: Request, res: Response) => {
+router.patch('/:id', adminAuthMiddleware, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, description, icon, is_featured } = req.body;
@@ -160,7 +161,7 @@ router.patch('/:id', async (req: Request, res: Response) => {
 });
 
 // DELETE /api/categories/:id — Archive category (admin)
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', adminAuthMiddleware, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -182,7 +183,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
 });
 
 // POST /api/categories/recalculate-post-counts — Recalculate post counts for all categories (maintenance)
-router.post('/recalculate-post-counts', async (req: Request, res: Response) => {
+router.post('/recalculate-post-counts', adminAuthMiddleware, async (req: Request, res: Response) => {
   try {
     // Get all categories
     const categories = await Category.find({ is_archived: false }).lean();

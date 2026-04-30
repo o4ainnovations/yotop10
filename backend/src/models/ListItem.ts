@@ -45,6 +45,5 @@ const listItemSchema = new Schema<IListItem>(
 
 // Indexes for efficient queries
 listItemSchema.index({ post_id: 1, rank: 1 });
-listItemSchema.index({ post_id: 1, fire_count: -1 });
 
 export const ListItem = mongoose.model<IListItem>('ListItem', listItemSchema);

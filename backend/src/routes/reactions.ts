@@ -44,39 +44,46 @@ router.post('/', validateReaction, async (req: Request, res: Response) => {
       return res.status(404).json({ error: `${target_type} not found` });
     }
 
-    // Check if user already reacted
-    const existingReaction = await Reaction.findOne({
+    // Atomic delete-first: prevents TOCTOU race via unique compound index
+    const removed = await Reaction.findOneAndDelete({
       user_device_fingerprint: device_fingerprint,
       target_type,
       target_id,
     });
 
     let action: 'added' | 'removed';
-    let currentFireCount = target.fire_count || 0;
 
-    if (existingReaction) {
-      // Remove reaction (toggle off)
-      await Reaction.findByIdAndDelete(existingReaction._id);
-      currentFireCount = Math.max(0, currentFireCount - 1);
+    if (removed) {
       action = 'removed';
     } else {
-      // Add reaction (toggle on)
-      await Reaction.create({
-        user_device_fingerprint: device_fingerprint,
-        target_type,
-        target_id,
-        reaction_type: 'fire',
-      });
-      currentFireCount += 1;
-      action = 'added';
+      try {
+        await Reaction.create({
+          user_device_fingerprint: device_fingerprint,
+          target_type,
+          target_id,
+          reaction_type: 'fire',
+        });
+        action = 'added';
+      } catch (err: unknown) {
+        if (err instanceof Error && err.message.includes('duplicate key')) {
+          return res.status(409).json({ error: 'Already reacted' });
+        }
+        throw err;
+      }
     }
 
-    // Update fire_count on the target and recalculate spark_score for comments
+    // Atomically increment/decrement fire_count
     const now = new Date();
-    await Comment.findByIdAndUpdate(target_id, { 
-      fire_count: currentFireCount,
+    const updated = await Comment.findByIdAndUpdate(target_id, {
+      $inc: { fire_count: action === 'added' ? 1 : -1 },
       last_engaged_at: now,
-    });
+    }, { new: true });
+
+    if (!updated) {
+      return res.status(404).json({ error: 'Comment not found' });
+    }
+
+    const currentFireCount = updated.fire_count;
     
     // Grant boost if comment reaches exactly 3 fires
     if (currentFireCount === 3 && action === 'added') {

@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAdminStore } from '@/stores/admin';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { loading, initialized, authenticated, checkSession } = useAdminStore();
 
   useEffect(() => {
@@ -13,10 +14,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [checkSession]);
 
   useEffect(() => {
-    if (initialized && !authenticated) {
+    if (initialized && !authenticated && pathname !== '/admin/login' && pathname !== '/admin/setup') {
       router.push('/admin/login');
     }
-  }, [initialized, authenticated, router]);
+  }, [initialized, authenticated, router, pathname]);
 
   if (loading || !initialized) return <div>Loading...</div>;
 

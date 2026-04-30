@@ -20,15 +20,14 @@ interface PostVersion {
 export default function PostHistoryClient({ slug }: { slug: string }) {
   const postId = slug;
 
-  // Route guard - reserved routes should not be treated as posts
-  if (RESERVED_ROUTES.includes(postId)) {
-    notFound();
-  }
-
   const [versions, setVersions] = useState<PostVersion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedVersion, setSelectedVersion] = useState<PostVersion | null>(null);
+
+  if (RESERVED_ROUTES.includes(postId)) {
+    notFound();
+  }
 
   useEffect(() => {
     if (!postId) return;

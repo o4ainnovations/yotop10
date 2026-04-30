@@ -469,8 +469,6 @@ router.post('/', validatePostSubmission, async (req: Request, res: Response) => 
       const updatedPost = await Post.findById(post._id);
       if (!updatedPost) throw new Error('Post lost during creation');
 
-      await Category.findByIdAndUpdate(category_id, { $inc: { post_count: 1 } });
-
       res.status(201).json({
         message: 'Post submitted successfully. It will be reviewed by an admin.',
         post: {

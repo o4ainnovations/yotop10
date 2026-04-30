@@ -92,8 +92,4 @@ const userSchema = new Schema<IUser>(
   }
 );
 
-// Index for efficient queries
-userSchema.index({ device_fingerprint: 1 });
-userSchema.index({ username: 1 });
-
 export const User = mongoose.model<IUser>('User', userSchema);
