@@ -1,1 +1,1 @@
-// Test setup — add testing-library imports when @testing-library/jest-dom is installed
+import '@testing-library/jest-dom/vitest';
