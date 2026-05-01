@@ -10,5 +10,4 @@ coverage/
 .idea/
 .DS_Store
 Thumbs.db
-ecosystem.config.js
 docker-compose.override.yml
