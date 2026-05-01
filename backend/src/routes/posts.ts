@@ -463,7 +463,7 @@ router.post('/', validatePostSubmission, async (req: Request, res: Response) => 
         )
       );
 
-      const finalSlug = generateUniqueSlug(title, post._id.toString());
+      const finalSlug = generateUniqueSlug(title, (post._id as { toString(): string }).toString());
       await Post.findByIdAndUpdate(post._id, { slug: finalSlug });
       const updatedPost = await Post.findById(post._id);
       if (!updatedPost) throw new Error('Post lost during creation');

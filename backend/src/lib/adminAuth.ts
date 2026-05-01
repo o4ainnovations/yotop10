@@ -48,7 +48,7 @@ export const adminAuthMiddleware = async (req: AdminAuthRequest, res: Response, 
     }
 
     req.admin = {
-      id: admin._id.toString(),
+      id: (admin._id as { toString(): string }).toString(),
       username: admin.username,
     };
 

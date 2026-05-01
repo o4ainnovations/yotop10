@@ -37,7 +37,7 @@ router.post('/login', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const token = generateAdminToken(admin._id.toString(), admin.username);
+    const token = generateAdminToken(admin._id as string, admin.username);
 
     res.cookie('admin_token', token, {
       httpOnly: true,
@@ -94,7 +94,7 @@ router.post('/setup', async (req: Request, res: Response) => {
     await SetupToken.findByIdAndUpdate(setupToken._id, { used: true });
 
     // Generate session token
-    const authToken = generateAdminToken(admin._id.toString(), admin.username);
+    const authToken = generateAdminToken(admin._id as string, admin.username);
 
     res.cookie('admin_token', authToken, {
       httpOnly: true,
@@ -234,7 +234,7 @@ router.patch('/posts/:id/approve', adminAuthMiddleware, async (req: AdminAuthReq
     await post.save();
 
     // Queue trust score update
-    await trustScoreWorker.queueUpdate(post.author_id, post._id.toString(), 'approve');
+    await trustScoreWorker.queueUpdate(post.author_id, (post._id as { toString(): string }).toString(), 'approve');
     
     // Grant post approval boost
     const { grantBoost, BoostType } = await import('../lib/ladderSystem');
@@ -281,7 +281,7 @@ router.patch('/posts/:id/reject', adminAuthMiddleware, async (req: AdminAuthRequ
     await post.save();
 
     // Queue trust score update
-    await trustScoreWorker.queueUpdate(post.author_id, post._id.toString(), 'reject');
+    await trustScoreWorker.queueUpdate(post.author_id, (post._id as { toString(): string }).toString(), 'reject');
 
     res.json({
       success: true,

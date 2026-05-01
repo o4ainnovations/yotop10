@@ -14,7 +14,7 @@ async function migrate() {
   
   let updated = 0;
   for (const post of posts) {
-    const slug = generateUniqueSlug(post.title, post._id.toString());
+    const slug = generateUniqueSlug(post.title, (post._id as { toString(): string }).toString());
     
     await Post.findByIdAndUpdate(post._id, {
       slug,

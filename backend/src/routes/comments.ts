@@ -243,12 +243,12 @@ router.get('/posts/:id/comments', async (req: Request, res: Response) => {
     
     if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
       const post = await Post.findOne({ _id: idOrSlug, status: 'approved' });
-      if (post) postId = post._id.toString();
+      if (post) postId = (post._id as { toString(): string }).toString();
     }
     
     if (!postId) {
       const post = await Post.findOne({ slug: idOrSlug, status: 'approved' });
-      if (post) postId = post._id.toString();
+      if (post) postId = (post._id as { toString(): string }).toString();
     }
 
     if (!postId) {
@@ -326,12 +326,12 @@ router.post('/posts/:id/comments', validateComment, async (req: Request, res: Re
     
     if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
       post = await Post.findOne({ _id: idOrSlug, status: 'approved' });
-      if (post) postId = post._id.toString();
+      if (post) postId = (post._id as { toString(): string }).toString();
     }
     
     if (!postId) {
       post = await Post.findOne({ slug: idOrSlug, status: 'approved' });
-      if (post) postId = post._id.toString();
+      if (post) postId = (post._id as { toString(): string }).toString();
     }
 
     if (!postId || !post) {
@@ -426,7 +426,7 @@ router.post('/posts/:id/comments', validateComment, async (req: Request, res: Re
       // Update parent with engagement pulse and weighted child calculation
       await updateParentSparkScore(parent_comment_id);
       // Propagate engagement to all ancestors
-      await propagateEngagementToAncestors(comment._id.toString());
+      await propagateEngagementToAncestors((comment._id as { toString(): string }).toString());
     }
 
     // Update post's comment_count
@@ -521,7 +521,7 @@ router.delete('/comments/:id', async (req: Request, res: Response) => {
       const children = await Comment.find({ parent_comment_id: parentId }, '_id');
       const ids: string[] = [];
       for (const child of children) {
-        const childId = child._id.toString();
+        const childId = (child._id as { toString(): string }).toString();
         ids.push(childId);
         const grandChildren = await collectDescendantIds(childId);
         ids.push(...grandChildren);

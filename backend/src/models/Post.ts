@@ -143,7 +143,7 @@ function normalizeTitle(title: string): string {
 // Auto-generate slug and normalized title before saving
 postSchema.pre('save', function(next) {
   if (this.isNew || this.isModified('title')) {
-    this.slug = generateUniqueSlug(this.title, this._id.toString());
+    this.slug = generateUniqueSlug(this.title, (this._id as { toString(): string }).toString());
     this.normalized_title = normalizeTitle(this.title);
   }
   next();
