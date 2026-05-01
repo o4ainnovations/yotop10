@@ -62,7 +62,10 @@ jobs:
         working-directory: ./backend
         run: pnpm build
 
-      - name: Security audit
-        run: |
-          cd frontend && pnpm audit --audit-level=high && cd ..
-          cd backend && pnpm audit --audit-level=high && cd ..
+      - name: Security audit (Frontend)
+        working-directory: ./frontend
+        run: pnpm audit --audit-level=high
+
+      - name: Security audit (Backend)
+        working-directory: ./backend
+        run: pnpm audit --audit-level=high
