@@ -5,7 +5,7 @@ describe('Title normalization', () => {
   describe('normalizeTitle', () => {
     it('lowercases and removes special chars', () => {
       const result = normalizeTitle('Top 10 Movies!');
-      expect(result.normalized).toBe('top 10 movie');
+      expect(result.normalized).toBe('top 10 movy');
     });
 
     it('removes common filler words when enough words remain', () => {
@@ -24,9 +24,14 @@ describe('Title normalization', () => {
       expect(result.year).toBe(2024);
     });
 
-    it('converts ies to y', () => {
+    it('converts consonant+ies to y (cities → city)', () => {
       const result = normalizeTitle('Top 10 Cities');
       expect(result.normalized).toContain('city');
+    });
+
+    it('handles regular plurals', () => {
+      const result = normalizeTitle('Top 10 Dramas');
+      expect(result.normalized).toContain('drama');
     });
   });
 

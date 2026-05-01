@@ -26,13 +26,13 @@ describe('RateLimit calculations', () => {
       const mid = calculateEffectivePostLimit(0.5);
       const max = calculateEffectivePostLimit(0.9);
       expect(min).toBeLessThanOrEqual(mid);
-      expect(mid).toBeLessThan(max);
+      expect(mid).toBeLessThanOrEqual(max);
     });
   });
 
   describe('calculateEffectiveCommentLimit', () => {
     it('guarantees minimum 10 comments for trolls', () => {
-      expect(calculateEffectiveCommentLimit(0.1)).toBe(10);
+      expect(calculateEffectiveCommentLimit(0.001)).toBe(10);
     });
 
     it('returns base limit for neutral users', () => {

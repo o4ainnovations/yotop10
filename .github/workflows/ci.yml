@@ -48,11 +48,11 @@ jobs:
 
       - name: Test Backend
         working-directory: ./backend
-        run: pnpm vitest run
+        run: pnpm test
 
       - name: Test Frontend
         working-directory: ./frontend
-        run: pnpm vitest run
+        run: pnpm test
 
       - name: Build Frontend
         working-directory: ./frontend

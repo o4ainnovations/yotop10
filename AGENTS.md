@@ -48,6 +48,55 @@ Before milestone completion:
 
 ---
 
+## 3.1 🏭 Enterprise-Grade Implementation Standards (NON-NEGOTIABLE)
+
+This is NOT a side project, prototype, or hobby codebase. Every
+implementation must meet production-grade standards. The following
+are MANDATORY for every change:
+
+### Dependency Management
+- Every package used MUST be declared in `package.json` (dependencies or devDependencies).
+  - No phantom dependencies. No "it works on my machine."
+- After ANY change to `package.json`, the lockfile MUST be regenerated
+  via `pnpm install --no-frozen-lockfile` and committed.
+- `pnpm install --frozen-lockfile` MUST succeed in CI.
+
+### CI/CD Integrity
+- CI MUST call npm scripts (`pnpm test`, `pnpm lint`), never raw binaries (`pnpm vitest run`).
+- No `|| true`, `|| exit 0`, `--if-present`, or any construct that
+  silently suppresses failures. If a step is required, it MUST fail on error.
+  If a step is optional, it MUST NOT be in CI.
+- Build, lint, typecheck, and test steps MUST all pass. Zero tolerance
+  for ignored failures.
+- `tsc --noEmit` (typecheck) runs BEFORE build. Type errors are build errors.
+
+### Code Quality Gates (Pre-Commit)
+1. `pnpm lint` — 0 errors, 0 warnings
+2. `pnpm typecheck` (`tsc --noEmit`) — 0 errors
+3. `pnpm build` — 0 errors
+4. `pnpm test` — all tests pass (when test infrastructure is available)
+
+### No Workarounds
+- Never suppress errors with `|| true`, `try {} catch {}`, `as any`,
+  `@ts-ignore`, or `@ts-expect-error` (use only when genuinely unavoidable
+  with a comment explaining why).
+- Never leave dead code, commented-out blocks, or TODO stubs in production paths.
+- Never commit code that you know is broken with the intent to "fix later."
+  If it's broken, fix it before committing.
+
+### Infrastructure as Code
+- Docker Compose, Dockerfile, CI configs, and nginx templates are production
+  artifacts. They must be secure, pinned to versions, and follow least-privilege.
+- No default passwords, no disabled security, no root containers.
+
+### Testing
+- Every pure function in `lib/` MUST have a corresponding `*.test.ts` file.
+- Tests are NOT optional. A feature without tests is not complete.
+- Test infrastructure (vitest configs, setup files, CI integration) must be
+  fully wired BEFORE declaring a phase complete.
+
+---
+
 ## 4. ⚠️ Priority Enforcement
 
 - You MAY NOT start new tasks outside what is listed in ram.md

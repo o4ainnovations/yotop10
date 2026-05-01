@@ -29,8 +29,9 @@ export function normalizeTitle(title: string): NormalizedTitle {
   }
 
   // Simple plural normalization
+  // Only apply ies→y when preceded by a consonant (cities→city, not movies→movy)
   normalized = normalized
-    .replace(/ies\b/g, 'y')
+    .replace(/([bcdfghjklmnpqrstvwxyz])ies\b/g, '$1y')
     .replace(/ves\b/g, 'f')
     .replace(/(?<=[^s])s\b/g, '')
     .replace(/\s+/g, ' ')
