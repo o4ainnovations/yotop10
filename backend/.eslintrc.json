@@ -25,5 +25,13 @@
         "message": "Routes directory may only contain express router files"
       }]
     }]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["**/*.test.ts"],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ]
 }
