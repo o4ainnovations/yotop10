@@ -1,0 +1,33 @@
+module.exports = {
+  apps: [
+    {
+      name: 'frontend-dev',
+      script: 'node_modules/.bin/next',
+      args: 'dev -p 3000',
+      cwd: '/app/frontend',
+      watch: false,
+      autorestart: true,
+      max_restarts: 5,
+      min_uptime: '5s',
+      kill_timeout: 3000,
+      out_file: '/dev/stdout',
+      error_file: '/dev/stderr',
+      merge_logs: true,
+    },
+    {
+      name: 'backend-dev',
+      script: 'node_modules/.bin/tsx',
+      args: 'watch src/server.ts',
+      cwd: '/app/backend',
+      watch: false,
+      autorestart: true,
+      max_restarts: 5,
+      min_uptime: '5s',
+      kill_timeout: 3000,
+      out_file: '/dev/stdout',
+      error_file: '/dev/stderr',
+      merge_logs: true,
+      env: { PORT: '8000' },
+    },
+  ],
+};

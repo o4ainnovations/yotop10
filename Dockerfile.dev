@@ -1,0 +1,18 @@
+FROM node:20
+
+RUN npm install -g pnpm@9
+
+WORKDIR /app
+
+COPY frontend/package.json frontend/pnpm-lock.yaml ./frontend/
+COPY backend/package.json backend/pnpm-lock.yaml ./backend/
+
+RUN cd frontend && pnpm install --frozen-lockfile
+RUN cd backend && pnpm install --frozen-lockfile
+
+COPY scripts/dev-* /app/scripts/
+COPY ecosystem.config.dev.js /app/
+
+EXPOSE 3000 8000
+
+ENTRYPOINT ["sh", "/app/scripts/dev-entrypoint.sh"]

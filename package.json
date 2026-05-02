@@ -1,0 +1,11 @@
+{
+  "name": "yotop10",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:docker": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up",
+    "dev:docker:build": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
+    "dev:docker:down": "docker compose -f docker-compose.yml -f docker-compose.dev.yml down",
+    "prod:docker": "docker compose up -d"
+  }
+}

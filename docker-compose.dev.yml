@@ -1,0 +1,45 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: yotop10_dev
+    ports:
+      - "3000:3000"
+      - "8000:8000"
+    environment:
+      - NODE_ENV=development
+      - CORS_ORIGINS=http://localhost:3000
+      - MONGODB_URI=mongodb://mongodb:27017/yotop10
+      - REDIS_URL=redis://redis:6379
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - JWT_SECRET=dev-jwt-secret-local-only
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+      - INTERNAL_API_URL=http://localhost:8000/api
+    volumes:
+      - ./backend/src:/app/backend/src
+      - ./frontend/src:/app/frontend/src
+      - ./frontend/public:/app/frontend/public
+      - ./backend/tsconfig.json:/app/backend/tsconfig.json
+      - ./frontend/tsconfig.json:/app/frontend/tsconfig.json
+      - ./frontend/next.config.ts:/app/frontend/next.config.ts
+      - next_cache:/app/frontend/.next/cache
+    networks:
+      - yotop10_net
+    extra_hosts:
+      - "yotop10.fun:host-gateway"
+    depends_on:
+      mongodb:
+        condition: service_started
+      redis:
+        condition: service_started
+      elasticsearch:
+        condition: service_healthy
+
+volumes:
+  next_cache:
+
+networks:
+  yotop10_net:
+    external: true
+    name: yotop10_yotop10_net
