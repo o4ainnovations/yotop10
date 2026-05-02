@@ -7,96 +7,15 @@ import { ListItem } from '../models/ListItem';
 import { Category } from '../models/Category';
 import { Comment } from '../models/Comment';
 import { atomicCheckRateLimit } from '../lib/redis';
-import { calculateEffectivePostLimit } from '../lib/rateLimit';
-
-const router: Router = Router();
-
-// GET /api/posts/check-title
-// Check for similar titles before submission
-router.get('/check-title', async (req: Request, res: Response) => {
-  try {
-    const query = req.query.q as string;
-    const categoryId = req.query.categoryId as string;
-
-    if (!query || query.length < 8) {
-      return res.json({
-        allowed: true,
-        blocked: false,
-        warning: false,
-        matches: [],
-      });
-    }
-
-    if (query === 'counter_list') {
-      return res.json({
-        allowed: true,
-        blocked: false,
-        warning: false,
-        matches: [],
-      });
-    }
-
-    // Check posts from last 5 years, same category, approved only
-    const fiveYearsAgo = new Date(Date.now() - 5 * 365 * 24 * 60 * 60 * 1000);
-    
-    const posts = await Post.find({
-      category_id: categoryId,
-      status: 'approved',
-      created_at: { $gt: fiveYearsAgo },
-    }).select('title slug');
-
-    const matches = [];
-    let blocked = false;
-    let warning = false;
-    let suggestion;
-
-    for (const post of posts) {
-      const result = checkTitleMatch(query, post.title);
-      
-      if (result.isYearVariation) {
-        const currentYear = new Date().getFullYear();
-        suggestion = `${query} ${currentYear}`;
-        continue;
-      }
-
-      if (result.isDuplicate) {
-        blocked = true;
-        matches.push({
-          title: post.title,
-          slug: post.slug,
-          similarity: result.similarity,
-        });
-      } else if (result.isWarning) {
-        warning = true;
-      }
-    }
-
-    return res.json({
-      allowed: !blocked,
-      blocked,
-      warning,
-      matches,
-      suggestion,
-      etag: crypto.createHash('md5').update(JSON.stringify({ allowed: !blocked, blocked, warning, matches, suggestion })).digest('hex'),
-    });
-
-  } catch (error) {
-    // Fail open behaviour - allow everything on any error
-    return res.json({
-      allowed: true,
-      blocked: false,
-      warning: false,
-      matches: [],
-    });
-  }
-});
-
+import { calculateEffectivePostLimit, getRateLimitKey } from '../lib/rateLimit';
 import { getActiveBoost } from '../lib/ladderSystem';
 import { checkTitleMatch } from '../lib/titleSimilarity';
 
+const router: Router = Router();
+
 const checkRateLimit = async (fingerprint: string, trustScore: number = 1.0, postType?: string, userId?: string): Promise<{ allowed: boolean; remaining: number; resetTime: number; maxRequests: number }> => {
   try {
-    const key = `rate_limit:posts:${fingerprint}`;
+    const key = getRateLimitKey('posts', fingerprint);
     const windowMs = 60 * 60 * 1000;
 
     let maxRequests = calculateEffectivePostLimit(trustScore, postType);
@@ -115,11 +34,12 @@ const checkRateLimit = async (fingerprint: string, trustScore: number = 1.0, pos
       allowed,
       remaining,
       resetTime: now + windowMs,
-      maxRequests,
+      maxRequests: Number.isFinite(maxRequests) ? maxRequests : calculateEffectivePostLimit(trustScore),
     };
   } catch (error) {
     console.error('Rate limit check failed:', error);
-    return { allowed: false, remaining: 0, resetTime: Date.now() + 60 * 60 * 1000, maxRequests: calculateEffectivePostLimit(trustScore) };
+    const fallback = calculateEffectivePostLimit(trustScore);
+    return { allowed: false, remaining: 0, resetTime: Date.now() + 60 * 60 * 1000, maxRequests: fallback };
   }
 };
 
@@ -390,9 +310,11 @@ router.post('/', validatePostSubmission, async (req: Request, res: Response) => 
       effectiveTrustScore = req.user.rate_limit_override.posts_per_hour / 4;
     }
     
-    // Check rate limit with trust score multiplier
-    // Use fingerprint from middleware - works for both authenticated and grace period users
+    // Reject if no fingerprint — rate limiting requires identity
     const fingerprint = req.user?.device_fingerprint || req.fingerprint || device_fingerprint;
+    if (!fingerprint) {
+      return res.status(401).json({ error: 'Device identity required for posting' });
+    }
     const userId = req.user?.user_id;
     const rateLimitResult = await checkRateLimit(fingerprint, effectiveTrustScore, post_type, userId);
     if (!rateLimitResult.allowed) {

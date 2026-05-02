@@ -14,30 +14,36 @@ export const MINIMUM_POSTS_PER_HOUR = 2;
 export const MINIMUM_COMMENTS_PER_HOUR = 10;
 
 export function calculateEffectivePostLimit(trustScore: number, postType?: string): number {
-  // Counter lists are ALWAYS UNLIMITED for all users
   if (postType === 'counter_list') {
-    return 9999; // Effectively unlimited
+    return 9999;
   }
 
-  // Soft gradient mapping for low trust users
-  const effectiveTrust = trustScore < 1.0 
+  if (!Number.isFinite(trustScore)) return MINIMUM_POSTS_PER_HOUR;
+
+  const effectiveTrust = trustScore < 1.0
     ? 0.5 + (trustScore * 0.5)
     : trustScore;
 
   const proportional = BASE_POSTS_PER_HOUR * effectiveTrust;
-  
-  // 2nd dimension: hard floor guarantee
+
   return Math.max(MINIMUM_POSTS_PER_HOUR, Math.floor(proportional));
 }
 
 export function calculateEffectiveCommentLimit(trustScore: number): number {
-  const effectiveTrust = trustScore < 1.0 
+  if (!Number.isFinite(trustScore)) return MINIMUM_COMMENTS_PER_HOUR;
+
+  const effectiveTrust = trustScore < 1.0
     ? 0.5 + (trustScore * 0.5)
     : trustScore;
 
   const proportional = BASE_COMMENTS_PER_HOUR * effectiveTrust;
-  
+
   return Math.max(MINIMUM_COMMENTS_PER_HOUR, Math.floor(proportional));
+}
+
+export function getRateLimitKey(namespace: 'posts' | 'comments', fingerprint: string): string {
+  if (!fingerprint) throw new Error('Fingerprint is required for rate limit key');
+  return `rate_limit:${namespace}:${fingerprint}`;
 }
 
 export interface RateLimitStatus {

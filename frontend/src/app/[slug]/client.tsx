@@ -217,9 +217,8 @@ export default function PostDetailClient({ slug }: { slug: string }) {
         }
         return next;
       });
-    } catch (err) {
-      console.error('Failed to react:', err);
-      alert('Failed to react');
+    } catch {
+      setCommentError('Failed to react. Please try again.');
     } finally {
       setReacting(false);
     }

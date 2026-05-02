@@ -4,7 +4,7 @@ import { Post } from '../models/Post';
 import { Comment } from '../models/Comment';
 import { User } from '../models/User';
 import { isUsernameAvailable, recordUsernameChange } from '../lib/usernameService';
-import { calculateEffectivePostLimit, calculateEffectiveCommentLimit, RateLimitStatus } from '../lib/rateLimit';
+import { calculateEffectivePostLimit, calculateEffectiveCommentLimit, RateLimitStatus, getRateLimitKey } from '../lib/rateLimit';
 import { redis } from '../lib/redis';
 
 const router: Router = Router();
@@ -335,8 +335,8 @@ router.get('/me/rate-limits', async (req: Request, res: Response) => {
     }
 
     // Get current counts
-    const postKey = `rate_limit:posts:${req.user.device_fingerprint}`;
-    const commentKey = `rate_limit:comments:${req.user.device_fingerprint}`;
+    const postKey = getRateLimitKey('posts', req.user.device_fingerprint);
+    const commentKey = getRateLimitKey('comments', req.user.device_fingerprint);
 
     const windowStart = now - windowMs;
     

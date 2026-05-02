@@ -6,7 +6,7 @@ import { Post } from '../models/Post';
 import { ListItem } from '../models/ListItem';
 import { SparkThreshold } from '../models/SparkThreshold';
 import { atomicCheckRateLimit } from '../lib/redis';
-import { calculateEffectiveCommentLimit } from '../lib/rateLimit';
+import { calculateEffectiveCommentLimit, getRateLimitKey } from '../lib/rateLimit';
 import { getActiveBoost, grantBoost, BoostType } from '../lib/ladderSystem';
 import {
   getPercentileValue, getThresholds,
@@ -197,7 +197,7 @@ const startThresholdCron = () => {
 // Check rate limit for comments (20 per hour per fingerprint)
 const checkCommentRateLimit = async (fingerprint: string, trustScore: number = 1.0, userId?: string): Promise<{ allowed: boolean; remaining: number; resetTime: number }> => {
   try {
-    const key = `rate_limit:comments:${fingerprint}`;
+    const key = getRateLimitKey('comments', fingerprint);
     const windowMs = 60 * 60 * 1000;
 
     let limit = calculateEffectiveCommentLimit(trustScore);
