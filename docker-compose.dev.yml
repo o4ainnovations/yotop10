@@ -5,11 +5,11 @@ services:
       dockerfile: Dockerfile.dev
     container_name: yotop10_dev
     ports:
-      - "3000:3000"
+      - "3100:3000"
       - "8000:8000"
     environment:
       - NODE_ENV=development
-      - CORS_ORIGINS=http://localhost:3000
+      - CORS_ORIGINS=http://localhost:3100
       - MONGODB_URI=mongodb://mongodb:27017/yotop10
       - REDIS_URL=redis://redis:6379
       - ELASTICSEARCH_URL=http://elasticsearch:9200
