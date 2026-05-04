@@ -35,9 +35,6 @@ interface DraftData {
   savedAt: number;
 }
 
-// Generate unique ID for items
-const generateId = () => Math.random().toString(36).substring(2, 9);
-
 const debounce = <T extends unknown[]>(fn: (...args: T) => void, ms: number) => {
   let timeoutId: NodeJS.Timeout;
   return (...args: T) => {
@@ -47,6 +44,9 @@ const debounce = <T extends unknown[]>(fn: (...args: T) => void, ms: number) => 
 };
 
 export default function SubmitPage() {
+  const idCounter = useRef(0);
+  const generateId = () => `item-${++idCounter.current}`;
+
   // Form state
   const [categoryId, setCategoryId] = useState('');
   const [title, setTitle] = useState('');
