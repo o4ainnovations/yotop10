@@ -2,7 +2,7 @@
   "apps": [
     {
       "name": "frontend-dev",
-      "script": "node_modules/.bin/next",
+      "script": "node_modules/next/dist/bin/next",
       "args": "dev -p 3000",
       "cwd": "/app/frontend",
       "watch": false,
@@ -13,7 +13,7 @@
     },
     {
       "name": "backend-dev",
-      "script": "node_modules/.bin/tsx",
+      "script": "node_modules/tsx/dist/cli.mjs",
       "args": "watch src/server.ts",
       "cwd": "/app/backend",
       "watch": false,
