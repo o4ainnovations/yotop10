@@ -129,7 +129,7 @@ const postSchema = new Schema<IPost>(
 );
 
 // Title normalization utility
-function normalizeTitle(title: string): string {
+export function normalizeTitle(title: string): string {
   return title
     .toLowerCase()
     .replace(/[^\w\s:']/g, '')
