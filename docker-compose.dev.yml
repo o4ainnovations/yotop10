@@ -6,7 +6,7 @@ services:
     container_name: yotop10_dev
     ports:
       - "3100:3000"
-      - "8000:8000"
+      - "8100:8000"
     environment:
       - NODE_ENV=development
       - CORS_ORIGINS=http://localhost:3100
@@ -14,7 +14,7 @@ services:
       - REDIS_URL=redis://redis:6379
       - ELASTICSEARCH_URL=http://elasticsearch:9200
       - JWT_SECRET=dev-jwt-secret-local-only
-      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+      - NEXT_PUBLIC_API_URL=http://localhost:8100/api
       - INTERNAL_API_URL=http://localhost:8000/api
     volumes:
       - ./backend/src:/app/backend/src
