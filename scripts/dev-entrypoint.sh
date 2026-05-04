@@ -9,5 +9,5 @@ fi
 
 echo "Starting dev servers under PM2..."
 
-pm2 start /app/ecosystem.config.dev.js
+pm2 start /app/ecosystem.config.dev.json
 exec pm2 logs

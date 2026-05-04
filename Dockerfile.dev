@@ -11,7 +11,7 @@ RUN cd frontend && pnpm install --frozen-lockfile
 RUN cd backend && pnpm install --frozen-lockfile
 
 COPY scripts/dev-* /app/scripts/
-COPY ecosystem.config.dev.js /app/
+COPY ecosystem.config.dev.json /app/
 
 EXPOSE 3000 8000
 
