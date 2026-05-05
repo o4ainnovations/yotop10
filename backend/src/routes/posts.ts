@@ -8,8 +8,10 @@ import { Category } from '../models/Category';
 import { Comment } from '../models/Comment';
 import { atomicCheckRateLimit } from '../lib/redis';
 import { calculateEffectivePostLimit, getRateLimitKey } from '../lib/rateLimit';
-import { getActiveBoost } from '../lib/ladderSystem';
+import { getActiveBoost, grantBoost, BoostType } from '../lib/ladderSystem';
 import { checkTitleMatch } from '../lib/titleSimilarity';
+import { updateParentSparkScore } from './comments';
+import { computeSparkScore, getThresholds } from '../lib/sparkScore';
 
 const router: Router = Router();
 
@@ -458,6 +460,182 @@ router.get('/:idOrSlug/history', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching post history:', error);
     res.status(500).json({ error: 'Failed to fetch post history' });
+  }
+});
+
+// GET /api/posts/:idOrSlug/comments — Get comments for a post
+router.get('/:idOrSlug/comments', async (req: Request, res: Response) => {
+  try {
+    const { idOrSlug } = req.params;
+    const { list_item_id } = req.query;
+
+    let post: { _id: { toString(): string } } | null = null;
+    if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
+      post = await Post.findOne({ _id: idOrSlug, status: 'approved' });
+    }
+    if (!post) {
+      post = await Post.findOne({ slug: idOrSlug, status: 'approved' });
+    }
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    const postId = post._id.toString();
+    const query: Record<string, unknown> = { post_id: postId };
+    if (list_item_id && mongoose.Types.ObjectId.isValid(list_item_id as string)) {
+      query.list_item_id = list_item_id;
+    }
+
+    const comments = await Comment.find(query)
+      .sort({ spark_score: -1, created_at: 1 })
+      .lean();
+
+    const commentMap = new Map<string, Record<string, unknown>>();
+    const rootComments: Record<string, unknown>[] = [];
+
+    comments.forEach((comment: Record<string, unknown>) => {
+      commentMap.set((comment._id as mongoose.Types.ObjectId).toString(), {
+        ...comment,
+        id: (comment._id as mongoose.Types.ObjectId).toString(),
+        replies: [],
+      });
+    });
+
+    comments.forEach((comment: Record<string, unknown>) => {
+      const entry = commentMap.get((comment._id as mongoose.Types.ObjectId).toString());
+      if (!entry) return;
+      if (comment.parent_comment_id) {
+        const parent = commentMap.get((comment.parent_comment_id as mongoose.Types.ObjectId).toString());
+        if (parent) {
+          (parent.replies as unknown[]).push(entry);
+          (parent as Record<string, unknown>).reply_count = (parent.replies as unknown[]).length;
+        } else {
+          rootComments.push(entry);
+        }
+      } else {
+        rootComments.push(entry);
+      }
+    });
+
+    res.json({ comments: rootComments, total: comments.length });
+  } catch (error) {
+    console.error('Get comments error:', error);
+    res.status(500).json({ error: 'Failed to fetch comments' });
+  }
+});
+
+// POST /api/posts/:idOrSlug/comments — Add comment (anonymous)
+router.post('/:idOrSlug/comments', [
+  body('content').trim().notEmpty().withMessage('Content is required').isLength({ max: 2000 }).withMessage('Content must be less than 2000 characters'),
+  body('list_item_id').optional().isMongoId().withMessage('Invalid list item ID'),
+  body('parent_comment_id').optional().isMongoId().withMessage('Invalid parent comment ID'),
+], async (req: Request, res: Response) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { idOrSlug } = req.params;
+    const { content, list_item_id, parent_comment_id } = req.body;
+    const deviceFingerprint = req.user?.device_fingerprint;
+    if (!deviceFingerprint || deviceFingerprint === 'unknown') {
+      return res.status(401).json({ error: 'Device identity required' });
+    }
+
+    let post: { _id: { toString(): string }; author_id?: string } | null = null;
+    if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
+      post = await Post.findOne({ _id: idOrSlug, status: 'approved' });
+    }
+    if (!post) {
+      post = await Post.findOne({ slug: idOrSlug, status: 'approved' });
+    }
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+    const postId = post._id.toString();
+
+    const user = req.user!;
+    const fingerprint = deviceFingerprint;
+
+    const rateLimitKey = getRateLimitKey('comments', fingerprint);
+    const windowMs = 60 * 60 * 1000;
+    let limit = 20;
+    if (user.trust_score) {
+      limit = Math.max(5, Math.floor(20 * user.trust_score));
+    }
+    const activeBoost = await getActiveBoost(user.user_id);
+    if (activeBoost) {
+      limit += activeBoost.comments;
+    }
+    const { allowed, remaining } = await atomicCheckRateLimit(rateLimitKey, windowMs, limit);
+    if (!allowed) {
+      return res.status(429).json({
+        error: 'Rate limit exceeded',
+        remaining: 0,
+        resetTime: Date.now() + windowMs,
+      });
+    }
+
+    let depth = 0;
+    if (parent_comment_id) {
+      const parentComment = await Comment.findById(parent_comment_id);
+      if (!parentComment) {
+        return res.status(404).json({ error: 'Parent comment not found' });
+      }
+      if (parentComment.depth >= 10) {
+        return res.status(400).json({ error: 'Maximum reply depth is 10 levels' });
+      }
+      depth = parentComment.depth + 1;
+    }
+
+    if (list_item_id) {
+      const listItem = await ListItem.findById(list_item_id);
+      if (!listItem || listItem.post_id.toString() !== postId) {
+        return res.status(400).json({ error: 'List item not found or does not belong to this post' });
+      }
+    }
+
+    const now = new Date();
+    const thresholds = await getThresholds();
+    const initialSparkScore = computeSparkScore(
+      { fireCount: 0, replyCount: 0, createdAt: now },
+      thresholds
+    );
+
+    const comment = await Comment.create({
+      post_id: postId,
+      list_item_id: list_item_id || undefined,
+      parent_comment_id: parent_comment_id || undefined,
+      depth,
+      author_id: user.user_id,
+      author_username: user.username,
+      author_display_name: user.username,
+      content,
+      fire_count: 0,
+      reply_count: 0,
+      spark_score: initialSparkScore,
+      last_engaged_at: now,
+    });
+
+    if (parent_comment_id) {
+      const updatedParent = await Comment.findByIdAndUpdate(
+        parent_comment_id,
+        { $inc: { reply_count: 1 } },
+        { new: true }
+      );
+      if (updatedParent && updatedParent.reply_count === 2) {
+        await grantBoost(updatedParent.author_id.toString(), BoostType.COMMENT_TWO_REPLIES);
+      }
+      await updateParentSparkScore(parent_comment_id);
+    }
+
+    await Post.findByIdAndUpdate(postId, { $inc: { comment_count: 1 } });
+
+    res.status(201).json({ comment });
+  } catch (error) {
+    console.error('Create comment error:', error);
+    res.status(500).json({ error: 'Failed to create comment' });
   }
 });
 

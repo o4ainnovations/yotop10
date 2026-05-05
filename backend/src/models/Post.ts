@@ -66,7 +66,6 @@ const postSchema = new Schema<IPost>(
     },
     normalized_title: {
       type: String,
-      required: true,
       index: true,
     },
     slug: {
@@ -149,10 +148,19 @@ postSchema.pre('save', function(next) {
   next();
 });
 
-// Auto-increment category post count ONLY when transitioning to approved
+// Flag category post_count increment in pre-save (isModified works here)
+postSchema.pre('save', function(next) {
+  if ((this.isNew || this.isModified('status')) && this.status === 'approved') {
+    this.$locals._incCategoryPostCount = true;
+  }
+  next();
+});
+
+// Execute the increment in post-save (after commit, with document ID available)
 postSchema.post('save', async function(doc, next) {
-  if (doc.status === 'approved' && doc.isModified('status')) {
+  if (doc.$locals._incCategoryPostCount) {
     await Category.findByIdAndUpdate(doc.category_id, { $inc: { post_count: 1 } });
+    delete doc.$locals._incCategoryPostCount;
   }
   next();
 });
