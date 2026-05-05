@@ -28,7 +28,7 @@ export async function apiFetch<T>(
     headers['X-Device-Fingerprint'] = deviceFingerprint;
   }
 
-  const response = await fetch(url, { ...options, headers });
+  const response = await fetch(url, { ...options, headers, credentials: 'include' });
 
   if (response.status === 425) {
     if (retryCount >= MAX_RETRIES) {

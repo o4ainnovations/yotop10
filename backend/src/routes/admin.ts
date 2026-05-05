@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
+import mongoose from 'mongoose';
 import { AdminUser } from '../models/AdminUser';
 import { SetupToken } from '../models/SetupToken';
 import { Post } from '../models/Post';
@@ -232,9 +233,17 @@ router.get('/posts/pending/:id', async (req: AdminAuthRequest, res: Response) =>
       return res.status(400).json({ code: 'INVALID_STATUS', error: 'Post is not pending review' });
     }
 
-    const items = await ListItem.find({ post_id: post._id })
+    const rawItems = await ListItem.find({ post_id: post._id })
       .sort({ rank: 1 })
-      .select('rank title justification');
+      .select('rank title justification')
+      .lean();
+
+    const items = rawItems.map((item: Record<string, unknown>) => ({
+      id: (item._id as mongoose.Types.ObjectId).toString(),
+      rank: item.rank,
+      title: item.title,
+      justification: item.justification,
+    }));
 
     res.json({ post: { ...post.toObject(), items } });
   } catch (error) {
