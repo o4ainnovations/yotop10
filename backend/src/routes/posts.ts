@@ -560,14 +560,16 @@ router.post('/:idOrSlug/comments', [
 
     const rateLimitKey = getRateLimitKey('comments', fingerprint);
     const windowMs = 60 * 60 * 1000;
-    let limit = 20;
-    if (user.trust_score) {
-      limit = Math.max(5, Math.floor(20 * user.trust_score));
-    }
+    const trustScore = Number.isFinite(user.trust_score) && user.trust_score > 0 ? user.trust_score : 1.0;
+    let limit = Math.max(5, Math.floor(20 * trustScore));
+    if (!Number.isFinite(limit)) { limit = 20; }
+
     const activeBoost = await getActiveBoost(user.user_id);
-    if (activeBoost) {
+    if (activeBoost?.comments && Number.isFinite(activeBoost.comments)) {
       limit += activeBoost.comments;
+      if (!Number.isFinite(limit)) { limit = 20; }
     }
+
     const { allowed, remaining } = await atomicCheckRateLimit(rateLimitKey, windowMs, limit);
     if (!allowed) {
       return res.status(429).json({
