@@ -231,7 +231,7 @@ router.get('/posts/pending/:id', async (req: AdminAuthRequest, res: Response) =>
       return res.status(400).json({ code: 'INVALID_STATUS', error: 'Post is not pending review' });
     }
 
-    res.json(post);
+    res.json({ post });
   } catch (error) {
     console.error('Error fetching pending post:', error);
     res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch post' });
