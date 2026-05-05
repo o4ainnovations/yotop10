@@ -29,14 +29,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 import { fingerprintMiddleware } from './middleware/fingerprint';
-app.use('/api', fingerprintMiddleware);
 
 app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+const FINGERPRINT_EXEMPT = new Set(['/api/admin']);
+
 for (const route of routes) {
-  app.use(route.path, route.router);
+  const middleware = FINGERPRINT_EXEMPT.has(route.path) ? [route.router] : [fingerprintMiddleware, route.router];
+  app.use(route.path, ...middleware);
   console.log(`Mounted route: ${route.path}`);
 }
 

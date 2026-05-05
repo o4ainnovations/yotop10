@@ -177,6 +177,7 @@ router.get('/me', async (req: AdminAuthRequest, res: Response) => {
  * Protected — invalidate admin session
  */
 router.post('/logout', async (req: AdminAuthRequest, res: Response) => {
+  await AdminUser.findByIdAndUpdate(req.admin!.id, { $inc: { token_version: 1 } });
   res.clearCookie('admin_token');
   res.json({ success: true });
 });
