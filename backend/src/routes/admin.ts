@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { AdminUser } from '../models/AdminUser';
 import { SetupToken } from '../models/SetupToken';
 import { Post } from '../models/Post';
+import { ListItem } from '../models/ListItem';
 import {
   adminAuthMiddleware,
   generateAdminToken,
@@ -231,7 +232,11 @@ router.get('/posts/pending/:id', async (req: AdminAuthRequest, res: Response) =>
       return res.status(400).json({ code: 'INVALID_STATUS', error: 'Post is not pending review' });
     }
 
-    res.json({ post });
+    const items = await ListItem.find({ post_id: post._id })
+      .sort({ rank: 1 })
+      .select('rank title justification');
+
+    res.json({ post: { ...post.toObject(), items } });
   } catch (error) {
     console.error('Error fetching pending post:', error);
     res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch post' });
