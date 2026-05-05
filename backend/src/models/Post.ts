@@ -13,6 +13,9 @@ export interface IPost extends Document {
   intro: string;
   status: 'pending_review' | 'approved' | 'rejected';
   rejection_reason?: string;
+  revision_guidance?: string;
+  revision_requested_at?: Date;
+  revision_count: number;
   category_id: string;
   published_at?: Date;
   view_count: number;
@@ -95,6 +98,18 @@ const postSchema = new Schema<IPost>(
     rejection_reason: {
       type: String,
       required: false,
+    },
+    revision_guidance: {
+      type: String,
+      required: false,
+    },
+    revision_requested_at: {
+      type: Date,
+      required: false,
+    },
+    revision_count: {
+      type: Number,
+      default: 0,
     },
     trust_score_updated: {
       type: Boolean,

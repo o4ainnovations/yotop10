@@ -27,8 +27,11 @@ export default function AdminPendingPostPreviewPage() {
   const [post, setPost] = useState<PendingPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [actionMessage, setActionMessage] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [retryGuidance, setRetryGuidance] = useState('');
+  const [showRetryModal, setShowRetryModal] = useState(false);
 
   useEffect(() => {
     if (!postId) return;
@@ -83,6 +86,26 @@ export default function AdminPendingPostPreviewPage() {
     }
   };
 
+  const handleRetry = async () => {
+    if (!retryGuidance.trim()) return;
+
+    setActionLoading(true);
+    setActionMessage('');
+    try {
+      await apiFetch(`/admin/posts/${postId}/retry`, {
+        method: 'POST',
+        body: JSON.stringify({ guidance: retryGuidance })
+      });
+      setActionMessage('Revision guidance sent. Post remains in queue.');
+      setRetryGuidance('');
+      setShowRetryModal(false);
+    } catch (error) {
+      console.error('Failed to request revision:', error);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   if (loading) return <div>Loading post...</div>;
   if (!postId) return <div>Invalid post ID</div>;
   if (!post) return <div>Post not found</div>;
@@ -116,10 +139,43 @@ export default function AdminPendingPostPreviewPage() {
           <button onClick={handleApprove} disabled={actionLoading} style={{ fontSize: '16px', padding: '10px 20px' }}>
             ✅ Approve Post
           </button>
+          <button onClick={() => setShowRetryModal(true)} disabled={actionLoading} style={{ fontSize: '16px', padding: '10px 20px', backgroundColor: '#ff9800', color: 'white', border: 'none', borderRadius: '4px', cursor: actionLoading ? 'not-allowed' : 'pointer' }}>
+            🔄 Request Revision
+          </button>
           <button onClick={() => setShowRejectModal(true)} disabled={actionLoading} style={{ fontSize: '16px', padding: '10px 20px' }}>
             ❌ Reject Post
           </button>
         </div>
+
+        {actionMessage && (
+          <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#e8f5e9', border: '1px solid #4caf50', borderRadius: '5px', color: '#2e7d32' }}>
+            {actionMessage}
+          </div>
+        )}
+
+        {showRetryModal && (
+          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'white', padding: '20px', border: '1px solid #ccc', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', zIndex: 100 }}>
+            <h3>Request Revision</h3>
+            <p style={{ color: '#666', marginBottom: '10px' }}>Send guidance to the author. No trust score penalty.</p>
+            <textarea
+              value={retryGuidance}
+              onChange={(e) => setRetryGuidance(e.target.value)}
+              placeholder="Enter guidance for the author (e.g., 'Add more detail to item #3' or 'Fix spelling in the intro')"
+              rows={5}
+              maxLength={2000}
+              style={{ width: '450px', margin: '10px 0', padding: '8px' }}
+            />
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '12px', color: '#999' }}>{retryGuidance.length}/2000</span>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button onClick={() => { setShowRetryModal(false); setRetryGuidance(''); }}>Cancel</button>
+                <button onClick={handleRetry} disabled={!retryGuidance.trim() || actionLoading} style={{ backgroundColor: '#ff9800', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '4px' }}>
+                  Send Guidance
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {showRejectModal && (
           <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'white', padding: '20px', border: '1px solid #ccc', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>

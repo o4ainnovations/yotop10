@@ -289,6 +289,46 @@ router.patch('/posts/:id/approve', async (req: AdminAuthRequest, res: Response) 
 });
 
 /**
+ * POST /api/admin/posts/:id/retry
+ * Protected — request revision without trust score penalty
+ */
+router.post('/posts/:id/retry', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const { guidance } = req.body;
+
+    if (!guidance || typeof guidance !== 'string' || guidance.trim().length === 0) {
+      return res.status(400).json({ code: 'VALIDATION', error: 'Revision guidance is required' });
+    }
+
+    if (guidance.length > 2000) {
+      return res.status(400).json({ code: 'VALIDATION', error: 'Guidance must be less than 2000 characters' });
+    }
+
+    const post = await Post.findById(req.params.id);
+
+    if (!post) {
+      return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
+    }
+
+    if (post.status !== 'pending_review') {
+      return res.status(400).json({ code: 'INVALID_STATUS', error: 'Only pending posts can receive revision guidance' });
+    }
+
+    post.revision_guidance = guidance.trim();
+    post.revision_requested_at = new Date();
+    post.revision_count = (post.revision_count || 0) + 1;
+    await post.save();
+
+    // Explicit: no trust score update, no boost grant for retry
+
+    res.json({ success: true, post });
+  } catch (error) {
+    console.error('Error requesting revision:', error);
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to request revision' });
+  }
+});
+
+/**
  * PATCH /api/admin/posts/:id/reject
  * Protected — reject pending post
  */
