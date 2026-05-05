@@ -32,6 +32,7 @@ export default function AdminHomePage() {
         <h3>Quick Links</h3>
         <ul>
           <li><button onClick={() => router.push('/admin/posts/pending')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Pending Posts</button></li>
+          <li><button onClick={() => router.push('/admin/audit')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Audit Logs</button></li>
           <li>All Posts</li>
           <li>Comments</li>
           <li>Categories</li>
