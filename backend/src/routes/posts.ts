@@ -196,6 +196,66 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/posts/check-title — Check for similar titles (MUST precede /:idOrSlug)
+router.get('/check-title', async (req: Request, res: Response) => {
+  try {
+    const q = (req.query.q as string || '').trim();
+    const categoryId = req.query.categoryId as string;
+
+    if (!q || q.length < 3) {
+      return res.json({
+        allowed: true, blocked: false, warning: false,
+        matches: [], etag: '',
+      });
+    }
+
+    const query: Record<string, unknown> = { status: 'approved' };
+    if (categoryId) {
+      query.category_id = categoryId;
+    }
+
+    const posts = await Post.find(query)
+      .select('title slug normalized_title')
+      .limit(50)
+      .lean();
+
+    const matches: Array<{ title: string; slug: string; similarity: number }> = [];
+    let blocked = false;
+    let warned = false;
+
+    for (const post of posts) {
+      const result = checkTitleMatch(q, post.title as string);
+      if (result.similarity >= 50) {
+        matches.push({
+          title: post.title as string,
+          slug: post.slug as string,
+          similarity: result.similarity,
+        });
+        if (result.isDuplicate) blocked = true;
+        if (result.isWarning) warned = true;
+      }
+    }
+
+    matches.sort((a, b) => b.similarity - a.similarity);
+
+    const etag = `"${Buffer.from(q).toString('base64').substring(0, 16)}"`;
+
+    res.json({
+      allowed: !blocked,
+      blocked,
+      warning: warned,
+      matches: matches.slice(0, 5),
+      suggestion: matches.length > 0 && !blocked
+        ? `${q} — Part 2`
+        : undefined,
+      etag,
+    });
+  } catch (error) {
+    console.error('Check title error:', error);
+    res.status(500).json({ error: 'Failed to check title' });
+  }
+});
+
 // GET /api/posts/:idOrSlug — Single post with items and comments
 router.get('/:idOrSlug', async (req: Request, res: Response) => {
   try {
