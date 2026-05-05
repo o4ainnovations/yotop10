@@ -4,14 +4,16 @@
 - **[M00.0] Dev ports changed** — Frontend `3000→3100`, Backend `8000→8100`
 - **[Fix] PM2 7 compatibility** — JSON ecosystem config, Node entry points, pm2 install
 - **[Fix] Hydration mismatch** — `useRef` counter for deterministic item IDs
-- **[Fix] Enterprise seed script resilience** — 4-layer fix:
-  1. Removed `required: true` from `normalized_title` (pre-save hook sets it, validation runs first)
-  2. Replaced dead `post('save')` hook with `pre('save')` flag + `post('save')` increment
-  3. Added `/posts/:idOrSlug/comments` GET+POST to posts router, removed dead routes from comments.ts
-  4. Created `services/posts.ts` service layer — one code path for post creation
+- **[Fix] Enterprise seed script resilience** — 4-layer fix (normalized_title, post_count hook, route paths, service layer)
+- **[Fix] NaN guards** — rate limit trust_score + activeBoost guards (3 locations)
+- **[Fix] Missing check-title route** — placed before /:idOrSlug catch-all
+- **[Fix] Title format validation** — 3-100 items, regex format check, beforeunload draft sync
+- **[Security] Admin auth overhaul** — router-level whitelist, token_version revocation, brute force account-lock, error codes, fingerprint exemption
+- **[Feature] Admin retry** — revision request without trust score penalty
+- **[Architecture] Slug-based categories** — global check-title, reconciler, hierarchy-aware delete protection, dual-accept POST, 9 posts migrated
 
 ## Current
 - _(none)_
 
 ## Next
-- _(none)_
+- Notification system (M9.1) — highest impact-to-effort ratio

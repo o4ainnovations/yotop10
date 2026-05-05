@@ -59,7 +59,7 @@ export interface PostSubmission {
   title: string;
   post_type: string;
   intro: string;
-  category_id: string;
+  category_slug: string;
   items: Array<{
     rank: number;
     title: string;
@@ -76,6 +76,7 @@ export interface TitleCheckResponse {
   matches: Array<{
     title: string;
     slug: string;
+    category_slug: string;
     similarity: number;
   }>;
   suggestion?: string;

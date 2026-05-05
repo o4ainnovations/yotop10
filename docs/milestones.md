@@ -64,7 +64,7 @@ All limits use 2D soft gradient floor algorithm:
 
 ### M1 — Project Foundation
 - [x] Monorepo structure (`/frontend` + `/backend`)
-- [x] Next.js 14 frontend (App Router)
+- [x] Next.js 15 frontend (App Router)
 - [x] Express.js backend
 - [x] MongoDB setup (local + connection)
 - [x] Elasticsearch setup
@@ -95,36 +95,39 @@ All limits use 2D soft gradient floor algorithm:
 - [x] Frontend: `/post/[id]`
 - [x] Full post display with ranked list items
 - [x] Item-anchored comments (highlight specific item)
-- [x] Nested comments (max 3 levels)
+- [x] Nested comments (max 10 levels)
 - [x] Fire reactions (toggle on/off)
 - [x] "Submit a Counter-List" button
 - [x] Post history/changelog
 
 ### M3 — Anonymous Post Submission ✅ COMPLETED
 - [x] `POST /api/posts` — Submit post (no auth) - BACKEND COMPLETE
-  - Body: `{ title, post_type (MVP: top_list only), intro, category_id (EXACTLY 1), items, author_display_name }`
+  - Body: `{ title, post_type (MVP: top_list only), intro, category_slug, items, author_display_name }`
   - All posts default to `pending_review`
   - Generate `a_XXXX` username from device fingerprint
   - Rate limit: 2-8 posts/hour per fingerprint (trust score based)
   - Other post types (this_vs_that, who_is_better, etc.) coming post-MVP
   - ✅ Counter lists are UNLIMITED for all users
 - [x] Frontend: `/submit` page - COMPLETE ✅
-  - Progressive disclosure form flow (3 steps)
-  - Category selector with icon
-  - Title similarity check with debounced API (500ms)
-  - Dynamic list items (1-25 items, title + justification + optional source URL)
+  - Category selector with icon (slug-based, 341 options)
+  - Title similarity check with debounced API (500ms), global cross-category detection
+  - Dynamic list items (3-100 items, title + justification + optional source URL)
+  - Title format validation (regex-based, instant client-side)
+  - Default "Top 10 " title prefix
   - Optional author display name
   - Multi-layer validation (client + server)
   - WCAG 2.1 AA accessibility compliance
-  - Draft recovery with localStorage (1 hour expiry)
+  - Draft recovery with localStorage (1 hour expiry, beforeunload sync)
   - Character counters and error handling
 
 ### M3.1 — Title Similarity Check (SEO & Quality Control) ✅ COMPLETED
 [x] **Title Similarity Engine**
-- [x] `GET /api/posts/check-title?q=...` — Check for similar titles before submission
+- [x] `GET /api/posts/check-title?q=...` — Global similarity check across all categories
 - [x] Fuzzy matching algorithm (Damerau-Levenshtein with dynamic thresholds)
+- [x] Year variation detection (intentionally not blocked)
+- [x] Format validation embedded in check-title response
 - [x] Backend: Title check implemented in `backend/src/routes/posts.ts`
-- [ ] Frontend: "Similar list already exists" warning in Submit UI if match found (M3 frontend task)
+- [ ] Frontend: "Similar list already exists" warning showing match titles and categories
 
 ### M5.5 — The SEO "Authority" Routing System
 [✅] **Part A: Database Schema Evolution**
