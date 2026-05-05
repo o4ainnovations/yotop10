@@ -6,6 +6,8 @@ import { SetupToken } from '../models/SetupToken';
 import { Post } from '../models/Post';
 import { ListItem } from '../models/ListItem';
 import { Notification, createNotification } from '../models/Notification';
+import { AuditLog } from '../models/AuditLog';
+import { logAudit, getAuditStats } from '../lib/auditWriter';
 import {
   adminAuthMiddleware,
   generateAdminToken,
@@ -16,6 +18,7 @@ import {
 } from '../lib/adminAuth';
 import { trustScoreWorker } from '../lib/trustScoreWorker';
 import { redis } from '../lib/redis';
+import { getClientIp } from '../middleware/fingerprint';
 
 const router: Router = Router();
 
@@ -33,10 +36,19 @@ router.use((req: AdminAuthRequest, res: Response, next: NextFunction) => {
 router.post('/login', async (req: Request, res: Response) => {
   try {
     const { username, password } = req.body;
-    const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+    const clientIp = getClientIp(req);
     const rateLimitKey = `admin_login:${clientIp}`;
     const maxIpAttempts = 10;
     const windowSeconds = 15 * 60;
+
+    // Audit: log every login attempt BEFORE rate limit (never blocked by throttling)
+    logAudit({
+      admin_id: null,
+      action: 'login_failed',
+      ip: clientIp,
+      metadata: { username_attempted: (username || '').substring(0, 100), stage: 'attempt_start' },
+      user_agent: req.headers['user-agent'] || '',
+    });
 
     const attempts = await redis.incr(rateLimitKey);
     if (attempts === 1) await redis.expire(rateLimitKey, windowSeconds);
@@ -46,6 +58,12 @@ router.post('/login', async (req: Request, res: Response) => {
 
     const admin = await AdminUser.findOne({ username });
     if (!admin) {
+      logAudit({
+        admin_id: null,
+        action: 'login_failed',
+        ip: clientIp,
+        metadata: { username_attempted: (username || '').substring(0, 100), stage: 'no_admin_found' },
+      });
       return res.status(401).json({ code: 'INVALID_CREDENTIALS', error: 'Invalid credentials' });
     }
 
@@ -57,10 +75,23 @@ router.post('/login', async (req: Request, res: Response) => {
     const passwordValid = await bcrypt.compare(password, admin.password_hash);
     if (!passwordValid) {
       await recordFailedLogin(admin);
+      logAudit({
+        admin_id: (admin._id as { toString(): string }).toString(),
+        action: 'login_failed',
+        ip: clientIp,
+        metadata: { username: admin.username, stage: 'wrong_password' },
+      });
       return res.status(401).json({ code: 'INVALID_CREDENTIALS', error: 'Invalid credentials' });
     }
 
     await resetLoginAttempts(admin._id);
+
+    logAudit({
+      admin_id: (admin._id as { toString(): string }).toString(),
+      action: 'login_success',
+      ip: clientIp,
+      metadata: { username: admin.username },
+    });
 
     const token = generateAdminToken(
       (admin._id as { toString(): string }).toString(),
@@ -181,6 +212,12 @@ router.get('/me', async (req: AdminAuthRequest, res: Response) => {
  */
 router.post('/logout', async (req: AdminAuthRequest, res: Response) => {
   await AdminUser.findByIdAndUpdate(req.admin!.id, { $inc: { token_version: 1 } });
+  logAudit({
+    admin_id: req.admin!.id,
+    action: 'logout',
+    ip: getClientIp(req),
+    metadata: { username: req.admin!.username },
+  });
   res.clearCookie('admin_token');
   res.json({ success: true });
 });
@@ -389,6 +426,58 @@ router.patch('/posts/:id/reject', async (req: AdminAuthRequest, res: Response) =
   } catch (error) {
     console.error('Error rejecting post:', error);
     res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to reject post' });
+  }
+});
+
+/**
+ * GET /api/admin/audit-logs/stats
+ * Protected — quick dashboard summary, Redis-cached 30s
+ */
+router.get('/audit-logs/stats', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const stats = await getAuditStats();
+    res.json(stats);
+  } catch (error) {
+    console.error('Error fetching audit stats:', error);
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch audit stats' });
+  }
+});
+
+/**
+ * GET /api/admin/audit-logs
+ * Protected — paginated, filterable audit trail
+ */
+router.get('/audit-logs', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
+    const skip = (page - 1) * limit;
+
+    const query: Record<string, unknown> = {};
+    if (req.query.action) query.action = req.query.action;
+    if (req.query.ip) query.ip = { $regex: req.query.ip, $options: 'i' };
+    if (req.query.date_from || req.query.date_to) {
+      query.created_at = {};
+      if (req.query.date_from) query.created_at.$gte = new Date(req.query.date_from as string);
+      if (req.query.date_to) query.created_at.$lte = new Date(req.query.date_to as string);
+    }
+
+    const [logs, total] = await Promise.all([
+      AuditLog.find(query)
+        .sort({ created_at: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      AuditLog.countDocuments(query),
+    ]);
+
+    res.json({
+      logs,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+    });
+  } catch (error) {
+    console.error('Error fetching audit logs:', error);
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch audit logs' });
   }
 });
 
