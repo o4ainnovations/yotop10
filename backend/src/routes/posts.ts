@@ -24,9 +24,13 @@ const checkRateLimit = async (fingerprint: string, trustScore: number = 1.0, pos
 
     if (userId) {
       const activeBoost = await getActiveBoost(userId);
-      if (activeBoost) {
+      if (activeBoost?.posts && Number.isFinite(activeBoost.posts)) {
         maxRequests += activeBoost.posts;
       }
+    }
+
+    if (!Number.isFinite(maxRequests)) {
+      maxRequests = calculateEffectivePostLimit(trustScore);
     }
 
     const { allowed, remaining } = await atomicCheckRateLimit(key, windowMs, maxRequests);
