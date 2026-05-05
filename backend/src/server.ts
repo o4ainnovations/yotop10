@@ -9,7 +9,6 @@ import mongoose from 'mongoose';
 import { validateEnv } from './lib/env';
 import { redis } from './lib/redis';
 import { es } from './lib/elasticsearch';
-import { adminAuthMiddleware } from './lib/adminAuth';
 import { routes } from './routes';
 
 dotenv.config();
@@ -37,11 +36,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
 });
 
 for (const route of routes) {
-  if (route.adminOnly) {
-    app.use(route.path, adminAuthMiddleware, route.router);
-  } else {
-    app.use(route.path, route.router);
-  }
+  app.use(route.path, route.router);
   console.log(`Mounted route: ${route.path}`);
 }
 

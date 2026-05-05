@@ -1,73 +1,95 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import { AdminUser } from '../models/AdminUser';
 import { SetupToken } from '../models/SetupToken';
 import { Post } from '../models/Post';
-import { adminAuthMiddleware, generateAdminToken, AdminAuthRequest } from '../lib/adminAuth';
+import {
+  adminAuthMiddleware,
+  generateAdminToken,
+  checkAccountLock,
+  recordFailedLogin,
+  resetLoginAttempts,
+  AdminAuthRequest,
+} from '../lib/adminAuth';
 import { trustScoreWorker } from '../lib/trustScoreWorker';
 import { redis } from '../lib/redis';
 
 const router: Router = Router();
 
+const PUBLIC_PATHS = new Set(['/login', '/setup', '/setup/validate']);
+
+router.use((req: AdminAuthRequest, res: Response, next: NextFunction) => {
+  if (PUBLIC_PATHS.has(req.path)) return next();
+  return adminAuthMiddleware(req, res, next);
+});
+
 /**
  * POST /api/admin/login
- * Admin login
+ * Public — brute-force protected via IP rate limit + account lock
  */
 router.post('/login', async (req: Request, res: Response) => {
   try {
     const { username, password } = req.body;
     const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
     const rateLimitKey = `admin_login:${clientIp}`;
-    const maxAttempts = 5;
+    const maxIpAttempts = 10;
     const windowSeconds = 15 * 60;
 
     const attempts = await redis.incr(rateLimitKey);
     if (attempts === 1) await redis.expire(rateLimitKey, windowSeconds);
-    if (attempts > maxAttempts) {
-      return res.status(429).json({ error: 'Too many login attempts. Try again in 15 minutes.' });
+    if (attempts > maxIpAttempts) {
+      return res.status(429).json({ code: 'RATE_LIMITED', error: 'Too many attempts. Try again in 15 minutes.' });
     }
 
     const admin = await AdminUser.findOne({ username });
     if (!admin) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ code: 'INVALID_CREDENTIALS', error: 'Invalid credentials' });
+    }
+
+    const locked = await checkAccountLock(admin);
+    if (locked) {
+      return res.status(429).json({ code: 'ACCOUNT_LOCKED', error: 'Account temporarily locked. Try again later.' });
     }
 
     const passwordValid = await bcrypt.compare(password, admin.password_hash);
     if (!passwordValid) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      await recordFailedLogin(admin);
+      return res.status(401).json({ code: 'INVALID_CREDENTIALS', error: 'Invalid credentials' });
     }
 
-    const token = generateAdminToken(admin._id as string, admin.username);
+    await resetLoginAttempts(admin._id);
+
+    const token = generateAdminToken(
+      (admin._id as { toString(): string }).toString(),
+      admin.username,
+      admin.token_version
+    );
 
     res.cookie('admin_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      maxAge: 24 * 60 * 60 * 1000,
     });
 
     res.json({
       success: true,
-      admin: {
-        id: admin._id,
-        username: admin.username,
-      },
+      admin: { id: admin._id, username: admin.username },
     });
   } catch (error) {
     console.error('Admin login error:', error);
-    res.status(500).json({ error: 'Login failed' });
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Login failed' });
   }
 });
 
 /**
  * POST /api/admin/setup
- * Complete initial admin setup with one-time token
+ * Public — one-time setup token required
  */
 router.post('/setup', async (req: Request, res: Response) => {
   try {
     const { token, username, password } = req.body;
 
-    // Validate token
     const setupToken = await SetupToken.findOne({
       token,
       expires_at: { $gt: new Date() },
@@ -75,52 +97,75 @@ router.post('/setup', async (req: Request, res: Response) => {
     });
 
     if (!setupToken) {
-      return res.status(400).json({ error: 'Invalid or expired setup token' });
+      return res.status(400).json({ code: 'TOKEN_INVALID', error: 'Invalid or expired setup token' });
     }
 
-    // Hash password
+    if (!username || username.length < 3) {
+      return res.status(400).json({ code: 'VALIDATION', error: 'Username must be at least 3 characters' });
+    }
+    if (!password || password.length < 8) {
+      return res.status(400).json({ code: 'VALIDATION', error: 'Password must be at least 8 characters' });
+    }
+
     const passwordHash = await bcrypt.hash(password, 12);
 
-    // Delete all existing admins
     await AdminUser.deleteMany({});
 
-    // Create new admin
     const admin = await AdminUser.create({
       username,
       password_hash: passwordHash,
     });
 
-    // Mark token as used
     await SetupToken.findByIdAndUpdate(setupToken._id, { used: true });
 
-    // Generate session token
-    const authToken = generateAdminToken(admin._id as string, admin.username);
+    const authToken = generateAdminToken(
+      (admin._id as { toString(): string }).toString(),
+      admin.username,
+      admin.token_version
+    );
 
     res.cookie('admin_token', authToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      maxAge: 24 * 60 * 60 * 1000,
     });
 
     res.json({
       success: true,
-      admin: {
-        id: admin._id,
-        username: admin.username,
-      },
+      admin: { id: admin._id, username: admin.username },
     });
   } catch (error) {
     console.error('Admin setup error:', error);
-    res.status(500).json({ error: 'Setup failed' });
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Setup failed' });
   }
 });
 
 /**
- * GET /api/admin/me
- * Get current admin user
+ * GET /api/admin/setup/validate
+ * Public — checks if a setup token is still valid
  */
-router.get('/me', adminAuthMiddleware, async (req: AdminAuthRequest, res: Response) => {
+router.get('/setup/validate', async (req: Request, res: Response) => {
+  const { token } = req.query;
+
+  if (!token || typeof token !== 'string' || token.length < 8) {
+    return res.json({ valid: false });
+  }
+
+  const setupToken = await SetupToken.findOne({
+    token,
+    expires_at: { $gt: new Date() },
+    used: false,
+  });
+
+  res.json({ valid: !!setupToken });
+});
+
+/**
+ * GET /api/admin/me
+ * Protected — get current admin user
+ */
+router.get('/me', async (req: AdminAuthRequest, res: Response) => {
   res.json({
     id: req.admin!.id,
     username: req.admin!.username,
@@ -129,37 +174,18 @@ router.get('/me', adminAuthMiddleware, async (req: AdminAuthRequest, res: Respon
 
 /**
  * POST /api/admin/logout
- * Invalidate admin session
+ * Protected — invalidate admin session
  */
-router.post('/logout', adminAuthMiddleware, async (req: AdminAuthRequest, res: Response) => {
+router.post('/logout', async (req: AdminAuthRequest, res: Response) => {
   res.clearCookie('admin_token');
   res.json({ success: true });
 });
 
 /**
- * GET /api/admin/setup/validate
- * Validate setup token
- */
-router.get('/setup/validate', async (req: Request, res: Response) => {
-  const { token } = req.query;
-
-  const setupToken = await SetupToken.findOne({
-    token,
-    expires_at: { $gt: new Date() },
-    used: false,
-  });
-
-  res.json({
-    valid: !!setupToken,
-  });
-});
-
-/**
  * GET /api/admin/posts/pending
- * List pending posts for admin review
- * Auth: Admin only
+ * Protected — list pending posts for review
  */
-router.get('/posts/pending', adminAuthMiddleware, async (req: AdminAuthRequest, res: Response) => {
+router.get('/posts/pending', async (req: AdminAuthRequest, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
@@ -179,117 +205,110 @@ router.get('/posts/pending', adminAuthMiddleware, async (req: AdminAuthRequest, 
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     console.error('Error fetching pending posts:', error);
-    res.status(500).json({ error: 'Failed to fetch pending posts' });
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch pending posts' });
   }
 });
 
 /**
  * GET /api/admin/posts/pending/:id
- * Get full pending post preview
- * Auth: Admin only
+ * Protected — get full pending post preview
  */
-router.get('/posts/pending/:id', adminAuthMiddleware, async (req: AdminAuthRequest, res: Response) => {
+router.get('/posts/pending/:id', async (req: AdminAuthRequest, res: Response) => {
   try {
     const post = await Post.findById(req.params.id);
 
     if (!post) {
-      return res.status(404).json({ error: 'Post not found' });
+      return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
     }
 
     if (post.status !== 'pending_review') {
-      return res.status(400).json({ error: 'Post is not pending review' });
+      return res.status(400).json({ code: 'INVALID_STATUS', error: 'Post is not pending review' });
     }
 
     res.json(post);
   } catch (error) {
     console.error('Error fetching pending post:', error);
-    res.status(500).json({ error: 'Failed to fetch post' });
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch post' });
   }
 });
 
 /**
  * PATCH /api/admin/posts/:id/approve
- * Approve post and publish to public feed
- * Auth: Admin only
+ * Protected — approve post and publish to public feed
  */
-router.patch('/posts/:id/approve', adminAuthMiddleware, async (req: AdminAuthRequest, res: Response) => {
+router.patch('/posts/:id/approve', async (req: AdminAuthRequest, res: Response) => {
   try {
     const post = await Post.findById(req.params.id);
 
     if (!post) {
-      return res.status(404).json({ error: 'Post not found' });
+      return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
     }
 
     if (post.status === 'approved') {
-      return res.status(400).json({ error: 'Post is already approved' });
+      return res.status(400).json({ code: 'ALREADY_APPROVED', error: 'Post is already approved' });
     }
 
     post.status = 'approved';
     post.published_at = new Date();
     await post.save();
 
-    // Queue trust score update
-    await trustScoreWorker.queueUpdate(post.author_id, (post._id as { toString(): string }).toString(), 'approve');
-    
-    // Grant post approval boost
+    await trustScoreWorker.queueUpdate(
+      post.author_id,
+      (post._id as { toString(): string }).toString(),
+      'approve'
+    );
+
     const { grantBoost, BoostType } = await import('../lib/ladderSystem');
     await grantBoost(post.author_id.toString(), BoostType.POST_APPROVED);
 
-    // Elasticsearch index stub - no implementation yet
-    // TODO: Implement Elasticsearch indexing
-
-    res.json({
-      success: true,
-      post
-    });
+    res.json({ success: true, post });
   } catch (error) {
     console.error('Error approving post:', error);
-    res.status(500).json({ error: 'Failed to approve post' });
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to approve post' });
   }
 });
 
 /**
  * PATCH /api/admin/posts/:id/reject
- * Reject pending post
- * Auth: Admin only
+ * Protected — reject pending post
  */
-router.patch('/posts/:id/reject', adminAuthMiddleware, async (req: AdminAuthRequest, res: Response) => {
+router.patch('/posts/:id/reject', async (req: AdminAuthRequest, res: Response) => {
   try {
     const { reason } = req.body;
 
     if (!reason || typeof reason !== 'string' || reason.trim().length === 0) {
-      return res.status(400).json({ error: 'Rejection reason is required' });
+      return res.status(400).json({ code: 'VALIDATION', error: 'Rejection reason is required' });
     }
 
     const post = await Post.findById(req.params.id);
 
     if (!post) {
-      return res.status(404).json({ error: 'Post not found' });
+      return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
     }
 
     if (post.status === 'rejected') {
-      return res.status(400).json({ error: 'Post is already rejected' });
+      return res.status(400).json({ code: 'ALREADY_REJECTED', error: 'Post is already rejected' });
     }
 
     post.status = 'rejected';
     post.rejection_reason = reason.trim();
     await post.save();
 
-    // Queue trust score update
-    await trustScoreWorker.queueUpdate(post.author_id, (post._id as { toString(): string }).toString(), 'reject');
+    await trustScoreWorker.queueUpdate(
+      post.author_id,
+      (post._id as { toString(): string }).toString(),
+      'reject'
+    );
 
-    res.json({
-      success: true,
-      post
-    });
+    res.json({ success: true, post });
   } catch (error) {
     console.error('Error rejecting post:', error);
-    res.status(500).json({ error: 'Failed to reject post' });
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to reject post' });
   }
 });
 

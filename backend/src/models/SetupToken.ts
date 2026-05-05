@@ -29,6 +29,4 @@ const setupTokenSchema = new Schema<ISetupToken>(
   }
 );
 
-setupTokenSchema.index({ expires_at: 1 }, { expireAfterSeconds: 0 });
-
 export const SetupToken = mongoose.model<ISetupToken>('SetupToken', setupTokenSchema);

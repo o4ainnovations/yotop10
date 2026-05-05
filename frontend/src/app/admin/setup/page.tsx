@@ -32,8 +32,15 @@ function AdminSetupContent() {
         if (result.valid) {
           setTokenSubmitted(true);
           router.replace('/admin/setup');
+        } else {
+          setError('This setup token is invalid or has already been used.');
         }
-      } catch {
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Validation failed';
+        setError(msg.includes('UNAUTHORIZED') ? 'Authentication required. The server may be misconfigured.' :
+              msg.includes('INVALID') ? 'This setup token is invalid or has already been used.' :
+              msg.includes('EXPIRED') ? 'This setup token has expired.' :
+              'Validation failed. Please check the server configuration.');
         setValidToken(false);
       } finally {
         setChecking(false);
@@ -57,8 +64,12 @@ function AdminSetupContent() {
       setValidToken(result.valid);
       setTokenSubmitted(true);
       if (result.valid) router.replace('/admin/setup');
-    } catch {
-      setError('Invalid or expired token');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Validation failed';
+      setError(msg.includes('UNAUTHORIZED') ? 'Authentication required. Server may be misconfigured.' :
+            msg.includes('INVALID') ? 'This setup token is invalid or has already been used.' :
+            msg.includes('EXPIRED') ? 'This setup token has expired.' :
+            'Invalid or expired token');
       setValidToken(false);
     } finally {
       setChecking(false);
@@ -84,8 +95,11 @@ function AdminSetupContent() {
     try {
       await API.adminSetup(token, username, password);
       router.push('/admin');
-    } catch {
-      setError('Setup failed');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Setup failed';
+      setError(msg.includes('TOKEN_INVALID') ? 'Setup token is invalid or already used.' :
+            msg.includes('VALIDATION') ? 'Username or password does not meet requirements.' :
+            'Setup failed. Please try again.');
     } finally {
       setLoading(false);
     }

@@ -29,5 +29,5 @@ export const routes: RouteDefinition[] = [
   { path: '/api/reviews',     router: reviewsRouter },
   { path: '/api/search',      router: searchRouter },
   { path: '/api/users',       router: usersRouter },
-  { path: '/api/admin',       router: adminRouter, adminOnly: true },
+  { path: '/api/admin',       router: adminRouter },
 ];

@@ -9,7 +9,18 @@ dotenv.config();
 
 async function generateToken() {
   await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/yotop10');
-  
+
+  // Clean up expired and used tokens
+  const removed = await SetupToken.deleteMany({
+    $or: [
+      { expires_at: { $lt: new Date() } },
+      { used: true },
+    ],
+  });
+  if (removed.deletedCount > 0) {
+    console.log(`🧹 Cleaned up ${removed.deletedCount} expired/used tokens`);
+  }
+
   const { token, expiresAt } = generateSetupToken();
   
   await SetupToken.create({

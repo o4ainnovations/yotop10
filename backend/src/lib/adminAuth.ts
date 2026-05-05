@@ -13,57 +13,95 @@ function getJwtSecret(): string {
     return secret;
   }
 }
+
 const JWT_EXPIRY = '24h';
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCK_DURATION_MS = 15 * 60 * 1000;
 
 export interface AdminAuthRequest extends Request {
   admin?: {
     id: string;
     username: string;
+    token_version: number;
   };
 }
 
-/**
- * Generate JWT token for admin
- */
-export const generateAdminToken = (adminId: string, username: string): string => {
-  return jwt.sign({ id: adminId, username }, getJwtSecret(), { expiresIn: JWT_EXPIRY });
+export const generateAdminToken = (adminId: string, username: string, tokenVersion: number): string => {
+  return jwt.sign(
+    { id: adminId, username, token_version: tokenVersion },
+    getJwtSecret(),
+    { expiresIn: JWT_EXPIRY }
+  );
 };
 
-/**
- * Admin auth middleware - protects all /api/admin routes
- */
 export const adminAuthMiddleware = async (req: AdminAuthRequest, res: Response, next: NextFunction) => {
   const token = req.cookies?.admin_token;
 
   if (!token) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ code: 'UNAUTHORIZED', error: 'Authentication required' });
   }
 
   try {
-    const decoded = jwt.verify(token, getJwtSecret()) as { id: string; username: string };
-    
+    const decoded = jwt.verify(token, getJwtSecret()) as {
+      id: string;
+      username: string;
+      token_version: number;
+    };
+
     const admin = await AdminUser.findById(decoded.id);
     if (!admin) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ code: 'UNAUTHORIZED', error: 'Admin account not found' });
+    }
+
+    if (decoded.token_version !== admin.token_version) {
+      return res.status(401).json({ code: 'TOKEN_EXPIRED', error: 'Session expired. Please login again.' });
     }
 
     req.admin = {
       id: (admin._id as { toString(): string }).toString(),
       username: admin.username,
+      token_version: admin.token_version,
     };
 
     next();
   } catch (error) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    if (error instanceof jwt.TokenExpiredError) {
+      return res.status(401).json({ code: 'TOKEN_EXPIRED', error: 'Session expired. Please login again.' });
+    }
+    return res.status(401).json({ code: 'UNAUTHORIZED', error: 'Invalid authentication' });
   }
 };
 
-/**
- * Generate one-time setup token
- */
+export const checkAccountLock = async (admin: { _id: unknown; locked_until: Date | null }): Promise<boolean> => {
+  if (!admin.locked_until) return false;
+  if (new Date() < admin.locked_until) return true;
+  await AdminUser.findByIdAndUpdate(admin._id, {
+    locked_until: null,
+    failed_login_attempts: 0,
+  });
+  return false;
+};
+
+export const recordFailedLogin = async (admin: { _id: unknown; failed_login_attempts: number }): Promise<void> => {
+  const newAttempts = admin.failed_login_attempts + 1;
+  const update: Record<string, unknown> = { failed_login_attempts: newAttempts };
+
+  if (newAttempts >= MAX_LOGIN_ATTEMPTS) {
+    update.locked_until = new Date(Date.now() + LOCK_DURATION_MS);
+  }
+
+  await AdminUser.findByIdAndUpdate(admin._id, update);
+};
+
+export const resetLoginAttempts = async (adminId: unknown): Promise<void> => {
+  await AdminUser.findByIdAndUpdate(adminId, {
+    failed_login_attempts: 0,
+    locked_until: null,
+  });
+};
+
 export const generateSetupToken = (): { token: string; expiresAt: Date } => {
   const token = crypto.randomBytes(8).toString('hex');
-  const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
-  
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
   return { token, expiresAt };
 };
