@@ -46,7 +46,7 @@ interface FormErrors {
 }
 
 interface DraftData {
-  category_id?: string;
+  category_slug?: string;
   title?: string;
   intro?: string;
   items?: Array<{ title: string; justification: string; source_url: string }>;
@@ -67,7 +67,7 @@ export default function SubmitPage() {
   const generateId = () => `item-${++idCounter.current}`;
 
   // Form state
-  const [categoryId, setCategoryId] = useState('');
+  const [categorySlug, setCategorySlug] = useState('');
   const [title, setTitle] = useState('Top 10 ');
   const [intro, setIntro] = useState('');
   const [items, setItems] = useState<ListItem[]>([
@@ -77,8 +77,8 @@ export default function SubmitPage() {
   ]);
   const [authorName, setAuthorName] = useState('');
 
-  const formDataRef = useRef({ categoryId, title, intro, items, authorName });
-  formDataRef.current = { categoryId, title, intro, items, authorName };
+  const formDataRef = useRef({ categorySlug, title, intro, items, authorName });
+  formDataRef.current = { categorySlug, title, intro, items, authorName };
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
@@ -120,7 +120,7 @@ export default function SubmitPage() {
       if (draft) {
         const data: DraftData = JSON.parse(draft);
         if (Date.now() - data.savedAt < DRAFT_EXPIRY_MS) {
-          if (data.category_id) setCategoryId(data.category_id);
+          if (data.category_slug) setCategorySlug(data.category_slug);
           if (data.title) setTitle(data.title);
           if (data.intro) setIntro(data.intro);
           if (data.items && data.items.length > 0) {
@@ -150,10 +150,10 @@ export default function SubmitPage() {
   const saveDraft = useCallback(() => {
     clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(() => {
-      const { categoryId: cat, title: t, intro: i, items: it, authorName: a } = formDataRef.current;
+      const { categorySlug: cat, title: t, intro: i, items: it, authorName: a } = formDataRef.current;
       if (!t && !i && !it.some(item => item.title || item.justification) && !a) return;
       const draft: DraftData = {
-        category_id: cat || undefined,
+        category_slug: cat || undefined,
         title: t || undefined,
         intro: i || undefined,
         items: it.map(({ title, justification, source_url }) => ({ title, justification, source_url })),
@@ -166,15 +166,15 @@ export default function SubmitPage() {
 
   useEffect(() => {
     saveDraft();
-  }, [categoryId, title, intro, items, authorName, saveDraft]);
+  }, [categorySlug, title, intro, items, authorName, saveDraft]);
 
   // Flush draft synchronously on tab close / unload (bypasses debounce)
   useEffect(() => {
     const flushDraftSync = () => {
-      const { categoryId: cat, title: t, intro: i, items: it, authorName: a } = formDataRef.current;
+      const { categorySlug: cat, title: t, intro: i, items: it, authorName: a } = formDataRef.current;
       if (!t && !i && !it.some(item => item.title || item.justification) && !a) return;
       const draft: DraftData = {
-        category_id: cat || undefined,
+        category_slug: cat || undefined,
         title: t || undefined,
         intro: i || undefined,
         items: it.map(({ title, justification, source_url }) => ({ title, justification, source_url })),
@@ -274,7 +274,7 @@ export default function SubmitPage() {
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    const categoryError = validateField('category', categoryId);
+    const categoryError = validateField('category', categorySlug);
     if (categoryError) newErrors.category = categoryError;
 
     const titleError = validateField('title', title);
@@ -318,11 +318,28 @@ export default function SubmitPage() {
 
   // Handle category change
   const handleCategoryChange = (value: string) => {
-    setCategoryId(value);
+    setCategorySlug(value);
     setErrors(prev => ({ ...prev, category: undefined }));
     
     if (title.length >= 8 && value) {
       checkTitleSimilarity(title, value);
+    }
+  };
+
+  const handleTitleChange = (value: string) => {
+    setTitle(value);
+    setErrors(prev => ({ ...prev, title: undefined, titleSimilarity: undefined }));
+    
+    const formatResult = validateListTitle(value);
+    if (!formatResult.valid) {
+      setTitleCheck(null);
+      return;
+    }
+
+    if (value.length >= 8 && categorySlug) {
+      checkTitleSimilarity(value, categorySlug);
+    } else {
+      setTitleCheck(null);
     }
   };
 
@@ -365,7 +382,7 @@ export default function SubmitPage() {
       title,
       post_type: 'top_list',
       intro,
-      category_id: categoryId,
+      category_slug: categorySlug,
       items: items.map((item, idx) => ({
         rank: idx + 1,
         title: item.title,
@@ -480,7 +497,7 @@ export default function SubmitPage() {
             </label>
             <select
               id="category"
-              value={categoryId}
+              value={categorySlug}
               onChange={(e) => handleCategoryChange(e.target.value)}
               aria-required="true"
               aria-invalid={!!errors.category}
@@ -489,7 +506,7 @@ export default function SubmitPage() {
             >
               <option value="">Select a category...</option>
               {categories.map(cat => (
-                <option key={cat.id} value={cat.id}>
+                <option key={cat.id} value={cat.slug}>
                   {cat.icon || '📁'} {cat.name}
                 </option>
               ))}

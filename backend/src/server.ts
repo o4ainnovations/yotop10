@@ -84,6 +84,9 @@ const startServer = async () => {
     startSparkScoreCron();
     startThresholdCron();
 
+    const { startPostCountCron } = await import('./lib/postCountReconciler');
+    startPostCountCron();
+
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
@@ -99,6 +102,8 @@ process.on('SIGTERM', async () => {
   console.log('SIGTERM received. Shutting down gracefully...');
   const { stopSparkScoreCron } = await import('./routes/comments');
   stopSparkScoreCron();
+  const { stopPostCountCron } = await import('./lib/postCountReconciler');
+  stopPostCountCron();
   await redis.quit();
   await mongoose.connection.close();
   process.exit(0);
@@ -108,6 +113,8 @@ process.on('SIGINT', async () => {
   console.log('SIGINT received. Shutting down gracefully...');
   const { stopSparkScoreCron } = await import('./routes/comments');
   stopSparkScoreCron();
+  const { stopPostCountCron } = await import('./lib/postCountReconciler');
+  stopPostCountCron();
   await redis.quit();
   await mongoose.connection.close();
   process.exit(0);

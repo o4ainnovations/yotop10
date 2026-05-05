@@ -8,7 +8,7 @@ export interface CreatePostParams {
   title: string;
   post_type: string;
   intro: string;
-  category_id: string;
+  category_slug: string;
   status: 'pending_review' | 'approved';
   items: Array<{ rank: number; title: string; justification: string; source_url?: string }>;
   fire_count?: number;
@@ -25,7 +25,7 @@ export async function createPost(params: CreatePostParams): Promise<IPost> {
     normalized_title: normalizeTitle(params.title),
     post_type: params.post_type,
     intro: params.intro,
-    category_id: params.category_id,
+    category_slug: params.category_slug,
     status: params.status,
     fire_count: params.fire_count ?? 0,
     view_count: params.view_count ?? 0,

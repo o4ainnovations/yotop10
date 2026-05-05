@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { Category } from '../models/Category';
+import { Post } from '../models/Post';
 import { adminAuthMiddleware } from '../lib/adminAuth';
 
 const router: Router = Router();
@@ -165,15 +166,26 @@ router.delete('/:id', adminAuthMiddleware, async (req: Request, res: Response) =
   try {
     const { id } = req.params;
 
-    const category = await Category.findByIdAndUpdate(
-      id,
-      { is_archived: true },
-      { new: true }
-    );
-
+    const category = await Category.findById(id);
     if (!category) {
       return res.status(404).json({ error: 'Category not found' });
     }
+
+    const escapedSlug = category.slug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const postsInHierarchy = await Post.countDocuments({
+      category_slug: { $regex: `^${escapedSlug}` },
+    });
+
+    if (postsInHierarchy > 0) {
+      return res.status(409).json({
+        code: 'HAS_POSTS',
+        error: `Cannot delete: ${postsInHierarchy} posts reference this category or its children.`,
+        post_count: postsInHierarchy,
+      });
+    }
+
+    category.is_archived = true;
+    await category.save();
 
     res.json({ message: 'Category archived successfully' });
   } catch (error) {

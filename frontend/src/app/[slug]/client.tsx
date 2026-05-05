@@ -341,7 +341,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
       <main>
         <article style={{ marginBottom: '30px' }}>
           <p style={{ color: '#666', fontSize: '14px' }}>
-            {post.post_type} | {post.category?.name} | {new Date(post.created_at).toLocaleDateString()} | {post.view_count} views
+            {post.post_type} | {post.category_slug} | {new Date(post.created_at).toLocaleDateString()} | {post.view_count} views
           </p>
           <h1>{post.title}</h1>
           <p>By {post.author_display_name}</p>

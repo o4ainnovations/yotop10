@@ -75,7 +75,7 @@ export interface PostSubmission {
   title: string;
   post_type: string;
   intro: string;
-  category_id: string;
+  category_slug: string;
   items: Array<{
     rank: number;
     title: string;

@@ -17,6 +17,7 @@ export interface IPost extends Document {
   revision_requested_at?: Date;
   revision_count: number;
   category_id: string;
+  category_slug: string;
   published_at?: Date;
   view_count: number;
   comment_count: number;
@@ -117,8 +118,14 @@ const postSchema = new Schema<IPost>(
     },
     category_id: {
       type: String,
+      required: false,
+      index: true,
+    },
+    category_slug: {
+      type: String,
       required: true,
       index: true,
+      default: '__orphan__',
     },
     comment_count: {
       type: Number,
@@ -162,49 +169,6 @@ postSchema.pre('save', function(next) {
   }
   next();
 });
-
-// Flag category post_count increment in pre-save (isModified works here)
-postSchema.pre('save', function(next) {
-  if ((this.isNew || this.isModified('status')) && this.status === 'approved') {
-    this.$locals._incCategoryPostCount = true;
-  }
-  next();
-});
-
-// Execute the increment in post-save (after commit, with document ID available)
-postSchema.post('save', async function(doc, next) {
-  if (doc.$locals._incCategoryPostCount) {
-    await Category.findByIdAndUpdate(doc.category_id, { $inc: { post_count: 1 } });
-    delete doc.$locals._incCategoryPostCount;
-  }
-  next();
-});
-
-// Auto-decrement category post count when post transitions FROM approved
-postSchema.pre('findOneAndUpdate', async function() {
-  const update = this.getUpdate() as Record<string, unknown>;
-  if (update.status === 'rejected') {
-    const doc = await this.model.findOne(this.getQuery());
-    if (doc && doc.status === 'approved') {
-      await Category.findByIdAndUpdate(doc.category_id, { $inc: { post_count: -1 } });
-    }
-  }
-});
-
-// Auto-decrement category post count when deleting approved post
-postSchema.post('findOneAndDelete', async function(doc) {
-  if (doc && doc.status === 'approved') {
-    await Category.findByIdAndUpdate(doc.category_id, { $inc: { post_count: -1 } });
-  }
-});
-
-// Auto-update user trust score when post status changes
-// DEPRECATED: Trust score updates are now handled via background worker
-// postSchema.post('findOneAndUpdate', async function(doc) {
-//   if (doc && doc.author_id) {
-//     await updateUserTrustScore(doc.author_id);
-//   }
-// });
 
 // Indexes for efficient queries
 postSchema.index({ status: 1, created_at: -1 });

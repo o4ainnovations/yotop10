@@ -90,7 +90,7 @@ async function seedPosts() {
         title: postData.title,
         post_type: postData.post_type,
         intro: postData.intro,
-        category_id: category._id.toString(),
+        category_slug: category.slug,
         status: 'approved',
         items: postData.items,
         fire_count: Math.floor(Math.random() * 100),

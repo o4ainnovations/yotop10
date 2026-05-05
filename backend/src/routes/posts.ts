@@ -72,13 +72,15 @@ const validatePostSubmission = [
     .withMessage('Intro must be less than 2000 characters'),
   body('category_id')
     .trim()
-    .notEmpty()
-    .withMessage('Category ID is required')
+    .optional()
     .isMongoId()
     .withMessage('Invalid category ID'),
+  body('category_slug')
+    .trim()
+    .optional(),
   body('items')
-    .isArray({ min: 1 })
-    .withMessage('At least one item is required'),
+    .isArray({ min: 3 })
+    .withMessage('At least 3 items are required'),
   body('items.*.rank')
     .isInt({ min: 1 })
     .withMessage('Item rank must be a positive integer'),
@@ -155,7 +157,6 @@ router.get('/', async (req: Request, res: Response) => {
     // Execute query with pagination
     const [posts, total] = await Promise.all([
       Post.find(query)
-        .populate('category_id', 'name slug icon')
         .sort(sortOption)
         .skip(skip)
         .limit(limitNum)
@@ -176,14 +177,7 @@ router.get('/', async (req: Request, res: Response) => {
       author_display_name: post.author_display_name,
       created_at: post.created_at,
       published_at: post.published_at,
-      category: post.category_id
-        ? {
-            id: (post.category_id as unknown as { _id: string })._id,
-            name: (post.category_id as unknown as { name: string }).name,
-            slug: (post.category_id as unknown as { slug: string }).slug,
-            icon: (post.category_id as unknown as { icon?: string }).icon,
-          }
-        : null,
+      category_slug: post.category_slug,
     }));
 
     res.json({
@@ -201,11 +195,10 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/posts/check-title — Check for similar titles (MUST precede /:idOrSlug)
+// GET /api/posts/check-title — Global similarity check (no category silo)
 router.get('/check-title', async (req: Request, res: Response) => {
   try {
     const q = (req.query.q as string || '').trim();
-    const categoryId = req.query.categoryId as string;
 
     if (!q || q.length < 3) {
       return res.json({
@@ -214,17 +207,13 @@ router.get('/check-title', async (req: Request, res: Response) => {
       });
     }
 
-    const query: Record<string, unknown> = { status: 'approved' };
-    if (categoryId) {
-      query.category_id = categoryId;
-    }
-
-    const posts = await Post.find(query)
-      .select('title slug normalized_title')
-      .limit(50)
+    const posts = await Post.find({ status: 'approved' })
+      .select('title slug normalized_title category_slug')
+      .sort({ created_at: -1 })
+      .limit(200)
       .lean();
 
-    const matches: Array<{ title: string; slug: string; similarity: number }> = [];
+    const matches: Array<{ title: string; slug: string; category_slug: string; similarity: number }> = [];
     let blocked = false;
     let warned = false;
 
@@ -234,6 +223,7 @@ router.get('/check-title', async (req: Request, res: Response) => {
         matches.push({
           title: post.title as string,
           slug: post.slug as string,
+          category_slug: post.category_slug as string,
           similarity: result.similarity,
         });
         if (result.isDuplicate) blocked = true;
@@ -271,15 +261,11 @@ router.get('/:idOrSlug', async (req: Request, res: Response) => {
     // Find approved post - try both _id and slug
     let post: { _id: { toString(): string }; [key: string]: unknown } | null = null;
     if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
-      post = await Post.findOne({ _id: idOrSlug, status: 'approved' })
-        .populate('category_id', 'name slug icon')
-        .lean();
+      post = await Post.findOne({ _id: idOrSlug, status: 'approved' }).lean();
     }
     
     if (!post) {
-      post = await Post.findOne({ slug: idOrSlug, status: 'approved' })
-        .populate('category_id', 'name slug icon')
-        .lean();
+      post = await Post.findOne({ slug: idOrSlug, status: 'approved' }).lean();
     }
 
     if (!post) {
@@ -314,14 +300,7 @@ router.get('/:idOrSlug', async (req: Request, res: Response) => {
         author_id: post.author_id,
         author_username: post.author_username,
         author_display_name: post.author_display_name,
-        category: post.category_id
-          ? {
-              id: (post.category_id as unknown as { _id: string })._id,
-              name: (post.category_id as unknown as { name: string }).name,
-              slug: (post.category_id as unknown as { slug: string }).slug,
-              icon: (post.category_id as unknown as { icon?: string }).icon,
-            }
-          : null,
+        category_slug: post.category_slug,
         created_at: post.created_at,
         updated_at: post.updated_at,
         published_at: post.published_at,
@@ -366,10 +345,27 @@ router.post('/', validatePostSubmission, async (req: Request, res: Response) => 
       post_type,
       intro,
       category_id,
+      category_slug,
       items,
       author_display_name,
       device_fingerprint,
     } = req.body;
+
+    // Resolve category slug (dual-accept during transition)
+    let resolvedCategorySlug: string | null = category_slug || null;
+    if (!resolvedCategorySlug && category_id) {
+      const cat = await Category.findById(category_id);
+      if (cat) resolvedCategorySlug = cat.slug;
+    }
+    if (!resolvedCategorySlug) {
+      return res.status(400).json({ error: 'Category is required' });
+    }
+
+    // Verify category exists
+    const category = await Category.findOne({ slug: resolvedCategorySlug });
+    if (!category) {
+      return res.status(400).json({ error: 'Category not found' });
+    }
 
     // Apply per-user rate limit override if set
     let effectiveTrustScore = req.user?.trust_score || 1.0;
@@ -393,12 +389,6 @@ router.post('/', validatePostSubmission, async (req: Request, res: Response) => 
       });
     }
 
-    // Verify category exists
-    const category = await Category.findById(category_id);
-    if (!category) {
-      return res.status(400).json({ error: 'Category not found' });
-    }
-
     // User is guaranteed to exist by fingerprint middleware
     const user = req.user!;
 
@@ -414,12 +404,11 @@ router.post('/', validatePostSubmission, async (req: Request, res: Response) => 
       }
     }
 
-    // Final title similarity check on submit - never trust client side validation
+    // Final title similarity check on submit - global (never trust client side validation)
     if (post_type !== 'counter_list') {
       const fiveYearsAgo = new Date(Date.now() - 5 * 365 * 24 * 60 * 60 * 1000);
       
       const existingPosts = await Post.find({
-        category_id,
         status: 'approved',
         created_at: { $gt: fiveYearsAgo },
       }).select('title');
@@ -443,6 +432,7 @@ router.post('/', validatePostSubmission, async (req: Request, res: Response) => 
       title,
       post_type,
       intro,
+      category_slug: resolvedCategorySlug,
       status: 'pending_review',
       category_id,
       fire_count: 0,
