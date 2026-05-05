@@ -330,8 +330,8 @@ router.get('/me/rate-limits', async (req: Request, res: Response) => {
     const { getActiveBoost } = await import('../lib/ladderSystem');
     const activeBoost = await getActiveBoost(req.user.user_id);
     if (activeBoost) {
-      postLimit += activeBoost.posts;
-      commentLimit += activeBoost.comments;
+      if (Number.isFinite(activeBoost.posts)) postLimit += activeBoost.posts;
+      if (Number.isFinite(activeBoost.comments)) commentLimit += activeBoost.comments;
     }
 
     // Get current counts
