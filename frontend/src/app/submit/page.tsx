@@ -604,7 +604,7 @@ export default function SubmitPage() {
         {/* Step 2: List Items */}
         <section style={{ marginBottom: '30px' }}>
           <h2>List Items</h2>
-          <p style={{ color: '#666', marginBottom: '15px' }}>Add at least 1 item (max 25). Each item needs a title and justification.</p>
+          <p style={{ color: '#666', marginBottom: '15px' }}>Add at least 3 items (max 100). Each item needs a title and justification.</p>
 
           {items.map((item) => (
             <fieldset key={item.id} style={{ border: '1px solid #ddd', borderRadius: '5px', padding: '15px', marginBottom: '15px' }}>
@@ -657,7 +657,7 @@ export default function SubmitPage() {
                 />
               </div>
 
-              {items.length > 1 && (
+              {items.length > MIN_ITEMS && (
                 <button
                   type="button"
                   onClick={() => removeItem(item.id)}
