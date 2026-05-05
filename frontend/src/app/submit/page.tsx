@@ -298,24 +298,6 @@ export default function SubmitPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle title change
-  const handleTitleChange = (value: string) => {
-    setTitle(value);
-    setErrors(prev => ({ ...prev, title: undefined, titleSimilarity: undefined }));
-    
-    const formatResult = validateListTitle(value);
-    if (!formatResult.valid) {
-      setTitleCheck(null);
-      return;
-    }
-
-    if (value.length >= 8 && categoryId) {
-      checkTitleSimilarity(value, categoryId);
-    } else {
-      setTitleCheck(null);
-    }
-  };
-
   // Handle category change
   const handleCategoryChange = (value: string) => {
     setCategorySlug(value);
@@ -759,7 +741,7 @@ export default function SubmitPage() {
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={submitting || !categoryId || !title || !intro || items.some(i => !i.title || !i.justification)}
+          disabled={submitting || !categorySlug || !title || !intro || items.some(i => !i.title || !i.justification)}
           style={{ 
             width: '100%', 
             padding: '15px', 
