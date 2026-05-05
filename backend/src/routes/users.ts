@@ -3,6 +3,7 @@ import { body, validationResult } from 'express-validator';
 import { Post } from '../models/Post';
 import { Comment } from '../models/Comment';
 import { User } from '../models/User';
+import { Notification } from '../models/Notification';
 import { isUsernameAvailable, recordUsernameChange } from '../lib/usernameService';
 import { calculateEffectivePostLimit, calculateEffectiveCommentLimit, RateLimitStatus, getRateLimitKey } from '../lib/rateLimit';
 import { redis } from '../lib/redis';
@@ -203,8 +204,8 @@ router.get('/:username', async (req: Request, res: Response) => {
 
     const userPosts = await Post.find(postQuery)
       .sort({ created_at: -1 })
-      .select('title slug status post_type fire_count comment_count created_at category_id')
-      .populate('category_id', 'name slug');
+      .select('title slug status post_type fire_count comment_count created_at category_slug rejection_reason revision_guidance')
+      .lean();
 
     // Count posts with status breakdown
     const postCounts = await Post.aggregate([
@@ -257,10 +258,9 @@ router.get('/:username', async (req: Request, res: Response) => {
         post_type: post.post_type,
         comment_count: post.comment_count,
         created_at: post.created_at,
-        category: post.category_id ? {
-          name: (post.category_id as unknown as { name: string; slug: string }).name,
-          slug: (post.category_id as unknown as { name: string; slug: string }).slug
-        } : null,
+        category: post.category_slug ? { slug: post.category_slug } : null,
+        rejection_reason: isOwnProfile ? post.rejection_reason || undefined : undefined,
+        revision_guidance: isOwnProfile ? post.revision_guidance || undefined : undefined,
       })),
       comments: userComments.map((comment) => ({
         id: comment._id,
@@ -390,6 +390,73 @@ router.get('/me/rate-limits', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching rate limit status:', error);
     res.status(500).json({ error: 'Failed to fetch rate limit status' });
+  }
+});
+
+// GET /api/users/me/notifications — Get user notifications
+router.get('/me/notifications', async (req: Request, res: Response) => {
+  if (!req.user) return res.status(401).json({ error: 'Authentication required' });
+  try {
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
+    const notifications = await Notification.find({ user_id: req.user.user_id })
+      .sort({ created_at: -1 })
+      .limit(limit)
+      .lean();
+
+    const unreadCount = await Notification.countDocuments({
+      user_id: req.user.user_id,
+      read: false,
+    });
+
+    res.json({ notifications, unreadCount });
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    res.status(500).json({ error: 'Failed to fetch notifications' });
+  }
+});
+
+// GET /api/users/me/notifications/unread-count — Quick badge count
+router.get('/me/notifications/unread-count', async (req: Request, res: Response) => {
+  if (!req.user) return res.status(401).json({ error: 'Authentication required' });
+  try {
+    const count = await Notification.countDocuments({
+      user_id: req.user.user_id,
+      read: false,
+    });
+    res.json({ count });
+  } catch (error) {
+    console.error('Error fetching unread count:', error);
+    res.status(500).json({ error: 'Failed to fetch unread count' });
+  }
+});
+
+// PATCH /api/users/me/notifications/:id/read — Mark single notification as read
+router.patch('/me/notifications/:id/read', async (req: Request, res: Response) => {
+  if (!req.user) return res.status(401).json({ error: 'Authentication required' });
+  try {
+    await Notification.findOneAndUpdate(
+      { _id: req.params.id, user_id: req.user.user_id },
+      { read: true }
+    );
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
+    res.status(500).json({ error: 'Failed to mark as read' });
+  }
+});
+
+// PATCH /api/users/me/notifications/read-all — Mark all as read
+router.patch('/me/notifications/read-all', async (req: Request, res: Response) => {
+  if (!req.user) return res.status(401).json({ error: 'Authentication required' });
+  try {
+    await Notification.updateMany(
+      { user_id: req.user.user_id, read: false },
+      { read: true }
+    );
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error marking all notifications as read:', error);
+    res.status(500).json({ error: 'Failed to mark all as read' });
   }
 });
 

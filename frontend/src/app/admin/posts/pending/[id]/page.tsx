@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
+import { toast } from '@/lib/toast';
 
 interface PendingPost {
   _id: string;
@@ -27,7 +28,6 @@ export default function AdminPendingPostPreviewPage() {
   const [post, setPost] = useState<PendingPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const [actionMessage, setActionMessage] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [retryGuidance, setRetryGuidance] = useState('');
@@ -90,13 +90,12 @@ export default function AdminPendingPostPreviewPage() {
     if (!retryGuidance.trim()) return;
 
     setActionLoading(true);
-    setActionMessage('');
     try {
       await apiFetch(`/admin/posts/${postId}/retry`, {
         method: 'POST',
         body: JSON.stringify({ guidance: retryGuidance })
       });
-      setActionMessage('Revision guidance sent. Post remains in queue.');
+      toast.success('Guidance sent. Post remains in queue.');
       setRetryGuidance('');
       setShowRetryModal(false);
     } catch (error) {
@@ -146,12 +145,6 @@ export default function AdminPendingPostPreviewPage() {
             ❌ Reject Post
           </button>
         </div>
-
-        {actionMessage && (
-          <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#e8f5e9', border: '1px solid #4caf50', borderRadius: '5px', color: '#2e7d32' }}>
-            {actionMessage}
-          </div>
-        )}
 
         {showRetryModal && (
           <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'white', padding: '20px', border: '1px solid #ccc', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', zIndex: 100 }}>

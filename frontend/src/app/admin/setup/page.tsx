@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { API } from '@/lib/api';
+import { toast } from '@/lib/toast';
 
 function AdminSetupContent() {
   const searchParams = useSearchParams();
@@ -94,6 +95,7 @@ function AdminSetupContent() {
 
     try {
       await API.adminSetup(token, username, password);
+      toast.success('Admin account created. You are now logged in.');
       router.push('/admin');
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Setup failed';

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { API, PostSubmission, PostSubmissionResponse, TitleCheckResponse } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
+import { toast } from '@/lib/toast';
 
 const DRAFT_KEY = 'yotop10_submit_draft';
 const DEBOUNCE_MS = 500;
@@ -390,6 +391,7 @@ export default function SubmitPage() {
         itemCount: response.items?.length || items.length,
         username,
       });
+      toast.success('Post submitted! It\'s now pending review.');
     } catch (err: unknown) {
       console.error('Submit failed:', err);
       

@@ -217,8 +217,30 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
                   {post.category?.name || 'Uncategorized'} |
                   💬 {post.comment_count} |
                   {new Date(post.created_at).toLocaleDateString()}
-                  {profile.is_own_profile && <> | Status: {post.status.replace('_', ' ')}</>}
+                  {profile.is_own_profile && (
+                    <>
+                      {' | '}
+                      <span style={{
+                        fontWeight: 'bold',
+                        color: post.status === 'approved' ? '#2e7d32' :
+                               post.status === 'rejected' ? '#c62828' :
+                               post.revision_guidance ? '#e65100' : '#f57f17',
+                      }}>
+                        {post.revision_guidance ? 'Revision Requested' : post.status.replace('_', ' ')}
+                      </span>
+                    </>
+                  )}
                 </p>
+                {profile.is_own_profile && post.rejection_reason && (
+                  <div style={{ backgroundColor: '#ffebee', border: '1px solid #f44336', padding: '8px 12px', borderRadius: '4px', marginBottom: '8px', fontSize: '13px', color: '#c62828' }}>
+                    <strong>Reason:</strong> {post.rejection_reason}
+                  </div>
+                )}
+                {profile.is_own_profile && post.revision_guidance && (
+                  <div style={{ backgroundColor: '#fff3e0', border: '1px solid #ff9800', padding: '8px 12px', borderRadius: '4px', marginBottom: '8px', fontSize: '13px', color: '#e65100' }}>
+                    <strong>Admin feedback:</strong> {post.revision_guidance}
+                  </div>
+                )}
                 <hr />
               </div>
             ))

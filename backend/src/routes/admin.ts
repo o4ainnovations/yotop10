@@ -5,6 +5,7 @@ import { AdminUser } from '../models/AdminUser';
 import { SetupToken } from '../models/SetupToken';
 import { Post } from '../models/Post';
 import { ListItem } from '../models/ListItem';
+import { Notification, createNotification } from '../models/Notification';
 import {
   adminAuthMiddleware,
   generateAdminToken,
@@ -281,6 +282,14 @@ router.patch('/posts/:id/approve', async (req: AdminAuthRequest, res: Response) 
     const { grantBoost, BoostType } = await import('../lib/ladderSystem');
     await grantBoost(post.author_id.toString(), BoostType.POST_APPROVED);
 
+    await createNotification({
+      user_id: post.author_id,
+      type: 'post_approved',
+      post_id: (post._id as { toString(): string }).toString(),
+      post_title: post.title,
+      message: `Your list "${post.title}" was approved and is now live on the feed.`,
+    });
+
     res.json({ success: true, post });
   } catch (error) {
     console.error('Error approving post:', error);
@@ -321,6 +330,14 @@ router.post('/posts/:id/retry', async (req: AdminAuthRequest, res: Response) => 
 
     // Explicit: no trust score update, no boost grant for retry
 
+    await createNotification({
+      user_id: post.author_id,
+      type: 'revision_requested',
+      post_id: (post._id as { toString(): string }).toString(),
+      post_title: post.title,
+      message: `The admin reviewed "${post.title}" and sent revision feedback. Check your profile.`,
+    });
+
     res.json({ success: true, post });
   } catch (error) {
     console.error('Error requesting revision:', error);
@@ -359,6 +376,14 @@ router.patch('/posts/:id/reject', async (req: AdminAuthRequest, res: Response) =
       (post._id as { toString(): string }).toString(),
       'reject'
     );
+
+    await createNotification({
+      user_id: post.author_id,
+      type: 'post_rejected',
+      post_id: (post._id as { toString(): string }).toString(),
+      post_title: post.title,
+      message: `Your list "${post.title}" was not approved. Reason: ${reason.trim()}`,
+    });
 
     res.json({ success: true, post });
   } catch (error) {

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { API } from '@/lib/api';
+import { toast } from '@/lib/toast';
 
 interface AdminUser {
   id: string;
@@ -35,6 +36,7 @@ export const useAdminStore = create<AdminState>((set) => ({
     try {
       const data = await API.adminLogin(username, password) as { admin: AdminUser };
       set({ admin: data.admin, authenticated: true, loading: false });
+      toast.success('Welcome back.');
       return true;
     } catch {
       return false;
