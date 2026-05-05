@@ -63,6 +63,18 @@ export const adminAuthMiddleware = async (req: AdminAuthRequest, res: Response, 
       token_version: admin.token_version,
     };
 
+    const REFRESH_THRESHOLD_MS = 60 * 60 * 1000; // 1 hour
+    const expiresAt = (decoded.exp ?? 0) * 1000;
+    if (Date.now() > expiresAt - REFRESH_THRESHOLD_MS) {
+      const newToken = generateAdminToken(req.admin.id, req.admin.username, admin.token_version);
+      res.cookie('admin_token', newToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 24 * 60 * 60 * 1000,
+      });
+    }
+
     next();
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
