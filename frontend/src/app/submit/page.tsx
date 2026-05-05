@@ -8,6 +8,25 @@ import { useAuthStore } from '@/stores/auth';
 const DRAFT_KEY = 'yotop10_submit_draft';
 const DEBOUNCE_MS = 500;
 const DRAFT_EXPIRY_MS = 3600000; // 1 hour
+const MIN_ITEMS = 3;
+const MAX_ITEMS = 100;
+
+const RANKING_KEYWORDS = /\b(top|best|worst|greatest|most|least|finest|favorite|iconic|legendary|essential|influential|underrated|overrated|controversial|important|hidden|all.time|must.know|must.see|must.read|must.watch)\b/i;
+
+function validateListTitle(title: string): { valid: boolean; code?: string; error?: string; number?: number } {
+  if (!title) return { valid: false, code: 'NO_NUMBER', error: 'Title must specify a list size like "Top 10" or "Best 5"' };
+  const numberMatch = title.match(/\b(\d{1,3})\b/);
+  if (!numberMatch) return { valid: false, code: 'NO_NUMBER', error: 'Title must specify a list size like "Top 10" or "Best 5"' };
+  const listNumber = parseInt(numberMatch[1], 10);
+  if (listNumber < 3) return { valid: false, code: 'NUMBER_TOO_SMALL', error: 'Minimum list size is 3. Use 3-100.', number: listNumber };
+  if (listNumber > 100) return { valid: false, code: 'NUMBER_TOO_LARGE', error: 'Maximum list size is 100. Use 3-100.', number: listNumber };
+  const numberIndex = title.search(/\b\d{1,3}\b/);
+  const searchStart = Math.max(0, numberIndex - 20);
+  const searchEnd = Math.min(title.length, numberIndex + 20);
+  const contextWindow = title.substring(searchStart, searchEnd);
+  if (!RANKING_KEYWORDS.test(contextWindow)) return { valid: false, code: 'NO_RANKING_KEYWORD', error: 'Title must indicate a ranked list (e.g., Top 10, Best 5, 10 Greatest)', number: listNumber };
+  return { valid: true, number: listNumber };
+}
 
 interface ListItem {
   id: string;
@@ -49,10 +68,12 @@ export default function SubmitPage() {
 
   // Form state
   const [categoryId, setCategoryId] = useState('');
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState('Top 10 ');
   const [intro, setIntro] = useState('');
   const [items, setItems] = useState<ListItem[]>([
-    { id: generateId(), rank: 1, title: '', justification: '', source_url: '' }
+    { id: generateId(), rank: 1, title: '', justification: '', source_url: '' },
+    { id: generateId(), rank: 2, title: '', justification: '', source_url: '' },
+    { id: generateId(), rank: 3, title: '', justification: '', source_url: '' },
   ]);
   const [authorName, setAuthorName] = useState('');
 
@@ -103,13 +124,17 @@ export default function SubmitPage() {
           if (data.title) setTitle(data.title);
           if (data.intro) setIntro(data.intro);
           if (data.items && data.items.length > 0) {
-            setItems(data.items.map((item, idx) => ({
+            const restored = data.items.map((item, idx) => ({
               id: generateId(),
               rank: idx + 1,
               title: item.title || '',
               justification: item.justification || '',
               source_url: item.source_url || '',
-            })));
+            }));
+            while (restored.length < MIN_ITEMS) {
+              restored.push({ id: generateId(), rank: restored.length + 1, title: '', justification: '', source_url: '' });
+            }
+            setItems(restored);
           }
           if (data.author_display_name) setAuthorName(data.author_display_name);
         } else {
@@ -142,6 +167,25 @@ export default function SubmitPage() {
   useEffect(() => {
     saveDraft();
   }, [categoryId, title, intro, items, authorName, saveDraft]);
+
+  // Flush draft synchronously on tab close / unload (bypasses debounce)
+  useEffect(() => {
+    const flushDraftSync = () => {
+      const { categoryId: cat, title: t, intro: i, items: it, authorName: a } = formDataRef.current;
+      if (!t && !i && !it.some(item => item.title || item.justification) && !a) return;
+      const draft: DraftData = {
+        category_id: cat || undefined,
+        title: t || undefined,
+        intro: i || undefined,
+        items: it.map(({ title, justification, source_url }) => ({ title, justification, source_url })),
+        author_display_name: a || undefined,
+        savedAt: Date.now(),
+      };
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    };
+    window.addEventListener('beforeunload', flushDraftSync);
+    return () => window.removeEventListener('beforeunload', flushDraftSync);
+  }, []);
 
   // Scroll to first error after React re-renders with aria-invalid attributes
   useEffect(() => {
@@ -185,8 +229,10 @@ export default function SubmitPage() {
         return !value ? 'Please select a category' : undefined;
       case 'title':
         if (!value) return 'Title is required';
-        if (value.length < 5) return 'Title must be at least 5 characters';
+        if (value.length < 8) return 'Title must be at least 8 characters';
         if (value.length > 300) return 'Title must be less than 300 characters';
+        const format = validateListTitle(value);
+        if (!format.valid) return format.error;
         return undefined;
       case 'intro':
         if (!value) return 'Introduction is required';
@@ -201,7 +247,7 @@ export default function SubmitPage() {
   };
 
   const validateItems = (): string | undefined => {
-    if (items.length === 0) return 'At least 1 item is required';
+    if (items.length < MIN_ITEMS) return `At least ${MIN_ITEMS} items are required`;
     
     for (let i = 0; i < items.length; i++) {
       if (!items[i].title.trim()) return `Item #${i + 1}: Title is required (max 200 chars)`;
@@ -257,6 +303,12 @@ export default function SubmitPage() {
     setTitle(value);
     setErrors(prev => ({ ...prev, title: undefined, titleSimilarity: undefined }));
     
+    const formatResult = validateListTitle(value);
+    if (!formatResult.valid) {
+      setTitleCheck(null);
+      return;
+    }
+
     if (value.length >= 8 && categoryId) {
       checkTitleSimilarity(value, categoryId);
     } else {
@@ -276,7 +328,7 @@ export default function SubmitPage() {
 
   // Item management
   const addItem = () => {
-    if (items.length >= 25) return;
+    if (items.length >= MAX_ITEMS) return;
     setItems(prev => [
       ...prev,
       { id: generateId(), rank: prev.length + 1, title: '', justification: '', source_url: '' }
@@ -284,7 +336,7 @@ export default function SubmitPage() {
   };
 
   const removeItem = (id: string) => {
-    if (items.length <= 1) return;
+    if (items.length <= MIN_ITEMS) return;
     if (!confirm('Remove this item?')) return;
     setItems(prev => prev.filter(item => item.id !== id).map((item, idx) => ({ ...item, rank: idx + 1 })));
   };
@@ -384,7 +436,9 @@ export default function SubmitPage() {
                 setSubmitted(null);
                 setTitle('');
                 setIntro('');
-                setItems([{ id: generateId(), rank: 1, title: '', justification: '', source_url: '' }]);
+                setItems([{ id: generateId(), rank: 1, title: '', justification: '', source_url: '' },
+                          { id: generateId(), rank: 2, title: '', justification: '', source_url: '' },
+                          { id: generateId(), rank: 3, title: '', justification: '', source_url: '' }]);
                 setAuthorName('');
                 localStorage.removeItem(DRAFT_KEY);
               }}
@@ -623,17 +677,17 @@ export default function SubmitPage() {
           <button
             type="button"
             onClick={addItem}
-            disabled={items.length >= 25}
+            disabled={items.length >= MAX_ITEMS}
             style={{ 
               padding: '10px 20px', 
-              backgroundColor: items.length >= 25 ? '#ccc' : '#f0f0f0', 
+              backgroundColor: items.length >= MAX_ITEMS ? '#ccc' : '#f0f0f0', 
               border: '1px solid #ccc', 
               borderRadius: '5px', 
-              cursor: items.length >= 25 ? 'not-allowed' : 'pointer',
+              cursor: items.length >= MAX_ITEMS ? 'not-allowed' : 'pointer',
               fontSize: '16px'
             }}
           >
-            + Add Item ({items.length}/25)
+            + Add Item ({items.length}/{MAX_ITEMS})
           </button>
         </section>
 

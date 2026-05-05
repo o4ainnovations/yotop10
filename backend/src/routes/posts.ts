@@ -10,6 +10,7 @@ import { atomicCheckRateLimit } from '../lib/redis';
 import { calculateEffectivePostLimit, getRateLimitKey } from '../lib/rateLimit';
 import { getActiveBoost, grantBoost, BoostType } from '../lib/ladderSystem';
 import { checkTitleMatch } from '../lib/titleSimilarity';
+import { validateListTitle, needsListTitleValidation, FormatCheckResult } from '../lib/listTitleValidation';
 import { updateParentSparkScore } from './comments';
 import { computeSparkScore, getThresholds } from '../lib/sparkScore';
 
@@ -243,6 +244,7 @@ router.get('/check-title', async (req: Request, res: Response) => {
     matches.sort((a, b) => b.similarity - a.similarity);
 
     const etag = `"${Buffer.from(q).toString('base64').substring(0, 16)}"`;
+    const formatCheck = validateListTitle(q);
 
     res.json({
       allowed: !blocked,
@@ -253,6 +255,7 @@ router.get('/check-title', async (req: Request, res: Response) => {
         ? `${q} — Part 2`
         : undefined,
       etag,
+      format_check: formatCheck,
     });
   } catch (error) {
     console.error('Check title error:', error);
@@ -398,6 +401,18 @@ router.post('/', validatePostSubmission, async (req: Request, res: Response) => 
 
     // User is guaranteed to exist by fingerprint middleware
     const user = req.user!;
+
+    // Validate list title format for list-type posts
+    if (needsListTitleValidation(post_type)) {
+      const formatResult = validateListTitle(title);
+      if (!formatResult.valid) {
+        return res.status(400).json({
+          code: 'INVALID_TITLE_FORMAT',
+          error: formatResult.error,
+          format_code: formatResult.code,
+        });
+      }
+    }
 
     // Final title similarity check on submit - never trust client side validation
     if (post_type !== 'counter_list') {
