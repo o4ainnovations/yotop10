@@ -110,25 +110,35 @@ export default function StatisticsDashboard() {
       </Panel>
 
       <Panel scope="health" title="🫀 Platform Health">
-        {panels.health.data && (() => { const d = panels.health.data as Record<string, unknown>; const s = d.services as Record<string, unknown>; const deps = d.dependency_map as Record<string, { depends_on: string[]; degradation: string }>;
+        {panels.health.data && (() => { const d = panels.health.data as Record<string, unknown>; const s = d.services as Record<string, unknown>; const mem = d.memory as Record<string, number>; const crons = d.crons as Record<string, Record<string, string>>; const deps = d.dependency_map as Record<string, { depends_on: string[]; degradation: string }>;
+          const ups = Number(d.uptime_seconds) || 0;
+          const uptimeHrs = Math.floor(ups / 3600); const uptimeMin = Math.floor((ups % 3600) / 60);
+          const leak = mem?.rss_mb > (mem?.heap_mb * 3) ? '⚠️ Possible memory leak (RSS 3x heap)' : '✅ Normal';
           return <>
-            <L>⏱️ Uptime: <B>{n(d.uptime_seconds)}</B> seconds. Memory: <B>{n((d.memory as Record<string, number>)?.heap_mb)}</B> MB heap / <B>{n((d.memory as Record<string, number>)?.rss_mb)}</B> MB RSS.</L>
-            <L>🗄️ MongoDB: <B>{n(s?.mongodb)}</B> (latency {n(s?.mongodb_latency_ms)}ms). Redis: <B>{n(s?.redis)}</B> ({s?.redis_memory_pct !== null && s?.redis_memory_pct !== undefined ? `${n(s?.redis_memory_pct)}% used` : 'memory N/A'}). Elasticsearch: <B>{n(s?.elasticsearch)}</B>.</L>
-            <L>🔄 Crons: {(d.crons as Record<string, unknown>) && Object.entries(d.crons as Record<string, unknown>).map(([k,v]) => { const hb = v as Record<string, string>; return `${k}: ${hb.last_success ? '✅' : hb.last_error ? '❌' : '⏳'}`; }).join(' · ')}</L>
-            {((d.affected_features_count as number) || 0) > 0 && <L>🔴 <B>{n(d.affected_features_count)}</B> features affected.</L>}
+            <L>⏱️ Uptime: <B>{uptimeHrs}h {uptimeMin}m</B>. Memory: <B>{n(mem?.heap_mb)}</B> MB heap / <B>{n(mem?.rss_mb)}</B> MB RSS — {leak}.</L>
+            <L>🗄️ MongoDB: <B>{n(s?.mongodb)}</B> at <B>{n(s?.mongodb_latency_ms)}ms</B>. Redis: <B>{n(s?.redis)}</B> {s?.redis_memory_pct !== null && s?.redis_memory_pct !== undefined ? `at ${n(s?.redis_memory_pct)}% memory (${n(s?.redis_memory_mb)} MB)` : ''}. Elasticsearch: <B>{n(s?.elasticsearch)}</B>.</L>
+            <L>🔄 Cron Health:</L>
+            {crons && Object.entries(crons).map(([k,v]) => { const hb = v as Record<string, string>; const status = hb.last_success ? '✅' : hb.last_error ? '❌' : '⏳'; const last = hb.last_success ? ` (${new Date(hb.last_success).toLocaleTimeString()})` : ''; return <L key={k}>  {status} <B>{k}</B>{last}{hb.last_error ? ` — ${hb.last_error}` : ''}</L>; })}
+            {((d.affected_features_count as number) || 0) > 0 && <>
+              <L>🔴 <B>{n(d.affected_features_count)}</B> features degraded due to service outages:</L>
+              {(arr(d.affected_features) as Array<{ feature: string; degradation: string; depends_on: string[] }>).map(f => <L key={f.feature}>  — <B>{f.feature}</B>: {f.degradation} (needs {f.depends_on.join(', ')})</L>)}
+            </>}
           </>;
         })()}
       </Panel>
 
       <Panel scope="content" title="📂 Content Pipeline + Age Distribution">
-        {panels.content.data && (() => { const d = panels.content.data as Record<string, unknown>; const p = d.posts as Record<string, number>; const ag = d.approval_gap as Record<string, number>; const age = d.age_distribution as Record<string, number>;
+        {panels.content.data && (() => { const d = panels.content.data as Record<string, unknown>; const p = d.posts as Record<string, number>; const ag = d.approval_gap as Record<string, number>; const age = d.age_distribution as Record<string, number>; const tp = arr(d.throughput_7d) as Array<{ day: number; count: number }>;
+          const gapContext = ag?.avg_hours ? (ag.avg_hours < 1 ? 'Same-day moderation (excellent).' : ag.avg_hours < 24 ? 'Within 24 hours (good).' : ag.avg_hours < 72 ? '2-3 days (acceptable).' : 'Over 3 days (backlog risk).') : '';
           return <>
             <T>📝 Posts</T>
-            <L>Total: <B>{n(p?.total)}</B>. Submitted: <B>{n(p?.submitted)}</B>. Approved: <B>{n(p?.approved)}</B>. Rejected: <B>{n(p?.rejected)}</B>. Pending: <B>{n(p?.pending)}</B>. In revision: <B>{n(p?.in_revision)}</B>.</L>
-            <L>Approval gap: avg <B>{n(ag?.avg_hours)}h</B>, max <B>{n(ag?.max_hours)}h</B>, min <B>{n(ag?.min_hours)}h</B>.</L>
-            <L>Comments: <B>{n((d.comments as Record<string, number>)?.total)}</B> total, <B>{n((d.comments as Record<string, number>)?.today)}</B> today.</L>
+            <L>Total: <B>{n(p?.total)}</B>. Submitted: <B>{n(p?.submitted)}</B>. Approved: <B>{n(p?.approved)}</B>. Rejected: <B>{n(p?.rejected)}</B>. In revision: <B>{n(p?.in_revision)}</B>.</L>
+            <L>Throughput (7d): {tp.map(t => <span key={t.day}>Day {t.day}: <B>{t.count}</B> · </span>)}</L>
+            <L>Approval gap: avg <B>{n(ag?.avg_hours)}h</B>, max <B>{n(ag?.max_hours)}h</B>, min <B>{n(ag?.min_hours)}h</B>. {gapContext}</L>
+            <L>Comments: <B>{n((d.comments as Record<string, number>)?.total)}</B> total, <B>{n((d.comments as Record<string, number>)?.today)}</B> today, <B>{n((d.comments as Record<string, number>)?.this_week)}</B> this week.</L>
             <T>📅 Age Distribution</T>
             {age && Object.entries(age).map(([k,v]) => <L key={k}>{k}: <B>{v}</B> posts</L>)}
+            {(!age || Object.keys(age).length === 0) && <L>No age data yet.</L>}
           </>;
         })()}
       </Panel>
@@ -148,14 +158,18 @@ export default function StatisticsDashboard() {
       </Panel>
 
       <Panel scope="moderation" title="⏳ Moderation + Velocity">
-        {panels.moderation.data && (() => { const d = panels.moderation.data as Record<string, unknown>; const pq = d.pending_queue as Record<string, number>; const qv = d.queue_velocity as Record<string, number>; const wv = d.weekend_vs_weekday as Record<string, number>;
+        {panels.moderation.data && (() => { const d = panels.moderation.data as Record<string, unknown>; const pq = d.pending_queue as Record<string, number>; const qv = d.queue_velocity as Record<string, number>; const wv = d.weekend_vs_weekday as Record<string, number>; const rbd = arr(d.reviews_by_day_of_week) as Array<{ day: number; count: number }>;
+          const dayNames: Record<string, string> = { '1': 'Sun', '2': 'Mon', '3': 'Tue', '4': 'Wed', '5': 'Thu', '6': 'Fri', '7': 'Sat' };
+          const vContext = qv?.days_to_clear ? (qv.days_to_clear <= 1 ? 'Queue will clear within a day.' : qv.days_to_clear <= 3 ? 'Manageable — clears within 3 days.' : 'Backlog — may take over 3 days.') : '';
+          const flipContext = (d.decision_flips as number) > 0 ? `⚠️ ${n(d.decision_flips)} posts changed from approved to rejected. Review these.` : '✅ No approval reversals.';
           return <>
-            <L>Pending queue: <B>{n(pq?.total)}</B> posts. Oldest: <B>{n(pq?.oldest_age_hours)}h</B>.</L>
-            <L>Reviews today: <B>{n(d.reviews_today)}</B>. Approved: <B>{n(d.approved_today)}</B>. Rejected: <B>{n(d.rejected_today)}</B>. Retry: <B>{n(d.retry_today)}</B>.</L>
-            <L>Velocity: avg <B>{n(qv?.avg_reviews_per_day)}</B> reviews/day. Days to clear queue: <B>{n(qv?.days_to_clear)}</B>.</L>
-            <L>Peak moderation hour: <B>{d.peak_moderation_hour !== null && d.peak_moderation_hour !== undefined ? `${d.peak_moderation_hour}:00` : 'N/A'}</B>.</L>
-            {wv && <L>Weekend: <B>{n(wv?.weekend)}</B> reviews ({n(wv?.weekend_pct)}%). Weekday: <B>{n(wv?.weekday)}</B>.</L>}
-            <L>Decision flips (approved→rejected): <B>{n(d.decision_flips)}</B>.</L>
+            <L>Pending: <B>{n(pq?.total)}</B> posts. Oldest: <B>{n(pq?.oldest_age_hours)}h</B> old.</L>
+            <L>Today: <B>{n(d.reviews_today)}</B> reviews — <B>{n(d.approved_today)}</B> approved, <B>{n(d.rejected_today)}</B> rejected, <B>{n(d.retry_today)}</B> revision requests sent.</L>
+            <L>Velocity: avg <B>{n(qv?.avg_reviews_per_day)}</B> reviews per day. {vContext}</L>
+            <L>Peak moderation hour: <B>{d.peak_moderation_hour !== null && d.peak_moderation_hour !== undefined ? `${d.peak_moderation_hour}:00 UTC` : 'N/A'}</B>.</L>
+            {rbd.length > 0 && <><T>Reviews by Day of Week</T>{rbd.map(d => <L key={d.day}><B>{dayNames[String(d.day)] || d.day}</B>: {d.count} reviews</L>)}</>}
+            {wv && <L>Weekend share: <B>{n(wv?.weekend)}</B> reviews ({n(wv?.weekend_pct)}%) vs weekday <B>{n(wv?.weekday)}</B>.</L>}
+            <L>{flipContext}</L>
           </>;
         })()}
       </Panel>
@@ -174,10 +188,20 @@ export default function StatisticsDashboard() {
 
       <Panel scope="trends" title="📉 Trends with Deltas">
         {panels.trends.data && (() => { const d = panels.trends.data as Record<string, unknown>; const weeks = arr(d.weeks) as Array<Record<string, unknown>>;
+          const arrow = (dir: string) => dir === 'up' ? '↑' : dir === 'down' ? '↓' : '→';
+          const c = (col: string) => col === 'green' ? '#2e7d32' : col === 'red' ? '#c62828' : '#999';
           return <>
             {weeks.map(w => { const del = w.deltas as Record<string, { delta_pct: number; direction: string; color: string }> | undefined;
-              return <L key={w.date as string}>📅 <B>{w.date as string}</B>: {n(w.posts_total)} posts, {n(w.comments_total)} comments, {n(w.users_new)} new users, {n(w.pending)} pending
-                {del && ` ↑${del.posts_total?.delta_pct || 0}%`}</L>;
+              return <L key={w.date as string}>
+                📅 <B>{w.date as string}</B>
+                {del && <span style={{ fontSize: '12px', marginLeft: '10px' }}>
+                  Posts <span style={{ color: c(del.posts_total?.color || 'grey') }}>{arrow(del.posts_total?.direction || 'flat')}{del.posts_total?.delta_pct || 0}%</span> ·
+                  Submitted <span style={{ color: c(del.posts_submitted?.color || 'grey') }}>{arrow(del.posts_submitted?.direction || 'flat')}{del.posts_submitted?.delta_pct || 0}%</span> ·
+                  Comments <span style={{ color: c(del.comments_total?.color || 'grey') }}>{arrow(del.comments_total?.direction || 'flat')}{del.comments_total?.delta_pct || 0}%</span> ·
+                  Users <span style={{ color: c(del.users_total?.color || 'grey') }}>{arrow(del.users_total?.direction || 'flat')}{del.users_total?.delta_pct || 0}%</span> ·
+                  Pending <span style={{ color: c(del.pending?.color || 'grey') }}>{arrow(del.pending?.direction || 'flat')}{del.pending?.delta_pct || 0}%</span>
+                </span>}
+              </L>;
             })}
           </>;
         })()}
@@ -194,16 +218,24 @@ export default function StatisticsDashboard() {
       </Panel>
 
       <Panel scope="traffic" title="🌐 Traffic Analytics">
-        {panels.traffic.data && (() => { const d = panels.traffic.data as Record<string, unknown>; const refs = arr(d.top_referrers) as Array<{ domain: string; count: number }>; const peaks = arr(d.peak_hours) as Array<{ hour: number; count: number }>; const countries = arr(d.countries) as Array<{ code: string; count: number; population: number; visits_per_million: number }>; const engaged = arr(d.top_engaged) as Array<{ slug: string; title: string; ratio: number }>; const items = arr(d.top_engaged_items) as Array<{ title: string; rank: number; comment_count: number }>; const newUser = arr(d.new_users_by_referrer) as Array<{ source: string; count: number }>;
+        {panels.traffic.data && (() => { const d = panels.traffic.data as Record<string, unknown>; const refs = arr(d.top_referrers) as Array<{ domain: string; count: number }>; const peaks = arr(d.peak_hours) as Array<{ hour: number; count: number }>; const countries = arr(d.countries) as Array<{ code: string; count: number; population: number; visits_per_million: number }>; const engaged = arr(d.top_engaged) as Array<{ slug: string; title: string; ratio: number }>; const items = arr(d.top_engaged_items) as Array<{ title: string; rank: number; comment_count: number }>; const newUser = arr(d.new_users_by_referrer) as Array<{ source: string; count: number }>; const paths = arr(d.top_paths) as Array<{ path: string; count: number }>;
+          const browserStr = d.browsers ? Object.entries(d.browsers as Record<string, number>).map(([k,v]) => `${k}: ${v}`).join(' · ') : 'N/A';
+          const osStr = d.os ? Object.entries(d.os as Record<string, number>).map(([k,v]) => `${k}: ${v}`).join(' · ') : 'N/A';
+          const engageContext = engaged.length > 0 ? `Top post "${engaged[0]?.title}" has ${engaged[0]?.ratio}% engagement rate (comments+fire/views).` : '';
+          const topCountry = countries[0]; const topCountryContext = topCountry && topCountry.visits_per_million ? `Highest per-capita: ${topCountry.code} at ${topCountry.visits_per_million} visits/million.` : '';
           return <>
-            <L>Visits today: <B>{n(d.visits_today)}</B>. Unique: <B>{n(d.unique_today)}</B>.</L>
-            <L>Browsers: {d.browsers ? Object.entries(d.browsers as Record<string, number>).map(([k,v]) => `${k}: ${v}`).join(' · ') : 'N/A'}</L>
-            <L>OS: {d.os ? Object.entries(d.os as Record<string, number>).map(([k,v]) => `${k}: ${v}`).join(' · ') : 'N/A'}</L>
+            <L>Visits today: <B>{n(d.visits_today)}</B>. Unique visitors: <B>{n(d.unique_today)}</B>.</L>
+            <L>🌐 Browsers: {browserStr}</L>
+            <L>💻 OS: {osStr}</L>
+            {paths.length > 0 && <><T>Top Pages</T>{paths.map(p => <L key={p.path}><B>{p.path}</B>: {p.count} visits</L>)}</>}
             {refs.length > 0 && <><T>Top Referrers</T>{refs.map(r => <L key={r.domain}><B>{r.domain}</B>: {r.count} visits</L>)}</>}
-            {countries.length > 0 && <><T>Countries</T>{countries.map(c => <L key={c.code}><B>{c.code}</B>: {c.count} visits, pop {c.population ? (c.population / 1000000).toFixed(0) + 'M' : 'N/A'}, {c.visits_per_million !== null ? c.visits_per_million + '/M' : 'N/A'}</L>)}</>}
-            {peaks.length > 0 && <><T>Peak Hours (7d)</T>{peaks.map(p => <L key={p.hour}><B>{p.hour}:00</B>: {p.count} visits</L>)}</>}
-            {engaged.length > 0 && <><T>Top Engaged Posts</T>{engaged.map(e => <L key={e.slug}><B>{e.title}</B>: {e.ratio}% engagement rate</L>)}</>}
-            {items.length > 0 && <><T>Top Engaged Items</T>{items.map(i => <L key={`${i.rank}-${i.title}`}><B>#{i.rank} {i.title}</B>: {i.comment_count} item-anchored comments</L>)}</>}
+            {countries.length > 0 && <><T>Countries</T>
+              <L>{topCountryContext}</L>
+              {countries.map(c => <L key={c.code}><B>{c.code}</B>: {c.count} visits, pop {c.population ? (c.population / 1000000).toFixed(1) + 'M' : 'N/A'}, {c.visits_per_million !== null ? c.visits_per_million + '/M' : 'N/A'}</L>)}
+            </>}
+            {peaks.length > 0 && <><T>Peak Hours (7d)</T>{peaks.map(p => <L key={p.hour}><B>{p.hour}:00 UTC</B>: {p.count} visits</L>)}</>}
+            {engaged.length > 0 && <><T>Top Engaged Posts</T>{engageContext && <L>{engageContext}</L>}{engaged.map(e => <L key={e.slug}><B>{e.title}</B>: {e.ratio}% engagement</L>)}</>}
+            {items.length > 0 && <><T>Top Debated Items</T>{items.map(i => <L key={`${i.rank}-${i.title}`}><B>#{i.rank} {i.title}</B>: {i.comment_count} item-anchored comments</L>)}</>}
             {newUser.length > 0 && <><T>New Users by Source</T>{newUser.map(r => <L key={r.source}><B>{r.source}</B>: {r.count} new users</L>)}</>}
           </>;
         })()}
