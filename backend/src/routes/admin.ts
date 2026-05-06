@@ -22,6 +22,8 @@ import { PageVisit } from '../models/PageVisit';
 import { User } from '../models/User';
 import { Comment } from '../models/Comment';
 import { AlertThreshold } from '../models/AlertThreshold';
+import { AlertHistory } from '../models/AlertHistory';
+import { UserEvent } from '../models/UserEvent';
 import { redis } from '../lib/redis';
 
 const router: Router = Router();

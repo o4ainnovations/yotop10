@@ -217,10 +217,10 @@ function DeepAnalytics() {
     endpoints.forEach(async ({ key, params }) => {
       setLoading(prev => ({ ...prev, [key]: true }));
       try {
-        const url = key === 'lifecycle' ? '/api/admin/stats/users/lifecycle'
-          : key === 'correlations' ? '/api/admin/stats/quality'
-          : key === 'compare' ? `/api/admin/stats/compare${params || ''}`
-          : `/api/admin/stats/${key}`;
+        const url = key === 'lifecycle' ? '/admin/stats/users/lifecycle'
+          : key === 'correlations' ? '/admin/stats/quality'
+          : key === 'compare' ? `/admin/stats/compare${params || ''}`
+          : `/admin/stats/${key}`;
         const result = await apiFetch(url);
         setData(prev => ({ ...prev, [key]: result }));
       } catch { setData(prev => ({ ...prev, [key]: { error: 'Failed' } })); }
