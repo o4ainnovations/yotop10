@@ -6,6 +6,7 @@ export interface IPageVisit extends Document {
   referer: string | null;
   user_agent: string;
   ip: string;
+  country: string | null;
   created_at: Date;
 }
 
@@ -16,6 +17,7 @@ const pageVisitSchema = new Schema<IPageVisit>(
     referer: { type: String, default: null },
     user_agent: { type: String, default: '' },
     ip: { type: String, default: '' },
+    country: { type: String, default: null },
   },
   { timestamps: { createdAt: 'created_at', updatedAt: false } }
 );

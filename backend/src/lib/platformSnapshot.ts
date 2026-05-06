@@ -8,6 +8,7 @@ import { UserEvent } from '../models/UserEvent';
 import { Notification } from '../models/Notification';
 import { AuditLog } from '../models/AuditLog';
 import { AlertThreshold } from '../models/AlertThreshold';
+import { AlertHistory } from '../models/AlertHistory';
 import { redis } from './redis';
 import { reconcilePostCounts } from './postCountReconciler';
 
@@ -152,18 +153,39 @@ async function evaluateAlerts(snapshot: Record<string, Record<string, unknown>>)
 
     const triggered = alert.operator === 'gt' ? value > alert.threshold : value < alert.threshold;
     if (triggered) {
+      const existingUnresolved = await AlertHistory.findOne({ metric: alert.metric, resolved_at: null });
+      if (!existingUnresolved) {
+        await AlertHistory.create({
+          metric: alert.metric, severity: alert.severity,
+          value, threshold: alert.threshold, operator: alert.operator,
+          triggered_at: new Date(),
+        });
+      }
       await AlertThreshold.findByIdAndUpdate(alert._id, {
-        last_triggered_at: new Date(),
-        notification_sent: true,
+        last_triggered_at: new Date(), notification_sent: true,
       });
       await redis.set(`alert:${alert.metric}`, JSON.stringify({
         metric: alert.metric, severity: alert.severity, value, threshold: alert.threshold,
         triggered_at: new Date().toISOString(),
       }), 'EX', 24 * 60 * 60);
     } else {
+      await AlertHistory.findOneAndUpdate(
+        { metric: alert.metric, resolved_at: null },
+        { resolved_at: new Date() }
+      );
       await AlertThreshold.findByIdAndUpdate(alert._id, { notification_sent: false });
     }
   }
+}
+
+async function writeCronHeartbeat(name: string, success: boolean, error?: string) {
+  try {
+    await redis.hSet('cron:heartbeats', name, JSON.stringify({
+      last_run: new Date().toISOString(),
+      last_success: success ? new Date().toISOString() : null,
+      last_error: error || null,
+    }));
+  } catch {}
 }
 
 let cronHandle: NodeJS.Timeout | null = null;
@@ -179,8 +201,10 @@ export async function runSnapshotNow(): Promise<void> {
     );
     await reconcilePostCounts();
     await evaluateAlerts(snapshot);
+    await writeCronHeartbeat('snapshot', true);
     console.log(`[Snapshot] Generated for ${today}`);
   } catch (err) {
+    await writeCronHeartbeat('snapshot', false, (err as Error).message);
     console.error('[Snapshot] Failed:', (err as Error).message);
   }
 }
