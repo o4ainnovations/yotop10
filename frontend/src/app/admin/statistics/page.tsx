@@ -183,5 +183,77 @@ export default function StatisticsDashboard() {
         )}
       </Panel>
     </div>
+
+    <div style={{ marginTop: '40px', borderTop: '2px solid #ccc', paddingTop: '20px' }}>
+      <h2>🔬 Deep Analytics (All Metrics)</h2>
+      <DeepAnalytics />
+    </div>
+  );
+}
+
+function DeepAnalytics() {
+  const endpoints = [
+    { key: 'health', label: '🫀 Platform Health' },
+    { key: 'content', label: '📂 Content Pipeline + Age Distribution' },
+    { key: 'community', label: '👥 Community + Fan-Out + Lurkers' },
+    { key: 'moderation', label: '⏳ Moderation Velocity + Queue Projection' },
+    { key: 'categories', label: '📁 Category Heatmap' },
+    { key: 'trends', label: '📉 Trends with Deltas (Week-over-Week)' },
+    { key: 'quality', label: '✅ Quality + Intro-Length Correlation' },
+    { key: 'traffic', label: '🌐 Traffic (Referrers, Peak Hours, Countries, Engagement)' },
+    { key: 'submissions', label: '✍️ Submissions (By Hour, By Type)' },
+    { key: 'lifecycle', label: '🔄 User Lifecycle (First → Second Post)' },
+    { key: 'alerts', label: '🚨 Alerts (Thresholds + History + Active)' },
+    { key: 'compare', label: '⚖️ Comparison Mode', params: '?date1=2026-05-06&date2=2026-05-05' },
+    { key: 'notifications', label: '🔔 Notification Analytics (Delivery + Click Rate)' },
+    { key: 'correlations', label: '📊 Quality Correlations (standalone)' },
+  ];
+
+  const [data, setData] = useState<Record<string, unknown>>({});
+  const [loading, setLoading] = useState<Record<string, boolean>>({});
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    endpoints.forEach(async ({ key, params }) => {
+      setLoading(prev => ({ ...prev, [key]: true }));
+      try {
+        const url = key === 'lifecycle' ? '/api/admin/stats/users/lifecycle'
+          : key === 'correlations' ? '/api/admin/stats/quality'
+          : key === 'compare' ? `/api/admin/stats/compare${params || ''}`
+          : `/api/admin/stats/${key}`;
+        const result = await apiFetch(url);
+        setData(prev => ({ ...prev, [key]: result }));
+      } catch { setData(prev => ({ ...prev, [key]: { error: 'Failed' } })); }
+      finally { setLoading(prev => ({ ...prev, [key]: false })); }
+    });
+  }, []);
+
+  const RawJSON = ({ d }: { d: unknown }) => (
+    <pre style={{
+      backgroundColor: '#1a1a2e', color: '#e0e0e0', padding: '12px', borderRadius: '6px',
+      fontSize: '11px', lineHeight: '1.5', overflow: 'auto', maxHeight: '400px',
+      fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-all',
+    }}>
+      {JSON.stringify(d, null, 2)}
+    </pre>
+  );
+
+  return (
+    <div>
+      {endpoints.map(({ key, label }) => (
+        <div key={key} style={{ border: '1px solid #ddd', borderRadius: '8px', marginBottom: '8px', overflow: 'hidden' }}>
+          <button onClick={() => setOpen(prev => ({ ...prev, [key]: !prev[key] }))}
+            style={{ width: '100%', textAlign: 'left', padding: '10px 14px', background: '#f5f5f5', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between' }}>
+            <span>{label} {loading[key] ? '(loading...)' : data[key] ? '✅' : '⏳'}</span>
+            <span>{open[key] ? '▾' : '▸'}</span>
+          </button>
+          {open[key] && (
+            <div style={{ padding: '8px' }}>
+              <RawJSON d={data[key] || { loading: true }} />
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }
