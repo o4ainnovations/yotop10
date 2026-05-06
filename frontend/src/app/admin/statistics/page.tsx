@@ -70,7 +70,7 @@ export default function StatisticsDashboard() {
 
   const overview = panels.overview.data as Record<string, unknown> | null;
 
-  return (
+  return (<>
     <div style={{ maxWidth: '900px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h2>📊 Platform Statistics</h2>
@@ -188,8 +188,8 @@ export default function StatisticsDashboard() {
       <h2>🔬 Deep Analytics (All Metrics)</h2>
       <DeepAnalytics />
     </div>
-  );
-}
+    </>);
+  }
 
 function DeepAnalytics() {
   const endpoints = [
