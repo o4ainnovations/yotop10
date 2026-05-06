@@ -47,7 +47,7 @@ export default function StatisticsDashboard() {
 
   const SummaryRow = ({ data, fields }: { data: Record<string, unknown>; fields: string[] }) => (
     <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-      {fields.map(f => card(f, (data as Record<string, unknown>)[f]))}
+      {fields.map(f => <span key={f}>{card(f, (data as Record<string, unknown>)[f])}</span>)}
     </div>
   );
 
