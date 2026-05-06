@@ -1,0 +1,14 @@
+{
+  "rate_limiting": { "depends_on": ["redis"], "degradation": "All rate-limited endpoints return 429" },
+  "user_identity": { "depends_on": ["mongodb"], "degradation": "No anonymous user tracking, comments/posts fail" },
+  "post_creation": { "depends_on": ["mongodb", "redis"], "degradation": "Cannot create posts (DB) or rate limit bypassed (Redis)" },
+  "comment_posting": { "depends_on": ["mongodb", "redis"], "degradation": "Cannot post comments (DB) or rate limit bypassed" },
+  "admin_auth": { "depends_on": ["mongodb", "redis"], "degradation": "Cannot login (DB) or rate limit bypassed" },
+  "admin_dashboard": { "depends_on": ["mongodb"], "degradation": "Stats and pending queue unavailable" },
+  "notifications": { "depends_on": ["mongodb"], "degradation": "Bell badge and notification list empty" },
+  "analytics": { "depends_on": ["mongodb", "redis"], "degradation": "Snapshot and stats unavailable (MongoDB), health pulse stale (Redis)" },
+  "search": { "depends_on": ["elasticsearch"], "degradation": "Full-text search unavailable" },
+  "fire_reactions": { "depends_on": ["mongodb"], "degradation": "Cannot toggle reactions" },
+  "page_visits": { "depends_on": ["mongodb"], "degradation": "Visit tracking silently drops data" },
+  "cron_jobs": { "depends_on": ["mongodb", "redis"], "degradation": "Reconciler, Snapshot, SparkScore all stall" }
+}

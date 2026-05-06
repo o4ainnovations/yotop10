@@ -516,6 +516,17 @@ router.get('/stats/health', async (req: AdminAuthRequest, res: Response) => {
     const redisUsed = redisUsedMatch ? parseInt(redisUsedMatch[1]) : null;
     const redisMax = redisMaxMatch ? parseInt(redisMaxMatch[1]) : null;
 
+    const downServices: string[] = [];
+    if (mongoState !== 1) downServices.push('mongodb');
+    if (redisPing !== 'ok') downServices.push('redis');
+    if (esPing !== 'ok') downServices.push('elasticsearch');
+
+    const deps = require('../data/serviceDependencies.json') as Record<string, { depends_on: string[]; degradation: string }>;
+    const affectedFeatures = downServices.length > 0
+      ? Object.entries(deps).filter(([, v]) => v.depends_on.some((s: string) => downServices.includes(s)))
+          .map(([feature, info]) => ({ feature, depends_on: info.depends_on, degradation: info.degradation }))
+      : [];
+
     res.json({
       uptime_seconds: Math.round(process.uptime()),
       memory: { heap_mb: Math.round(mem.heapUsed / 1024 / 1024), rss_mb: Math.round(mem.rss / 1024 / 1024) },
@@ -528,6 +539,9 @@ router.get('/stats/health', async (req: AdminAuthRequest, res: Response) => {
         elasticsearch: esPing,
       },
       crons: Object.fromEntries(Object.entries(heartbeats as Record<string, string>).map(([k, v]) => [k, parseHb(v)])),
+      dependency_map: deps,
+      affected_features_count: affectedFeatures.length,
+      affected_features: affectedFeatures,
     });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
@@ -539,17 +553,18 @@ router.get('/stats/overview', async (req: AdminAuthRequest, res: Response) => {
     if (!snapshot) return res.json({ error: 'No data yet.' });
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const threeDaysAgo = new Date(Date.now() - 3 * 24 * 3600000);
-    const [tp, tc, tu, pn, orphans, peakQueueHour] = await Promise.all([
+    const [tp, tc, tu, pn, orphans, peakQueueHour, peakSubmitHour] = await Promise.all([
       Post.countDocuments({ created_at: { $gte: today } }),
       Comment.countDocuments({ created_at: { $gte: today } }),
       User.countDocuments({ created_at: { $gte: today } }),
       Post.countDocuments({ status: 'pending_review' }),
       Post.countDocuments({ status: 'pending_review', created_at: { $lt: new Date(Date.now() - 72 * 3600000) }, revision_guidance: null }),
       Post.aggregate([{ $match: { status: 'pending_review' } }, { $group: { _id: { $hour: '$created_at' }, count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }]),
+      Post.aggregate([{ $group: { _id: { $hour: '$created_at' }, count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }]),
     ]);
-    const peakHr = peakQueueHour[0] || {};
+    const peakHr = peakQueueHour[0] || {}; const peakSubHr = peakSubmitHour[0] || {};
     const c = snapshot.content as Record<string, unknown>; const co = snapshot.community as Record<string, unknown>; const m = snapshot.moderation as Record<string, unknown>; const p = c.posts as Record<string, number>; const cm = c.comments as Record<string, number>; const u = co.users as Record<string, number>; const t = co.trust as Record<string, number>; const pq = (m as Record<string, unknown>)?.pending_queue as Record<string, number>;
-    res.json({ posts: { total: p.total || 0, today: tp, submitted: p.submitted || 0, approved: p.approved || 0, rejected: p.rejected || 0 }, comments: { total: cm?.total || 0, today: tc }, users: { total: u?.total || 0, today: tu }, pending: pn, queue: { pending: pn, reviewed_today: (m as Record<string, number>)?.reviews_today || 0, oldest_age_hours: pq?.oldest_age_hours || 0, peak_queue_hour: peakHr._id || null, peak_queue_hour_count: peakHr.count || 0 }, trust: { scholars: t?.scholars || 0, neutrals: t?.neutrals || 0, trolls: t?.trolls || 0 }, trolls_active: (co as Record<string, number>)?.trolls_active_24h || 0, orphans_72h_no_guidance: orphans });
+    res.json({ posts: { total: p.total || 0, today: tp, submitted: p.submitted || 0, approved: p.approved || 0, rejected: p.rejected || 0 }, comments: { total: cm?.total || 0, today: tc }, users: { total: u?.total || 0, today: tu }, pending: pn, queue: { pending: pn, reviewed_today: (m as Record<string, number>)?.reviews_today || 0, oldest_age_hours: pq?.oldest_age_hours || 0, peak_queue_hour: peakHr._id || null, peak_queue_hour_count: peakHr.count || 0 }, trust: { scholars: t?.scholars || 0, neutrals: t?.neutrals || 0, trolls: t?.trolls || 0 }, trolls_active: (co as Record<string, number>)?.trolls_active_24h || 0, orphans_72h_no_guidance: orphans, peak_submission_hour: peakSubHr._id || null, peak_submission_hour_count: peakSubHr.count || 0 });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
@@ -608,14 +623,16 @@ router.get('/stats/moderation', async (req: AdminAuthRequest, res: Response) => 
     const pq = ((s.moderation as Record<string, unknown>)?.pending_queue as Record<string, number>);
     const pending = pq?.total || 0;
     const sevenDaysAgo = new Date(Date.now() - 7 * 86400000);
-    const [weekendReviews, decisionFlips] = await Promise.all([
+    const [weekendReviews, peakModHour, decisionFlips] = await Promise.all([
       Post.aggregate([{ $match: { status: { $in: ['approved', 'rejected'] }, updated_at: { $gte: sevenDaysAgo } } }, { $group: { _id: { $dayOfWeek: '$updated_at' }, count: { $sum: 1 } } }, { $sort: { _id: 1 } }]),
-      AuditLog.countDocuments({ action: 'reject_post', created_at: { $gte: sevenDaysAgo }, 'metadata.post_id': { $in: await Post.find({ status: 'rejected', updated_at: { $gte: sevenDaysAgo } }).distinct('_id').then(ids => ids.map(String)) } }),
+      AuditLog.aggregate([{ $match: { action: { $in: ['approve_post', 'reject_post', 'retry_post'] }, created_at: { $gte: sevenDaysAgo } } }, { $group: { _id: { $hour: '$created_at' }, count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }]),
+      Post.countDocuments({ status: 'rejected', 'status_history.2': { $exists: true }, 'status_history.status': 'approved' }),
     ]);
+    const peakHr = peakModHour[0] || {};
     const weekendDays = [1, 7]; // Sunday=1, Saturday=7
     const weekendCount = weekendReviews.filter((r: Record<string, unknown>) => weekendDays.includes(r._id as number)).reduce((a: number, r: Record<string, number>) => a + (r.count || 0), 0);
     const weekdayCount = weekendReviews.filter((r: Record<string, unknown>) => !weekendDays.includes(r._id as number)).reduce((a: number, r: Record<string, number>) => a + (r.count || 0), 0);
-    res.json({ ...s.moderation, pending_queue: { total: pending, oldest_age_hours: ageHours }, queue_velocity: { avg_reviews_per_day: Math.round(avgReviews * 10) / 10, days_to_clear: avgReviews > 0 ? Math.ceil(pending / avgReviews) : null }, reviews_by_day_of_week: weekendReviews.map((r: Record<string, unknown>) => ({ day: r._id, count: r.count })), weekend_vs_weekday: { weekend: weekendCount, weekday: weekdayCount, weekend_pct: (weekendCount + weekdayCount) > 0 ? Math.round((weekendCount / (weekendCount + weekdayCount)) * 100) : 0 }, decision_confidence: { flips_: decisionFlips } });
+    res.json({ ...s.moderation, pending_queue: { total: pending, oldest_age_hours: ageHours }, queue_velocity: { avg_reviews_per_day: Math.round(avgReviews * 10) / 10, days_to_clear: avgReviews > 0 ? Math.ceil(pending / avgReviews) : null }, reviews_by_day_of_week: weekendReviews.map((r: Record<string, unknown>) => ({ day: r._id, count: r.count })), weekend_vs_weekday: { weekend: weekendCount, weekday: weekdayCount, weekend_pct: (weekendCount + weekdayCount) > 0 ? Math.round((weekendCount / (weekendCount + weekdayCount)) * 100) : 0 }, peak_moderation_hour: peakHr._id || null, peak_moderation_hour_count: peakHr.count || 0, decision_flips: decisionFlips });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
@@ -690,12 +707,41 @@ router.get('/stats/traffic', async (req: AdminAuthRequest, res: Response) => {
     for (const b of browsers) { browserMap[parseBrowser(b._id)] = (browserMap[parseBrowser(b._id)] || 0) + b.count; osMap[parseOS(b._id)] = (osMap[parseOS(b._id)] || 0) + b.count; }
     const extractDomain = (ref: string) => { try { return new URL(ref).hostname.replace('www.', ''); } catch { return ref.substring(0, 50); } };
     const topRefs = referrers.map((r: Record<string, unknown>) => ({ domain: extractDomain(r._id as string), count: r.count }));
+    let population: Record<string, number> = {};
+    try { population = require('../data/countryPopulation.json'); } catch {}
+    const countriesWithPop = countries.map((c: Record<string, unknown>) => {
+      const code = c._id as string;
+      const pop = population[code] || null;
+      return { code, count: c.count, population: pop, visits_per_million: pop ? Math.round((c.count as number / pop) * 1000000 * 100) / 100 : null };
+    });
     const engagement = await Post.aggregate([
       { $match: { status: 'approved', view_count: { $gt: 0 } } },
       { $project: { title: 1, slug: 1, comment_count: 1, fire_count: 1, view_count: 1, ratio: { $divide: [{ $add: ['$comment_count', '$fire_count'] }, '$view_count'] } } },
       { $sort: { ratio: -1 } }, { $limit: 10 }
     ]);
-    res.json({ visits_today: visitsToday, unique_today: uniqueFps.length, top_paths: topPaths.map((p: Record<string, unknown>) => ({ path: p._id, count: p.count })), browsers: browserMap, os: osMap, peak_hours: peakHours.map((h: Record<string, unknown>) => ({ hour: h._id, count: h.count })), top_referrers: topRefs, countries: countries.map((c: Record<string, unknown>) => ({ code: c._id, count: c.count })), top_engaged: engagement.map((e: Record<string, unknown>) => ({ slug: e.slug, title: e.title, ratio: Math.round((e.ratio as number) * 1000) / 10 })), top_engaged_items: itemEngagement.map((i: Record<string, unknown>) => ({ title: i.item_title, rank: i.item_rank, comment_count: i.comment_count })), new_users_by_referrer: newUserByRef.map((r: Record<string, unknown>) => ({ source: r._id, count: r.count })) });
+    res.json({ visits_today: visitsToday, unique_today: uniqueFps.length, top_paths: topPaths.map((p: Record<string, unknown>) => ({ path: p._id, count: p.count })), browsers: browserMap, os: osMap, peak_hours: peakHours.map((h: Record<string, unknown>) => ({ hour: h._id, count: h.count })), top_referrers: topRefs, countries: countriesWithPop, top_engaged: engagement.map((e: Record<string, unknown>) => ({ slug: e.slug, title: e.title, ratio: Math.round((e.ratio as number) * 1000) / 10 })), top_engaged_items: itemEngagement.map((i: Record<string, unknown>) => ({ title: i.item_title, rank: i.item_rank, comment_count: i.comment_count })), new_users_by_referrer: newUserByRef.map((r: Record<string, unknown>) => ({ source: r._id, count: r.count })) });
+  } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+// 9b. Traffic Lurkers — Ghost ratio
+router.get('/stats/traffic/lurkers', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const allFingerprints = await PageVisit.distinct('fingerprint', { fingerprint: { $ne: null } });
+    const posters = await Post.distinct('author_id');
+    const posterSet = new Set(posters);
+    const neverPosted = allFingerprints.filter((fp: string) => !posterSet.has(fp));
+
+    const visitCounts = await PageVisit.aggregate([
+      { $match: { fingerprint: { $in: neverPosted } } },
+      { $group: { _id: '$fingerprint', total_visits: { $sum: 1 } } },
+    ]);
+
+    const ghosts = visitCounts.filter((v: Record<string, number>) => v.total_visits === 1).length;
+    const repeat = visitCounts.filter((v: Record<string, number>) => v.total_visits > 1 && v.total_visits <= 10).length;
+    const deep = visitCounts.filter((v: Record<string, number>) => v.total_visits > 10).length;
+    const totalLurkers = neverPosted.length || 1;
+
+    res.json({ total_lurkers: neverPosted.length, ghosts, repeat_lurkers: repeat, deep_lurkers: deep, ghosts_pct: Math.round((ghosts / totalLurkers) * 100), repeat_pct: Math.round((repeat / totalLurkers) * 100), deep_pct: Math.round((deep / totalLurkers) * 100) });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
@@ -703,14 +749,15 @@ router.get('/stats/traffic', async (req: AdminAuthRequest, res: Response) => {
 router.get('/stats/submissions', async (req: AdminAuthRequest, res: Response) => {
   try {
     const d = new Date(); d.setDate(d.getDate() - 7);
-    const [byHour, byType, avgItems, typeMigration] = await Promise.all([
+    const [byHour, byType, avgItems, typeMigration, typePaths] = await Promise.all([
       Post.aggregate([{ $match: { created_at: { $gte: d } } }, { $group: { _id: { $hour: '$created_at' }, count: { $sum: 1 } } }, { $sort: { _id: 1 } }]),
       Post.aggregate([{ $group: { _id: '$post_type', count: { $sum: 1 } } }, { $sort: { count: -1 } }]),
       Post.aggregate([{ $lookup: { from: 'listitems', localField: '_id', foreignField: 'post_id', as: 'items' } }, { $group: { _id: null, avg: { $avg: { $size: '$items' } } } }]),
       Post.aggregate([{ $sort: { author_id: 1, created_at: 1 } }, { $group: { _id: '$author_id', types: { $push: '$post_type' }, count: { $sum: 1 } } }, { $match: { count: { $gt: 1 } } }, { $project: { switched: { $cond: [{ $gt: [{ $size: { $setUnion: ['$types', []] } }, 1] }, 1, 0] }, total: 1 } }, { $group: { _id: null, switched: { $sum: '$switched' }, multi_type_users: { $sum: 1 } } }]),
+      Post.aggregate([{ $sort: { author_id: 1, created_at: 1 } }, { $group: { _id: '$author_id', types: { $push: '$post_type' } } }, { $match: { $expr: { $gt: [{ $size: '$types' }, 1] } } }, { $project: { paths: { $reduce: { input: { $range: [0, { $subtract: [{ $size: '$types' }, 1] }] }, initialValue: [], in: { $concatArrays: ['$$value', [{ from: { $arrayElemAt: ['$types', '$$this'] }, to: { $arrayElemAt: ['$types', { $add: ['$$this', 1] }] } }]] } } } } }, { $unwind: '$paths' }, { $match: { $expr: { $ne: ['$paths.from', '$paths.to'] } } }, { $group: { _id: { from: '$paths.from', to: '$paths.to' }, count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 10 }]),
     ]);
     const migration = typeMigration[0] as Record<string, number> | undefined;
-    res.json({ by_hour: byHour.map((h: Record<string, unknown>) => ({ hour: h._id, count: h.count })), by_type: byType.map((t: Record<string, unknown>) => ({ type: t._id || 'unknown', count: t.count })), avg_items_per_post: Math.round((avgItems[0]?.avg as number) || 0), type_migration: { multi_type_users: migration?.multi_type_users || 0, switched_types: migration?.switched || 0 } });
+    res.json({ by_hour: byHour.map((h: Record<string, unknown>) => ({ hour: h._id, count: h.count })), by_type: byType.map((t: Record<string, unknown>) => ({ type: t._id || 'unknown', count: t.count })), avg_items_per_post: Math.round((avgItems[0]?.avg as number) || 0), type_migration: { multi_type_users: migration?.multi_type_users || 0, switched_types: migration?.switched || 0, paths: typePaths.map((p: Record<string, unknown>) => ({ from: (p._id as Record<string, string>).from, to: (p._id as Record<string, string>).to, count: p.count })) } });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
@@ -729,7 +776,8 @@ router.get('/stats/users/lifecycle', async (req: AdminAuthRequest, res: Response
     const oneAndDone = dropOff.filter((d: Record<string, unknown>) => d._id === 1).reduce((a: number, d: Record<string, number>) => a + (d.users || 0), 0);
     const allPosters = dropOff.reduce((a: number, d: Record<string, number>) => a + (d.users || 0), 0);
     const lv = lifetime[0] as Record<string, number> | undefined;
-    res.json({ lifecycle: buckets, activation_gap_hours: gap ? Math.round(gap.avg_hours) : null, one_and_done_pct: allPosters > 0 ? Math.round((oneAndDone / allPosters) * 100) : 0, drop_off_distribution: dropOff.map((d: Record<string, unknown>) => ({ posts_made: d._id, users: d.users })), avg_lifetime_posts: lv ? Math.round(lv.avg) : 0, total_posters: allUsers.length });
+    const converted24h = (activationGap[0] as Record<string, number> | undefined)?.total || 0;
+    res.json({ lifecycle: buckets, activation_gap_hours: gap ? Math.round(gap.avg_hours) : null, converted_within_24h: converted24h, one_and_done_pct: allPosters > 0 ? Math.round((oneAndDone / allPosters) * 100) : 0, drop_off_distribution: dropOff.map((d: Record<string, unknown>) => ({ posts_made: d._id, users: d.users })), avg_lifetime_posts: lv ? Math.round(lv.avg) : 0, total_posters: allUsers.length });
 
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });

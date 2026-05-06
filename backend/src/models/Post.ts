@@ -23,6 +23,7 @@ export interface IPost extends Document {
   comment_count: number;
   trust_score_updated: boolean;
   is_public: boolean;
+  status_history: Array<{ status: string; changed_at: Date }>;
   created_at: Date;
   updated_at: Date;
 }
@@ -140,6 +141,10 @@ const postSchema = new Schema<IPost>(
       default: true,
       index: true,
     },
+    status_history: {
+      type: [{ status: String, changed_at: Date }],
+      default: [],
+    },
     published_at: {
       type: Date,
     },
@@ -160,6 +165,15 @@ export function normalizeTitle(title: string): string {
     .replace(/\s+/g, ' ')
     .trim();
 }
+
+// Track status changes
+postSchema.pre('save', function(next) {
+  if (this.isModified('status')) {
+    if (!this.status_history) this.status_history = [];
+    this.status_history.push({ status: this.status, changed_at: new Date() });
+  }
+  next();
+});
 
 // Auto-generate slug and normalized title before saving
 postSchema.pre('save', function(next) {
