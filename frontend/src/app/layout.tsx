@@ -4,6 +4,7 @@ import Eruda from "./Eruda";
 import AuthInitializer from "@/components/AuthInitializer";
 import ToastContainer from "@/components/Toast";
 import NotificationBell from "@/components/NotificationBell";
+import AnalyticsBeacon from "@/components/AnalyticsBeacon";
 
 export const metadata: Metadata = {
   title: "YoTop10 - Top 10 Lists Platform",
@@ -23,6 +24,7 @@ export default function RootLayout({
         {children}
         <Eruda />
         <ToastContainer />
+        <AnalyticsBeacon />
       </body>
     </html>
   );

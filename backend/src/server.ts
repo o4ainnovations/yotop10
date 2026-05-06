@@ -34,7 +34,11 @@ app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-const FINGERPRINT_EXEMPT = new Set(['/api/admin']);
+// Analytics visit beacon (no fingerprint required)
+import analyticsRouter from './routes/analytics';
+app.use('/api/analytics', analyticsRouter);
+
+const FINGERPRINT_EXEMPT = new Set(['/api/admin', '/api/analytics']);
 
 for (const route of routes) {
   const middleware = FINGERPRINT_EXEMPT.has(route.path) ? [route.router] : [fingerprintMiddleware, route.router];
@@ -87,6 +91,9 @@ const startServer = async () => {
     const { startPostCountCron } = await import('./lib/postCountReconciler');
     startPostCountCron();
 
+    const { startSnapshotCron } = await import('./lib/platformSnapshot');
+    startSnapshotCron();
+
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
@@ -104,6 +111,8 @@ process.on('SIGTERM', async () => {
   stopSparkScoreCron();
   const { stopPostCountCron } = await import('./lib/postCountReconciler');
   stopPostCountCron();
+  const { stopSnapshotCron } = await import('./lib/platformSnapshot');
+  stopSnapshotCron();
   await redis.quit();
   await mongoose.connection.close();
   process.exit(0);
@@ -115,6 +124,8 @@ process.on('SIGINT', async () => {
   stopSparkScoreCron();
   const { stopPostCountCron } = await import('./lib/postCountReconciler');
   stopPostCountCron();
+  const { stopSnapshotCron } = await import('./lib/platformSnapshot');
+  stopSnapshotCron();
   await redis.quit();
   await mongoose.connection.close();
   process.exit(0);

@@ -7,38 +7,21 @@ export interface INotification extends Document {
   post_title: string;
   message: string;
   read: boolean;
+  delivered_at: Date | null;
+  clicked_at: Date | null;
   created_at: Date;
 }
 
 const notificationSchema = new Schema<INotification>(
   {
-    user_id: {
-      type: String,
-      required: true,
-      index: true,
-    },
-    type: {
-      type: String,
-      required: true,
-      enum: ['post_approved', 'post_rejected', 'revision_requested'],
-    },
-    post_id: {
-      type: String,
-      required: true,
-    },
-    post_title: {
-      type: String,
-      required: true,
-    },
-    message: {
-      type: String,
-      required: true,
-    },
-    read: {
-      type: Boolean,
-      default: false,
-      index: true,
-    },
+    user_id: { type: String, required: true, index: true },
+    type: { type: String, required: true, enum: ['post_approved', 'post_rejected', 'revision_requested'] },
+    post_id: { type: String, required: true },
+    post_title: { type: String, required: true },
+    message: { type: String, required: true },
+    read: { type: Boolean, default: false, index: true },
+    delivered_at: { type: Date, default: null },
+    clicked_at: { type: Date, default: null },
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: false },

@@ -8,6 +8,7 @@ import { ListItem } from '../models/ListItem';
 import { Notification, createNotification } from '../models/Notification';
 import { AuditLog } from '../models/AuditLog';
 import { logAudit, getAuditStats } from '../lib/auditWriter';
+import { getClientIp } from '../middleware/fingerprint';
 import {
   adminAuthMiddleware,
   generateAdminToken,
@@ -16,9 +17,12 @@ import {
   resetLoginAttempts,
   AdminAuthRequest,
 } from '../lib/adminAuth';
-import { trustScoreWorker } from '../lib/trustScoreWorker';
+import { PlatformSnapshot } from '../models/PlatformSnapshot';
+import { PageVisit } from '../models/PageVisit';
+import { User } from '../models/User';
+import { Comment } from '../models/Comment';
+import { AlertThreshold } from '../models/AlertThreshold';
 import { redis } from '../lib/redis';
-import { getClientIp } from '../middleware/fingerprint';
 
 const router: Router = Router();
 
@@ -480,5 +484,99 @@ router.get('/audit-logs', async (req: AdminAuthRequest, res: Response) => {
     res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch audit logs' });
   }
 });
+
+// ─── Stats Endpoints ────────────────────────────────────────────────
+
+router.get('/stats/overview', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const snapshot = await PlatformSnapshot.findOne().sort({ date: -1 }).lean();
+    if (!snapshot) return res.json({ error: 'No data yet. First snapshot will appear within an hour.' });
+
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const [todayPosts, todayComments, todayUsers, pending] = await Promise.all([
+      Post.countDocuments({ created_at: { $gte: today } }),
+      Comment.countDocuments({ created_at: { $gte: today } }),
+      User.countDocuments({ created_at: { $gte: today } }),
+      Post.countDocuments({ status: 'pending_review' }),
+    ]);
+
+    const c = snapshot.content as Record<string, unknown>;
+    const co = snapshot.community as Record<string, unknown>;
+    const m = snapshot.moderation as Record<string, unknown>;
+    const posts = c.posts as Record<string, number>;
+
+    res.json({ posts: { total: posts.total || 0, today: todayPosts, submitted: posts.submitted || 0, approved: posts.approved || 0, rejected: posts.rejected || 0 }, comments: { total: (c.comments as Record<string, number>)?.total || 0, today: todayComments }, users: { total: (co.users as Record<string, number>)?.total || 0, today: todayUsers }, pending, queue: { pending, reviewed_today: (m as Record<string, number>)?.reviews_today || 0 }, trust: { scholars: (co.trust as Record<string, number>)?.scholars || 0, trolls: (co.trust as Record<string, number>)?.trolls || 0 } });
+  } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+router.get('/stats/content', async (req: AdminAuthRequest, res: Response) => {
+  const s = await PlatformSnapshot.findOne().sort({ date: -1 }).lean();
+  res.json(s?.content || {});
+});
+
+router.get('/stats/community', async (req: AdminAuthRequest, res: Response) => {
+  const s = await PlatformSnapshot.findOne().sort({ date: -1 }).lean();
+  if (!s) return res.json({});
+  const co = s.community as Record<string, unknown>;
+  const u = co.users as Record<string, number>;
+  const active = u?.active_30d || 0; const total = u?.total || 1;
+  res.json({ ...s.community, lurkers: Math.max(0, total - active), lurker_pct: Math.round((Math.max(0, total - active) / total) * 100), active_pct: Math.round((active / total) * 100) });
+});
+
+router.get('/stats/moderation', async (req: AdminAuthRequest, res: Response) => {
+  const s = await PlatformSnapshot.findOne().sort({ date: -1 }).lean();
+  if (!s) return res.json({});
+  const oldest = await Post.findOne({ status: 'pending_review' }).sort({ created_at: 1 }).select('created_at').lean();
+  const ageHours = oldest ? Math.round((Date.now() - new Date(oldest.created_at).getTime()) / 3600000) : 0;
+  res.json({ ...s.moderation, pending_queue: { ...((s.moderation as Record<string, unknown>)?.pending_queue || {}), oldest_age_hours: ageHours } });
+});
+
+router.get('/stats/categories', async (req: AdminAuthRequest, res: Response) => {
+  const s = await PlatformSnapshot.findOne().sort({ date: -1 }).lean();
+  res.json(s?.categories || {});
+});
+
+router.get('/stats/trends', async (req: AdminAuthRequest, res: Response) => {
+  const snapshots = await PlatformSnapshot.find().sort({ date: -1 }).limit(14).lean();
+  const weeks = snapshots.map(s => { const c = s.content as Record<string, unknown>; const co = s.community as Record<string, unknown>; const m = s.moderation as Record<string, unknown>; const p = c.posts as Record<string, number>; const cu = co.users as Record<string, number>; return { date: s.date, posts_total: p?.total || 0, posts_submitted: p?.submitted || 0, comments_total: (c.comments as Record<string, number>)?.total || 0, users_total: cu?.total || 0, users_new: cu?.new_today || 0, reviews: (m as Record<string, number>)?.reviews_today || 0, pending: ((m as Record<string, unknown>)?.pending_queue as Record<string, number>)?.total || 0 }; });
+  res.json({ weeks });
+});
+
+router.get('/stats/quality', async (req: AdminAuthRequest, res: Response) => {
+  const s = await PlatformSnapshot.findOne().sort({ date: -1 }).lean();
+  if (!s) return res.json({});
+  const c = s.content as Record<string, unknown>;
+  const posts = c.posts as Record<string, number>;
+  const revisionRate = (posts?.submitted || 0) > 0 ? Math.round(((posts?.in_revision || 0) / (posts?.submitted || 1)) * 100) : 0;
+  res.json({ revision_rate: revisionRate, rejection_reasons: (s.moderation as Record<string, unknown>)?.rejection_reasons || {} });
+});
+
+router.get('/stats/traffic', async (req: AdminAuthRequest, res: Response) => {
+  const today = new Date().toISOString().substring(0, 10);
+  const todayStart = new Date(today + 'T00:00:00.000Z');
+  const [visitsToday, uniqueFps, topPaths, browsers] = await Promise.all([
+    PageVisit.countDocuments({ created_at: { $gte: todayStart } }),
+    PageVisit.distinct('fingerprint', { created_at: { $gte: todayStart }, fingerprint: { $ne: null } }),
+    PageVisit.aggregate([{ $group: { _id: '$path', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 10 }]),
+    PageVisit.aggregate([{ $match: { created_at: { $gte: todayStart } } }, { $group: { _id: '$user_agent', count: { $sum: 1 } } }, { $limit: 100 }]),
+  ]);
+  const browserMap: Record<string, number> = {}; const osMap: Record<string, number> = {};
+  const parseBrowser = (ua: string) => { if (!ua) return 'unknown'; if (/Edg/.test(ua)) return 'edge'; if (/Opera|OPR/.test(ua)) return 'opera'; if (/Chrome/.test(ua)) return 'chrome'; if (/Firefox/.test(ua)) return 'firefox'; if (/Safari/.test(ua)) return 'safari'; return 'other'; };
+  const parseOS = (ua: string) => { if (!ua) return 'unknown'; if (/Windows/.test(ua)) return 'windows'; if (/Mac/.test(ua)) return 'macos'; if (/Linux/.test(ua) && !/Android/.test(ua)) return 'linux'; if (/Android/.test(ua)) return 'android'; if (/iPhone|iPad|iPod/.test(ua)) return 'ios'; return 'other'; };
+  for (const b of browsers) { const br = parseBrowser(b._id); browserMap[br] = (browserMap[br] || 0) + b.count; const os = parseOS(b._id); osMap[os] = (osMap[os] || 0) + b.count; }
+  res.json({ visits_today: visitsToday, unique_today: uniqueFps.length, top_paths: topPaths.map((p: Record<string, unknown>) => ({ path: p._id, count: p.count })), browsers: browserMap, os: osMap });
+});
+
+router.get('/stats/submissions', async (req: AdminAuthRequest, res: Response) => {
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const [byHour, byType, avgItems] = await Promise.all([
+    Post.aggregate([{ $match: { created_at: { $gte: sevenDaysAgo } } }, { $group: { _id: { $hour: '$created_at' }, count: { $sum: 1 } } }, { $sort: { _id: 1 } }]),
+    Post.aggregate([{ $group: { _id: '$post_type', count: { $sum: 1 } } }, { $sort: { count: -1 } }]),
+    Post.aggregate([{ $lookup: { from: 'listitems', localField: '_id', foreignField: 'post_id', as: 'items' } }, { $group: { _id: null, avg: { $avg: { $size: '$items' } } } }]),
+  ]);
+  res.json({ by_hour: byHour.map((h: Record<string, unknown>) => ({ hour: h._id, count: h.count })), by_type: byType.map((t: Record<string, unknown>) => ({ type: t._id, count: t.count })), avg_items_per_post: Math.round((avgItems[0]?.avg as number) || 0) });
+});
+
+// Keep analytics beacon routes under /api/analytics (mounted in server.ts)
 
 export default router;
