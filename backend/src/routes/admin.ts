@@ -745,6 +745,50 @@ router.get('/stats/traffic/lurkers', async (req: AdminAuthRequest, res: Response
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
+// 9c. Content That Converts Lurkers
+router.get('/stats/traffic/conversion', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const convertingPaths = await UserEvent.aggregate([
+      { $match: { event: 'post_submitted' } },
+      { $sort: { created_at: 1 } },
+      { $group: { _id: '$user_id', fingerprint: { $first: '$fingerprint' }, first_post: { $first: '$created_at' } } },
+      { $lookup: { from: 'pagevisits', let: { fp: '$fingerprint', fpDate: '$first_post' },
+        pipeline: [
+          { $match: { $expr: { $and: [{ $eq: ['$fingerprint', '$$fp'] }, { $lt: ['$created_at', '$$fpDate'] }, { $gt: ['$created_at', { $subtract: ['$$fpDate', 86400000] }] }] } } },
+          { $sort: { created_at: -1 } }, { $limit: 1 },
+          { $project: { path: 1 } }
+        ], as: 'last_visit' } },
+      { $unwind: { path: '$last_visit', preserveNullAndEmptyArrays: false } },
+      { $group: { _id: '$last_visit.path', count: { $sum: 1 } } },
+      { $sort: { count: -1 } }, { $limit: 20 },
+    ]);
+    res.json({ converting_paths: convertingPaths.map((p: Record<string, unknown>) => ({ path: p._id, count: p.count })) });
+  } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+// 9d. Re-Engagement Triggers
+router.get('/stats/users/reengagement', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
+    const reengaged = await UserEvent.aggregate([
+      { $match: { event: 'post_submitted' } },
+      { $sort: { fingerprint: 1, created_at: 1 } },
+      { $group: { _id: '$fingerprint', posts: { $push: '$created_at' }, last_post: { $last: '$created_at' } } },
+      { $match: { $expr: { $and: [{ $gt: [{ $size: '$posts' }, 1] }, { $gt: ['$last_post', thirtyDaysAgo] }, { $lt: [{ $arrayElemAt: ['$posts', { $subtract: [{ $size: '$posts' }, 2] }] }, thirtyDaysAgo] }] } } },
+      { $lookup: { from: 'pagevisits', let: { fp: '$_id', fpDate: '$last_post' },
+        pipeline: [
+          { $match: { $expr: { $and: [{ $eq: ['$fingerprint', '$$fp'] }, { $lt: ['$created_at', '$$fpDate'] }, { $gt: ['$created_at', { $subtract: ['$$fpDate', 86400000] }] }] } } },
+          { $sort: { created_at: -1 } }, { $limit: 1 },
+          { $project: { path: 1 } }
+        ], as: 'last_visit' } },
+      { $unwind: { path: '$last_visit', preserveNullAndEmptyArrays: false } },
+      { $group: { _id: '$last_visit.path', count: { $sum: 1 } } },
+      { $sort: { count: -1 } }, { $limit: 20 },
+    ]);
+    res.json({ reengaged_users: reengaged.reduce((a: number, r: Record<string, number>) => a + r.count, 0), triggers: reengaged.map((p: Record<string, unknown>) => ({ path: p._id, count: p.count })) });
+  } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
 // 10. Submissions + type migration
 router.get('/stats/submissions', async (req: AdminAuthRequest, res: Response) => {
   try {
