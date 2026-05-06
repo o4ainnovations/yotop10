@@ -5,9 +5,19 @@ import { apiFetch } from '@/lib/api';
 
 interface PanelState { loading: boolean; data: unknown; error?: string; open: boolean }
 
+function n(v: unknown): string { if (v === null || v === undefined) return 'N/A'; return String(v); }
+function pct(v: unknown): string { if (v === null || v === undefined) return 'N/A'; return `${v}%`; }
+function hrs(v: unknown): string { if (v === null || v === undefined) return 'N/A'; return `${v}h`; }
+function arr(v: unknown): unknown[] { return Array.isArray(v) ? v : []; }
+
+const L = ({ children }: { children: React.ReactNode }) => <div style={{ marginBottom: '4px', fontSize: '13px', lineHeight: '1.6' }}>{children}</div>;
+const B = ({ children }: { children: React.ReactNode }) => <strong>{children}</strong>;
+const T = ({ children }: { children: React.ReactNode }) => <h3 style={{ margin: '0 0 8px 0', fontSize: '15px', borderBottom: '1px solid #eee', paddingBottom: '4px' }}>{children}</h3>;
+
 export default function StatisticsDashboard() {
   const [panels, setPanels] = useState<Record<string, PanelState>>({
     overview: { loading: false, data: null, open: true },
+    health: { loading: false, data: null, open: false },
     content: { loading: false, data: null, open: false },
     community: { loading: false, data: null, open: false },
     moderation: { loading: false, data: null, open: false },
@@ -16,244 +26,266 @@ export default function StatisticsDashboard() {
     quality: { loading: false, data: null, open: false },
     traffic: { loading: false, data: null, open: false },
     submissions: { loading: false, data: null, open: false },
+    lifecycle: { loading: false, data: null, open: false },
+    lurkers: { loading: false, data: null, open: false },
+    conversion: { loading: false, data: null, open: false },
+    reengagement: { loading: false, data: null, open: false },
+    alerts: { loading: false, data: null, open: false },
+    notifications: { loading: false, data: null, open: false },
   });
 
   const fetchPanel = useCallback(async (scope: string) => {
     setPanels(prev => ({ ...prev, [scope]: { ...prev[scope], loading: true } }));
     try {
-      const data = await apiFetch(`/admin/stats/${scope}`);
+      const url = scope === 'lifecycle' ? '/admin/stats/users/lifecycle'
+        : scope === 'lurkers' ? '/admin/stats/traffic/lurkers'
+        : scope === 'conversion' ? '/admin/stats/traffic/conversion'
+        : scope === 'reengagement' ? '/admin/stats/users/reengagement'
+        : `/admin/stats/${scope}`;
+      const data = await apiFetch(url);
       setPanels(prev => ({ ...prev, [scope]: { ...prev[scope], loading: false, data, open: true } }));
     } catch {
-      setPanels(prev => ({ ...prev, [scope]: { ...prev[scope], loading: false, error: 'Failed to load' } }));
+      setPanels(prev => ({ ...prev, [scope]: { ...prev[scope], loading: false, error: 'Failed' } }));
     }
   }, []);
 
   useEffect(() => { fetchPanel('overview'); }, [fetchPanel]);
 
-  const toggle = (scope: string) => {
-    setPanels(prev => {
-      const current = prev[scope];
-      if (!current.open && !current.data) fetchPanel(scope);
-      return { ...prev, [scope]: { ...current, open: !current.open } };
-    });
-  };
+  const toggle = (scope: string) => setPanels(prev => {
+    const c = prev[scope];
+    if (!c.open && !c.data) fetchPanel(scope);
+    return { ...prev, [scope]: { ...c, open: !c.open } };
+  });
 
-  const card = (label: string, value: unknown) => (
-    <div style={{ background: '#f9f9f9', padding: '16px', borderRadius: '8px', textAlign: 'center', flex: 1, minWidth: '100px' }}>
-      <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{String(value ?? '—')}</div>
-      <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>{label}</div>
-    </div>
-  );
-
-  const SummaryRow = ({ data, fields }: { data: Record<string, unknown>; fields: string[] }) => (
-    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-      {fields.map(f => <span key={f}>{card(f, (data as Record<string, unknown>)[f])}</span>)}
-    </div>
-  );
-
-  const Panel = ({ scope, title, summary, children }: { scope: string; title: string; summary?: string; children: React.ReactNode }) => {
+  const Panel = ({ scope, title, children }: { scope: string; title: string; children: React.ReactNode }) => {
     const p = panels[scope];
+    const overview = panels.overview.data as Record<string, unknown> | null;
+    let hint = '';
+    if (!p.open && overview && scope !== 'overview') {
+      const ov = overview as Record<string, unknown>;
+      if (scope === 'health') hint = ` ▸ ${n((ov.services as Record<string, unknown>)?.mongodb)}`;
+      else if (scope === 'content') hint = ` ▸ ${n((ov.posts as Record<string, number>)?.total)} posts`;
+      else if (scope === 'community') hint = ` ▸ ${n((ov.users as Record<string, number>)?.total)} users`;
+      else if (scope === 'moderation') hint = ` ▸ ${n(ov.pending)} pending`;
+    }
     return (
       <div style={{ border: '1px solid #ddd', borderRadius: '8px', marginBottom: '12px', overflow: 'hidden' }}>
         <button onClick={() => toggle(scope)} style={{ width: '100%', textAlign: 'left', padding: '12px 16px', background: '#f5f5f5', border: 'none', cursor: 'pointer', fontSize: '15px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between' }}>
-          <span>{title}{!p.open && summary ? ` ▸ ${summary}` : ''}</span>
-          <span>{p.open ? '▾' : '▸'}</span>
+          <span>{title}{hint}</span><span>{p.open ? '▾' : '▸'}</span>
         </button>
-        {p.open && (
-          <div style={{ padding: '16px' }}>
-            {p.loading ? <p>Loading...</p> : p.error ? <p style={{ color: 'red' }}>{p.error}</p> : children}
-          </div>
-        )}
+        {p.open && <div style={{ padding: '16px' }}>{p.loading ? <p>Loading...</p> : p.error ? <p style={{ color: 'red' }}>{p.error}</p> : children}</div>}
       </div>
     );
   };
 
+  const card = (label: string, value: unknown) => (
+    <div style={{ background: '#f9f9f9', padding: '14px', borderRadius: '8px', textAlign: 'center', flex: 1, minWidth: '90px' }}>
+      <div style={{ fontSize: '22px', fontWeight: 'bold' }}>{String(value ?? '—')}</div>
+      <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>{label}</div>
+    </div>
+  );
+
   const overview = panels.overview.data as Record<string, unknown> | null;
+  const op = overview?.posts as Record<string, number> | undefined;
+  const oc = overview?.comments as Record<string, number> | undefined;
+  const ou = overview?.users as Record<string, number> | undefined;
+  const ot = overview?.trust as Record<string, number> | undefined;
 
   return (<>
     <div style={{ maxWidth: '900px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h2>📊 Platform Statistics</h2>
-        <button onClick={() => window.open('/api/admin/stats/export?scope=overview', '_blank')}
-          style={{ fontSize: '12px', padding: '6px 12px' }}>Export CSV</button>
-      </div>
+      <h2>📊 Platform Statistics</h2>
 
       <Panel scope="overview" title="📈 Overview">
-        {overview && (
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            {card('Posts', (overview.posts as Record<string, number>)?.total)}
-            {card('Comments', (overview.comments as Record<string, number>)?.total)}
-            {card('Users', (overview.users as Record<string, number>)?.total)}
-            {card('Pending', overview.pending)}
-            {card('Approved', (overview.posts as Record<string, number>)?.approved)}
-            {card('Rejected', (overview.posts as Record<string, number>)?.rejected)}
+        {overview && <>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '20px' }}>
+            {card('Posts', op?.total)}{card('Comments', oc?.total)}{card('Users', ou?.total)}{card('Pending', overview.pending)}{card('Approved', op?.approved)}{card('Rejected', op?.rejected)}
           </div>
-        )}
+          <L>📝 <B>{n(op?.total)}</B> total posts. <B>{n(op?.submitted)}</B> submitted, <B>{n(op?.approved)}</B> approved, <B>{n(op?.rejected)}</B> rejected. <B>{n(overview.pending)}</B> pending review.</L>
+          <L>💬 <B>{n(oc?.total)}</B> total comments, <B>{n(oc?.today)}</B> today.</L>
+          <L>👥 <B>{n(ou?.total)}</B> anonymous users, <B>{n(ou?.today)}</B> new today. <B>{n(ot?.scholars)}</B> Scholars · <B>{n(ot?.neutrals)}</B> Neutrals · <B>{n(ot?.trolls)}</B> Trolls.</L>
+          {((overview.trolls_active as number) || 0) > 0 && <L>⚠️ <B>{n(overview.trolls_active)}</B> trolls active in last 24 hours.</L>}
+          {((overview as Record<string, unknown>).orphans_72h_no_guidance as number) > 0 && <L>🟠 <B>{n((overview as Record<string, unknown>).orphans_72h_no_guidance)}</B> posts stuck pending over 72h without admin guidance.</L>}
+          <L>⏰ Peak submission hour: <B>{n((overview as Record<string, unknown>).peak_submission_hour)}:00</B> ({n((overview as Record<string, unknown>).peak_submission_hour_count)} submissions).</L>
+        </>}
       </Panel>
 
-      <Panel scope="content" title="📂 Content" summary={overview ? `${(overview.posts as Record<string, number>)?.total || 0} posts, ${(overview.comments as Record<string, number>)?.total || 0} comments` : ''}>
-        {panels.content.data && (
-          <SummaryRow data={panels.content.data as Record<string, unknown>}
-            fields={['posts.total', 'posts.submitted', 'posts.approved', 'posts.rejected', 'posts.pending', 'posts.in_revision', 'comments.total', 'comments.this_week', 'comments.today']} />
-        )}
+      <Panel scope="health" title="🫀 Platform Health">
+        {panels.health.data && (() => { const d = panels.health.data as Record<string, unknown>; const s = d.services as Record<string, unknown>; const deps = d.dependency_map as Record<string, { depends_on: string[]; degradation: string }>;
+          return <>
+            <L>⏱️ Uptime: <B>{n(d.uptime_seconds)}</B> seconds. Memory: <B>{n((d.memory as Record<string, number>)?.heap_mb)}</B> MB heap / <B>{n((d.memory as Record<string, number>)?.rss_mb)}</B> MB RSS.</L>
+            <L>🗄️ MongoDB: <B>{n(s?.mongodb)}</B> (latency {n(s?.mongodb_latency_ms)}ms). Redis: <B>{n(s?.redis)}</B> ({s?.redis_memory_pct !== null && s?.redis_memory_pct !== undefined ? `${n(s?.redis_memory_pct)}% used` : 'memory N/A'}). Elasticsearch: <B>{n(s?.elasticsearch)}</B>.</L>
+            <L>🔄 Crons: {(d.crons as Record<string, unknown>) && Object.entries(d.crons as Record<string, unknown>).map(([k,v]) => { const hb = v as Record<string, string>; return `${k}: ${hb.last_success ? '✅' : hb.last_error ? '❌' : '⏳'}`; }).join(' · ')}</L>
+            {((d.affected_features_count as number) || 0) > 0 && <L>🔴 <B>{n(d.affected_features_count)}</B> features affected.</L>}
+          </>;
+        })()}
       </Panel>
 
-      <Panel scope="community" title="👥 Community" summary={overview ? `${(overview.users as Record<string, number>)?.total || 0} users, ${(overview.trust as Record<string, number>)?.scholars || 0} scholars` : ''}>
-        {panels.community.data && (
-          <SummaryRow data={panels.community.data as Record<string, unknown>}
-            fields={['users.total', 'users.new_today', 'users.new_this_week', 'users.active_30d', 'users.active_7d', 'trust.scholars', 'trust.neutrals', 'trust.trolls', 'trolls_active_24h', 'lurkers', 'active_pct']} />
-        )}
+      <Panel scope="content" title="📂 Content Pipeline + Age Distribution">
+        {panels.content.data && (() => { const d = panels.content.data as Record<string, unknown>; const p = d.posts as Record<string, number>; const ag = d.approval_gap as Record<string, number>; const age = d.age_distribution as Record<string, number>;
+          return <>
+            <T>📝 Posts</T>
+            <L>Total: <B>{n(p?.total)}</B>. Submitted: <B>{n(p?.submitted)}</B>. Approved: <B>{n(p?.approved)}</B>. Rejected: <B>{n(p?.rejected)}</B>. Pending: <B>{n(p?.pending)}</B>. In revision: <B>{n(p?.in_revision)}</B>.</L>
+            <L>Approval gap: avg <B>{n(ag?.avg_hours)}h</B>, max <B>{n(ag?.max_hours)}h</B>, min <B>{n(ag?.min_hours)}h</B>.</L>
+            <L>Comments: <B>{n((d.comments as Record<string, number>)?.total)}</B> total, <B>{n((d.comments as Record<string, number>)?.today)}</B> today.</L>
+            <T>📅 Age Distribution</T>
+            {age && Object.entries(age).map(([k,v]) => <L key={k}>{k}: <B>{v}</B> posts</L>)}
+          </>;
+        })()}
       </Panel>
 
-      <Panel scope="moderation" title="⏳ Moderation" summary={overview ? `${overview.queue || 0} pending` : ''}>
-        {panels.moderation.data && (
-          <SummaryRow data={panels.moderation.data as Record<string, unknown>}
-            fields={['reviews_today', 'approved_today', 'rejected_today', 'retry_today', 'pending_queue.total', 'pending_queue.oldest_age_hours']} />
-        )}
+      <Panel scope="community" title="👥 Community + Fan-Out">
+        {panels.community.data && (() => { const d = panels.community.data as Record<string, unknown>; const u = d.users as Record<string, number>; const tr = d.trust as Record<string, number>; const ti = d.user_tiers as Record<string, number>;
+          return <>
+            <L>Total users: <B>{n(u?.total)}</B>. New today: <B>{n(u?.new_today)}</B>. New this week: <B>{n(u?.new_this_week)}</B>.</L>
+            <L>Active (30d): <B>{n(u?.active_30d)}</B> ({n(d.active_pct)}%). Lurkers: <B>{n(d.lurkers)}</B> ({n(d.lurker_pct)}%).</L>
+            <L>Scholars: <B>{n(tr?.scholars)}</B>. Neutrals: <B>{n(tr?.neutrals)}</B>. Trolls: <B>{n(tr?.trolls)}</B>. Trolls active 24h: <B>{n(d.trolls_active_24h)}</B>.</L>
+            <L>Churn: <B>{n(d.churn_pct)}%</B>. Maturity: <B>{n(d.maturity_pct)}%</B>. New user conversion (24h): <B>{n(d.new_user_conversion_24h_pct)}%</B>.</L>
+            <L>Fan-out: <B>{n(d.fan_out)}</B> posts/active user. Pareto: <B>{n(d.pareto_pct)}%</B> posts from top 5 users.</L>
+            {ti && <L>Tiers: <B>{n(ti?.casual)}</B> casual (1-2 posts) · <B>{n(ti?.regular)}</B> regular (3-9) · <B>{n(ti?.power)}</B> power (10+).</L>}
+            <L>Retained creators: <B>{n(d.retained_creators)}</B>. Deep lurkers (10+ visits, 0 posts): <B>{n(d.lurker_depth_10plus)}</B>.</L>
+          </>;
+        })()}
       </Panel>
 
-      <Panel scope="categories" title="📁 Categories">
-        {panels.categories.data && (
-          <div>
-            <p>Utilization: {(panels.categories.data as Record<string, number>).utilization_pct}% | Empty children: {(panels.categories.data as Record<string, number>).empty_children}</p>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead><tr style={{ borderBottom: '1px solid #ccc' }}><th style={{ textAlign: 'left', padding: '4px' }}>Category</th><th style={{ textAlign: 'left', padding: '4px' }}>Posts</th></tr></thead>
-              <tbody>
-                {((panels.categories.data as Record<string, unknown>).top_by_posts as Array<{ slug: string; post_count: number }>)?.map(c => (
-                  <tr key={c.slug} style={{ borderBottom: '1px solid #eee' }}><td style={{ padding: '4px' }}>{c.slug}</td><td style={{ padding: '4px' }}>{c.post_count}</td></tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+      <Panel scope="moderation" title="⏳ Moderation + Velocity">
+        {panels.moderation.data && (() => { const d = panels.moderation.data as Record<string, unknown>; const pq = d.pending_queue as Record<string, number>; const qv = d.queue_velocity as Record<string, number>; const wv = d.weekend_vs_weekday as Record<string, number>;
+          return <>
+            <L>Pending queue: <B>{n(pq?.total)}</B> posts. Oldest: <B>{n(pq?.oldest_age_hours)}h</B>.</L>
+            <L>Reviews today: <B>{n(d.reviews_today)}</B>. Approved: <B>{n(d.approved_today)}</B>. Rejected: <B>{n(d.rejected_today)}</B>. Retry: <B>{n(d.retry_today)}</B>.</L>
+            <L>Velocity: avg <B>{n(qv?.avg_reviews_per_day)}</B> reviews/day. Days to clear queue: <B>{n(qv?.days_to_clear)}</B>.</L>
+            <L>Peak moderation hour: <B>{d.peak_moderation_hour !== null && d.peak_moderation_hour !== undefined ? `${d.peak_moderation_hour}:00` : 'N/A'}</B>.</L>
+            {wv && <L>Weekend: <B>{n(wv?.weekend)}</B> reviews ({n(wv?.weekend_pct)}%). Weekday: <B>{n(wv?.weekday)}</B>.</L>}
+            <L>Decision flips (approved→rejected): <B>{n(d.decision_flips)}</B>.</L>
+          </>;
+        })()}
       </Panel>
 
-      <Panel scope="trends" title="📉 Trends (14-day)">
-        {panels.trends.data && (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-            <thead><tr style={{ borderBottom: '1px solid #ccc' }}>
-              <th style={{ padding: '4px' }}>Date</th><th style={{ padding: '4px' }}>Posts</th><th style={{ padding: '4px' }}>Submits</th><th style={{ padding: '4px' }}>Comments</th><th style={{ padding: '4px' }}>Users</th><th style={{ padding: '4px' }}>New</th><th style={{ padding: '4px' }}>Reviews</th><th style={{ padding: '4px' }}>Pending</th>
-            </tr></thead>
-            <tbody>
-              {((panels.trends.data as Record<string, unknown>).weeks as Array<Record<string, number>>)?.map(w => (
-                <tr key={w.date} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={{ padding: '4px' }}>{w.date}</td>
-                  <td style={{ padding: '4px' }}>{w.posts_total}</td><td style={{ padding: '4px' }}>{w.posts_submitted}</td>
-                  <td style={{ padding: '4px' }}>{w.comments_total}</td><td style={{ padding: '4px' }}>{w.users_total}</td>
-                  <td style={{ padding: '4px' }}>{w.users_new}</td><td style={{ padding: '4px' }}>{w.reviews}</td>
-                  <td style={{ padding: '4px' }}>{w.pending}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+      <Panel scope="categories" title="📁 Category Heatmap">
+        {panels.categories.data && (() => { const d = panels.categories.data as Record<string, unknown>; const top = arr(d.top_by_posts) as Array<{ slug: string; post_count: number }>; const eng = arr(d.per_category_engagement) as Array<{ slug: string; post_count: number; avg_comments: number; avg_views: number }>;
+          return <>
+            <L>Utilization: <B>{n(d.utilization_pct)}%</B>. Empty children: <B>{n(d.empty_children)}</B>.</L>
+            <T>Top Categories</T>
+            {top.slice(0, 10).map(c => <L key={c.slug}><B>{c.slug}</B>: {c.post_count} posts</L>)}
+            <T>Engagement Per Category</T>
+            {eng.slice(0, 10).map(c => <L key={c.slug}><B>{c.slug}</B>: {c.post_count} posts, avg {Math.round(c.avg_comments)} comments, avg {Math.round(c.avg_views)} views</L>)}
+          </>;
+        })()}
       </Panel>
 
-      <Panel scope="quality" title="✅ Quality">
-        {panels.quality.data && (
-          <SummaryRow data={panels.quality.data as Record<string, unknown>} fields={['revision_rate']} />
-        )}
+      <Panel scope="trends" title="📉 Trends with Deltas">
+        {panels.trends.data && (() => { const d = panels.trends.data as Record<string, unknown>; const weeks = arr(d.weeks) as Array<Record<string, unknown>>;
+          return <>
+            {weeks.map(w => { const del = w.deltas as Record<string, { delta_pct: number; direction: string; color: string }> | undefined;
+              return <L key={w.date as string}>📅 <B>{w.date as string}</B>: {n(w.posts_total)} posts, {n(w.comments_total)} comments, {n(w.users_new)} new users, {n(w.pending)} pending
+                {del && ` ↑${del.posts_total?.delta_pct || 0}%`}</L>;
+            })}
+          </>;
+        })()}
       </Panel>
 
-      <Panel scope="traffic" title="🌐 Traffic">
-        {panels.traffic.data && (
-          <div>
-            <SummaryRow data={panels.traffic.data as Record<string, unknown>} fields={['visits_today', 'unique_today']} />
-            <h4 style={{ marginTop: '12px' }}>Browsers</h4>
-            <div>{Object.entries(((panels.traffic.data as Record<string, unknown>).browsers as Record<string, number>) || {}).map(([k, v]) => `${k}: ${v}`).join(' | ')}</div>
-            <h4 style={{ marginTop: '8px' }}>OS</h4>
-            <div>{Object.entries(((panels.traffic.data as Record<string, unknown>).os as Record<string, number>) || {}).map(([k, v]) => `${k}: ${v}`).join(' | ')}</div>
-            <h4 style={{ marginTop: '8px' }}>Top Paths</h4>
-            {((panels.traffic.data as Record<string, unknown>).top_paths as Array<{ path: string; count: number }>)?.map(p => (
-              <div key={p.path}>{p.path}: {p.count}</div>
-            ))}
-          </div>
-        )}
+      <Panel scope="quality" title="✅ Quality + Correlations">
+        {panels.quality.data && (() => { const d = panels.quality.data as Record<string, unknown>; const corr = arr(d.intro_length_correlation) as Array<{ bucket: string; count: number; avg_comments: number; avg_fire: number }>;
+          return <>
+            <L>Revision rate: <B>{n(d.revision_rate)}%</B> of submissions requested revision.</L>
+            <T>Intro Length → Comments/Fire</T>
+            {corr.map(c => <L key={c.bucket}><B>{c.bucket}</B>: {c.count} posts, avg {c.avg_comments} comments, avg {c.avg_fire} fire</L>)}
+          </>;
+        })()}
       </Panel>
 
-      <Panel scope="submissions" title="✍️ Submissions (7d)">
-        {panels.submissions.data && (
-          <div>
-            <SummaryRow data={panels.submissions.data as Record<string, unknown>} fields={['avg_items_per_post']} />
-            <h4 style={{ marginTop: '12px' }}>By Post Type</h4>
-            {((panels.submissions.data as Record<string, unknown>).by_type as Array<{ type: string; count: number }>)?.map(t => (
-              <div key={t.type}>{t.type}: {t.count}</div>
-            ))}
-          </div>
-        )}
+      <Panel scope="traffic" title="🌐 Traffic Analytics">
+        {panels.traffic.data && (() => { const d = panels.traffic.data as Record<string, unknown>; const refs = arr(d.top_referrers) as Array<{ domain: string; count: number }>; const peaks = arr(d.peak_hours) as Array<{ hour: number; count: number }>; const countries = arr(d.countries) as Array<{ code: string; count: number; population: number; visits_per_million: number }>; const engaged = arr(d.top_engaged) as Array<{ slug: string; title: string; ratio: number }>; const items = arr(d.top_engaged_items) as Array<{ title: string; rank: number; comment_count: number }>; const newUser = arr(d.new_users_by_referrer) as Array<{ source: string; count: number }>;
+          return <>
+            <L>Visits today: <B>{n(d.visits_today)}</B>. Unique: <B>{n(d.unique_today)}</B>.</L>
+            <L>Browsers: {d.browsers ? Object.entries(d.browsers as Record<string, number>).map(([k,v]) => `${k}: ${v}`).join(' · ') : 'N/A'}</L>
+            <L>OS: {d.os ? Object.entries(d.os as Record<string, number>).map(([k,v]) => `${k}: ${v}`).join(' · ') : 'N/A'}</L>
+            {refs.length > 0 && <><T>Top Referrers</T>{refs.map(r => <L key={r.domain}><B>{r.domain}</B>: {r.count} visits</L>)}</>}
+            {countries.length > 0 && <><T>Countries</T>{countries.map(c => <L key={c.code}><B>{c.code}</B>: {c.count} visits, pop {c.population ? (c.population / 1000000).toFixed(0) + 'M' : 'N/A'}, {c.visits_per_million !== null ? c.visits_per_million + '/M' : 'N/A'}</L>)}</>}
+            {peaks.length > 0 && <><T>Peak Hours (7d)</T>{peaks.map(p => <L key={p.hour}><B>{p.hour}:00</B>: {p.count} visits</L>)}</>}
+            {engaged.length > 0 && <><T>Top Engaged Posts</T>{engaged.map(e => <L key={e.slug}><B>{e.title}</B>: {e.ratio}% engagement rate</L>)}</>}
+            {items.length > 0 && <><T>Top Engaged Items</T>{items.map(i => <L key={`${i.rank}-${i.title}`}><B>#{i.rank} {i.title}</B>: {i.comment_count} item-anchored comments</L>)}</>}
+            {newUser.length > 0 && <><T>New Users by Source</T>{newUser.map(r => <L key={r.source}><B>{r.source}</B>: {r.count} new users</L>)}</>}
+          </>;
+        })()}
       </Panel>
+
+      <Panel scope="submissions" title="✍️ Submission Patterns">
+        {panels.submissions.data && (() => { const d = panels.submissions.data as Record<string, unknown>; const hr = arr(d.by_hour) as Array<{ hour: number; count: number }>; const tp = arr(d.by_type) as Array<{ type: string; count: number }>; const tm = d.type_migration as Record<string, unknown>;
+          return <>
+            <L>Avg items per post: <B>{n(d.avg_items_per_post)}</B>.</L>
+            {tp.length > 0 && <><T>By Post Type</T>{tp.map(t => <L key={t.type}><B>{t.type}</B>: {t.count} posts</L>)}</>}
+            {hr.length > 0 && <><T>By Hour (7d)</T>{hr.map(h => <L key={h.hour}><B>{h.hour}:00</B>: {h.count} submissions</L>)}</>}
+            {tm && <><T>Type Migration</T>
+              <L>Multi-type users: <B>{n(tm.multi_type_users)}</B>. Switched types: <B>{n(tm.switched_types)}</B>.</L>
+              {(arr(tm.paths) as Array<{ from: string; to: string; count: number }>).map(p => <L key={`${p.from}-${p.to}`}><B>{p.from}</B> → <B>{p.to}</B>: {p.count} users</L>)}
+            </>}
+          </>;
+        })()}
+      </Panel>
+
+      <Panel scope="lifecycle" title="🔄 User Lifecycle">
+        {panels.lifecycle.data && (() => { const d = panels.lifecycle.data as Record<string, unknown>; const lc = arr(d.lifecycle) as Array<{ bucket: string; count: number }>; const drop = arr(d.drop_off_distribution) as Array<{ posts_made: number; users: number }>;
+          return <>
+            <L>Total posters: <B>{n(d.total_posters)}</B>. Avg lifetime posts: <B>{n(d.avg_lifetime_posts)}</B>.</L>
+            <L>Activation gap (creation → first post): <B>{n(d.activation_gap_hours)}h</B>. Converted within 24h: <B>{n(d.converted_within_24h)}</B>.</L>
+            <L>One-and-done rate: <B>{n(d.one_and_done_pct)}%</B> (posted once, never returned).</L>
+            {lc.length > 0 && <><T>Time to Second Post</T>{lc.map(b => <L key={b.bucket}><B>{b.bucket}</B>: {b.count} users</L>)}</>}
+            {drop.length > 0 && <><T>Drop-off Distribution</T>{drop.map(b => <L key={b.posts_made}>{b.posts_made} post(s): {b.users} users</L>)}</>}
+          </>;
+        })()}
+      </Panel>
+
+      <Panel scope="lurkers" title="👻 Lurker Analysis">
+        {panels.lurkers.data && (() => { const d = panels.lurkers.data as Record<string, unknown>;
+          return <>
+            <L>Total lurkers: <B>{n(d.total_lurkers)}</B>.</L>
+            <L>Ghosts (1 visit, never returned): <B>{n(d.ghosts)}</B> ({n(d.ghosts_pct)}%).</L>
+            <L>Repeat lurkers (2-10 visits): <B>{n(d.repeat_lurkers)}</B> ({n(d.repeat_pct)}%).</L>
+            <L>Deep lurkers (10+ visits, 0 posts): <B>{n(d.deep_lurkers)}</B> ({n(d.deep_pct)}%).</L>
+          </>;
+        })()}
+      </Panel>
+
+      <Panel scope="conversion" title="🔄 Lurker → Poster Conversion">
+        {panels.conversion.data && (() => { const d = panels.conversion.data as Record<string, unknown>; const paths = arr(d.converting_paths) as Array<{ path: string; count: number }>;
+          return <>
+            {paths.length === 0 ? <L>No conversion data yet — needs page visit traffic and user events.</L>
+              : paths.map(p => <L key={p.path}><B>{p.path}</B> converted {p.count} lurker(s) into posters</L>)}
+          </>;
+        })()}
+      </Panel>
+
+      <Panel scope="reengagement" title="🔁 Re-Engagement Triggers">
+        {panels.reengagement.data && (() => { const d = panels.reengagement.data as Record<string, unknown>; const triggers = arr(d.triggers) as Array<{ path: string; count: number }>;
+          return <>
+            <L>Re-engaged users (30+ day gap): <B>{n(d.reengaged_users)}</B>.</L>
+            {triggers.map(t => <L key={t.path}><B>{t.path}</B> triggered {t.count} re-engagement(s)</L>)}
+          </>;
+        })()}
+      </Panel>
+
+      <Panel scope="alerts" title="🚨 Alerts">
+        {panels.alerts.data && (() => { const d = panels.alerts.data as Record<string, unknown>; const th = arr(d.thresholds) as Array<{ metric: string; threshold: number; severity: string; enabled: boolean }>; const active = arr(d.active) as Array<{ metric: string; severity: string; value: number; threshold: number }>; const hist = arr(d.history) as Array<{ metric: string; severity: string; triggered_at: string; resolved_at: string | null }>;
+          return <>
+            {active.length > 0 && <><L>🔴 <B>{active.length}</B> active alerts:</L>
+              {active.map(a => <L key={a.metric}>⚠️ <B>{a.metric}</B>: {a.value} (threshold {a.threshold})</L>)}</>}
+            {active.length === 0 && <L>✅ No active alerts.</L>}
+            <T>Thresholds</T>
+            {th.map(t => <L key={t.metric}><B>{t.metric}</B>: {t.operator} {t.threshold} [{t.severity}] {t.enabled ? '✅' : '⏸️'}</L>)}
+            {hist.length > 0 && <><T>Recent History</T>{hist.slice(0, 5).map(h => <L key={`${h.metric}-${h.triggered_at}`}><B>{h.metric}</B>: triggered {new Date(h.triggered_at).toLocaleString()} {h.resolved_at ? '✅ resolved' : '🔴 unresolved'}</L>)}</>}
+          </>;
+        })()}
+      </Panel>
+
+      <Panel scope="notifications" title="🔔 Notification Analytics">
+        {panels.notifications.data && (() => { const d = panels.notifications.data as Record<string, unknown>; const bt = arr(d.by_type) as Array<{ type: string; sent: number; delivered: number; clicked: number }>;
+          return <>
+            <L>Total sent: <B>{n(d.total_sent)}</B>. Delivered: <B>{n(d.total_delivered)}</B> ({n(d.delivery_rate)}%). Clicked: <B>{n(d.total_clicked)}</B> ({n(d.click_rate)}%).</L>
+            {bt.map(b => <L key={b.type}><B>{b.type}</B>: {b.sent} sent, {b.delivered} delivered, {b.clicked} clicked</L>)}
+          </>;
+        })()}
+      </Panel>
+
     </div>
-
-    <div style={{ marginTop: '40px', borderTop: '2px solid #ccc', paddingTop: '20px' }}>
-      <h2>🔬 Deep Analytics (All Metrics)</h2>
-      <DeepAnalytics />
-    </div>
-    </>);
-  }
-
-function DeepAnalytics() {
-  const endpoints = [
-    { key: 'health', label: '🫀 Platform Health' },
-    { key: 'content', label: '📂 Content Pipeline + Age Distribution' },
-    { key: 'community', label: '👥 Community + Fan-Out + Lurkers' },
-    { key: 'moderation', label: '⏳ Moderation Velocity + Queue Projection' },
-    { key: 'categories', label: '📁 Category Heatmap' },
-    { key: 'trends', label: '📉 Trends with Deltas (Week-over-Week)' },
-    { key: 'quality', label: '✅ Quality + Intro-Length Correlation' },
-    { key: 'traffic', label: '🌐 Traffic (Referrers, Peak Hours, Countries, Engagement)' },
-    { key: 'submissions', label: '✍️ Submissions (By Hour, By Type)' },
-    { key: 'lifecycle', label: '🔄 User Lifecycle (First → Second Post)' },
-    { key: 'alerts', label: '🚨 Alerts (Thresholds + History + Active)' },
-    { key: 'compare', label: '⚖️ Comparison Mode', params: '?date1=2026-05-06&date2=2026-05-05' },
-    { key: 'notifications', label: '🔔 Notification Analytics (Delivery + Click Rate)' },
-    { key: 'correlations', label: '📊 Quality Correlations (standalone)' },
-  ];
-
-  const [data, setData] = useState<Record<string, unknown>>({});
-  const [loading, setLoading] = useState<Record<string, boolean>>({});
-  const [open, setOpen] = useState<Record<string, boolean>>({});
-
-  useEffect(() => {
-    endpoints.forEach(async ({ key, params }) => {
-      setLoading(prev => ({ ...prev, [key]: true }));
-      try {
-        const url = key === 'lifecycle' ? '/admin/stats/users/lifecycle'
-          : key === 'correlations' ? '/admin/stats/quality'
-          : key === 'compare' ? `/admin/stats/compare${params || ''}`
-          : `/admin/stats/${key}`;
-        const result = await apiFetch(url);
-        setData(prev => ({ ...prev, [key]: result }));
-      } catch { setData(prev => ({ ...prev, [key]: { error: 'Failed' } })); }
-      finally { setLoading(prev => ({ ...prev, [key]: false })); }
-    });
-  }, []);
-
-  const RawJSON = ({ d }: { d: unknown }) => (
-    <pre style={{
-      backgroundColor: '#1a1a2e', color: '#e0e0e0', padding: '12px', borderRadius: '6px',
-      fontSize: '11px', lineHeight: '1.5', overflow: 'auto', maxHeight: '400px',
-      fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-all',
-    }}>
-      {JSON.stringify(d, null, 2)}
-    </pre>
-  );
-
-  return (
-    <div>
-      {endpoints.map(({ key, label }) => (
-        <div key={key} style={{ border: '1px solid #ddd', borderRadius: '8px', marginBottom: '8px', overflow: 'hidden' }}>
-          <button onClick={() => setOpen(prev => ({ ...prev, [key]: !prev[key] }))}
-            style={{ width: '100%', textAlign: 'left', padding: '10px 14px', background: '#f5f5f5', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between' }}>
-            <span>{label} {loading[key] ? '(loading...)' : data[key] ? '✅' : '⏳'}</span>
-            <span>{open[key] ? '▾' : '▸'}</span>
-          </button>
-          {open[key] && (
-            <div style={{ padding: '8px' }}>
-              <RawJSON d={data[key] || { loading: true }} />
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
+  </>);
 }
