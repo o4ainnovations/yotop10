@@ -96,7 +96,7 @@ export default function AllPostsPage() {
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
         <thead><tr style={{ borderBottom: '2px solid #ccc', textAlign: 'left' }}>
           <th style={{ padding: '6px', width: '30px' }}><input type="checkbox" checked={selected.size === posts.length && posts.length > 0} onChange={selectAll} /></th>
-          <th style={{ padding: '6px' }}>Title</th><th style={{ padding: '6px' }}>Author</th><th style={{ padding: '6px' }}>Category</th><th style={{ padding: '6px' }}>Type</th><th style={{ padding: '6px' }}>Status</th><th style={{ padding: '6px' }}>🔥</th><th style={{ padding: '6px' }}>💬</th><th style={{ padding: '6px' }}>👁</th><th style={{ padding: '6px' }}>Published</th><th style={{ padding: '6px' }}>Actions</th>
+          <th style={{ padding: '6px' }}>Title</th><th style={{ padding: '6px' }}>Author</th><th style={{ padding: '6px' }}>Category</th><th style={{ padding: '6px' }}>Type</th><th style={{ padding: '6px' }}>Status</th><th style={{ padding: '6px' }}>💬</th><th style={{ padding: '6px' }}>👁</th><th style={{ padding: '6px' }}>Published</th><th style={{ padding: '6px' }}>Actions</th>
         </tr></thead>
         <tbody>
           {posts.map(p => (<tr key={p._id} style={{ borderBottom: '1px solid #eee', opacity: p.deleted ? 0.5 : 1 }}>
@@ -106,7 +106,6 @@ export default function AllPostsPage() {
             <td style={{ padding: '4px', fontSize: '11px', color: '#666' }}>{p.category_slug}</td>
             <td style={{ padding: '4px', fontSize: '11px' }}>{p.post_type}</td>
             <td style={{ padding: '4px' }}>{statusBadge(p.status)}</td>
-            <td style={{ padding: '4px' }}>{p.fire_count || 0}</td>
             <td style={{ padding: '4px' }}>{p.comment_count}</td>
             <td style={{ padding: '4px' }}>{p.view_count}</td>
             <td style={{ padding: '4px', fontSize: '11px' }}>{p.published_at ? new Date(p.published_at).toLocaleDateString() : '—'}</td>
