@@ -19,8 +19,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
+        <header style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 20px', borderBottom: '1px solid #eee', background: '#fafafa', position: 'sticky', top: 0, zIndex: 50 }}>
+          <NotificationBell />
+        </header>
         <AuthInitializer />
-        <NotificationBell />
         {children}
         <Eruda />
         <ToastContainer />

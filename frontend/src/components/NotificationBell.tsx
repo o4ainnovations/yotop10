@@ -69,12 +69,13 @@ export default function NotificationBell() {
       <button
         onClick={handleBellClick}
         style={{
-          background: 'none',
-          border: 'none',
-          fontSize: '20px',
+          background: unreadCount > 0 ? '#e3f2fd' : 'transparent',
+          border: '1px solid #ddd',
+          fontSize: '18px',
           cursor: 'pointer',
           position: 'relative',
-          padding: '4px 8px',
+          padding: '6px 12px',
+          borderRadius: '6px',
         }}
         aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
       >
@@ -110,10 +111,9 @@ export default function NotificationBell() {
           />
           <div
             style={{
-              position: 'absolute',
-              top: '100%',
-              right: 0,
-              marginTop: '8px',
+              position: 'fixed',
+              top: '52px',
+              right: '20px',
               width: '360px',
               maxHeight: '400px',
               overflowY: 'auto',
