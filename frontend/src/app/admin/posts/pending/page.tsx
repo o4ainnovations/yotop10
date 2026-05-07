@@ -1,14 +1,17 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 
 interface PendingPost { _id: string; title: string; author_username: string; post_type: string; created_at: string; revision_count: number; category_slug: string; intro?: string }
+interface CategoryOption { slug: string; name: string; children?: Array<{ slug: string; name: string }> }
 
 export default function PendingPostsPage() {
   const router = useRouter();
+  const postsRef = useRef<PendingPost[]>([]);
   const [posts, setPosts] = useState<PendingPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -22,6 +25,9 @@ export default function PendingPostsPage() {
   const [retryGuidance, setRetryGuidance] = useState('');
   const [showRetryModal, setShowRetryModal] = useState(false);
   const [previewCache, setPreviewCache] = useState<Record<string, { intro: string; items: Array<{ rank: number; title: string; justification: string }> }>>({});
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   const fetchPosts = useCallback(async (p: number) => {
     setLoading(true);
@@ -30,12 +36,29 @@ export default function PendingPostsPage() {
       if (filters.category_slug) params.set('category_slug', filters.category_slug);
       if (filters.post_type) params.set('post_type', filters.post_type);
       if (filters.author) params.set('author', filters.author);
+      if (dateFrom) params.set('date_from', dateFrom);
+      if (dateTo) params.set('date_to', dateTo);
       const data = await apiFetch<{ posts: PendingPost[]; pagination: { total: number; pages: number } }>(`/admin/posts/pending?${params}`);
-      setPosts(data.posts); setPagination(data.pagination);
+      setPosts(data.posts); postsRef.current = data.posts; setPagination(data.pagination);
     } catch {} finally { setLoading(false); }
-  }, [filters]);
+  }, [filters, dateFrom, dateTo]);
 
   useEffect(() => { fetchPosts(page); }, [page, fetchPosts]);
+
+  useEffect(() => { apiFetch<{ categories: CategoryOption[] }>('/categories').then(d => setCategories(d.categories || [])).catch(() => {}); }, []);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
+      const posts = postsRef.current;
+      if (e.key === 'a' || e.key === 'A') { e.preventDefault(); if (posts.length > 0) singleAction(posts[0]._id, 'approve'); }
+      else if (e.key === 'r' || e.key === 'R') { e.preventDefault(); setSelected(new Set([posts[0]?._id].filter(Boolean) as string[])); setShowRejectModal(true); }
+      else if (e.key === 'e' || e.key === 'E') { e.preventDefault(); setSelected(new Set([posts[0]?._id].filter(Boolean) as string[])); setShowRetryModal(true); }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, []);
 
   const toggleSelect = (id: string) => setSelected(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
   const selectAll = () => { if (selected.size === posts.length) setSelected(new Set()); else setSelected(new Set(posts.map(p => p._id))); };
@@ -98,7 +121,15 @@ export default function PendingPostsPage() {
         <option value="">All Types</option><option value="top_list">Top List</option><option value="best_of">Best Of</option><option value="worst_of">Worst Of</option><option value="hidden_gems">Hidden Gems</option><option value="counter_list">Counter List</option>
       </select>
       <input placeholder="Author username" value={filters.author} onChange={e => { setFilters(f => ({ ...f, author: e.target.value })); setPage(1); }} style={{ padding: '6px', width: '140px' }} />
-      <input placeholder="Category slug" value={filters.category_slug} onChange={e => { setFilters(f => ({ ...f, category_slug: e.target.value })); setPage(1); }} style={{ padding: '6px', width: '140px' }} />
+      <select value={filters.category_slug} onChange={e => { setFilters(f => ({ ...f, category_slug: e.target.value })); setPage(1); }} style={{ padding: '6px', maxWidth: '180px' }}>
+        <option value="">All Categories</option>
+        {categories.map(c => (<React.Fragment key={c.slug}>
+          <option value={c.slug}>📁 {c.name}</option>
+          {c.children?.map(ch => <option key={ch.slug} value={ch.slug}>&nbsp;&nbsp;{ch.name}</option>)}
+        </React.Fragment>))}
+      </select>
+      <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1); }} style={{ padding: '4px', width: '130px' }} title="From date" />
+      <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(1); }} style={{ padding: '4px', width: '130px' }} title="To date" />
     </div>
 
     {selected.size > 0 && (<div style={{ background: '#e3f2fd', padding: '8px 12px', borderRadius: '4px', marginBottom: '12px', display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -150,6 +181,8 @@ export default function PendingPostsPage() {
       <span>Page {page} of {pagination.pages}</span>
       <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)}>Next</button>
     </div>
+
+    <p style={{ marginTop: '12px', fontSize: '11px', color: '#999' }}>⌨️ Shortcuts: <strong>A</strong>=Approve first &nbsp; <strong>R</strong>=Reject first &nbsp; <strong>E</strong>=Request revision for first</p>
 
     {showRejectModal && <div style={modalOverlay} onClick={() => setShowRejectModal(false)}>
       <div style={modalBox} onClick={e => e.stopPropagation()}>
