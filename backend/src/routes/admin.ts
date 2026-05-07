@@ -25,6 +25,7 @@ import { AlertThreshold } from '../models/AlertThreshold';
 import { AlertHistory } from '../models/AlertHistory';
 import { UserEvent } from '../models/UserEvent';
 import { redis } from '../lib/redis';
+import { trustScoreWorker } from '../lib/trustScoreWorker';
 
 const router: Router = Router();
 
@@ -234,31 +235,31 @@ router.post('/logout', async (req: AdminAuthRequest, res: Response) => {
  */
 router.get('/posts/pending', async (req: AdminAuthRequest, res: Response) => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
     const skip = (page - 1) * limit;
 
-    const posts = await Post.find({ status: 'pending_review' })
-      .sort({ created_at: 1 })
-      .skip(skip)
-      .limit(limit)
-      .select('-__v');
+    const query: Record<string, unknown> = { status: 'pending_review' };
+    if (req.query.category_slug) query.category_slug = req.query.category_slug;
+    if (req.query.post_type) query.post_type = req.query.post_type;
+    if (req.query.author) query.author_username = { $regex: req.query.author, $options: 'i' };
+    if (req.query.date_from || req.query.date_to) {
+      query.created_at = {};
+      if (req.query.date_from) (query.created_at as Record<string, unknown>).$gte = new Date(req.query.date_from as string);
+      if (req.query.date_to) (query.created_at as Record<string, unknown>).$lte = new Date(req.query.date_to as string);
+    }
 
-    const total = await Post.countDocuments({ status: 'pending_review' });
+    const sortField = (req.query.sort as string) === 'newest' ? 'created_at' : 'created_at';
+    const sortDir = (req.query.sort as string) === 'newest' ? -1 : 1;
+    const sortObj: Record<string, 1 | -1> = { [sortField]: sortDir as 1 | -1 };
 
-    res.json({
-      posts,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
-      },
-    });
-  } catch (error) {
-    console.error('Error fetching pending posts:', error);
-    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch pending posts' });
-  }
+    const [posts, total] = await Promise.all([
+      Post.find(query).sort(sortObj).skip(skip).limit(limit).select('-__v').lean(),
+      Post.countDocuments(query),
+    ]);
+
+    res.json({ posts, pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch pending posts' }); }
 });
 
 /**
@@ -433,6 +434,67 @@ router.patch('/posts/:id/reject', async (req: AdminAuthRequest, res: Response) =
     console.error('Error rejecting post:', error);
     res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to reject post' });
   }
+});
+
+/**
+ * POST /api/admin/posts/bulk/approve — Bulk approve multiple posts
+ */
+router.post('/posts/bulk/approve', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0 || ids.length > 50) {
+      return res.status(400).json({ code: 'VALIDATION', error: 'Provide 1-50 post IDs' });
+    }
+
+    let approved = 0; let skipped = 0; const errors: string[] = [];
+    for (const id of ids) {
+      try {
+        const post = await Post.findById(id);
+        if (!post) { skipped++; continue; }
+        if (post.status === 'approved') { skipped++; continue; }
+        post.status = 'approved'; post.published_at = new Date();
+        await post.save();
+        await trustScoreWorker.queueUpdate(post.author_id, (post._id as { toString(): string }).toString(), 'approve');
+        const { grantBoost, BoostType } = await import('../lib/ladderSystem');
+        await grantBoost(post.author_id.toString(), BoostType.POST_APPROVED);
+        await createNotification({ user_id: post.author_id, type: 'post_approved', post_id: (post._id as { toString(): string }).toString(), post_title: post.title, message: `Your list "${post.title}" was approved.` });
+        approved++;
+      } catch (e) { errors.push(`Post ${id}: ${(e as Error).message}`); }
+    }
+
+    res.json({ success: true, approved, skipped, errors: errors.length > 0 ? errors.slice(0, 5) : [] });
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Bulk approve failed' }); }
+});
+
+/**
+ * POST /api/admin/posts/bulk/reject — Bulk reject multiple posts
+ */
+router.post('/posts/bulk/reject', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const { ids, reason } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0 || ids.length > 50) {
+      return res.status(400).json({ code: 'VALIDATION', error: 'Provide 1-50 post IDs' });
+    }
+    if (!reason || typeof reason !== 'string' || reason.trim().length === 0) {
+      return res.status(400).json({ code: 'VALIDATION', error: 'Rejection reason is required' });
+    }
+
+    let rejected = 0; let skipped = 0; const errors: string[] = [];
+    for (const id of ids) {
+      try {
+        const post = await Post.findById(id);
+        if (!post) { skipped++; continue; }
+        if (post.status === 'rejected') { skipped++; continue; }
+        post.status = 'rejected'; post.rejection_reason = reason.trim();
+        await post.save();
+        await trustScoreWorker.queueUpdate(post.author_id, (post._id as { toString(): string }).toString(), 'reject');
+        await createNotification({ user_id: post.author_id, type: 'post_rejected', post_id: (post._id as { toString(): string }).toString(), post_title: post.title, message: `Your list "${post.title}" was not approved. Reason: ${reason.trim()}` });
+        rejected++;
+      } catch (e) { errors.push(`Post ${id}: ${(e as Error).message}`); }
+    }
+
+    res.json({ success: true, rejected, skipped, errors: errors.length > 0 ? errors.slice(0, 5) : [] });
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Bulk reject failed' }); }
 });
 
 /**
