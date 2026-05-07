@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 
-interface Comment { _id: string; id: string; content: string; author_username: string; post_id: string; post_slug: string | null; spark_score: number; fire_count: number; reply_count: number; depth: number; is_item_anchored: boolean; depth_badge: string | null; created_at: string; deleted: boolean; hidden: boolean; highlighted: boolean; }
+interface Comment { _id: string; id: string; content: string; author_username: string; post_id: string; post_slug: string | null; post_title: string | null; spark_score: number; fire_count: number; reply_count: number; depth: number; is_item_anchored: boolean; depth_badge: string | null; created_at: string; deleted: boolean; hidden: boolean; highlighted: boolean; }
 
 export default function AdminCommentsPage() {
   const router = useRouter();
@@ -92,6 +92,7 @@ export default function AdminCommentsPage() {
         <thead><tr style={{ borderBottom: '2px solid #ccc', textAlign: 'left' }}>
           <th style={{ padding: '6px', width: '30px' }}><input type="checkbox" checked={selected.size === comments.length && comments.length > 0} onChange={selectAll} /></th>
           <th style={{ padding: '6px', width: '40px' }}>ID</th>
+          <th style={{ padding: '6px' }}>Post</th>
           <th style={{ padding: '6px' }}>Content</th>
           <th style={{ padding: '6px' }}>Author</th>
           <th style={{ padding: '6px' }}>Type</th>
@@ -103,6 +104,11 @@ export default function AdminCommentsPage() {
           {comments.map(c => (<tr key={c._id} style={{ borderBottom: '1px solid #eee', opacity: c.deleted ? 0.5 : 1, background: c.highlighted ? '#fffde7' : c.hidden ? '#fafafa' : 'transparent' }}>
             <td style={{ padding: '4px' }}><input type="checkbox" checked={selected.has(c._id)} onChange={() => toggleSelect(c._id)} /></td>
             <td style={{ padding: '4px', fontSize: '10px', color: '#999', fontFamily: 'monospace' }}>{String(c._id).slice(-6)}</td>
+            <td style={{ padding: '4px', fontSize: '11px' }}>
+              <a href={`/${c.post_slug || '#'}`} target="_blank" style={{ color: '#1565c0', textDecoration: 'none' }} title={c.post_title || ''}>
+                {(c.post_title || c.post_slug || '—').substring(0, 30)}
+              </a>
+            </td>
             <td style={{ padding: '4px' }}>
               {c.depth_badge ? <span style={{ background: '#e0e0e0', padding: '0 4px', borderRadius: '2px', fontSize: '10px', marginRight: '4px' }}>{c.depth_badge}</span> : null}
               <a href={`/${c.post_slug || '#'}`} target="_blank" onClick={e => { if (!c.post_slug) e.preventDefault(); }} style={{ textDecoration: 'none', color: 'inherit' }}>

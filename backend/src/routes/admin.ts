@@ -880,9 +880,10 @@ router.get('/comments', async (req: AdminAuthRequest, res: Response) => {
 
     // Enrich with post slugs
     const postIds = [...new Set(enriched.map((c: Record<string, unknown>) => c.post_id))];
-    const posts = postIds.length > 0 ? await Post.find({ _id: { $in: postIds } }).select('slug').lean() : [];
+    const posts = postIds.length > 0 ? await Post.find({ _id: { $in: postIds } }).select('slug title').lean() : [];
     const slugMap = new Map(posts.map((p: Record<string, unknown>) => [(p._id as { toString(): string }).toString(), p.slug]));
-    const withSlugs = enriched.map((c: Record<string, unknown>) => ({ ...c, post_slug: slugMap.get((c.post_id as { toString(): string }).toString()) || null }));
+    const titleMap = new Map(posts.map((p: Record<string, unknown>) => [(p._id as { toString(): string }).toString(), p.title]));
+    const withSlugs = enriched.map((c: Record<string, unknown>) => ({ ...c, post_slug: slugMap.get((c.post_id as { toString(): string }).toString()) || null, post_title: titleMap.get((c.post_id as { toString(): string }).toString()) || null }));
 
     const result: Record<string, unknown> = { comments: withSlugs, pagination: { page, limit, total, pages: Math.ceil(total / limit) } };
     if (req.query.stats === 'true') {
