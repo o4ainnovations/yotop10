@@ -579,7 +579,16 @@ router.get('/posts', async (req: AdminAuthRequest, res: Response) => {
       Post.countDocuments(query),
     ]);
 
-    const result: Record<string, unknown> = { posts, pagination: { page, limit, total, pages: Math.ceil(total / limit) } };
+    // Enrich with comment fire count
+    const postIds = posts.map(p => p._id);
+    const fireAgg = postIds.length > 0 ? await require('../models/Comment').Comment.aggregate([
+      { $match: { post_id: { $in: postIds } } },
+      { $group: { _id: '$post_id', total_fire: { $sum: '$fire_count' } } },
+    ]) : [];
+    const fireMap = new Map(fireAgg.map((f: { _id: { toString(): string }; total_fire: number }) => [f._id.toString(), f.total_fire]));
+    const enrichedPosts = posts.map(p => ({ ...p, fire_count: fireMap.get((p._id as { toString(): string }).toString()) || 0 }));
+
+    const result: Record<string, unknown> = { posts: enrichedPosts, pagination: { page, limit, total, pages: Math.ceil(total / limit) } };
     if (req.query.stats === 'true') {
       const [pp, approved, rejected, del] = await Promise.all([
         Post.countDocuments({ status: 'pending_review', deleted: false }),
