@@ -878,7 +878,13 @@ router.get('/comments', async (req: AdminAuthRequest, res: Response) => {
 
     const enriched = comments.map(c => ({ ...c, id: c._id, post_id: c.post_id, is_item_anchored: !!c.list_item_id, depth_badge: c.depth > 0 ? `L${c.depth}` : null }));
 
-    const result: Record<string, unknown> = { comments: enriched, pagination: { page, limit, total, pages: Math.ceil(total / limit) } };
+    // Enrich with post slugs
+    const postIds = [...new Set(enriched.map((c: Record<string, unknown>) => c.post_id))];
+    const posts = postIds.length > 0 ? await Post.find({ _id: { $in: postIds } }).select('slug').lean() : [];
+    const slugMap = new Map(posts.map((p: Record<string, unknown>) => [(p._id as { toString(): string }).toString(), p.slug]));
+    const withSlugs = enriched.map((c: Record<string, unknown>) => ({ ...c, post_slug: slugMap.get((c.post_id as { toString(): string }).toString()) || null }));
+
+    const result: Record<string, unknown> = { comments: withSlugs, pagination: { page, limit, total, pages: Math.ceil(total / limit) } };
     if (req.query.stats === 'true') {
       const [totalAll, del, hid, hi] = await Promise.all([
         Comment.countDocuments({}), Comment.countDocuments({ deleted: true }), Comment.countDocuments({ hidden: true }), Comment.countDocuments({ highlighted: true }),
