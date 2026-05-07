@@ -1,45 +1,31 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAdminStore } from '@/stores/admin';
 
-export default function AdminHomePage() {
+export default function AdminDashboard() {
   const router = useRouter();
-  const admin = useAdminStore((s) => s.admin);
-  const loading = useAdminStore((s) => s.loading);
-  const authenticated = useAdminStore((s) => s.authenticated);
-  const initialized = useAdminStore((s) => s.initialized);
-  const checkSession = useAdminStore((s) => s.checkSession);
+  const admin = useAdminStore(s => s.admin);
 
-  useEffect(() => {
-    if (!initialized) checkSession();
-  }, [initialized, checkSession]);
-
-  useEffect(() => {
-    if (initialized && !authenticated) {
-      router.push('/admin/login');
-    }
-  }, [initialized, authenticated, router]);
-
-  if (loading || !initialized) return <div>Loading...</div>;
+  const actionCards = [
+    { title: '📋 Pending Posts', desc: 'Review and moderate submitted posts', href: '/admin/posts/pending', color: '#e3f2fd' },
+    { title: '📊 Statistics', desc: 'Deep platform analytics and trends', href: '/admin/statistics', color: '#e8f5e9' },
+    { title: '📝 Audit Logs', desc: 'All admin actions and login history', href: '/admin/audit', color: '#fff3e0' },
+    { title: '👤 Profile', desc: 'View your admin account', href: '/admin/profile', color: '#f3e5f5' },
+  ];
 
   return (
     <div>
-      <h2>Admin Dashboard</h2>
-      <p>Welcome, {admin?.username}</p>
-      <div style={{ marginTop: '30px' }}>
-        <h3>Quick Links</h3>
-        <ul>
-          <li><button onClick={() => router.push('/admin/posts/pending')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Pending Posts</button></li>
-          <li><button onClick={() => router.push('/admin/audit')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Audit Logs</button></li>
-          <li><button onClick={() => router.push('/admin/statistics')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Statistics</button></li>
-          <li>All Posts</li>
-          <li>Comments</li>
-          <li>Categories</li>
-          <li>Users</li>
-          <li>Settings</li>
-        </ul>
+      <h2>Welcome, {admin?.username || 'Admin'}</h2>
+      <p style={{ color: '#666', marginBottom: '24px' }}>Use the sidebar to navigate. Quick actions below.</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
+        {actionCards.map(card => (
+          <button key={card.href} onClick={() => router.push(card.href)}
+            style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer', textAlign: 'left', background: card.color, display: 'block' }}>
+            <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '4px' }}>{card.title}</div>
+            <div style={{ fontSize: '12px', color: '#666' }}>{card.desc}</div>
+          </button>
+        ))}
       </div>
     </div>
   );
