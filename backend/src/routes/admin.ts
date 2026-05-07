@@ -549,6 +549,297 @@ router.get('/audit-logs', async (req: AdminAuthRequest, res: Response) => {
   }
 });
 
+// ═══ M10.4 All Posts Management ══════════════════════════════════
+
+// 1. List all posts
+router.get('/posts', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
+    const skip = (page - 1) * limit;
+
+    const query: Record<string, unknown> = { $or: [{ deleted: false }, { deleted: { $exists: false } }] };
+    if (req.query.status) {
+      if (req.query.status === 'deleted') { query.$or = [{ deleted: true }]; }
+      else { query.status = req.query.status; }
+    }
+    if (req.query.category_slug) query.category_slug = req.query.category_slug;
+    if (req.query.post_type) query.post_type = req.query.post_type;
+    if (req.query.author) query.author_username = { $regex: req.query.author, $options: 'i' };
+    if (req.query.search) query.$or = [{ title: { $regex: req.query.search, $options: 'i' } }, { intro: { $regex: req.query.search, $options: 'i' } }];
+    if (req.query.date_from || req.query.date_to) { query.created_at = {}; if (req.query.date_from) (query.created_at as Record<string, unknown>).$gte = new Date(req.query.date_from as string); if (req.query.date_to) (query.created_at as Record<string, unknown>).$lte = new Date(req.query.date_to as string); }
+
+    const sortMap: Record<string, string> = { newest: 'created_at', oldest: 'created_at', most_comments: 'comment_count', most_views: 'view_count', most_fire: 'fire_count' };
+    const sortField = sortMap[req.query.sort as string] || 'created_at';
+    const sortDir = (req.query.sort as string) === 'oldest' ? 1 : -1;
+    const fields = req.query.fields ? (req.query.fields as string).split(',').join(' ') : '-__v';
+
+    const [posts, total] = await Promise.all([
+      Post.find(query).sort({ [sortField]: sortDir }).skip(skip).limit(limit).select(fields).lean(),
+      Post.countDocuments(query),
+    ]);
+
+    const result: Record<string, unknown> = { posts, pagination: { page, limit, total, pages: Math.ceil(total / limit) } };
+    if (req.query.stats === 'true') {
+      const [pp, approved, rejected, del] = await Promise.all([
+        Post.countDocuments({ status: 'pending_review', deleted: false }),
+        Post.countDocuments({ status: 'approved', deleted: false }),
+        Post.countDocuments({ status: 'rejected', deleted: false }),
+        Post.countDocuments({ deleted: true }),
+      ]);
+      result.stats = { total, pending: pp, approved, rejected, deleted: del, featured: await Post.countDocuments({ featured: true }), locked: await Post.countDocuments({ comments_locked: true }) };
+    }
+
+    res.json(result);
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch posts' }); }
+});
+
+// 2. Edit post
+router.patch('/posts/:id', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
+
+    if (req.body.version !== undefined && req.body.version !== post.version) {
+      return res.status(409).json({ code: 'CONFLICT', error: 'Post was modified by another session. Reload and retry.' });
+    }
+
+    if (req.body.title) { post.title = req.body.title; post.slug = require('../models/Post').generateUniqueSlug(post.title, (post._id as { toString(): string }).toString()); }
+    if (req.body.intro !== undefined) post.intro = req.body.intro;
+    if (req.body.category_slug) { const cat = await require('../models/Category').Category.findOne({ slug: req.body.category_slug }); if (!cat) return res.status(400).json({ code: 'NOT_FOUND', error: 'Category not found' }); post.category_slug = req.body.category_slug; }
+    if (req.body.editorial_note !== undefined) post.editorial_note = req.body.editorial_note || null;
+    await post.save();
+
+    if (req.body.items && Array.isArray(req.body.items)) {
+      const { ListItem } = await import('../models/ListItem');
+      await ListItem.deleteMany({ post_id: post._id });
+      if (req.body.items.length > 0) {
+        await ListItem.insertMany(req.body.items.map((item: { rank: number; title: string; justification: string }) => ({ post_id: post._id, rank: item.rank, title: item.title, justification: item.justification })));
+      }
+    }
+
+    res.json({ success: true, post });
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to edit post' }); }
+});
+
+// 3. Soft delete
+router.delete('/posts/:id', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
+    post.deleted = true; post.deleted_at = new Date(); post.auto_hard_delete_at = new Date(Date.now() + 30 * 86400000);
+    await post.save();
+    res.json({ success: true });
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to delete post' }); }
+});
+
+// 4. Restore soft-deleted
+router.post('/posts/:id/restore', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post || !post.deleted) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found or not deleted' });
+    post.deleted = false; post.deleted_at = null; post.auto_hard_delete_at = null;
+    await post.save();
+    res.json({ success: true });
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to restore post' }); }
+});
+
+// 5. Hard delete (permanent)
+router.delete('/posts/:id/permanent', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const post = await Post.findByIdAndDelete(req.params.id);
+    if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
+    const { ListItem } = await import('../models/ListItem');
+    await ListItem.deleteMany({ post_id: post._id });
+    res.json({ success: true });
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to permanently delete post' }); }
+});
+
+// 6. Feature
+router.post('/posts/:id/feature', async (req: AdminAuthRequest, res: Response) => {
+  const post = await Post.findById(req.params.id);
+  if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
+  post.featured = true; post.featured_at = new Date();
+  if (req.body.editorial_note) post.editorial_note = req.body.editorial_note;
+  await post.save();
+  res.json({ success: true, post });
+});
+
+// 7. Unfeature
+router.post('/posts/:id/unfeature', async (req: AdminAuthRequest, res: Response) => {
+  const post = await Post.findById(req.params.id);
+  if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
+  post.featured = false; post.featured_at = null; post.editorial_note = null;
+  await post.save();
+  res.json({ success: true, post });
+});
+
+// 8. Lock comments
+router.post('/posts/:id/lock', async (req: AdminAuthRequest, res: Response) => {
+  const post = await Post.findById(req.params.id);
+  if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
+  post.comments_locked = true;
+  await post.save();
+  res.json({ success: true });
+});
+
+// 9. Unlock comments
+router.post('/posts/:id/unlock', async (req: AdminAuthRequest, res: Response) => {
+  const post = await Post.findById(req.params.id);
+  if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
+  post.comments_locked = false;
+  await post.save();
+  res.json({ success: true });
+});
+
+// 10. Bump
+router.post('/posts/:id/bump', async (req: AdminAuthRequest, res: Response) => {
+  const post = await Post.findById(req.params.id);
+  if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
+  post.bumped_at = new Date();
+  await post.save();
+  res.json({ success: true, post });
+});
+
+// 11. Quick stats
+router.get('/posts/stats', async (req: AdminAuthRequest, res: Response) => {
+  const [total, pending, approved, rejected, del, featured, locked] = await Promise.all([
+    Post.countDocuments({ deleted: false }), Post.countDocuments({ status: 'pending_review', deleted: false }), Post.countDocuments({ status: 'approved', deleted: false }), Post.countDocuments({ status: 'rejected', deleted: false }), Post.countDocuments({ deleted: true }), Post.countDocuments({ featured: true }), Post.countDocuments({ comments_locked: true }),
+  ]);
+  res.json({ total, pending, approved, rejected, deleted: del, featured, locked });
+});
+
+// 12-14. Item-level operations
+router.patch('/posts/:id/items/:itemId', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const { ListItem } = await import('../models/ListItem');
+    const item = await ListItem.findOneAndUpdate({ _id: req.params.itemId, post_id: req.params.id }, { $set: req.body }, { new: true });
+    if (!item) return res.status(404).json({ code: 'NOT_FOUND', error: 'Item not found' });
+    res.json({ success: true, item });
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to edit item' }); }
+});
+router.post('/posts/:id/items', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
+    const { ListItem } = await import('../models/ListItem');
+    const item = await ListItem.create({ ...req.body, post_id: post._id });
+    res.status(201).json({ success: true, item });
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to add item' }); }
+});
+router.delete('/posts/:id/items/:itemId', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const { ListItem } = await import('../models/ListItem');
+    await ListItem.findOneAndDelete({ _id: req.params.itemId, post_id: req.params.id });
+    res.json({ success: true });
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to delete item' }); }
+});
+
+// 15-17. Bulk operations
+router.post('/posts/bulk/delete', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0 || ids.length > 50) return res.status(400).json({ code: 'VALIDATION', error: 'Provide 1-50 post IDs' });
+    const result = await Post.updateMany({ _id: { $in: ids } }, { $set: { deleted: true, deleted_at: new Date(), auto_hard_delete_at: new Date(Date.now() + 30 * 86400000) } });
+    res.json({ success: true, deleted: result.modifiedCount });
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Bulk delete failed' }); }
+});
+router.post('/posts/bulk/change-category', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const { ids, category_slug } = req.body;
+    if (!Array.isArray(ids) || !category_slug) return res.status(400).json({ code: 'VALIDATION', error: 'Provide ids array and category_slug' });
+    const cat = await require('../models/Category').Category.findOne({ slug: category_slug });
+    if (!cat) return res.status(400).json({ code: 'NOT_FOUND', error: 'Category not found' });
+    const result = await Post.updateMany({ _id: { $in: ids } }, { $set: { category_slug } });
+    res.json({ success: true, changed: result.modifiedCount });
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Bulk recategorize failed' }); }
+});
+router.post('/posts/bulk/status', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const { ids, status } = req.body;
+    if (!Array.isArray(ids) || !['approved', 'rejected', 'pending_review'].includes(status)) return res.status(400).json({ code: 'VALIDATION', error: 'Provide ids and valid status' });
+    let changed = 0;
+    for (const id of ids) {
+      const post = await Post.findById(id);
+      if (!post || post.status === status) continue;
+      post.status = status;
+      if (status === 'approved') post.published_at = new Date();
+      await post.save();
+      await trustScoreWorker.queueUpdate(post.author_id, (post._id as { toString(): string }).toString(), status === 'approved' ? 'approve' : 'reject');
+      changed++;
+    }
+    res.json({ success: true, changed });
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Bulk status change failed' }); }
+});
+
+// 18. Export
+router.get('/posts/export', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const query: Record<string, unknown> = { deleted: false };
+    if (req.query.status) query.status = req.query.status;
+    const posts = await Post.find(query).sort({ created_at: -1 }).limit(10000).lean();
+    const header = 'ID,Title,Author,Category,Type,Status,Fire,Comments,Views,Created,Published\n';
+    const rows = posts.map(p => [`"${p._id}"`, `"${(p.title || '').replace(/"/g, '""')}"`, p.author_username, p.category_slug, p.post_type, p.status, p.fire_count, p.comment_count, p.view_count, p.created_at, p.published_at || ''].join(',')).join('\n');
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="posts_export_${new Date().toISOString().substring(0,10)}.csv"`);
+    res.send(header + rows);
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Export failed' }); }
+});
+
+// 19. Revisions
+router.get('/posts/:id/revisions', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const post = await Post.findById(req.params.id).select('status_history title intro created_at updated_at').lean();
+    if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
+    res.json({ revisions: post.status_history || [], current: { title: post.title, intro: post.intro, created_at: post.created_at, updated_at: post.updated_at } });
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch revisions' }); }
+});
+
+// 20. Compare
+router.get('/posts/compare', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const ids = (req.query.ids as string || '').split(',');
+    if (ids.length !== 2) return res.status(400).json({ code: 'VALIDATION', error: 'Provide exactly 2 IDs' });
+    const [p1, p2] = await Promise.all([Post.findById(ids[0]).select('title intro post_type category_slug items created_at').lean(), Post.findById(ids[1]).select('title intro post_type category_slug items created_at').lean()]);
+    res.json({ post1: p1, post2: p2 });
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Compare failed' }); }
+});
+
+// 21. Duplicate
+router.post('/posts/:id/duplicate', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const post = await Post.findById(req.params.id).lean();
+    if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
+    const copy = await Post.create({ ...post, _id: undefined, status: 'pending_review', published_at: undefined, created_at: undefined, updated_at: undefined, slug: '', normalized_title: '', view_count: 0, comment_count: 0, fire_count: 0, version: 0, deleted: false, deleted_at: null, featured: false, comments_locked: false });
+    res.status(201).json({ success: true, post: copy });
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Duplicate failed' }); }
+});
+
+// 22. Activity
+router.get('/posts/:id/activity', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const logs = await AuditLog.find({ 'metadata.post_id': req.params.id }).sort({ created_at: -1 }).limit(50).lean();
+    res.json({ activity: logs });
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch activity' }); }
+});
+
+// 23. Admin view comments
+router.get('/posts/:id/comments', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const { Comment } = await import('../models/Comment');
+    const comments = await Comment.find({ post_id: req.params.id }).sort({ created_at: -1 }).limit(100).lean();
+    res.json({ comments });
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch comments' }); }
+});
+
+// 24. Quality check
+router.post('/posts/quality-check', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const flags = await Post.find({ status: 'approved', deleted: false, intro: { $exists: true, $not: { $regex: /.{100,}/ } } }).select('title intro').lean();
+    res.json({ low_quality_count: flags.length, flagged: flags.slice(0, 20) });
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Quality check failed' }); }
+});
+
 // ═══ Stats Endpoints ═══════════════════════════════════════════════
 
 const SNAPSHOT_OR_LIVE = async (req: Request, computeSnapshot: () => Promise<unknown>, computeLive: () => Promise<unknown>) => {

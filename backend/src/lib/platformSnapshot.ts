@@ -212,7 +212,16 @@ export async function runSnapshotNow(): Promise<void> {
 export function startSnapshotCron(): void {
   if (cronHandle) return;
   runSnapshotNow();
-  cronHandle = setInterval(runSnapshotNow, 60 * 60 * 1000); // hourly for catch-up; daily baseline via cron accuracy
+
+  // Auto hard-delete expired soft-deleted posts every 60 seconds
+  const hardDeleteInterval = setInterval(async () => {
+    try {
+      const result = await Post.deleteMany({ auto_hard_delete_at: { $lt: new Date(), $ne: null } });
+      if (result.deletedCount > 0) console.log(`[HardDelete] Removed ${result.deletedCount} expired soft-deleted posts`);
+    } catch (e) { /* silent */ }
+  }, 60 * 1000);
+
+  cronHandle = setInterval(runSnapshotNow, 60 * 60 * 1000);
   console.log('[Snapshot] Cron started (hourly)');
 }
 

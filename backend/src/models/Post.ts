@@ -24,6 +24,15 @@ export interface IPost extends Document {
   trust_score_updated: boolean;
   is_public: boolean;
   status_history: Array<{ status: string; changed_at: Date }>;
+  version: number;
+  deleted: boolean;
+  deleted_at: Date | null;
+  auto_hard_delete_at: Date | null;
+  featured: boolean;
+  featured_at: Date | null;
+  editorial_note: string | null;
+  comments_locked: boolean;
+  bumped_at: Date | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -145,6 +154,15 @@ const postSchema = new Schema<IPost>(
       type: [{ status: String, changed_at: Date }],
       default: [],
     },
+    version: { type: Number, default: 0 },
+    deleted: { type: Boolean, default: false, index: true },
+    deleted_at: { type: Date, default: null },
+    auto_hard_delete_at: { type: Date, default: null },
+    featured: { type: Boolean, default: false },
+    featured_at: { type: Date, default: null },
+    editorial_note: { type: String, default: null },
+    comments_locked: { type: Boolean, default: false },
+    bumped_at: { type: Date, default: null },
     published_at: {
       type: Date,
     },
@@ -166,11 +184,16 @@ export function normalizeTitle(title: string): string {
     .trim();
 }
 
-// Track status changes
+// Track status changes and version increments
 postSchema.pre('save', function(next) {
   if (this.isModified('status')) {
     if (!this.status_history) this.status_history = [];
     this.status_history.push({ status: this.status, changed_at: new Date() });
+  }
+  if (this.isModified() && !this.isNew) {
+    const modifiedPaths = this.modifiedPaths();
+    const nonStatusPaths = modifiedPaths.filter(p => p !== 'status' && p !== 'status_history' && p !== 'version');
+    if (nonStatusPaths.length > 0) this.version = (this.version || 0) + 1;
   }
   next();
 });
