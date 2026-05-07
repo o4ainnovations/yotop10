@@ -284,6 +284,8 @@ router.get('/:idOrSlug', async (req: Request, res: Response) => {
     const comments = await Comment.find({
       post_id: post._id,
       parent_comment_id: null,
+      deleted: false,
+      hidden: false,
     })
       .sort({ created_at: -1 })
       .limit(50)
@@ -550,7 +552,7 @@ router.get('/:idOrSlug/comments', async (req: Request, res: Response) => {
     }
 
     const postId = post._id.toString();
-    const query: Record<string, unknown> = { post_id: postId };
+    const query: Record<string, unknown> = { post_id: postId, deleted: false, hidden: false };
     if (list_item_id && mongoose.Types.ObjectId.isValid(list_item_id as string)) {
       query.list_item_id = list_item_id;
     }

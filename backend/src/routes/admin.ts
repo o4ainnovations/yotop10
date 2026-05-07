@@ -849,6 +849,155 @@ router.post('/posts/quality-check', async (req: AdminAuthRequest, res: Response)
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Quality check failed' }); }
 });
 
+// ═══ M10.5 All Comments Management ════════════════════════════════
+
+// 1. List all comments
+router.get('/comments', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
+    const skip = (page - 1) * limit;
+    const query: Record<string, unknown> = {};
+    if (req.query.post_id) query.post_id = req.query.post_id;
+    if (req.query.author) query.author_username = { $regex: req.query.author, $options: 'i' };
+    if (req.query.type === 'item_anchored') query.list_item_id = { $ne: null };
+    if (req.query.type === 'post_comment') query.list_item_id = null;
+    if (req.query.search) query.content = { $regex: req.query.search, $options: 'i' };
+    if (req.query.date_from || req.query.date_to) { query.created_at = {}; if (req.query.date_from) (query.created_at as Record<string, unknown>).$gte = new Date(req.query.date_from as string); if (req.query.date_to) (query.created_at as Record<string, unknown>).$lte = new Date(req.query.date_to as string); }
+    if (req.query.has_replies === 'yes') query.reply_count = { $gt: 0 };
+    if (req.query.has_replies === 'no') query.reply_count = 0;
+
+    const sortMap: Record<string, string> = { newest: 'created_at', oldest: 'created_at', most_fire: 'fire_count', most_replies: 'reply_count', highest_spark: 'spark_score' };
+    const sortField = sortMap[req.query.sort as string] || 'created_at';
+    const sortDir = (req.query.sort as string) === 'oldest' ? 1 : -1;
+
+    const [comments, total] = await Promise.all([
+      Comment.find(query).sort({ [sortField]: sortDir }).skip(skip).limit(limit).lean(),
+      Comment.countDocuments(query),
+    ]);
+
+    const enriched = comments.map(c => ({ ...c, id: c._id, post_id: c.post_id, is_item_anchored: !!c.list_item_id, depth_badge: c.depth > 0 ? `L${c.depth}` : null }));
+
+    const result: Record<string, unknown> = { comments: enriched, pagination: { page, limit, total, pages: Math.ceil(total / limit) } };
+    if (req.query.stats === 'true') {
+      const [totalAll, del, hid, hi] = await Promise.all([
+        Comment.countDocuments({}), Comment.countDocuments({ deleted: true }), Comment.countDocuments({ hidden: true }), Comment.countDocuments({ highlighted: true }),
+      ]);
+      result.stats = { total: totalAll, deleted: del, hidden: hid, highlighted: hi };
+    }
+    res.json(result);
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch comments' }); }
+});
+
+// 2. Admin edit comment (any age, override 2hr window)
+router.patch('/comments/:id', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const comment = await Comment.findById(req.params.id);
+    if (!comment) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
+    if (req.body.content) comment.content = req.body.content.substring(0, 2000);
+    await comment.save();
+    res.json({ success: true, comment });
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to edit comment' }); }
+});
+
+// 3. Soft delete
+router.delete('/comments/:id', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const c = await Comment.findById(req.params.id);
+    if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
+    c.deleted = true; c.deleted_at = new Date();
+    await c.save();
+    res.json({ success: true });
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to delete comment' }); }
+});
+
+// 4. Restore
+router.post('/comments/:id/restore', async (req: AdminAuthRequest, res: Response) => {
+  const c = await Comment.findById(req.params.id);
+  if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
+  c.deleted = false; c.deleted_at = null;
+  await c.save();
+  res.json({ success: true });
+});
+
+// 5. Hard delete
+router.delete('/comments/:id/permanent', async (req: AdminAuthRequest, res: Response) => {
+  const c = await Comment.findByIdAndDelete(req.params.id);
+  if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
+  res.json({ success: true });
+});
+
+// 6-7. Hide / Unhide
+router.post('/comments/:id/hide', async (req: AdminAuthRequest, res: Response) => {
+  const c = await Comment.findById(req.params.id);
+  if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
+  c.hidden = true; c.hidden_reason = req.body.reason || null;
+  await c.save();
+  res.json({ success: true });
+});
+router.post('/comments/:id/unhide', async (req: AdminAuthRequest, res: Response) => {
+  const c = await Comment.findById(req.params.id);
+  if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
+  c.hidden = false; c.hidden_reason = null;
+  await c.save();
+  res.json({ success: true });
+});
+
+// 8-9. Highlight / Unhighlight
+router.post('/comments/:id/highlight', async (req: AdminAuthRequest, res: Response) => {
+  const c = await Comment.findById(req.params.id);
+  if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
+  c.highlighted = true;
+  await c.save();
+  res.json({ success: true });
+});
+router.post('/comments/:id/unhighlight', async (req: AdminAuthRequest, res: Response) => {
+  const c = await Comment.findById(req.params.id);
+  if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
+  c.highlighted = false;
+  await c.save();
+  res.json({ success: true });
+});
+
+// 10-11. Bulk
+router.post('/comments/bulk/delete', async (req: AdminAuthRequest, res: Response) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids) || ids.length === 0 || ids.length > 50) return res.status(400).json({ code: 'VALIDATION', error: 'Provide 1-50 IDs' });
+  const r = await Comment.updateMany({ _id: { $in: ids } }, { $set: { deleted: true, deleted_at: new Date() } });
+  res.json({ success: true, deleted: r.modifiedCount });
+});
+router.post('/comments/bulk/hide', async (req: AdminAuthRequest, res: Response) => {
+  const { ids, reason } = req.body;
+  if (!Array.isArray(ids) || ids.length === 0 || ids.length > 50) return res.status(400).json({ code: 'VALIDATION', error: 'Provide 1-50 IDs' });
+  const r = await Comment.updateMany({ _id: { $in: ids } }, { $set: { hidden: true, hidden_reason: reason || null } });
+  res.json({ success: true, hidden: r.modifiedCount });
+});
+
+// 12. Quick stats
+router.get('/comments/stats', async (req: AdminAuthRequest, res: Response) => {
+  const [total, del, hid, hi, itemAnchored, postComment] = await Promise.all([
+    Comment.countDocuments({}), Comment.countDocuments({ deleted: true }), Comment.countDocuments({ hidden: true }), Comment.countDocuments({ highlighted: true }), Comment.countDocuments({ list_item_id: { $ne: null } }), Comment.countDocuments({ list_item_id: null }),
+  ]);
+  res.json({ total, deleted: del, hidden: hid, highlighted: hi, item_anchored: itemAnchored, post_comment: postComment });
+});
+
+// 13. Export
+router.get('/comments/export', async (req: AdminAuthRequest, res: Response) => {
+  const comments = await Comment.find({}).sort({ created_at: -1 }).limit(10000).lean();
+  const header = 'ID,Content,Author,PostID,Type,Fire,Replies,SparkScore,Depth,Created\n';
+  const rows = comments.map(c => [`"${c._id}"`, `"${(c.content || '').substring(0, 200).replace(/"/g, '""')}"`, c.author_username, c.post_id, c.list_item_id ? 'item_anchored' : 'post_comment', c.fire_count, c.reply_count, c.spark_score, c.depth, c.created_at].join(',')).join('\n');
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', `attachment; filename="comments_export_${new Date().toISOString().substring(0,10)}.csv"`);
+  res.send(header + rows);
+});
+
+// 14. Activity
+router.get('/comments/:id/activity', async (req: AdminAuthRequest, res: Response) => {
+  const c = await Comment.findById(req.params.id).select('content_history').lean();
+  if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
+  res.json({ content_history: c.content_history || [] });
+});
+
 // ═══ Stats Endpoints ═══════════════════════════════════════════════
 
 const SNAPSHOT_OR_LIVE = async (req: Request, computeSnapshot: () => Promise<unknown>, computeLive: () => Promise<unknown>) => {

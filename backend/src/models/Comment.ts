@@ -13,6 +13,12 @@ export interface IComment extends Document {
   reply_count: number;
   spark_score: number;
   last_engaged_at: Date;
+  deleted: boolean;
+  deleted_at: Date | null;
+  hidden: boolean;
+  hidden_reason: string | null;
+  highlighted: boolean;
+  content_history: Array<{ content: string; changed_at: Date }>;
   created_at: Date;
   updated_at: Date;
 }
@@ -78,6 +84,12 @@ const commentSchema = new Schema<IComment>(
       type: Date,
       default: Date.now,
     },
+    deleted: { type: Boolean, default: false, index: true },
+    deleted_at: { type: Date, default: null },
+    hidden: { type: Boolean, default: false },
+    hidden_reason: { type: String, default: null },
+    highlighted: { type: Boolean, default: false },
+    content_history: { type: [{ content: String, changed_at: Date }], default: [] },
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
@@ -92,5 +104,14 @@ commentSchema.index({ parent_comment_id: 1, created_at: 1 });
 commentSchema.index({ author_id: 1, created_at: -1 });
 commentSchema.index({ depth: 1 });
 commentSchema.index({ last_engaged_at: -1 });
+
+// Track content changes
+commentSchema.pre('save', function(next) {
+  if (this.isModified('content') && !this.isNew) {
+    if (!this.content_history) this.content_history = [];
+    this.content_history.push({ content: this.content, changed_at: new Date() });
+  }
+  next();
+});
 
 export const Comment = mongoose.model<IComment>('Comment', commentSchema);
