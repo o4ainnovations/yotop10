@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 
-interface Post { _id: string; title: string; author_username: string; post_type: string; status: string; category_slug: string; comment_count: number; fire_count?: number; view_count: number; created_at: string; published_at?: string; deleted: boolean; featured: boolean; comments_locked: boolean }
+interface Post { _id: string; title: string; slug: string; author_username: string; post_type: string; status: string; category_slug: string; comment_count: number; fire_count?: number; view_count: number; created_at: string; published_at?: string; deleted: boolean; featured: boolean; comments_locked: boolean }
 
 export default function AllPostsPage() {
   const router = useRouter();
@@ -55,6 +55,7 @@ export default function AllPostsPage() {
       else if (action === 'unfeature') await apiFetch(`/admin/posts/${id}/unfeature`, { method: 'POST' });
       else if (action === 'lock') await apiFetch(`/admin/posts/${id}/lock`, { method: 'POST' });
       else if (action === 'unlock') await apiFetch(`/admin/posts/${id}/unlock`, { method: 'POST' });
+      else if (action === 'bump') await apiFetch(`/admin/posts/${id}/bump`, { method: 'POST' });
       toast.success(`${action} done.`);
       fetchPosts(page);
     } catch {}
@@ -95,7 +96,7 @@ export default function AllPostsPage() {
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
         <thead><tr style={{ borderBottom: '2px solid #ccc', textAlign: 'left' }}>
           <th style={{ padding: '6px', width: '30px' }}><input type="checkbox" checked={selected.size === posts.length && posts.length > 0} onChange={selectAll} /></th>
-          <th style={{ padding: '6px' }}>Title</th><th style={{ padding: '6px' }}>Author</th><th style={{ padding: '6px' }}>Category</th><th style={{ padding: '6px' }}>Type</th><th style={{ padding: '6px' }}>Status</th><th style={{ padding: '6px' }}>💬</th><th style={{ padding: '6px' }}>👁</th><th style={{ padding: '6px' }}>Created</th><th style={{ padding: '6px' }}>Actions</th>
+          <th style={{ padding: '6px' }}>Title</th><th style={{ padding: '6px' }}>Author</th><th style={{ padding: '6px' }}>Category</th><th style={{ padding: '6px' }}>Type</th><th style={{ padding: '6px' }}>Status</th><th style={{ padding: '6px' }}>🔥</th><th style={{ padding: '6px' }}>💬</th><th style={{ padding: '6px' }}>👁</th><th style={{ padding: '6px' }}>Published</th><th style={{ padding: '6px' }}>Actions</th>
         </tr></thead>
         <tbody>
           {posts.map(p => (<tr key={p._id} style={{ borderBottom: '1px solid #eee', opacity: p.deleted ? 0.5 : 1 }}>
@@ -105,13 +106,16 @@ export default function AllPostsPage() {
             <td style={{ padding: '4px', fontSize: '11px', color: '#666' }}>{p.category_slug}</td>
             <td style={{ padding: '4px', fontSize: '11px' }}>{p.post_type}</td>
             <td style={{ padding: '4px' }}>{statusBadge(p.status)}</td>
+            <td style={{ padding: '4px' }}>{p.fire_count || 0}</td>
             <td style={{ padding: '4px' }}>{p.comment_count}</td>
             <td style={{ padding: '4px' }}>{p.view_count}</td>
-            <td style={{ padding: '4px', fontSize: '11px' }}>{new Date(p.created_at).toLocaleDateString()}</td>
+            <td style={{ padding: '4px', fontSize: '11px' }}>{p.published_at ? new Date(p.published_at).toLocaleDateString() : '—'}</td>
             <td style={{ padding: '4px' }}>
               {p.deleted ? <button onClick={() => quickAction(p._id, 'restore')} style={{ fontSize: '11px', cursor: 'pointer' }}>Restore</button> : <>
                 <button onClick={() => router.push(`/admin/posts/pending/${p._id}`)} style={{ fontSize: '11px', cursor: 'pointer' }}>View</button>
                 <button onClick={() => quickAction(p._id, 'delete')} style={{ fontSize: '11px', cursor: 'pointer', color: '#c62828' }}>Del</button>
+                <button onClick={() => quickAction(p._id, 'bump')} style={{ fontSize: '11px', cursor: 'pointer' }}>Bump</button>
+                <button onClick={() => router.push(`/admin/posts/${p._id}/edit`)} style={{ fontSize: '11px', cursor: 'pointer' }}>Edit</button>
               </>}
               {p.featured ? <button onClick={() => quickAction(p._id, 'unfeature')} style={{ fontSize: '11px', cursor: 'pointer' }}>Unfeat</button> : <button onClick={() => quickAction(p._id, 'feature')} style={{ fontSize: '11px', cursor: 'pointer' }}>Feat</button>}
               {p.comments_locked ? <button onClick={() => quickAction(p._id, 'unlock')} style={{ fontSize: '11px', cursor: 'pointer' }}>Unlock</button> : <button onClick={() => quickAction(p._id, 'lock')} style={{ fontSize: '11px', cursor: 'pointer' }}>Lock</button>}
