@@ -624,6 +624,10 @@ router.post('/:idOrSlug/comments', [
     }
     const postId = post._id.toString();
 
+    if ((post as Record<string, unknown>).comments_locked) {
+      return res.status(403).json({ error: 'Comments are locked for this post.' });
+    }
+
     const user = req.user!;
     const fingerprint = deviceFingerprint;
 
