@@ -13,6 +13,7 @@ import { checkTitleMatch } from '../lib/titleSimilarity';
 import { validateListTitle, needsListTitleValidation, FormatCheckResult } from '../lib/listTitleValidation';
 import { updateParentSparkScore } from './comments';
 import { computeSparkScore, getThresholds } from '../lib/sparkScore';
+import { indexComment, indexPost } from '../elasticsearch/lib/indexWriter';
 
 const router: Router = Router();
 
@@ -468,6 +469,8 @@ router.post('/', validatePostSubmission, async (req: Request, res: Response) => 
       const updatedPost = await Post.findById(post._id);
       if (!updatedPost) throw new Error('Post lost during creation');
 
+      indexPost(updatedPost as unknown as Record<string, unknown>);
+
       res.status(201).json({
         message: 'Post submitted successfully. It will be reviewed by an admin.',
         post: {
@@ -704,6 +707,8 @@ router.post('/:idOrSlug/comments', [
       spark_score: initialSparkScore,
       last_engaged_at: now,
     });
+
+    indexComment(comment as unknown as Record<string, unknown>);
 
     if (parent_comment_id) {
       const updatedParent = await Comment.findByIdAndUpdate(

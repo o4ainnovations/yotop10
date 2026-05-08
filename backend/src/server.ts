@@ -34,6 +34,9 @@ app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+import searchRouter from './routes/search';
+app.use('/api/search', searchRouter);
+
 // Analytics visit beacon (no fingerprint required)
 import analyticsRouter from './routes/analytics';
 app.use('/api/analytics', analyticsRouter);
@@ -69,6 +72,8 @@ const connectDatabases = async () => {
     try {
       await es.ping();
       console.log('Connected to Elasticsearch');
+      const { ensureIndices } = await import('./elasticsearch/lib/indexer');
+      await ensureIndices();
       break;
     } catch (_error) {
       if (attempt === maxRetries) {
@@ -96,6 +101,9 @@ const startServer = async () => {
 
     const { startFlagCron } = await import('./lib/flagEngine');
     startFlagCron();
+
+    const { startAutoHeal } = await import('./elasticsearch/lib/searchAutoHeal');
+    startAutoHeal();
 
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

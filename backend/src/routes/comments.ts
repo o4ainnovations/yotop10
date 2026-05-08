@@ -8,6 +8,7 @@ import {
   getPercentileValue, getThresholds,
   computeSparkScore, computeParentSparkScore,
 } from '../lib/sparkScore';
+import { indexComment, removeComment } from '../elasticsearch/lib/indexWriter';
 
 const router: Router = Router();
 
@@ -208,6 +209,8 @@ router.patch('/comments/:id',
     comment.content = content;
     await comment.save();
 
+    indexComment(comment as unknown as Record<string, unknown>);
+
     res.json({ comment });
   } catch (error) {
     console.error('Edit comment error:', error);
@@ -269,6 +272,10 @@ router.delete('/comments/:id', async (req: Request, res: Response) => {
 
     // Delete the comment itself
     await Comment.findByIdAndDelete(commentId);
+
+    // Remove from ES
+    removeComment(commentId);
+    for (const id of descendantIds) removeComment(id);
 
     // Decrement post's comment_count by total removed (comment + all descendants)
     const totalRemoved = 1 + descendantIds.length;

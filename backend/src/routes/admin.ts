@@ -28,6 +28,7 @@ import { AlertHistory } from '../models/AlertHistory';
 import { UserEvent } from '../models/UserEvent';
 import { redis } from '../lib/redis';
 import { trustScoreWorker } from '../lib/trustScoreWorker';
+import { indexPost, removePost, indexComment, removeComment } from '../elasticsearch/lib/indexWriter';
 
 const router: Router = Router();
 
@@ -336,6 +337,8 @@ router.patch('/posts/:id/approve', async (req: AdminAuthRequest, res: Response) 
       message: `Your list "${post.title}" was approved and is now live on the feed.`,
     });
 
+    indexPost(post as unknown as Record<string, unknown>);
+
     res.json({ success: true, post });
   } catch (error) {
     console.error('Error approving post:', error);
@@ -431,6 +434,8 @@ router.patch('/posts/:id/reject', async (req: AdminAuthRequest, res: Response) =
       message: `Your list "${post.title}" was not approved. Reason: ${reason.trim()}`,
     });
 
+    indexPost(post as unknown as Record<string, unknown>);
+
     res.json({ success: true, post });
   } catch (error) {
     console.error('Error rejecting post:', error);
@@ -460,6 +465,7 @@ router.post('/posts/bulk/approve', async (req: AdminAuthRequest, res: Response) 
         const { grantBoost, BoostType } = await import('../lib/ladderSystem');
         await grantBoost(post.author_id.toString(), BoostType.POST_APPROVED);
         await createNotification({ user_id: post.author_id, type: 'post_approved', post_id: (post._id as { toString(): string }).toString(), post_title: post.title, message: `Your list "${post.title}" was approved.` });
+        indexPost(post as unknown as Record<string, unknown>);
         approved++;
       } catch (e) { errors.push(`Post ${id}: ${(e as Error).message}`); }
     }
@@ -491,6 +497,7 @@ router.post('/posts/bulk/reject', async (req: AdminAuthRequest, res: Response) =
         await post.save();
         await trustScoreWorker.queueUpdate(post.author_id, (post._id as { toString(): string }).toString(), 'reject');
         await createNotification({ user_id: post.author_id, type: 'post_rejected', post_id: (post._id as { toString(): string }).toString(), post_title: post.title, message: `Your list "${post.title}" was not approved. Reason: ${reason.trim()}` });
+        indexPost(post as unknown as Record<string, unknown>);
         rejected++;
       } catch (e) { errors.push(`Post ${id}: ${(e as Error).message}`); }
     }
@@ -629,6 +636,8 @@ router.patch('/posts/:id', async (req: AdminAuthRequest, res: Response) => {
       }
     }
 
+    indexPost(post as unknown as Record<string, unknown>);
+
     res.json({ success: true, post });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to edit post' }); }
 });
@@ -640,6 +649,7 @@ router.delete('/posts/:id', async (req: AdminAuthRequest, res: Response) => {
     if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
     post.deleted = true; post.deleted_at = new Date(); post.auto_hard_delete_at = new Date(Date.now() + 30 * 86400000);
     await post.save();
+    removePost((post._id as { toString(): string }).toString());
     res.json({ success: true });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to delete post' }); }
 });
@@ -651,6 +661,7 @@ router.post('/posts/:id/restore', async (req: AdminAuthRequest, res: Response) =
     if (!post || !post.deleted) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found or not deleted' });
     post.deleted = false; post.deleted_at = null; post.auto_hard_delete_at = null;
     await post.save();
+    indexPost(post as unknown as Record<string, unknown>);
     res.json({ success: true });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to restore post' }); }
 });
@@ -662,6 +673,7 @@ router.delete('/posts/:id/permanent', async (req: AdminAuthRequest, res: Respons
     if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
     const { ListItem } = await import('../models/ListItem');
     await ListItem.deleteMany({ post_id: post._id });
+    removePost((post._id as { toString(): string }).toString());
     res.json({ success: true });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to permanently delete post' }); }
 });
@@ -673,6 +685,7 @@ router.post('/posts/:id/feature', async (req: AdminAuthRequest, res: Response) =
   post.featured = true; post.featured_at = new Date();
   if (req.body.editorial_note) post.editorial_note = req.body.editorial_note;
   await post.save();
+  indexPost(post as unknown as Record<string, unknown>);
   res.json({ success: true, post });
 });
 
@@ -682,6 +695,7 @@ router.post('/posts/:id/unfeature', async (req: AdminAuthRequest, res: Response)
   if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
   post.featured = false; post.featured_at = null; post.editorial_note = null;
   await post.save();
+  indexPost(post as unknown as Record<string, unknown>);
   res.json({ success: true, post });
 });
 
@@ -691,6 +705,7 @@ router.post('/posts/:id/lock', async (req: AdminAuthRequest, res: Response) => {
   if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
   post.comments_locked = true;
   await post.save();
+  indexPost(post as unknown as Record<string, unknown>);
   res.json({ success: true });
 });
 
@@ -700,6 +715,7 @@ router.post('/posts/:id/unlock', async (req: AdminAuthRequest, res: Response) =>
   if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
   post.comments_locked = false;
   await post.save();
+  indexPost(post as unknown as Record<string, unknown>);
   res.json({ success: true });
 });
 
@@ -709,6 +725,7 @@ router.post('/posts/:id/bump', async (req: AdminAuthRequest, res: Response) => {
   if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
   post.bumped_at = new Date();
   await post.save();
+  indexPost(post as unknown as Record<string, unknown>);
   res.json({ success: true, post });
 });
 
@@ -752,6 +769,7 @@ router.post('/posts/bulk/delete', async (req: AdminAuthRequest, res: Response) =
     const { ids } = req.body;
     if (!Array.isArray(ids) || ids.length === 0 || ids.length > 50) return res.status(400).json({ code: 'VALIDATION', error: 'Provide 1-50 post IDs' });
     const result = await Post.updateMany({ _id: { $in: ids } }, { $set: { deleted: true, deleted_at: new Date(), auto_hard_delete_at: new Date(Date.now() + 30 * 86400000) } });
+    for (const id of ids) removePost(id);
     res.json({ success: true, deleted: result.modifiedCount });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Bulk delete failed' }); }
 });
@@ -777,6 +795,7 @@ router.post('/posts/bulk/status', async (req: AdminAuthRequest, res: Response) =
       if (status === 'approved') post.published_at = new Date();
       await post.save();
       await trustScoreWorker.queueUpdate(post.author_id, (post._id as { toString(): string }).toString(), status === 'approved' ? 'approve' : 'reject');
+      indexPost(post as unknown as Record<string, unknown>);
       changed++;
     }
     res.json({ success: true, changed });
@@ -822,6 +841,7 @@ router.post('/posts/:id/duplicate', async (req: AdminAuthRequest, res: Response)
     const post = await Post.findById(req.params.id).lean();
     if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
     const copy = await Post.create({ ...post, _id: undefined, status: 'pending_review', published_at: undefined, created_at: undefined, updated_at: undefined, slug: '', normalized_title: '', view_count: 0, comment_count: 0, fire_count: 0, version: 0, deleted: false, deleted_at: null, featured: false, comments_locked: false });
+    indexPost(copy as unknown as Record<string, unknown>);
     res.status(201).json({ success: true, post: copy });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Duplicate failed' }); }
 });
@@ -910,6 +930,7 @@ router.patch('/comments/:id', async (req: AdminAuthRequest, res: Response) => {
     if (!comment) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
     if (req.body.content) comment.content = req.body.content.substring(0, 2000);
     await comment.save();
+    indexComment(comment as unknown as Record<string, unknown>);
     res.json({ success: true, comment });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to edit comment' }); }
 });
@@ -921,6 +942,7 @@ router.delete('/comments/:id', async (req: AdminAuthRequest, res: Response) => {
     if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
     c.deleted = true; c.deleted_at = new Date(); c.flag_type = null; c.flag_evidence = null;
     await c.save();
+    removeComment((c._id as { toString(): string }).toString());
     res.json({ success: true });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to delete comment' }); }
 });
@@ -931,6 +953,7 @@ router.post('/comments/:id/restore', async (req: AdminAuthRequest, res: Response
   if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
   c.deleted = false; c.deleted_at = null;
   await c.save();
+  indexComment(c as unknown as Record<string, unknown>);
   res.json({ success: true });
 });
 
@@ -938,6 +961,7 @@ router.post('/comments/:id/restore', async (req: AdminAuthRequest, res: Response
 router.delete('/comments/:id/permanent', async (req: AdminAuthRequest, res: Response) => {
   const c = await Comment.findByIdAndDelete(req.params.id);
   if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
+  removeComment((c._id as { toString(): string }).toString());
   res.json({ success: true });
 });
 
@@ -947,6 +971,7 @@ router.post('/comments/:id/hide', async (req: AdminAuthRequest, res: Response) =
   if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
   c.hidden = true; c.hidden_reason = req.body.reason || null; c.flag_type = null; c.flag_evidence = null;
   await c.save();
+  removeComment((c._id as { toString(): string }).toString());
   res.json({ success: true });
 });
 router.post('/comments/:id/unhide', async (req: AdminAuthRequest, res: Response) => {
@@ -954,6 +979,7 @@ router.post('/comments/:id/unhide', async (req: AdminAuthRequest, res: Response)
   if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
   c.hidden = false; c.hidden_reason = null;
   await c.save();
+  indexComment(c as unknown as Record<string, unknown>);
   res.json({ success: true });
 });
 
@@ -963,6 +989,7 @@ router.post('/comments/:id/highlight', async (req: AdminAuthRequest, res: Respon
   if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
   c.highlighted = true;
   await c.save();
+  indexComment(c as unknown as Record<string, unknown>);
   res.json({ success: true });
 });
 router.post('/comments/:id/unhighlight', async (req: AdminAuthRequest, res: Response) => {
@@ -970,6 +997,7 @@ router.post('/comments/:id/unhighlight', async (req: AdminAuthRequest, res: Resp
   if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
   c.highlighted = false;
   await c.save();
+  indexComment(c as unknown as Record<string, unknown>);
   res.json({ success: true });
 });
 
@@ -978,12 +1006,14 @@ router.post('/comments/bulk/delete', async (req: AdminAuthRequest, res: Response
   const { ids } = req.body;
   if (!Array.isArray(ids) || ids.length === 0 || ids.length > 50) return res.status(400).json({ code: 'VALIDATION', error: 'Provide 1-50 IDs' });
   const r = await Comment.updateMany({ _id: { $in: ids } }, { $set: { deleted: true, deleted_at: new Date(), flag_type: null, flag_evidence: null } });
+  for (const id of ids) removeComment(id);
   res.json({ success: true, deleted: r.modifiedCount });
 });
 router.post('/comments/bulk/hide', async (req: AdminAuthRequest, res: Response) => {
   const { ids, reason } = req.body;
   if (!Array.isArray(ids) || ids.length === 0 || ids.length > 50) return res.status(400).json({ code: 'VALIDATION', error: 'Provide 1-50 IDs' });
   const r = await Comment.updateMany({ _id: { $in: ids } }, { $set: { hidden: true, hidden_reason: reason || null, flag_type: null, flag_evidence: null } });
+  for (const id of ids) removeComment(id);
   res.json({ success: true, hidden: r.modifiedCount });
 });
 
@@ -1034,7 +1064,12 @@ router.post('/comments/:id/apply-penalty', async (req: AdminAuthRequest, res: Re
 
 // 16. Dismiss flag
 router.post('/comments/:id/dismiss-flag', async (req: AdminAuthRequest, res: Response) => {
-  await Comment.findByIdAndUpdate(req.params.id, { $set: { flag_type: null, flag_evidence: null } });
+  const comment = await Comment.findById(req.params.id);
+  if (!comment) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
+  comment.flag_type = null;
+  comment.flag_evidence = null;
+  await comment.save();
+  indexComment(comment as unknown as Record<string, unknown>);
   res.json({ success: true });
 });
 
@@ -1045,6 +1080,7 @@ router.post('/comments/:id/flag', async (req: AdminAuthRequest, res: Response) =
   comment.flag_type = req.body.flag_type || 'manual';
   comment.flag_evidence = req.body.evidence || { flagged_by: 'admin' };
   await comment.save();
+  indexComment(comment as unknown as Record<string, unknown>);
   res.json({ success: true });
 });
 
