@@ -62,7 +62,7 @@ export default function NotificationDetailPage() {
     <div style={{ maxWidth: '700px', margin: '0 auto', padding: '40px 20px', textAlign: 'center' }}>
       <h2 style={{ color: '#999' }}>Notification not found</h2>
       <p style={{ color: '#aaa', fontSize: '13px' }}>
-        It may have been deleted, expired, or you don't have access to it.
+        It may have been deleted, expired, or you don&rsquo;t have access to it.
       </p>
       <button onClick={() => router.push('/notifications')} style={{ marginTop: '12px', padding: '8px 16px', background: '#1565c0', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
         ← Back to notifications

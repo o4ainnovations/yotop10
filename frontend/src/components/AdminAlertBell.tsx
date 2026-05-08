@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 
 interface AlertNotification {
@@ -162,9 +163,9 @@ export default function AdminAlertBell() {
                     Settle all
                   </button>
                 )}
-                <a href="/admin/alerts" style={{ color: '#8D6E63', fontSize: '12px', textDecoration: 'none' }} onClick={() => setOpen(false)}>
+                <Link href="/admin/alerts" style={{ color: '#8D6E63', fontSize: '12px', textDecoration: 'none' }} onClick={() => setOpen(false)}>
                   View all →
-                </a>
+                </Link>
               </div>
             </div>
 
@@ -220,7 +221,7 @@ export default function AdminAlertBell() {
               padding: '8px 16px', borderTop: '1px solid #EFEBE0', textAlign: 'center',
               fontSize: '11px', color: '#A1887F',
             }}>
-              Runs every 60s · <a href="/admin/alerts" style={{ color: '#8D6E63' }}>Manage thresholds</a>
+              Runs every 60s · <Link href="/admin/alerts" style={{ color: '#8D6E63' }}>Manage thresholds</Link>
             </div>
           </div>
         </>

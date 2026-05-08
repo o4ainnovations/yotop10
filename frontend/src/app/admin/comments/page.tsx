@@ -1,14 +1,12 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 
 interface Comment { _id: string; id: string; content: string; author_username: string; post_id: string; post_slug: string | null; post_title: string | null; spark_score: number; fire_count: number; reply_count: number; depth: number; is_item_anchored: boolean; depth_badge: string | null; created_at: string; deleted: boolean; hidden: boolean; highlighted: boolean; flag_type: string | null; flag_evidence: Record<string, unknown> | null; }
 
 export default function AdminCommentsPage() {
-  const router = useRouter();
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -17,7 +15,7 @@ export default function AdminCommentsPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [flagModal, setFlagModal] = useState<{ comment: Comment } | null>(null);
   const [customMin, setCustomMin] = useState(''); const [customTrust, setCustomTrust] = useState('');
-  const [filters, setFilters] = useState({ type: '', sort: 'newest', search: '', has_replies: '' });
+  const [filters, setFilters] = useState({ type: '', sort: 'newest', search: '', has_replies: '', filter: '' });
   const [stats, setStats] = useState<Record<string, number>>({});
 
   const fetchComments = useCallback(async (p: number) => {
@@ -27,7 +25,7 @@ export default function AdminCommentsPage() {
       if (filters.type) params.set('type', filters.type);
       if (filters.search) params.set('search', filters.search);
       if (filters.has_replies) params.set('has_replies', filters.has_replies);
-      if ((filters as any).filter) params.set('filter', (filters as any).filter);
+      if (filters.filter) params.set('filter', filters.filter);
       const data = await apiFetch<{ comments: Comment[]; pagination: { total: number; pages: number }; stats: Record<string, number> }>(`/admin/comments?${params}`);
       setComments(data.comments); setPagination(data.pagination); setStats(data.stats || {});
     } catch {} finally { setLoading(false); }
@@ -35,7 +33,7 @@ export default function AdminCommentsPage() {
 
   useEffect(() => { fetchComments(page); }, [page, fetchComments]);
 
-  const toggleSelect = (id: string) => setSelected(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
+  const toggleSelect = (id: string) => setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   const selectAll = () => selected.size === comments.length ? setSelected(new Set()) : setSelected(new Set(comments.map(c => c._id)));
 
   const quickAction = async (id: string, action: string) => {
@@ -56,8 +54,8 @@ export default function AdminCommentsPage() {
 
   const applyPenalty = async (commentId: string, minutes: number, trustPenalty: number) => {
     try {
-      const r1 = await apiFetch(`/admin/comments/${commentId}/flag`, { method: 'POST', body: JSON.stringify({ flag_type: 'manual', evidence: { flagged_by: 'admin', penalty_min: minutes, penalty_trust: trustPenalty } }) });
-      const r2 = await apiFetch(`/admin/comments/${commentId}/apply-penalty`, { method: 'POST', body: JSON.stringify({ minutes, trust_penalty: trustPenalty }) });
+      await apiFetch(`/admin/comments/${commentId}/flag`, { method: 'POST', body: JSON.stringify({ flag_type: 'manual', evidence: { flagged_by: 'admin', penalty_min: minutes, penalty_trust: trustPenalty } }) });
+      await apiFetch(`/admin/comments/${commentId}/apply-penalty`, { method: 'POST', body: JSON.stringify({ minutes, trust_penalty: trustPenalty }) });
       toast.success(`Done. Flagged + ${minutes}min applied.`);
       setFlagModal(null);
       await new Promise(r => setTimeout(r, 300));
@@ -204,7 +202,7 @@ export default function AdminCommentsPage() {
         <div style={{ background: 'white', padding: '20px', borderRadius: '8px', minWidth: '400px', maxWidth: '500px' }} onClick={e => e.stopPropagation()}>
           <h3>Flag: {flagModal.comment.flag_type?.replace(/_/g, ' ')}</h3>
           <div style={{ background: '#f5f5f5', padding: '10px', borderRadius: '4px', marginBottom: '12px', fontSize: '12px' }}>
-            <p><strong>Comment:</strong> "{flagModal.comment.content?.substring(0, 100)}"</p>
+            <p><strong>Comment:</strong> &ldquo;{flagModal.comment.content?.substring(0, 100)}&rdquo;</p>
             <p><strong>Author:</strong> {flagModal.comment.author_username}</p>
             <p><strong>Evidence:</strong> {JSON.stringify(ev)}</p>
           </div>

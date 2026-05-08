@@ -32,7 +32,7 @@ export default function AllPostsPage() {
 
   useEffect(() => { fetchPosts(page); }, [page, fetchPosts]);
 
-  const toggleSelect = (id: string) => setSelected(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
+  const toggleSelect = (id: string) => setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   const selectAll = () => selected.size === posts.length ? setSelected(new Set()) : setSelected(new Set(posts.map(p => p._id)));
 
   const bulkAction = async (action: string) => {

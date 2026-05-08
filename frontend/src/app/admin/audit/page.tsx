@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 
 interface AuditEntry {
@@ -14,7 +13,6 @@ interface AuditEntry {
 }
 
 export default function AdminAuditPage() {
-  const router = useRouter();
   const [logs, setLogs] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -35,7 +33,7 @@ export default function AdminAuditPage() {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchLogs(page); }, [page, filterAction]);
+  useEffect(() => { fetchLogs(page); }, [page, filterAction, fetchLogs]);
 
   const badgeStyle = (action: string) => {
     if (action === 'login_success') return { bg: '#e8f5e9', color: '#2e7d32', label: 'Login Success' };

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 
 interface NotificationItem {
@@ -228,9 +229,9 @@ export default function NotificationBell() {
             )}
 
             <div style={{ padding: '8px 16px', borderTop: '1px solid #eee', textAlign: 'center' }}>
-              <a href="/notifications" style={{ fontSize: '13px', color: '#1565c0', textDecoration: 'none' }} onClick={() => setOpen(false)}>
+              <Link href="/notifications" style={{ fontSize: '13px', color: '#1565c0', textDecoration: 'none' }} onClick={() => setOpen(false)}>
                 See all notifications →
-              </a>
+              </Link>
             </div>
           </div>
         </>

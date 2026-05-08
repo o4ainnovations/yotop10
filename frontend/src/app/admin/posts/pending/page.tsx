@@ -58,9 +58,9 @@ export default function PendingPostsPage() {
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, []);
+  }, [singleAction]);
 
-  const toggleSelect = (id: string) => setSelected(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
+  const toggleSelect = (id: string) => setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   const selectAll = () => { if (selected.size === posts.length) setSelected(new Set()); else setSelected(new Set(posts.map(p => p._id))); };
 
   const toggleExpand = async (id: string) => {

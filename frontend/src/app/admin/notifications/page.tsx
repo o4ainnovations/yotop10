@@ -84,7 +84,7 @@ export default function AdminNotificationsPage() {
       });
       toast.success(msgType === 'broadcast' ? 'Broadcast sent to all users' : 'Message sent');
       setTitle(''); setBody(''); setRecipient(null); setRecipientQuery('');
-    } catch (e: any) { toast.error(e?.message || 'Failed to send'); }
+    } catch (e) { toast.error((e as Error)?.message || 'Failed to send'); }
     setSending(false);
   };
 
@@ -94,21 +94,7 @@ export default function AdminNotificationsPage() {
       await apiFetch(`/admin/messages/${id}`, { method: 'DELETE' });
       fetchSent(sentPage);
       toast.success('Message retracted');
-    } catch { toast.error('Failed'); }
-  };
-
-  const handleSaveTemplate = async () => {
-    if (!templateName.trim() || !templateTitle.trim() || !templateBody.trim()) return toast.error('All fields required');
-    try {
-      await apiFetch('/admin/messages/templates', {
-        method: 'POST',
-        body: JSON.stringify({ name: templateName.trim(), title: templateTitle.trim(), body: templateBody.trim(), priority: templatePriority }),
-      });
-      fetchTemplates();
-      setTemplateName(''); setTemplateTitle(''); setTemplateBody('');
-      setShowTemplateForm(false);
-      toast.success('Template saved');
-    } catch (e: any) { toast.error(e?.message || 'Failed'); }
+    } catch (e) { toast.error((e as Error)?.message || 'Failed'); }
   };
 
   const handleDeleteTemplate = async (id: string) => {
@@ -181,7 +167,7 @@ export default function AdminNotificationsPage() {
           <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
             <div>
               <label style={{ fontSize: '12px', color: '#666' }}>Priority</label>
-              <select value={priority} onChange={e => setPriority(e.target.value as any)} style={{ padding: '6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px' }}>
+              <select value={priority} onChange={e => setPriority(e.target.value as typeof priority)} style={{ padding: '6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px' }}>
                 <option value="info">Info</option>
                 <option value="important">Important</option>
                 <option value="urgent">Urgent</option>
@@ -260,7 +246,7 @@ export default function AdminNotificationsPage() {
                   style={{ width: '100%', padding: '6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px', fontFamily: 'inherit' }} />
               </div>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <select value={templatePriority} onChange={e => setTemplatePriority(e.target.value as any)} style={{ padding: '6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px' }}>
+                <select value={templatePriority} onChange={e => setTemplatePriority(e.target.value as typeof templatePriority)} style={{ padding: '6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px' }}>
                   <option value="info">Info</option>
                   <option value="important">Important</option>
                   <option value="urgent">Urgent</option>
