@@ -15,7 +15,7 @@ const router: Router = Router();
  * M11.A: GET /api/users/me
  * Returns current user context for authenticated fingerprint
  */
-router.get('/me', async (req: Request, res: Response) => {
+router.get('/me', async (req, res) => {
   if (!req.user) {
     return res.status(404).json({ error: 'User not found' });
   }
@@ -91,7 +91,7 @@ const validateDisplayName = [
     .withMessage('Display name may only contain alphanumeric characters and underscores'),
 ];
 
-router.patch('/me', validateDisplayName, async (req: Request, res: Response) => {
+router.patch('/me', ...validateDisplayName as any[], async (req, res) => {
   if (!req.user) {
     return res.status(404).json({ error: 'User not found' });
   }
@@ -153,7 +153,7 @@ router.patch('/me', validateDisplayName, async (req: Request, res: Response) => 
  * M11.E: GET /api/users/:username
  * Public user profile endpoint
  */
-router.get('/:username', async (req: Request, res: Response) => {
+router.get('/:username', async (req, res) => {
   try {
     const { username } = req.params;
     
@@ -280,15 +280,15 @@ router.get('/:username', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/', (_req: Request, res: Response) => res.status(501).json({ error: 'Not implemented' }));
-router.put('/:id', (_req: Request, res: Response) => res.status(501).json({ error: 'Not implemented' }));
-router.delete('/:id', (_req: Request, res: Response) => res.status(501).json({ error: 'Not implemented' }));
+router.get('/', (_req, res) => res.status(501).json({ error: 'Not implemented' }));
+router.put('/:id', (_req, res) => res.status(501).json({ error: 'Not implemented' }));
+router.delete('/:id', (_req, res) => res.status(501).json({ error: 'Not implemented' }));
 
 /**
  * GET /api/users/me/history
  * Get username history for current user
  */
-router.get('/me/history', async (req: Request, res: Response) => {
+router.get('/me/history', async (req, res) => {
   if (!req.user) {
     return res.status(404).json({ error: 'User not found' });
   }
@@ -310,7 +310,7 @@ router.get('/me/history', async (req: Request, res: Response) => {
  * GET /api/users/me/rate-limits
  * Get current user rate limit status
  */
-router.get('/me/rate-limits', async (req: Request, res: Response) => {
+router.get('/me/rate-limits', async (req, res) => {
   if (!req.user) {
     // Return 425 instead of 404 during initialization
     return res.status(425).json({ 
@@ -396,7 +396,7 @@ router.get('/me/rate-limits', async (req: Request, res: Response) => {
 
 // GET /api/users/me/notifications — Get merged feed (system + admin messages)
 // Query: ?unread=true returns only unread system notifications (for bell)
-router.get('/me/notifications', async (req: Request, res: Response) => {
+router.get('/me/notifications', async (req, res) => {
   if (!req.user) return res.status(401).json({ error: 'Authentication required' });
   try {
     const uid = req.user.user_id;
@@ -436,7 +436,7 @@ router.get('/me/notifications', async (req: Request, res: Response) => {
     }));
 
     const merged = [...sysNotifs.map((n: Record<string, unknown>) => ({ ...n, is_admin: false })), ...adminItems.map((a) => ({ ...a, is_admin: true }))]
-      .sort((a, b) => new Date(b.created_at as string).getTime() - new Date(a.created_at as string).getTime())
+      .sort((a, b) => new Date((b as any).created_at as string).getTime() - new Date((a as any).created_at as string).getTime())
       .slice(0, limit);
 
     res.json({ notifications: merged, unreadCount });
@@ -447,7 +447,7 @@ router.get('/me/notifications', async (req: Request, res: Response) => {
 });
 
 // GET /api/users/me/notifications/unread-count — Quick badge count (system + admin messages)
-router.get('/me/notifications/unread-count', async (req: Request, res: Response) => {
+router.get('/me/notifications/unread-count', async (req, res) => {
   if (!req.user) return res.status(401).json({ error: 'Authentication required' });
   try {
     const uid = req.user.user_id;
@@ -473,7 +473,7 @@ router.get('/me/notifications/unread-count', async (req: Request, res: Response)
 });
 
 // GET /api/users/me/notifications/:id — Single notification (must be after unread-count to avoid route collision)
-router.get('/me/notifications/:id', async (req: Request, res: Response) => {
+router.get('/me/notifications/:id', async (req, res) => {
   if (!req.user) return res.status(401).json({ error: 'Authentication required' });
   try {
     const uid = req.user.user_id;
@@ -517,7 +517,7 @@ router.get('/me/notifications/:id', async (req: Request, res: Response) => {
 });
 
 // PATCH /api/users/me/notifications/:id/read — Mark single notification as read
-router.patch('/me/notifications/:id/read', async (req: Request, res: Response) => {
+router.patch('/me/notifications/:id/read', async (req, res) => {
   if (!req.user) return res.status(401).json({ error: 'Authentication required' });
   try {
     await Notification.findOneAndUpdate(
@@ -532,7 +532,7 @@ router.patch('/me/notifications/:id/read', async (req: Request, res: Response) =
 });
 
 // PATCH /api/users/me/notifications/read-all — Mark all as read (system + dismiss admin messages)
-router.patch('/me/notifications/read-all', async (req: Request, res: Response) => {
+router.patch('/me/notifications/read-all', async (req, res) => {
   if (!req.user) return res.status(401).json({ error: 'Authentication required' });
   try {
     const uid = req.user.user_id;
@@ -556,7 +556,7 @@ router.patch('/me/notifications/read-all', async (req: Request, res: Response) =
 });
 
 // Get merged feed: personal messages + active broadcasts not dismissed
-router.get('/me/messages', async (req: Request, res: Response) => {
+router.get('/me/messages', async (req, res) => {
   if (!req.user) return res.status(401).json({ error: 'Authentication required' });
   try {
     const userId = req.user.user_id;
@@ -587,7 +587,7 @@ router.get('/me/messages', async (req: Request, res: Response) => {
 });
 
 // Dismiss a broadcast (add user to dismissed_by)
-router.patch('/me/messages/:id/dismiss', async (req: Request, res: Response) => {
+router.patch('/me/messages/:id/dismiss', async (req, res) => {
   if (!req.user) return res.status(401).json({ error: 'Authentication required' });
   try {
     await AdminMessage.findByIdAndUpdate(req.params.id, {

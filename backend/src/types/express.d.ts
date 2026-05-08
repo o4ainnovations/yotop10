@@ -9,6 +9,7 @@ declare global {
         username: string;
         trust_score: number;
         device_fingerprint: string;
+        created_at?: Date | string;
         restricted_until?: Date | string;
         custom_display_name?: string;
       };
