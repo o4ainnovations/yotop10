@@ -51,6 +51,8 @@ export default function NotificationsPage() {
     }
     router.push(`/notifications/${n._id}`);
   };
+
+  const handleDismissAdmin = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     try {
       await apiFetch(`/users/me/messages/${id}/dismiss`, { method: 'PATCH' });
