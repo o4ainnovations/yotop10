@@ -27,7 +27,9 @@ interface UserProfile {
     post_type: string;
     comment_count: number;
     created_at: string;
-    category: { name: string; slug: string } | null;
+    category: { name?: string; slug: string } | null;
+    revision_guidance?: string;
+    rejection_reason?: string;
   }>;
   comments: Array<{
     id: string;
