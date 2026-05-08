@@ -102,6 +102,60 @@ are MANDATORY for every change:
 - Never commit code that you know is broken with the intent to "fix later."
   If it's broken, fix it before committing.
 
+### 3.2 🔒 TypeScript Governance (NON-NEGOTIABLE)
+
+These rules prevent type errors from entering the codebase. Every violation
+below is a compile error in production builds.
+
+#### Type Widening Prevention
+- ALL constant objects used as type annotations (config, mappings, enums, error codes)
+  MUST use `as const` on the object literal. This prevents TypeScript from widening
+  `'text'` to `string` and causing incompatibility with library types.
+  ```typescript
+  // ❌ BAD — TypeScript widens 'text' to string
+  const MAPPINGS = { title: { type: 'text', analyzer: 'english' } };
+  // ✅ GOOD — literal types preserved
+  const MAPPINGS = { title: { type: 'text' as const, analyzer: 'english' as const } };
+  ```
+
+#### Library Type Extensions
+- ALL extensions to external library types (Express `Request`, JWT payload,
+  Mongoose `Document`) MUST live in `backend/src/types/` as `.d.ts` declaration files.
+- NEVER cast `req.user` with `as any` or `as unknown as ...`. Extend the type once
+  and all route files pick it up automatically.
+- Required declaration files at minimum:
+  - `types/express.d.ts` — `Request.user`, `Request.admin`, `Request.fingerprint`
+  - `types/jwt.d.ts` — JWT payload claims (`id`, `username`, `token_version`)
+  - `types/mongoose.d.ts` — Custom document fields not in the schema interface
+
+#### Redis Client API
+- Redis `set()` MUST use the options-object form: `redis.set(key, val, { EX: ttl })`.
+- NEVER use the positional form: `redis.set(key, val, 'EX', ttl)` — deprecated and
+  breaks strict TypeScript overload resolution.
+
+#### Duplicate Imports
+- NEVER import the same module twice in the same file. This is trivially caught
+  by `tsc --noEmit` and indicates sloppy editing.
+
+#### Mongoose Lean Types
+- When using `.lean()` on Mongoose queries, use the `Lean<T>` helper from
+  `backend/src/types/mongoose.ts` instead of `Record<string, unknown>`.
+- `.lean()` strips Mongoose document methods — raw casting to `as Record<string, unknown>`
+  loses all type safety and hides real property access errors.
+
+#### Dynamic Property Access
+- When building MongoDB query objects dynamically (`query.created_at.$gte`), type the
+  intermediate object as `Record<string, unknown>` and narrow at the field level,
+  or use a typed builder pattern. Never use `as Record<string, unknown>` on a
+  known-typed object to bypass an assignability error.
+
+#### Zero-Error Incremental Policy
+- Every commit MUST NOT introduce NEW `tsc --noEmit` errors.
+- Fixing pre-existing type errors: fix ALL errors in one file per commit. Do not
+  scatter fixes across files.
+- The total error count must monotonically decrease — it can never go up.
+- Pre-commit hook: `tsc --noEmit` must have 0 new errors vs the previous baseline.
+
 ### Infrastructure as Code
 - Docker Compose, Dockerfile, CI configs, and nginx templates are production
   artifacts. They must be secure, pinned to versions, and follow least-privilege.
