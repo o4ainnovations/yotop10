@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { User } from '../models/User';
 import crypto from 'crypto';
 import { redis } from '../lib/redis';
+import { findMatchingUser, storeFingerprintObservation } from '../lib/fingerprintMatching';
 
 declare module 'express' {
   interface Request {
@@ -47,19 +48,33 @@ export const fingerprintMiddleware = async (req: Request, res: Response, next: N
     const fingerprint = existingCookie || deviceFingerprint;
     req.fingerprint = fingerprint;
 
+    // Parse Tier 0 signals from header for cross-browser matching
+    let tier0: Record<string, string | number | boolean> = {};
+    try { const t0 = req.headers['x-tier0'] as string; if (t0) tier0 = JSON.parse(t0); } catch {}
+
     try {
       let user = await User.findOne({ device_fingerprint: fingerprint });
 
       if (!user) {
         const userId = crypto.randomBytes(4).toString('hex');
         const username = `a_${userId.slice(-4)}`;
-        user = await User.create({
-          user_id: userId,
-          username,
-          device_fingerprint: fingerprint,
-          trust_score: 1.0,
-          is_admin: false,
-        });
+
+        let matchedUserId: string | null = null;
+        if (Object.keys(tier0).length > 0) {
+          matchedUserId = await findMatchingUser(tier0, {}, {});
+        }
+
+        if (matchedUserId) {
+          user = await User.findOneAndUpdate(
+            { user_id: matchedUserId },
+            { $set: { device_fingerprint: fingerprint } },
+            { new: true }
+          );
+        }
+
+        if (!user) {
+          user = await User.create({ user_id: userId, username, device_fingerprint: fingerprint, trust_score: 1.0, is_admin: false });
+        }
       }
 
       req.user = {

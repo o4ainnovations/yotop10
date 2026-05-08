@@ -5,6 +5,7 @@ type FingerprintSignals = Record<string, string | number | boolean>;
 export interface IFingerprintObservation extends Document {
   user_id: string;
   fingerprint_hash: string;
+  tier0: FingerprintSignals;
   tier1: FingerprintSignals;
   tier2: FingerprintSignals;
   observed_at: Date;
@@ -22,6 +23,7 @@ const fingerprintObservationSchema = new Schema<IFingerprintObservation>(
       required: true,
       index: true,
     },
+    tier0: { type: Map, of: Schema.Types.Mixed, default: {} },
     tier1: {
       type: Map,
       of: Schema.Types.Mixed,

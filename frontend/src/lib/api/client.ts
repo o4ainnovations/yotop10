@@ -28,6 +28,21 @@ export async function apiFetch<T>(
     headers['X-Device-Fingerprint'] = deviceFingerprint;
   }
 
+  // Always send Tier 0 machine-stable signals for cross-browser matching
+  if (typeof window !== 'undefined') {
+    try {
+      headers['X-Tier0'] = JSON.stringify({
+        screenResolution: `${window.screen.width}x${window.screen.height}`,
+        colorDepth: window.screen.colorDepth,
+        hardwareConcurrency: navigator.hardwareConcurrency || 0,
+        timezoneOffset: new Date().getTimezoneOffset(),
+        platform: navigator.platform || 'unknown',
+        devicePixelRatio: window.devicePixelRatio,
+        maxTouchPoints: navigator.maxTouchPoints || 0,
+      });
+    } catch {}
+  }
+
   const response = await fetch(url, { ...options, headers, credentials: 'include' });
 
   if (response.status === 425) {

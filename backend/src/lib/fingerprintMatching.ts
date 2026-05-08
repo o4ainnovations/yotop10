@@ -3,33 +3,34 @@ import { FingerprintObservation } from '../models/FingerprintObservation';
 type FingerprintSignals = Record<string, string | number | boolean>;
 
 const SIGNALS = {
+  tier0: [
+    { name: 'screenResolution', weight: 25 },
+    { name: 'colorDepth', weight: 25 },
+    { name: 'hardwareConcurrency', weight: 25 },
+    { name: 'timezoneOffset', weight: 25 },
+    { name: 'platform', weight: 25 },
+    { name: 'devicePixelRatio', weight: 25 },
+    { name: 'maxTouchPoints', weight: 25 },
+  ],
   tier1: [
     { name: 'webglRenderer', weight: 10 },
     { name: 'webglVendor', weight: 10 },
     { name: 'audioFingerprint', weight: 10 },
     { name: 'cpuCoreCount', weight: 10 },
     { name: 'maxHeapSize', weight: 10 },
-    { name: 'devicePixelRatio', weight: 10 },
     { name: 'canvasHash', weight: 10 },
     { name: 'webglExtensions', weight: 10 },
   ],
   tier2: [
-    { name: 'timezoneOffset', weight: 1 },
     { name: 'canvasPixelRatio', weight: 1 },
     { name: 'touchSupport', weight: 1 },
     { name: 'webglShaderPrecision', weight: 1 },
     { name: 'audioSampleRate', weight: 1 },
-    { name: 'colorDepth', weight: 1 },
-    { name: 'hardwareConcurrency', weight: 1 },
     { name: 'localStorageAvailable', weight: 1 },
     { name: 'indexedDBAvailable', weight: 1 },
   ]
 };
 
-/**
- * Time decay weighting
- * Older observations count for exponentially less
- */
 function getSignalAgeWeight(ageDays: number): number {
   if (ageDays < 7) return 1.0;
   if (ageDays < 30) return 0.5;
@@ -37,63 +38,19 @@ function getSignalAgeWeight(ageDays: number): number {
   return 0.0;
 }
 
-/**
- * Tiered similarity score calculation
- */
-function calculateSimilarityScore(signalA: FingerprintSignals, signalB: FingerprintSignals): number {
-  let score = 0;
-  let maximum = 0;
-
-  // Check Tier 1 signals
-  for (const signal of SIGNALS.tier1) {
+function calculateSimilarity(signalA: FingerprintSignals, signalB: FingerprintSignals, signalList: Array<{ name: string; weight: number }>): number {
+  let score = 0; let maximum = 0;
+  for (const signal of signalList) {
     maximum += signal.weight;
-    if (signalA[signal.name] === signalB[signal.name]) {
-      score += signal.weight;
-    }
+    if (signalA[signal.name] !== undefined && signalA[signal.name] === signalB[signal.name]) score += signal.weight;
   }
-
-  // Check Tier 2 signals
-  for (const signal of SIGNALS.tier2) {
-    maximum += signal.weight;
-    if (signalA[signal.name] === signalB[signal.name]) {
-      score += signal.weight;
-    }
-  }
-
-  return score / maximum;
+  return maximum > 0 ? score / maximum : 0;
 }
 
-/**
- * Negative matching logic
- * If 6 out of 7 Tier 1 signals match exactly and one differs: it is still the same device
- */
-function applyNegativeMatching(similarity: number, signalA: FingerprintSignals, signalB: FingerprintSignals): number {
-  let tier1Matches = 0;
-  
-  for (const signal of SIGNALS.tier1) {
-    if (signalA[signal.name] === signalB[signal.name]) {
-      tier1Matches++;
-    }
-  }
-
-  // The single biggest accuracy gain
-  if (tier1Matches >= 6) {
-    return Math.max(similarity, 0.95);
-  }
-
-  return similarity;
-}
-
-/**
- * Find existing user match for new fingerprint observation
- */
-export async function findMatchingUser(tier1: FingerprintSignals, tier2: FingerprintSignals): Promise<string | null> {
-  // Get all observations from last 90 days
+export async function findMatchingUser(tier0: FingerprintSignals, tier1: FingerprintSignals, tier2: FingerprintSignals): Promise<string | null> {
   const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
-  
-  const observations = await FingerprintObservation.find({
-    observed_at: { $gte: ninetyDaysAgo }
-  }).sort({ observed_at: -1 });
+  const observations = await FingerprintObservation.find({ observed_at: { $gte: ninetyDaysAgo } }).sort({ observed_at: -1 }).lean();
+  const allSignals: FingerprintSignals = { ...tier0, ...tier1, ...tier2 };
 
   let bestMatch: { userId: string; score: number } | null = null;
 
@@ -101,50 +58,46 @@ export async function findMatchingUser(tier1: FingerprintSignals, tier2: Fingerp
     const ageMs = Date.now() - observation.observed_at.getTime();
     const ageDays = ageMs / (1000 * 60 * 60 * 24);
     const ageWeight = getSignalAgeWeight(ageDays);
-
     if (ageWeight === 0) continue;
 
-    const observedTier1 = observation.tier1 as unknown as FingerprintSignals;
-    const observedTier2 = observation.tier2 as unknown as FingerprintSignals;
-    
-    let similarity = calculateSimilarityScore(
-      { ...tier1, ...tier2 },
-      { ...observedTier1, ...observedTier2 }
-    );
+    const observedAll = { ...(observation.tier0 as unknown as FingerprintSignals || {}), ...(observation.tier1 as unknown as FingerprintSignals), ...(observation.tier2 as unknown as FingerprintSignals) };
 
-    similarity = applyNegativeMatching(similarity, tier1, observedTier1);
-    similarity *= ageWeight;
+    // Tier 0 (machine-stable) — cross-browser threshold ≥ 0.80
+    const t0Score = calculateSimilarity(allSignals, observedAll, SIGNALS.tier0);
 
-    // ≥0.95 = Same device
-    if (similarity >= 0.95) {
-      return observation.user_id;
+    if (t0Score >= 0.80) {
+      // Same machine confirmed via Tier 0. Accept regardless of Tier 1/2 browser differences.
+      const finalScore = t0Score * ageWeight;
+      if (finalScore >= 0.75) return observation.user_id;
     }
 
-    if (!bestMatch || similarity > bestMatch.score) {
-      bestMatch = {
-        userId: observation.user_id,
-        score: similarity
-      };
+    // Tier 1 + Tier 2 (same-browser re-identification) — threshold ≥ 0.90
+    const t1Score = calculateSimilarity(allSignals, observedAll, SIGNALS.tier1);
+    const t2Score = calculateSimilarity(allSignals, observedAll, SIGNALS.tier2);
+    const combinedScore = (t0Score * 25 + t1Score * 10 + t2Score * 1) / 36 * ageWeight;
+
+    // Negative matching: 6/7 Tier 0 signals = same device
+    let t0Matches = 0;
+    for (const signal of SIGNALS.tier0) {
+      if (allSignals[signal.name] !== undefined && allSignals[signal.name] === observedAll[signal.name]) t0Matches++;
+    }
+    if (t0Matches >= 6 && combinedScore >= 0.70) return observation.user_id;
+
+    if (!bestMatch || combinedScore > bestMatch.score) {
+      bestMatch = { userId: observation.user_id, score: combinedScore };
     }
   }
 
+  if (bestMatch && bestMatch.score >= 0.90) return bestMatch.userId;
   return null;
 }
 
-/**
- * Store new fingerprint observation
- */
 export async function storeFingerprintObservation(
-  userId: string,
-  fingerprintHash: string,
-  tier1: FingerprintSignals,
-  tier2: FingerprintSignals
+  userId: string, fingerprintHash: string,
+  tier0: FingerprintSignals, tier1: FingerprintSignals, tier2: FingerprintSignals
 ): Promise<void> {
   await FingerprintObservation.create({
-    user_id: userId,
-    fingerprint_hash: fingerprintHash,
-    tier1,
-    tier2,
-    observed_at: new Date(),
+    user_id: userId, fingerprint_hash: fingerprintHash,
+    tier0, tier1, tier2, observed_at: new Date(),
   });
 }

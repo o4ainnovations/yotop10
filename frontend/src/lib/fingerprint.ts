@@ -9,6 +9,17 @@ const performanceMemory = typeof window !== 'undefined'
   ? (window.performance as Performance & { memory?: { jsHeapSizeLimit: number } }).memory
   : undefined;
 
+// Tier 0 Signals: Machine-stable, cross-browser — never changes
+interface Tier0Signals {
+  screenResolution: string;
+  colorDepth: number;
+  hardwareConcurrency: number;
+  timezoneOffset: number;
+  platform: string;
+  devicePixelRatio: number;
+  maxTouchPoints: number;
+}
+
 // Tier 1 Signals: 99.9% stability | Weight: 10x
 interface Tier1Signals {
   webglRenderer: string;
@@ -35,11 +46,22 @@ interface Tier2Signals {
 }
 
 interface FingerprintData {
+  tier0: Tier0Signals;
   tier1: Tier1Signals;
   tier2: Tier2Signals;
   hash: string;
   generatedAt: number;
 }
+
+export const getTier0Signals = (): Tier0Signals => ({
+  screenResolution: `${window.screen.width}x${window.screen.height}`,
+  colorDepth: window.screen.colorDepth,
+  hardwareConcurrency: navigator.hardwareConcurrency || 0,
+  timezoneOffset: new Date().getTimezoneOffset(),
+  platform: navigator.platform || 'unknown',
+  devicePixelRatio: window.devicePixelRatio,
+  maxTouchPoints: navigator.maxTouchPoints || 0,
+});
 
 // Generate audio context fingerprint
 const getAudioFingerprint = async (): Promise<number> => {
@@ -115,13 +137,14 @@ const getWebGLInfo = (): { renderer: string; vendor: string; extensions: string;
   }
 };
 
-// Collect all 18 signals
+// Collect all 25 signals
 const collectAllSignals = async (): Promise<FingerprintData> => {
   const webglInfo = getWebGLInfo();
   const audioFingerprint = await getAudioFingerprint();
   const canvasHash = getCanvasHash();
-  
+
   return {
+    tier0: getTier0Signals(),
     tier1: {
       webglRenderer: webglInfo.renderer,
       webglVendor: webglInfo.vendor,
@@ -186,12 +209,21 @@ export const getFingerprint = async (): Promise<string> => {
   return data.hash;
 };
 
-// Run fingerprinting exactly 3000ms after page load per specification
+// Run fingerprinting exactly 3000ms after page load
 if (typeof window !== 'undefined') {
   window.addEventListener('load', () => {
     setTimeout(() => {
-      getFingerprint().catch(() => {
-        // Fallback to simple random fingerprint if collection fails
+      getFingerprint().then(hash => {
+        // Submit full fingerprint data for cross-browser matching
+        const tier0 = getTier0Signals();
+        const full = JSON.parse(safeGetItem('yotop10_fp_full') || '{}');
+        fetch('/api/fingerprint/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tier0, tier1: full.tier1 || {}, tier2: full.tier2 || {}, hash }),
+          credentials: 'include',
+        }).catch(() => {});
+      }).catch(() => {
         const fallback = 'fp_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
         localStorage.setItem('yotop10_fp', fallback);
       });
