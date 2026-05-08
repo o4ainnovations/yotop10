@@ -442,19 +442,43 @@ router.get('/me/notifications', async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/users/me/notifications/:id — Single notification (bypasses all filters, used by detail page)
+// GET /api/users/me/notifications/unread-count — Quick badge count (system + admin messages)
+router.get('/me/notifications/unread-count', async (req: Request, res: Response) => {
+  if (!req.user) return res.status(401).json({ error: 'Authentication required' });
+  try {
+    const uid = req.user.user_id;
+    const now = new Date();
+    let sysCount = 0;
+    let msgCount = 0;
+
+    try { sysCount = await Notification.countDocuments({ user_id: uid, read: false }); } catch {}
+
+    try {
+      msgCount = await AdminMessage.countDocuments({
+        $or: [
+          { type: 'individual', recipient_id: uid, expires_at: { $gt: now } },
+          { type: 'broadcast', dismissed_by: { $nin: [uid] }, expires_at: { $gt: now } },
+        ],
+      });
+    } catch {}
+
+    res.json({ count: sysCount + msgCount });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch unread count' });
+  }
+});
+
+// GET /api/users/me/notifications/:id — Single notification (must be after unread-count to avoid route collision)
 router.get('/me/notifications/:id', async (req: Request, res: Response) => {
   if (!req.user) return res.status(401).json({ error: 'Authentication required' });
   try {
     const uid = req.user.user_id;
     let notification: Record<string, unknown> | null = null;
 
-    // Try system notification first
     const sysNotif = await Notification.findOne({ _id: req.params.id, user_id: uid }).lean();
     if (sysNotif) {
       notification = { ...sysNotif, is_admin: false };
     } else {
-      // Try admin message
       const adminMsg = await AdminMessage.findOne({
         _id: req.params.id,
         $or: [
@@ -485,28 +509,6 @@ router.get('/me/notifications/:id', async (req: Request, res: Response) => {
     res.json({ notification });
   } catch (error) {
     res.status(500).json({ error: 'Failed' });
-  }
-});
-
-// GET /api/users/me/notifications/unread-count — Quick badge count (system + admin messages)
-router.get('/me/notifications/unread-count', async (req: Request, res: Response) => {
-  if (!req.user) return res.status(401).json({ error: 'Authentication required' });
-  try {
-    const uid = req.user.user_id;
-    const now = new Date();
-    const [sysCount, msgCount] = await Promise.all([
-      Notification.countDocuments({ user_id: uid, read: false }),
-      AdminMessage.countDocuments({
-        $or: [
-          { type: 'individual', recipient_id: uid, expires_at: { $gt: now } },
-          { type: 'broadcast', dismissed_by: { $nin: [uid] }, expires_at: { $gt: now } },
-        ],
-      }),
-    ]);
-    res.json({ count: sysCount + msgCount });
-  } catch (error) {
-    console.error('Error fetching unread count:', error);
-    res.status(500).json({ error: 'Failed to fetch unread count' });
   }
 });
 
