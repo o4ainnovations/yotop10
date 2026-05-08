@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 
 interface AlertNotification {
@@ -31,6 +32,7 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 export default function AdminAlertBell() {
+  const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<AlertNotification[]>([]);
   const [open, setOpen] = useState(false);
@@ -62,9 +64,9 @@ export default function AdminAlertBell() {
     setOpen(!open);
   };
 
-  const handleMarkAllRead = async () => {
+  const handleSettleAll = async () => {
     try {
-      await apiFetch('/admin/alerts/notifications/read-all', { method: 'PATCH' });
+      await apiFetch('/admin/alerts/notifications/settle-all', { method: 'PATCH' });
       setUnreadCount(0);
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     } catch { /* ignore */ }
@@ -154,10 +156,10 @@ export default function AdminAlertBell() {
               <div style={{ display: 'flex', gap: '8px' }}>
                 {unreadCount > 0 && (
                   <button
-                    onClick={handleMarkAllRead}
+                    onClick={handleSettleAll}
                     style={{ background: 'none', border: 'none', color: '#D84315', cursor: 'pointer', fontSize: '12px' }}
                   >
-                    Mark all read
+                    Settle all
                   </button>
                 )}
                 <a href="/admin/alerts" style={{ color: '#8D6E63', fontSize: '12px', textDecoration: 'none' }} onClick={() => setOpen(false)}>
@@ -174,6 +176,7 @@ export default function AdminAlertBell() {
               notifications.map((n) => (
                 <div
                   key={n._id}
+                  onClick={() => { setOpen(false); router.push(`/admin/alerts/${n._id}`); }}
                   style={{
                     padding: '10px 16px',
                     backgroundColor: n.read ? 'transparent' : severityBg(n.severity),

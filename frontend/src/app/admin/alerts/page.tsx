@@ -65,6 +65,7 @@ export default function AdminAlertsPage() {
   const [historyTotal, setHistoryTotal] = useState(0);
   const [historyPage, setHistoryPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [activeAlerts, setActiveAlerts] = useState<Map<string, { value: number; severity: string }>>(new Map());
 
   // ─── Form state ──────────────────────────────────────────────
   const [showForm, setShowForm] = useState(false);
@@ -98,6 +99,21 @@ export default function AdminAlertsPage() {
   useEffect(() => { fetchThresholds(); }, [fetchThresholds]);
   useEffect(() => { fetchNotifications(); }, [fetchNotifications]);
   useEffect(() => { fetchHistory(historyPage); }, [fetchHistory, historyPage]);
+
+  // Fetch active alert status
+  useEffect(() => {
+    const fetchActive = async () => {
+      try {
+        const data = await apiFetch<{ active: Array<{ metric: string; value: number; severity: string }> }>('/admin/stats/alerts');
+        const map = new Map<string, { value: number; severity: string }>();
+        for (const a of data.active) map.set(a.metric, { value: a.value, severity: a.severity });
+        setActiveAlerts(map);
+      } catch {}
+    };
+    fetchActive();
+    const interval = setInterval(fetchActive, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // ─── Threshold actions ───────────────────────────────────────
   const handleCreate = async () => {
@@ -219,8 +235,9 @@ export default function AdminAlertsPage() {
                 <th style={{ padding: '8px' }}>Metric</th>
                 <th style={{ padding: '8px' }}>Condition</th>
                 <th style={{ padding: '8px' }}>Severity</th>
+                <th style={{ padding: '8px' }}>Live Status</th>
                 <th style={{ padding: '8px' }}>Cooldown</th>
-                <th style={{ padding: '8px' }}>Status</th>
+                <th style={{ padding: '8px' }}>Enabled</th>
                 <th style={{ padding: '8px' }}>Last Triggered</th>
                 <th style={{ padding: '8px', textAlign: 'right' }}>Actions</th>
               </tr>
@@ -233,6 +250,15 @@ export default function AdminAlertsPage() {
                     <code>{t.operator} {t.threshold}</code>
                   </td>
                   <td style={{ padding: '8px' }}><span style={BADGE(t.severity)}>{t.severity}</span></td>
+                  <td style={{ padding: '8px' }}>
+                    {(() => {
+                      const active = activeAlerts.get(t.metric);
+                      if (!t.enabled) return <span title="Disabled">⚫</span>;
+                      if (active && active.severity === 'critical') return <span style={{ fontSize: '18px' }} title={`Active: ${active.value}`}>🔴</span>;
+                      if (active && active.severity === 'warning') return <span style={{ fontSize: '18px' }} title={`Active: ${active.value}`}>🟠</span>;
+                      return <span style={{ fontSize: '18px' }} title="Normal">🟢</span>;
+                    })()}
+                  </td>
                   <td style={{ padding: '8px', color: '#666' }}>{t.cooldown_minutes}m</td>
                   <td style={{ padding: '8px' }}>
                     <button onClick={() => handleToggle(t._id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }} title={t.enabled ? 'Disable' : 'Enable'}>
@@ -248,7 +274,7 @@ export default function AdminAlertsPage() {
                 </tr>
               ))}
               {thresholds.length === 0 && (
-                <tr><td colSpan={7} style={{ padding: '24px', textAlign: 'center', color: '#999' }}>No thresholds configured. Add one to start monitoring.</td></tr>
+                <tr><td colSpan={8} style={{ padding: '24px', textAlign: 'center', color: '#999' }}>No thresholds configured. Add one to start monitoring.</td></tr>
               )}
             </tbody>
           </table>

@@ -33,7 +33,7 @@ function formatMessage(metric: string, value: number, threshold: number, operato
   return `${METRIC_TITLES[metric] || metric}: value ${value} is ${op} threshold ${threshold}`;
 }
 
-async function computeMetric(metric: string): Promise<number> {
+export async function computeMetric(metric: string): Promise<number> {
   const now = new Date();
   const hourAgo = new Date(now.getTime() - 3600_000);
   const dayAgo = new Date(now.getTime() - 86_400_000);

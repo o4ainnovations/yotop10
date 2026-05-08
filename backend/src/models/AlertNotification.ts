@@ -25,6 +25,8 @@ export interface IAlertNotification extends Document {
   value: number;
   threshold: number;
   read: boolean;
+  settled: boolean;
+  settled_at: Date | null;
   dismissed: boolean;
   created_at: Date;
 }
@@ -38,6 +40,8 @@ const alertNotificationSchema = new Schema<IAlertNotification>(
     value: { type: Number, required: true },
     threshold: { type: Number, required: true },
     read: { type: Boolean, default: false, index: true },
+    settled: { type: Boolean, default: false, index: true },
+    settled_at: { type: Date, default: null },
     dismissed: { type: Boolean, default: false, index: true },
   },
   { timestamps: { createdAt: 'created_at', updatedAt: false } }

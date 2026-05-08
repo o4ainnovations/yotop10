@@ -1596,6 +1596,64 @@ router.delete('/alerts/notifications/:id', async (req: AdminAuthRequest, res: Re
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
+// Get single alert notification with live metric value
+router.get('/alerts/notifications/:id', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const n = await AlertNotificationModel.findById(req.params.id).lean();
+    if (!n) return res.status(404).json({ code: 'NOT_FOUND', error: 'Notification not found' });
+
+    // Compute current metric value for the alert type
+    const { tickAlertEngine } = await import('../lib/alertEngine');
+    // We just need the current value, not a full tick — re-import computeMetric
+    let currentValue: number | null = null;
+    try {
+      const { computeMetric } = await import('../lib/alertEngine');
+      currentValue = await computeMetric(n.alert_type);
+    } catch { /* ignore */ }
+
+    // Get the threshold config
+    const threshold = await AlertThreshold.findOne({ metric: n.alert_type, enabled: true }).lean();
+
+    // Check Redis for active status
+    let active = false;
+    try {
+      active = !!(await redis.get(`alert:${n.alert_type}`));
+    } catch { /* ignore */ }
+
+    res.json({
+      notification: n,
+      current_value: currentValue,
+      threshold_config: threshold,
+      active,
+      still_breaching: currentValue !== null && (threshold?.operator === 'gt' ? currentValue > (threshold?.threshold ?? 0) : currentValue < (threshold?.threshold ?? 0)),
+    });
+  } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+// Settle alert notification (admin acknowledges and addresses)
+router.patch('/alerts/notifications/:id/settle', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const n = await AlertNotificationModel.findByIdAndUpdate(
+      req.params.id,
+      { settled: true, settled_at: new Date(), read: true },
+      { new: true }
+    );
+    if (!n) return res.status(404).json({ code: 'NOT_FOUND', error: 'Notification not found' });
+    res.json({ success: true, notification: n });
+  } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+// Settle all alert notifications
+router.patch('/alerts/notifications/settle-all', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const result = await AlertNotificationModel.updateMany(
+      { settled: false },
+      { settled: true, settled_at: new Date(), read: true }
+    );
+    res.json({ success: true, settled: result.modifiedCount });
+  } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
 // History
 router.get('/alerts/history', async (req: AdminAuthRequest, res: Response) => {
   try {
