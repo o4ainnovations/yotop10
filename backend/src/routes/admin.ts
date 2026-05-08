@@ -1022,8 +1022,6 @@ router.post('/comments/:id/apply-penalty', async (req: AdminAuthRequest, res: Re
       await User.findByIdAndUpdate(user._id, { trust_score: newTrust, restricted_until: newRestricted });
     }
 
-    await Comment.findByIdAndUpdate(req.params.id, { $set: { flag_type: null, flag_evidence: null } });
-
     res.json({ success: true, penalty: { minutes, trust_penalty: trustPenalty } });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to apply penalty' }); }
 });
