@@ -37,7 +37,7 @@ export interface Post {
   view_count: number;
   author_username: string;
   author_display_name: string;
-  category: Category;
+  category_slug: string;
   created_at: string;
 }
 
@@ -89,9 +89,11 @@ export interface TitleCheckResponse {
   allowed: boolean;
   blocked: boolean;
   warning: boolean;
-  matches: Array<{ title: string; slug: string; similarity: number }>;
+  matches: Array<{ title: string; slug: string; category_slug: string; similarity: number }>;
+  pending_conflicts: Array<{ title: string; submitted_at: string }>;
   suggestion?: string;
   etag: string;
+  format_check?: { valid: boolean; code?: string; error?: string; number?: number };
 }
 
 export interface PostSubmissionResponse {
