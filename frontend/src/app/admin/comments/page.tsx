@@ -129,6 +129,8 @@ export default function AdminCommentsPage() {
       <strong>{selected.size} selected</strong>
       <button onClick={() => bulkAction('delete')} disabled={actionLoading}>Delete</button>
       <button onClick={() => bulkAction('hide')} disabled={actionLoading}>Hide</button>
+      <button onClick={() => bulkAction('flag')} disabled={actionLoading}>Flag</button>
+      <button onClick={() => bulkAction('unflag')} disabled={actionLoading}>Unflag</button>
     </div>)}
 
     {loading ? <p>Loading...</p> : comments.length === 0 ? <p>No comments found.</p> : (

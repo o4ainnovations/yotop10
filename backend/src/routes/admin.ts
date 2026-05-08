@@ -1042,6 +1042,22 @@ router.post('/comments/:id/flag', async (req: AdminAuthRequest, res: Response) =
   res.json({ success: true });
 });
 
+// 18. Bulk flag
+router.post('/comments/bulk/flag', async (req: AdminAuthRequest, res: Response) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids) || ids.length === 0 || ids.length > 50) return res.status(400).json({ code: 'VALIDATION', error: 'Provide 1-50 IDs' });
+  const r = await Comment.updateMany({ _id: { $in: ids } }, { $set: { flag_type: 'manual', flag_evidence: { flagged_by: 'admin', bulk: true } } });
+  res.json({ success: true, flagged: r.modifiedCount });
+});
+
+// 19. Bulk unflag
+router.post('/comments/bulk/unflag', async (req: AdminAuthRequest, res: Response) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids) || ids.length === 0 || ids.length > 50) return res.status(400).json({ code: 'VALIDATION', error: 'Provide 1-50 IDs' });
+  const r = await Comment.updateMany({ _id: { $in: ids } }, { $set: { flag_type: null, flag_evidence: null } });
+  res.json({ success: true, unflagged: r.modifiedCount });
+});
+
 // ═══ Stats Endpoints ═══════════════════════════════════════════════
 
 const SNAPSHOT_OR_LIVE = async (req: Request, computeSnapshot: () => Promise<unknown>, computeLive: () => Promise<unknown>) => {
