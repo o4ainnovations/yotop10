@@ -407,7 +407,7 @@ router.get('/me/notifications', async (req: Request, res: Response) => {
       AdminMessage.find({
         $or: [
           { type: 'individual', recipient_id: uid, expires_at: { $gt: now } },
-          { type: 'broadcast', dismissed_by: { $ne: uid }, expires_at: { $gt: now } },
+          { type: 'broadcast', dismissed_by: { $nin: [uid] }, expires_at: { $gt: now } },
         ],
       }).sort({ created_at: -1 }).limit(20).lean(),
     ]);
@@ -448,7 +448,7 @@ router.get('/me/notifications/unread-count', async (req: Request, res: Response)
       AdminMessage.countDocuments({
         $or: [
           { type: 'individual', recipient_id: uid, expires_at: { $gt: now } },
-          { type: 'broadcast', dismissed_by: { $ne: uid }, expires_at: { $gt: now } },
+          { type: 'broadcast', dismissed_by: { $nin: [uid] }, expires_at: { $gt: now } },
         ],
       }),
     ]);
@@ -504,7 +504,7 @@ router.get('/me/messages', async (req: Request, res: Response) => {
       }).sort({ created_at: -1 }).limit(50).lean(),
       AdminMessage.find({
         type: 'broadcast',
-        dismissed_by: { $ne: userId },
+        dismissed_by: { $nin: [userId] },
         expires_at: { $gt: now },
       }).sort({ created_at: -1 }).limit(20).lean(),
     ]);
