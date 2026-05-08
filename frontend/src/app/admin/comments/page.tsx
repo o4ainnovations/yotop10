@@ -94,7 +94,7 @@ export default function AdminCommentsPage() {
     } catch {} finally { setActionLoading(false); }
   };
 
-  const statCards = ['total', 'item_anchored', 'post_comment', 'deleted', 'hidden', 'highlighted'];
+  const statCards = ['total', 'item_anchored', 'post_comment', 'deleted', 'hidden', 'highlighted', 'flagged'];
 
   return (<div>
     <h2>All Comments ({pagination.total})</h2>

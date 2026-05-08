@@ -983,10 +983,10 @@ router.post('/comments/bulk/hide', async (req: AdminAuthRequest, res: Response) 
 
 // 12. Quick stats
 router.get('/comments/stats', async (req: AdminAuthRequest, res: Response) => {
-  const [total, del, hid, hi, itemAnchored, postComment] = await Promise.all([
-    Comment.countDocuments({}), Comment.countDocuments({ deleted: true }), Comment.countDocuments({ hidden: true }), Comment.countDocuments({ highlighted: true }), Comment.countDocuments({ list_item_id: { $ne: null } }), Comment.countDocuments({ list_item_id: null }),
-  ]);
-  res.json({ total, deleted: del, hidden: hid, highlighted: hi, item_anchored: itemAnchored, post_comment: postComment });
+    const [total, del, hid, hi, itemAnchored, postComment, flagged] = await Promise.all([
+      Comment.countDocuments({}), Comment.countDocuments({ deleted: true }), Comment.countDocuments({ hidden: true }), Comment.countDocuments({ highlighted: true }), Comment.countDocuments({ list_item_id: { $ne: null } }), Comment.countDocuments({ list_item_id: null }), Comment.countDocuments({ flag_type: { $ne: null } }),
+    ]);
+    res.json({ total, deleted: del, hidden: hid, highlighted: hi, item_anchored: itemAnchored, post_comment: postComment, flagged });
 });
 
 // 13. Export
