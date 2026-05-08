@@ -1,9 +1,7 @@
 #!/bin/sh
-# Pre-commit hook — enforces zero new TypeScript errors
-# Soft enforcement: skips if tsc not available (host machine)
-# Hard enforcement: CI via `pnpm typecheck`
+# Pre-commit hook — enforces zero new TypeScript errors + zero lint errors
 
-echo "🔍 Checking TypeScript..."
+echo "🔍 Pre-commit checks..."
 
 STAGED_TS=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx)$' | grep -v '\.test\.' | grep -v 'node_modules' | grep -v 'types/')
 
@@ -12,37 +10,45 @@ if [ -z "$STAGED_TS" ]; then
   exit 0
 fi
 
-# Try backend tsc (preferred — uses project's TypeScript version)
+# ─── Backend typecheck ───────────────────────────────────────────
 if [ -d "backend" ] && [ -f "backend/node_modules/.bin/tsc" ]; then
   cd backend
   node_modules/.bin/tsc --noEmit 2>&1
-  RESULT=$?
-  cd ..
-  if [ $RESULT -ne 0 ]; then
-    echo ""
-    echo "❌ TypeScript compilation failed on staged files."
-    echo "   See AGENTS.md Section 3.2."
-    exit 1
-  fi
-  echo "✅ Backend typecheck passed."
-elif command -v tsc >/dev/null 2>&1; then
-  cd backend 2>/dev/null && tsc --noEmit 2>&1
   if [ $? -ne 0 ]; then
-    echo "❌ TypeScript compilation failed."
+    echo "❌ Backend TypeScript compilation failed."
     exit 1
   fi
-  cd ..
   echo "✅ Backend typecheck passed."
+  cd ..
 else
-  echo "⚠️  tsc not available locally — CI will enforce. Commit allowed."
+  echo "⚠️  Backend tsc not available locally — CI will enforce."
 fi
 
-# Check for 'as any' in staged files (fast grep, no deps)
-AS_ANY=$(echo "$STAGED_TS" | xargs grep -l 'as any' 2>/dev/null)
-if [ -n "$AS_ANY" ]; then
-  echo "⚠️  WARNING: 'as any' found in staged files:"
-  echo "$AS_ANY"
-  echo "   CI may reject. See AGENTS.md Section 3.2."
+# ─── Backend lint on staged files ───────────────────────────────
+BACKEND_STAGED=$(echo "$STAGED_TS" | grep '^backend/' | tr '\n' ' ')
+if [ -n "$BACKEND_STAGED" ] && [ -f "backend/node_modules/.bin/eslint" ]; then
+  cd backend
+  echo "$BACKEND_STAGED" | xargs node_modules/.bin/eslint --quiet 2>&1
+  if [ $? -ne 0 ]; then
+    echo "❌ Backend lint failed."
+    exit 1
+  fi
+  echo "✅ Backend lint passed."
+  cd ..
 fi
 
+# ─── Frontend lint on staged files ──────────────────────────────
+FRONTEND_STAGED=$(echo "$STAGED_TS" | grep '^frontend/' | tr '\n' ' ')
+if [ -n "$FRONTEND_STAGED" ] && [ -f "frontend/node_modules/.bin/eslint" ]; then
+  cd frontend
+  echo "$FRONTEND_STAGED" | xargs npx eslint --quiet 2>&1
+  if [ $? -ne 0 ]; then
+    echo "❌ Frontend lint failed."
+    exit 1
+  fi
+  echo "✅ Frontend lint passed."
+  cd ..
+fi
+
+echo "✅ All checks passed."
 exit 0
