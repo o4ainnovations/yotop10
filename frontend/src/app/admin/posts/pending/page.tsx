@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 
-interface PendingPost { _id: string; title: string; author_username: string; post_type: string; created_at: string; revision_count: number; category_slug: string; intro?: string }
+interface PendingPost { _id: string; title: string; author_username: string; post_type: string; created_at: string; revision_count: number; category_slug: string; intro?: string; collision?: { title: string; submitted_at: string; first: boolean } }
 interface CategoryOption { slug: string; name: string; children?: Array<{ slug: string; name: string }> }
 
 export default function PendingPostsPage() {
@@ -148,7 +148,9 @@ export default function PendingPostsPage() {
           <div style={{ display: 'flex', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid #eee', cursor: 'pointer' }}>
             <span style={{ width: '30px' }}><input type="checkbox" checked={selected.has(p._id)} onChange={() => toggleSelect(p._id)} onClick={e => e.stopPropagation()} /></span>
             <span style={{ flex: 1, fontWeight: 'bold', fontSize: '13px' }} onClick={() => toggleExpand(p._id)}>
-              {p.title} {p.revision_count > 0 && <span style={{ background: '#e3f2fd', color: '#1565c0', padding: '1px 4px', borderRadius: '3px', fontSize: '10px' }}>×{p.revision_count}</span>}
+              {p.title}
+              {p.collision && <span style={{ background: '#ffcc02', color: '#333', padding: '1px 5px', borderRadius: '3px', fontSize: '10px', marginLeft: '6px', fontWeight: 'bold' }} title={`Similar pending: ${p.collision.title} (submitted ${new Date(p.collision.submitted_at).toLocaleDateString()})`}>⚡ COLLISION → submitted later</span>}
+              {p.revision_count > 0 && <span style={{ background: '#e3f2fd', color: '#1565c0', padding: '1px 4px', borderRadius: '3px', fontSize: '10px' }}>×{p.revision_count}</span>}
             </span>
             <span style={{ width: '90px', fontSize: '11px', color: '#666' }}>{p.post_type}</span>
             <span style={{ width: '90px', fontSize: '11px' }}>{p.author_username}</span>

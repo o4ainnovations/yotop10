@@ -262,7 +262,37 @@ router.get('/posts/pending', async (req: AdminAuthRequest, res: Response) => {
       Post.countDocuments(query),
     ]);
 
-    res.json({ posts, pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
+    // Detect title collisions: for each pending post, find any other pending
+    // post with >80% similar title and mark the LATER one with collision info
+    const allPending = await Post.find({ status: 'pending_review', deleted: false })
+      .select('title created_at')
+      .sort({ created_at: 1 })
+      .lean();
+
+    const { checkTitleMatch } = await import('../lib/titleSimilarity');
+    const enriched = posts.map((p: Record<string, unknown>) => {
+      const myTime = new Date(p.created_at as string).getTime();
+      for (const other of allPending) {
+        if (String(other._id) === String(p._id)) continue;
+        const result = checkTitleMatch(p.title as string, other.title as string);
+        if (result.similarity >= 80) {
+          const otherTime = new Date((other as any).created_at).getTime();
+          if (myTime > otherTime) {
+            return {
+              ...p,
+              collision: {
+                title: other.title,
+                submitted_at: (other as any).created_at,
+                first: false,
+              },
+            };
+          }
+        }
+      }
+      return p;
+    });
+
+    res.json({ posts: enriched, pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch pending posts' }); }
 });
 
