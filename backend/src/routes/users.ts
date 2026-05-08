@@ -407,14 +407,17 @@ router.get('/me/notifications', async (req: Request, res: Response) => {
     const sysQuery: Record<string, unknown> = { user_id: uid };
     if (unreadOnly) sysQuery.read = false;
 
+    // Admin messages: exclude dismissed only for bell modal (?unread=true)
+    const adminQuery: Record<string, unknown> = {
+      $or: [
+        { type: 'individual', recipient_id: uid, expires_at: { $gt: now } },
+        { type: 'broadcast', dismissed_by: unreadOnly ? { $nin: [uid] } : { $exists: true }, expires_at: { $gt: now } },
+      ],
+    };
+
     const [sysNotifs, adminMsgs] = await Promise.all([
       Notification.find(sysQuery).sort({ created_at: -1 }).limit(limit).lean(),
-      AdminMessage.find({
-        $or: [
-          { type: 'individual', recipient_id: uid, expires_at: { $gt: now } },
-          { type: 'broadcast', dismissed_by: { $nin: [uid] }, expires_at: { $gt: now } },
-        ],
-      }).sort({ created_at: -1 }).limit(20).lean(),
+      AdminMessage.find(adminQuery).sort({ created_at: -1 }).limit(20).lean(),
     ]);
 
     const unreadCount = await Notification.countDocuments({ user_id: uid, read: false });
@@ -427,7 +430,8 @@ router.get('/me/notifications', async (req: Request, res: Response) => {
       priority: m.priority,
       created_by: m.created_by,
       message_type: m.type,
-      read: false, // admin messages are always "unread" until dismissed
+      dismissed: m.dismissed_by.includes(uid),
+      read: false,
       created_at: m.created_at,
     }));
 

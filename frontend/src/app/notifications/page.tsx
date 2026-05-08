@@ -45,7 +45,10 @@ export default function NotificationsPage() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  const handleClick = (n: NotifItem) => {
+  const handleClick = async (n: NotifItem) => {
+    if (!n.is_admin && n.type !== 'admin_message') {
+      try { await apiFetch(`/users/me/notifications/${n._id}/read`, { method: 'PATCH' }); } catch {}
+    }
     router.push(`/notifications/${n._id}`);
   };
 
