@@ -47,4 +47,21 @@ export const adminApi = {
     const qs = new URLSearchParams(params).toString();
     return apiFetch(`/admin/alerts/history${qs ? '?' + qs : ''}`);
   },
+
+  // Outbound messaging
+  sendMessage: (body: Record<string, unknown>) =>
+    apiFetch('/admin/messages', { method: 'POST', body: JSON.stringify(body) }),
+  getMessages: (params: Record<string, string> = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return apiFetch(`/admin/messages${qs ? '?' + qs : ''}`);
+  },
+  retractMessage: (id: string) =>
+    apiFetch(`/admin/messages/${id}`, { method: 'DELETE' }),
+  getMessageStats: (id: string) =>
+    apiFetch(`/admin/messages/${id}/stats`),
+  createMessageTemplate: (body: Record<string, unknown>) =>
+    apiFetch('/admin/messages/templates', { method: 'POST', body: JSON.stringify(body) }),
+  getMessageTemplates: () => apiFetch('/admin/messages/templates'),
+  deleteMessageTemplate: (id: string) =>
+    apiFetch(`/admin/messages/templates/${id}`, { method: 'DELETE' }),
 };

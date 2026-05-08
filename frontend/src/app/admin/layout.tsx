@@ -33,6 +33,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {nav('/admin/comments', 'Comments')}
       {nav('/admin/statistics', 'Statistics')}
       {nav('/admin/alerts', 'Alerts')}
+      {nav('/admin/notifications', 'Notifications')}
       {nav('/admin/audit', 'Audit Logs')}
       <div style={{ borderTop: '1px solid #eee', marginTop: '16px', paddingTop: '8px' }}>
         {nav('/admin/profile', 'Profile')}

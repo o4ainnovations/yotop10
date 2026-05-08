@@ -4,6 +4,7 @@ import { Post } from '../models/Post';
 import { Comment } from '../models/Comment';
 import { User } from '../models/User';
 import { Notification } from '../models/Notification';
+import { AdminMessage } from '../models/AdminMessage';
 import { isUsernameAvailable, recordUsernameChange } from '../lib/usernameService';
 import { calculateEffectivePostLimit, calculateEffectiveCommentLimit, RateLimitStatus, getRateLimitKey } from '../lib/rateLimit';
 import { redis } from '../lib/redis';
@@ -457,6 +458,50 @@ router.patch('/me/notifications/read-all', async (req: Request, res: Response) =
   } catch (error) {
     console.error('Error marking all notifications as read:', error);
     res.status(500).json({ error: 'Failed to mark all as read' });
+  }
+});
+
+// Get merged feed: personal messages + active broadcasts not dismissed
+router.get('/me/messages', async (req: Request, res: Response) => {
+  if (!req.user) return res.status(401).json({ error: 'Authentication required' });
+  try {
+    const userId = req.user.user_id;
+    const now = new Date();
+
+    const [personal, broadcasts] = await Promise.all([
+      AdminMessage.find({
+        type: 'individual',
+        recipient_id: userId,
+        expires_at: { $gt: now },
+      }).sort({ created_at: -1 }).limit(50).lean(),
+      AdminMessage.find({
+        type: 'broadcast',
+        dismissed_by: { $ne: userId },
+        expires_at: { $gt: now },
+      }).sort({ created_at: -1 }).limit(20).lean(),
+    ]);
+
+    const merged = [...personal, ...broadcasts].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+
+    res.json({ messages: merged });
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+// Dismiss a broadcast (add user to dismissed_by)
+router.patch('/me/messages/:id/dismiss', async (req: Request, res: Response) => {
+  if (!req.user) return res.status(401).json({ error: 'Authentication required' });
+  try {
+    await AdminMessage.findByIdAndUpdate(req.params.id, {
+      $addToSet: { dismissed_by: req.user.user_id },
+    });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to dismiss message' });
   }
 });
 

@@ -26,6 +26,8 @@ import { Comment } from '../models/Comment';
 import { AlertThreshold } from '../models/AlertThreshold';
 import { AlertHistory } from '../models/AlertHistory';
 import { AlertNotificationModel } from '../models/AlertNotification';
+import { AdminMessage } from '../models/AdminMessage';
+import { MessageTemplate } from '../models/MessageTemplate';
 import { UserEvent } from '../models/UserEvent';
 import { redis } from '../lib/redis';
 import { trustScoreWorker } from '../lib/trustScoreWorker';
@@ -1690,6 +1692,105 @@ router.get('/alerts/history', async (req: AdminAuthRequest, res: Response) => {
     if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
     res.status(500).json({ error: 'Failed to list history' });
   }
+});
+
+// ═══ Outbound Messaging ════════════════════════════════════════════
+
+import { sendMessageSchema, messageListQuerySchema, templateSchema } from '../schemas/message';
+
+// Send individual or broadcast message
+router.post('/messages', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const body = sendMessageSchema.parse(req.body);
+
+    const message = await AdminMessage.create({
+      type: body.type,
+      recipient_id: body.type === 'individual' ? body.recipient_id : null,
+      title: body.title,
+      body: body.body,
+      priority: body.priority,
+      created_by: req.admin?.username || 'admin',
+      expires_at: new Date(Date.now() + body.expires_in_days * 86400000),
+    });
+
+    res.status(201).json({ success: true, message });
+  } catch (e: any) {
+    if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
+    res.status(500).json({ error: 'Failed to send message' });
+  }
+});
+
+// List sent messages
+router.get('/messages', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const { page, limit, type } = messageListQuerySchema.parse(req.query);
+    const skip = (page - 1) * limit;
+    const query: Record<string, unknown> = {};
+    if (type) query.type = type;
+
+    const [messages, total] = await Promise.all([
+      AdminMessage.find(query).sort({ created_at: -1 }).skip(skip).limit(limit).lean(),
+      AdminMessage.countDocuments(query),
+    ]);
+
+    res.json({ messages, pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
+  } catch (e: any) {
+    if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
+    res.status(500).json({ error: 'Failed to list messages' });
+  }
+});
+
+// Retract/expire a message
+router.delete('/messages/:id', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const m = await AdminMessage.findByIdAndUpdate(req.params.id, { expires_at: new Date() }, { new: true });
+    if (!m) return res.status(404).json({ code: 'NOT_FOUND', error: 'Message not found' });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: 'Failed to retract message' }); }
+});
+
+// Delivery stats for one message
+router.get('/messages/:id/stats', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const m = await AdminMessage.findById(req.params.id).lean();
+    if (!m) return res.status(404).json({ code: 'NOT_FOUND', error: 'Message not found' });
+
+    res.json({
+      message: m,
+      stats: {
+        dismissed: m.dismissed_by.length,
+        type: m.type,
+        target: m.type === 'broadcast' ? 'all users' : m.recipient_id,
+      },
+    });
+  } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+// Templates CRUD
+router.post('/messages/templates', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const body = templateSchema.parse(req.body);
+    const t = await MessageTemplate.create(body);
+    res.status(201).json({ success: true, template: t });
+  } catch (e: any) {
+    if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
+    res.status(500).json({ error: 'Failed to create template' });
+  }
+});
+
+router.get('/messages/templates', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const templates = await MessageTemplate.find().sort({ name: 1 }).lean();
+    res.json({ templates });
+  } catch (e) { res.status(500).json({ error: 'Failed to list templates' }); }
+});
+
+router.delete('/messages/templates/:id', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const t = await MessageTemplate.findByIdAndDelete(req.params.id);
+    if (!t) return res.status(404).json({ code: 'NOT_FOUND', error: 'Template not found' });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: 'Failed to delete template' }); }
 });
 
 // ═══ Comparison & Notifications ════════════════════════════════════
