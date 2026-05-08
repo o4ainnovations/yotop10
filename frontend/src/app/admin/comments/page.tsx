@@ -55,13 +55,15 @@ export default function AdminCommentsPage() {
 
   const applyPenalty = async (commentId: string, minutes: number, trustPenalty: number) => {
     try {
-      await apiFetch(`/admin/comments/${commentId}/flag`, { method: 'POST', body: JSON.stringify({ flag_type: 'manual', evidence: { flagged_by: 'admin', penalty_min: minutes, penalty_trust: trustPenalty } }) });
-      await apiFetch(`/admin/comments/${commentId}/apply-penalty`, { method: 'POST', body: JSON.stringify({ minutes, trust_penalty: trustPenalty }) });
-      toast.success(`${minutes}min pause + ${trustPenalty} trust applied.`);
+      const r1 = await apiFetch(`/admin/comments/${commentId}/flag`, { method: 'POST', body: JSON.stringify({ flag_type: 'manual', evidence: { flagged_by: 'admin', penalty_min: minutes, penalty_trust: trustPenalty } }) });
+      const r2 = await apiFetch(`/admin/comments/${commentId}/apply-penalty`, { method: 'POST', body: JSON.stringify({ minutes, trust_penalty: trustPenalty }) });
+      toast.success(`Done. Flagged + ${minutes}min applied.`);
       setFlagModal(null);
+      await new Promise(r => setTimeout(r, 300));
       fetchComments(page);
     } catch (err) {
-      toast.error('Failed: ' + (err instanceof Error ? err.message : 'unknown'));
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(msg.substring(0, 80));
     }
   };
 
