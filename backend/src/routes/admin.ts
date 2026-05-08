@@ -889,7 +889,7 @@ router.get('/comments', async (req: AdminAuthRequest, res: Response) => {
     const result: Record<string, unknown> = { comments: withSlugs, pagination: { page, limit, total, pages: Math.ceil(total / limit) } };
     if (req.query.stats === 'true') {
       const [totalAll, del, hid, hi, flg] = await Promise.all([
-        Comment.countDocuments({}), Comment.countDocuments({ deleted: true }), Comment.countDocuments({ hidden: true }), Comment.countDocuments({ highlighted: true }), Comment.countDocuments({ flag_type: { $ne: null } }),
+        Comment.countDocuments({}), Comment.countDocuments({ deleted: true }), Comment.countDocuments({ hidden: true }), Comment.countDocuments({ highlighted: true }), Comment.countDocuments({ deleted: { $ne: true }, flag_type: { $ne: null } }),
       ]);
       result.stats = { total: totalAll, deleted: del, hidden: hid, highlighted: hi, flagged: flg };
     }
@@ -913,7 +913,7 @@ router.delete('/comments/:id', async (req: AdminAuthRequest, res: Response) => {
   try {
     const c = await Comment.findById(req.params.id);
     if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
-    c.deleted = true; c.deleted_at = new Date();
+    c.deleted = true; c.deleted_at = new Date(); c.flag_type = null; c.flag_evidence = null;
     await c.save();
     res.json({ success: true });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to delete comment' }); }
@@ -984,7 +984,7 @@ router.post('/comments/bulk/hide', async (req: AdminAuthRequest, res: Response) 
 // 12. Quick stats
 router.get('/comments/stats', async (req: AdminAuthRequest, res: Response) => {
     const [total, del, hid, hi, itemAnchored, postComment, flagged] = await Promise.all([
-      Comment.countDocuments({}), Comment.countDocuments({ deleted: true }), Comment.countDocuments({ hidden: true }), Comment.countDocuments({ highlighted: true }), Comment.countDocuments({ list_item_id: { $ne: null } }), Comment.countDocuments({ list_item_id: null }), Comment.countDocuments({ flag_type: { $ne: null } }),
+      Comment.countDocuments({}), Comment.countDocuments({ deleted: true }), Comment.countDocuments({ hidden: true }), Comment.countDocuments({ highlighted: true }), Comment.countDocuments({ list_item_id: { $ne: null } }), Comment.countDocuments({ list_item_id: null }), Comment.countDocuments({ deleted: { $ne: true }, flag_type: { $ne: null } }),
     ]);
     res.json({ total, deleted: del, hidden: hid, highlighted: hi, item_anchored: itemAnchored, post_comment: postComment, flagged });
 });
