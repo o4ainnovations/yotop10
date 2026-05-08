@@ -62,8 +62,6 @@ export default function NotificationBell() {
     } catch { /* ignore */ }
   };
 
-  if (unreadCount === 0 && !open) return null;
-
   return (
     <div style={{ position: 'relative', display: 'inline-block' }}>
       <button
