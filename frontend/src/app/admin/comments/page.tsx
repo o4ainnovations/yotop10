@@ -58,7 +58,9 @@ export default function AdminCommentsPage() {
       await apiFetch(`/admin/comments/${commentId}/apply-penalty`, { method: 'POST', body: JSON.stringify({ minutes, trust_penalty: trustPenalty }) });
       toast.success(`${minutes}min pause + ${trustPenalty} trust applied.`);
       setFlagModal(null); fetchComments(page);
-    } catch {}
+    } catch (err) {
+      toast.error('Failed to apply penalty.');
+    }
   };
 
   const dismissFlag = async (commentId: string) => {
