@@ -57,11 +57,11 @@ export default function AdminCommentsPage() {
     try {
       await apiFetch(`/admin/comments/${commentId}/flag`, { method: 'POST', body: JSON.stringify({ flag_type: 'manual', evidence: { flagged_by: 'admin', penalty_min: minutes, penalty_trust: trustPenalty } }) });
       await apiFetch(`/admin/comments/${commentId}/apply-penalty`, { method: 'POST', body: JSON.stringify({ minutes, trust_penalty: trustPenalty }) });
-      alert(`${minutes}min + ${trustPenalty} trust applied`);
+      toast.success(`${minutes}min pause + ${trustPenalty} trust applied.`);
       setFlagModal(null);
       fetchComments(page);
     } catch (err) {
-      alert('Apply failed: ' + (err instanceof Error ? err.message : 'unknown'));
+      toast.error('Failed: ' + (err instanceof Error ? err.message : 'unknown'));
     }
   };
 
