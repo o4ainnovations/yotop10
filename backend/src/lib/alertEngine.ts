@@ -53,11 +53,20 @@ export async function computeMetric(metric: string): Promise<number> {
     }
 
     case 'zero_review_hours': {
-      const lastReview = await AuditLog.findOne({
-        action: { $in: ['approve_post', 'reject_post'] },
-      }).sort({ created_at: -1 }).select('created_at').lean();
-      if (!lastReview) return 999;
-      return Math.round((now.getTime() - new Date(lastReview.created_at).getTime()) / 3_600_000);
+      // Query Post directly — last approved or rejected post, not dependent on audit log
+      const lastReviewed = await Post.findOne({
+        status: { $in: ['approved', 'rejected'] },
+        $or: [
+          { published_at: { $ne: null } },
+          { rejection_reason: { $ne: null } },
+        ],
+        deleted: false,
+      }).sort({ updated_at: -1 }).select('published_at updated_at').lean();
+
+      if (!lastReviewed) return 999;
+      const lastAction = lastReviewed.published_at || (lastReviewed as any).updated_at;
+      if (!lastAction) return 999;
+      return Math.round((now.getTime() - new Date(lastAction).getTime()) / 3_600_000);
     }
 
     case 'comment_brigade': {

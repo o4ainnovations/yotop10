@@ -351,6 +351,13 @@ router.patch('/posts/:id/approve', async (req: AdminAuthRequest, res: Response) 
     post.published_at = new Date();
     await post.save();
 
+    logAudit({
+      admin_id: (req.admin?.id as string) || 'unknown',
+      action: 'approve_post',
+      ip: getClientIp(req),
+      metadata: { post_id: (post._id as { toString(): string }).toString(), post_title: post.title },
+    });
+
     await trustScoreWorker.queueUpdate(
       post.author_id,
       (post._id as { toString(): string }).toString(),
@@ -450,6 +457,13 @@ router.patch('/posts/:id/reject', async (req: AdminAuthRequest, res: Response) =
     post.status = 'rejected';
     post.rejection_reason = reason.trim();
     await post.save();
+
+    logAudit({
+      admin_id: (req.admin?.id as string) || 'unknown',
+      action: 'reject_post',
+      ip: getClientIp(req),
+      metadata: { post_id: (post._id as { toString(): string }).toString(), post_title: post.title, reason: reason.trim() },
+    });
 
     await trustScoreWorker.queueUpdate(
       post.author_id,
