@@ -32,13 +32,13 @@ All 9 critical security and crash fixes from the ROM.md audit have been implemen
 **Priority**: HIGH
 **Reference**: `docs/rom.md` Section 8 — Phase 2
 
-| # | Task | Description |
-|---|------|-------------|
-| P2.1 | Create singleton Redis client | Replace 5 per-request `getRedisClient()` functions with shared singleton |
-| P2.2 | Create singleton Elasticsearch client | Export ES client so search routes can use it |
-| P2.3 | Enable MongoDB replica set OR replace `withTransaction()` | Trust score writes crash on standalone MongoDB |
-| P2.4 | Move cron initialization to server.ts | Remove module-level `setInterval` calls, centralize lifecycle |
-| P2.5 | Remove dead setInterval in fingerprint middleware | Delete the 60-second Redis connect/disconnect loop |
+| # | Task | Description | Status |
+|---|------|-------------|--------|
+| P2.1 | Create singleton Redis client | Replace 5 per-request `getRedisClient()` functions with shared singleton | `completed` ✅ |
+| P2.2 | Create singleton Elasticsearch client | Export ES client so search routes can use it | `completed` ✅ |
+| P2.3 | Enable MongoDB replica set OR replace `withTransaction()` | Trust score writes crash on standalone MongoDB | `pending` ⏳ |
+| P2.4 | Move cron initialization to server.ts | Remove module-level `setInterval` calls, centralize lifecycle | `completed` ✅ |
+| P2.5 | Remove dead setInterval in fingerprint middleware | Delete the 60-second Redis connect/disconnect loop | `completed` ✅ |
 
 ---
 

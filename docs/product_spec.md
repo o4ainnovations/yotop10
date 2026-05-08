@@ -278,12 +278,12 @@ Every user can view their exact rate limit status in real-time on their profile 
 /arguments                 → Arguments Page (Hot Debates)
 /hall-of-fame             → Hall of Fame (Best Lists)
 /submit                    → Anonymous post submission
-/post/[id]                → Post detail + comments
-/post/[id]/history        → Post changelog/revisions
-/post/[id]/counter       → Counter-lists for post
+/[slug]                → Post detail + comments
+/[slug]/history        → Post changelog/revisions
+/[slug]/counter       → Counter-lists for post
 /categories               → Browse all categories
 /c/[slug]                 → Category feed
-/any_XXXX                 → User profile (e.g., /any_9Gh7)
+/a/[username]             → User profile (e.g., /a/9Gh7)
 /admin                    → Admin login
 /admin/dashboard           → Review queue
 /admin/posts              → All posts management

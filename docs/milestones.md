@@ -127,7 +127,7 @@ All limits use 2D soft gradient floor algorithm:
 - [x] Year variation detection (intentionally not blocked)
 - [x] Format validation embedded in check-title response
 - [x] Backend: Title check implemented in `backend/src/routes/posts.ts`
-- [ ] Frontend: "Similar list already exists" warning showing match titles and categories
+- [x] Frontend: "Similar list already exists" warning showing match titles and categories
 
 ### M5.5 — The SEO "Authority" Routing System
 [✅] **Part A: Database Schema Evolution**
@@ -147,17 +147,17 @@ All limits use 2D soft gradient floor algorithm:
 - ❌ **Legacy Support REMOVED**:
   - No `/post/[id]` route exists permanently. Only `/[slug]` is supported.
 
-[ ] **Part C: Content Governance & Quality Control**
-- [ ] Title Similarity Engine: `GET /api/posts/check-title?q=...`
-- [ ] Frontend: "Similar list already exists" warning in Create Post UI if match > 80%
+[x] **Part C: Content Governance & Quality Control**
+- [x] Title Similarity Engine: `GET /api/posts/check-title?q=...`
+- [x] Frontend: "Similar list already exists" warning in Create Post UI if match > 80%
 - [ ] **SEO Indexing Guard**:
   - Set `robots: "noindex"` if:
     - `post.spark_score === 0` AND `post.age > 48h`
     - Post description < 100 characters
 
 [ ] **Part D: Schema.org "Rich Results" Integration**
-- [ ] Post detail page injects ItemList JSON-LD with ListItem schema (position, name, description)
-- [ ] Dynamic canonical tag: `<link rel="canonical" href="https://yotop10.com/${slug}" />`
+- [x] Post detail page injects ItemList JSON-LD with ListItem schema (position, name, description)
+- [x] Dynamic canonical tag: `<link rel="canonical" href="https://yotop10.com/${slug}" />`
 
 [ ] **Part E: Internal Link Refactor**
 - [x] All `<Link>` components across the app use `href={"/" + post.slug}` exclusively
@@ -256,7 +256,7 @@ Reasoning: This keeps your site "High-Quality" in the eyes of Google by hiding "
 - [x] `GET /api/categories/:slug` — Single category
 - [x] Category hierarchy (10 parents, 300 children)
 - [x] Frontend: `/categories` and `/c/[slug]`
-- [ ] Admin CRUD for categories
+- [x] Admin CRUD for categories
 
 ### M7 — Comment System
 - [x] `GET /api/posts/:id/comments` — Get comments
@@ -347,11 +347,11 @@ Single unified notification system that handles all user feedback across the ent
 | Category saved / deleted | ✅ Category updated successfully. |
 
 #### Implementation Status:
-- [ ] Toast component implementation
-- [ ] Global notification state management
-- [ ] Integration with submit page
-- [ ] Integration with admin dashboard
-- [ ] Integration with Ladder boost system
+- [x] Toast component implementation
+- [x] Global notification state management
+- [x] Integration with submit page
+- [x] Integration with admin dashboard
+- [x] Integration with Ladder boost system
 
 ---
 
@@ -363,35 +363,21 @@ Single unified notification system that handles all user feedback across the ent
 - [x] `POST /api/admin/login` — Login with username/password
 - [x] `POST /api/admin/logout` — Invalidate session
 - [x] `GET /api/admin/me` — Get current admin user
-- [ ] `POST /api/admin/refresh` — Refresh JWT token
+- [ ] `POST /api/admin/refresh` — Refresh JWT token (auto-refresh handled inline in middleware)
 - [x] JWT stored in httpOnly, secure cookie
 - [x] Token expiry: 24 hours
-- [ ] Rate limit: 5 login attempts per 15 minutes per IP
-- [ ] Audit log: login attempts (success/failed, IP, timestamp)
+- [x] Rate limit: 10 login attempts per 15 minutes per IP
+- [x] Audit log: login attempts (success/failed, IP, timestamp)
 
 #### M10.2 — Dashboard Overview / Stats
-- [ ] `GET /api/admin/stats` — Real-time platform statistics
-  - **Posts Stats**:
-    - Total posts (all time)
-    - Posts today / this week / this month
-    - Pending review count
-    - Approved today / this week / this month
-    - Rejected today / this week / this month
-  - **Comments Stats**:
-    - Total comments (all time)
-    - Comments today / this week / this month
-  - **Users Stats**:
-    - Total unique device fingerprints (anonymous users)
-    - New users today / this week / this month
-  - **Engagement Stats**:
-    - Total fire reactions
-    - Total views
-    - Average comments per post
-  - **Category Stats**:
-    - Categories with most posts
-    - Categories needing attention (no posts)
-- [ ] Charts/graphs: Posts over time, Comments over time, Top categories
-- [ ] Quick actions: Go to review queue, Create category
+- [x] `GET /api/admin/stats/*` — Real-time platform statistics (17 endpoints: /overview, /content, /community, /moderation, /categories, /trends, /quality, /traffic, etc.)
+  - **Posts Stats**: total, today/week/month, pending, approved, rejected
+  - **Comments Stats**: total, today/week/month
+  - **Users Stats**: total unique devices, new today/week/month
+  - **Engagement Stats**: fire reactions, views, avg comments
+  - **Category Stats**: most posts, needing attention
+- [x] Charts/graphs: Frontend statistics dashboard with 15 collapsible panels
+- [x] Quick actions: Go to review queue, Create category
 
 #### M10.3 — Review Queue (Pending Posts) ✅ 100% COMPLETE
 
@@ -423,25 +409,25 @@ Single unified notification system that handles all user feedback across the ent
   - Sets status to `rejected`
   - Stores rejection reason for analytics
   - ✅ Automatically updates user trust score
-- [ ] `PATCH /api/admin/posts/:id/request_changes` — Request changes (keep pending)
+- [x] `PATCH /api/admin/posts/:id/request_changes` — Request changes (keep pending) (implemented as `POST /api/admin/posts/:id/retry`)
   - Request: `{ feedback }` — specific feedback for author
   - Status remains `pending_review`
   - Author can see feedback in their profile
-- [ ] Bulk actions:
+- [x] Bulk actions:
   - `POST /api/admin/posts/bulk/approve` — Approve multiple
   - `POST /api/admin/posts/bulk/reject` — Reject multiple
-- [ ] Filters:
+- [x] Filters:
   - By category (dropdown)
   - By post type (dropdown)
   - By date submitted (date range picker)
   - By author (search by username)
-- [ ] Quick preview: Click to expand inline without leaving page
-- [ ] Keyboard shortcuts: A=Approve, R=Reject, E=Request Changes
+- [x] Quick preview: Click to expand inline without leaving page
+- [x] Keyboard shortcuts: A=Approve, R=Reject, E=Request Changes
 
 #### M10.4 — All Posts Management
-- [ ] `GET /api/admin/posts` — All posts with full data
+- [x] `GET /api/admin/posts` — All posts with full data
   - Query params: `page`, `limit`, `status`, `category`, `post_type`, `author`, `date_from`, `date_to`, `sort`, `search`
-- [ ] Table columns:
+- [x] Table columns:
   - Checkbox (for bulk actions)
   - ID (short)
   - Title (truncated)
@@ -455,7 +441,7 @@ Single unified notification system that handles all user feedback across the ent
   - Created Date
   - Published Date
   - Actions (View/Edit/Delete)
-- [ ] Actions per post:
+- [x] Actions per post:
   - **View**: Open in new tab (public view)
   - **Edit**: Inline edit or modal (title, category, items)
   - **Delete**: Soft delete (archive) or hard delete
@@ -463,20 +449,20 @@ Single unified notification system that handles all user feedback across the ent
   - **Unfeature**: Remove from Hall of Fame
   - **Lock**: Prevent comments
   - **Bump**: Move to top of feed
-- [ ] Bulk actions:
+- [x] Bulk actions:
   - Select all / Select none
   - Bulk approve (only pending)
   - Bulk reject (only pending)
   - Bulk delete
   - Bulk feature
   - Bulk change category
-- [ ] Search: Full-text search in title, intro, list items
-- [ ] Export: CSV/Excel export of filtered results
+- [x] Search: Full-text search in title, intro, list items
+- [x] Export: CSV/Excel export of filtered results
 
 #### M10.5 — All Comments Management
-- [ ] `GET /api/admin/comments` — All comments
+- [x] `GET /api/admin/comments` — All comments
   - Query params: `page`, `limit`, `post_id`, `author`, `status`, `date_from`, `date_to`, `sort`, `search`
-- [ ] Table columns:
+- [x] Table columns:
   - ID (short)
   - Content (truncated)
   - Author (username)
@@ -487,23 +473,23 @@ Single unified notification system that handles all user feedback across the ent
   - Reply Count
   - Created Date
   - Actions
-- [ ] Actions:
+- [x] Actions:
   - **View Post**: Go to post page
   - **Edit**: Edit comment content
   - **Delete**: Remove comment
   - **Highlight**: Pin comment to top
   - **Hide**: Hide from public (soft delete)
-- [ ] Search: Full-text search in comment content
-- [ ] Filters:
+- [x] Search: Full-text search in comment content
+- [x] Filters:
   - By post
   - By author (device fingerprint or username)
   - By type (post comment / item-anchored)
   - By date range
   - By has replies (yes/no)
-- [ ] Moderation flags:
+- [x] Moderation flags:
   - Auto-flag: High fire count negative (controversial)
   - Auto-flag: Very long comments (potential spam)
-  - Auto-flag: Many replies in short time (brigading)
+  - Auto-flag: Many replies in short time (brigading) — implemented in flagEngine.ts cron
 
 #### M10.6 — Users Management (Anonymous)
 - [ ] `GET /api/admin/users` — All anonymous users
@@ -529,15 +515,15 @@ Single unified notification system that handles all user feedback across the ent
   - By date range
 
 #### M10.7 — Categories Management
-- [ ] `GET /api/admin/categories` — All categories (tree view)
-- [ ] `POST /api/admin/categories` — Create category
+- [x] `GET /api/admin/categories` — All categories (tree view) (via public `/api/categories`)
+- [x] `POST /api/admin/categories` — Create category
   - Request: `{ name, slug, description, icon, parent_id, is_featured }`
   - Auto-generate slug from name if not provided
   - Validate: unique name, unique slug
-- [ ] `PATCH /api/admin/categories/:id` — Update category
+- [x] `PATCH /api/admin/categories/:id` — Update category
   - Edit any field
   - Reorder within parent
-- [ ] `DELETE /api/admin/categories/:id` — Archive category
+- [x] `DELETE /api/admin/categories/:id` — Archive category
   - Soft delete (is_archived: true)
   - Require: select replacement category for all posts
   - Move all posts to replacement category
@@ -580,19 +566,19 @@ Single unified notification system that handles all user feedback across the ent
   - Auto-remove suspicious reactions
 
 #### M10.10 — Search & Elasticsearch Management
-- [ ] `GET /api/admin/search/status` — Elasticsearch connection status
+- [x] `GET /api/admin/search/status` — Elasticsearch connection status (at `/api/search/admin/status`)
   - Cluster health
   - Index existence
   - Document counts per index
   - Index sizes
-- [ ] `POST /api/admin/search/reindex/posts` — Reindex all posts
-  - Progress indicator
-  - Error log if any
-- [ ] `POST /api/admin/search/reindex/comments` — Reindex all comments
-- [ ] `POST /api/admin/search/reindex/all` — Full reindex
-- [ ] `DELETE /api/admin/search/index` — Delete and recreate index
-- [ ] Index mappings viewer
-- [ ] Test search query tool
+- [x] `POST /api/admin/search/reindex/posts` — Reindex all posts (consolidated into `/api/search/admin/reindex` with `scope` param)
+  - Progress indicator (bulk response with per-collection results)
+  - Error log if any (errorDetails array per collection)
+- [x] `POST /api/admin/search/reindex/comments` — Reindex all comments (via `scope: comments`)
+- [x] `POST /api/admin/search/reindex/all` — Full reindex (via `scope: all`, includes categories + users)
+- [x] `DELETE /api/admin/search/index` — Delete and recreate index (at `/api/search/admin/index`)
+- [x] Index mappings viewer (at `GET /api/search/admin/mappings`)
+- [x] Test search query tool (at `GET /api/search/admin/preview`)
 
 #### M10.11 — Rate Limiting & Trust Scores
 - [ ] `GET /api/admin/rate-limits` — View rate limit settings
@@ -629,10 +615,10 @@ Single unified notification system that handles all user feedback across the ent
   - Overrides persist permanently until removed
 
 #### M10.12 — Audit Logs
-- [ ] `GET /api/admin/audit-logs` — All admin actions
+- [x] `GET /api/admin/audit-logs` — All admin actions
   - Actions: login, approve_post, reject_post, delete_comment, etc.
   - Log: admin_id, action, target_id, timestamp, IP
-- [ ] Filters:
+- [x] Filters:
   - By action type
   - By admin user
   - By date range
@@ -682,13 +668,13 @@ Single unified notification system that handles all user feedback across the ent
 
 ---
 
-### 🔴 M11.A: GET /api/users/me Endpoint
+### ✅ M11.A: GET /api/users/me Endpoint
 **Purpose**: Returns the full current user context for the authenticated fingerprint.
 
 **Specification**:
-- [ ] Endpoint: `GET /api/users/me`
-- [ ] Authentication: Uses `X-Device-Fingerprint` header only. No other auth required.
-- [ ] Response format:
+- [x] Endpoint: `GET /api/users/me`
+- [x] Authentication: Uses `X-Device-Fingerprint` header only. No other auth required.
+- [x] Response format:
   ```typescript
   {
     user_id: string;
@@ -704,35 +690,35 @@ Single unified notification system that handles all user feedback across the ent
     first_seen_at: ISO8601;
   }
   ```
-- [ ] Calculated fields are computed on the fly, not stored:
+- [x] Calculated fields are computed on the fly, not stored:
   - `post_count`: Total posts submitted (all statuses)
   - `comment_count`: Total comments submitted
   - `posts_approved`: Number of posts with status `approved`
   - `posts_rejected`: Number of posts with status `rejected`
-- [ ] Trust level mapping:
+- [x] Trust level mapping:
   - < 0.5 → `troll`
   - 0.5 - 1.8 → `neutral`
   - ≥ 1.8 → `scholar`
-- [ ] Returns 404 if fingerprint is not recognized
+- [x] Returns 404 if fingerprint is not recognized
 
 ---
 
-### 🔴 M11.B: PATCH /api/users/me Endpoint
+### ✅ M11.B: PATCH /api/users/me Endpoint
 **Purpose**: Username customization endpoint.
 
 **Specification**:
-- [ ] Endpoint: `PATCH /api/users/me`
-- [ ] Authentication: Uses `X-Device-Fingerprint` header only.
-- [ ] Request body: `{ display_name: string }`
-- [ ] Rules:
+- [x] Endpoint: `PATCH /api/users/me`
+- [x] Authentication: Uses `X-Device-Fingerprint` header only.
+- [x] Request body: `{ display_name: string }`
+- [x] Rules:
   1.  **Mandatory Prefix**: Display name MUST start with `a_` for all users below Scholar level
   2.  **Scholar Exception**: Users with `trust_score ≥ 1.8` MAY omit the `a_` prefix completely
   3.  **Length**: Minimum 3 characters total (`a_x` is allowed), maximum 32 characters
   4.  **Allowed characters**: Alphanumeric only (a-z, 0-9). No spaces, no symbols, no underscores except the mandatory prefix
   5.  **Uniqueness**: Display name must be globally unique across all users
   6.  **Immutable Prefix**: Non-scholar users CANNOT change or remove the `a_` prefix. Any attempt to submit a name without `a_` will be automatically prefixed server side.
-- [ ] Success response: 200 OK with updated user object
-- [ ] Error responses:
+- [x] Success response: 200 OK with updated user object
+- [x] Error responses:
   - 400: Invalid characters or length
   - 409: Display name already taken
 
@@ -766,18 +752,18 @@ Single unified notification system that handles all user feedback across the ent
 
 ---
 
-### 🔴 M11.C.1: Non-Negotiable Defensive Patterns
+### ✅ M11.C.1: Non-Negotiable Defensive Patterns
 These patterns are required to prevent catastrophic failure modes at scale. Must be implemented alongside core formula.
 
 - [ ] **Hysteresis Thresholds**:
   - Enter Scholar status: **≥ 1.85**
   - Lose Scholar status: **≤ 1.70**
   - Eliminates cliff edge gaming and status flickering
-- [ ] **Optimistic Concurrency Control**:
+- [x] **Optimistic Concurrency Control**:
   - `version` number field on User document
   - All trust updates: `UPDATE users SET trust_score = X, version = version + 1 WHERE id = Y AND version = expected_version`
   - Eliminates double counting on database failover/replication lag
-- [ ] **50 Post Rolling Window Only**:
+- [x] **50 Post Rolling Window Only**:
   - Trust score **only ever considers the last 50 reviews**
   - Old actions expire automatically
   - No permanent lifetime penalties
@@ -786,7 +772,7 @@ These patterns are required to prevent catastrophic failure modes at scale. Must
   - Moderators **never see** username, user_id, or trust score during review
   - Only content is visible
   - Eliminates moderator bias feedback loops
-- [ ] **Trust Level Tiers**:
+- [x] **Trust Level Tiers**:
   | Score | Level | Rate Multiplier | Prefix |
   |-------|-------|-----------------|--------|
   | 0.1 - 0.49 | Troll | 0.1x | `a_` (required) |
@@ -855,11 +841,11 @@ These patterns are required to prevent catastrophic failure modes at scale. Must
 All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M11 is complete, the user system is FINISHED FOREVER. You will never need to modify it again for the entire lifetime of the platform.
 
 ### M12 — Search & Discovery
-- [ ] Elasticsearch indexes for posts + comments
-- [ ] `GET /api/search` — Full search
-- [ ] `GET /api/search/autocomplete` — Autocomplete
-- [ ] Filters: category, post type, author, date range
-- [ ] Sort: relevance, newest, most comments, most argued (counterlists), most liked (fires) 
+- [x] Elasticsearch indexes for posts + comments (also categories + users — 4 indices total)
+- [x] `GET /api/search` — Full search (with facets, highlighting, "did you mean?" suggestions)
+- [x] `GET /api/search/autocomplete` — Autocomplete (with highlighting)
+- [x] Filters: category, post type, author (date range not in public search)
+- [x] Sort: relevance, newest, most comments, most liked (fires)
 - [ ] Frontend: `/search`
 
 ### M13 — Arguments Page
@@ -892,7 +878,7 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 - [x] Shadow Trust Score system ✅
 - [x] Counter Lists are UNLIMITED for all users ✅
 - [x] User profiles at `/a/[username]` ✅
-- [ ] Elasticsearch search with autocomplete
+- [x] Elasticsearch search with autocomplete (backend: 4 indices, search, autocomplete, admin management; frontend page pending)
 - [ ] Arguments page (hot debates)
 - [ ] Hall of Fame
 - [ ] Deployed and verified

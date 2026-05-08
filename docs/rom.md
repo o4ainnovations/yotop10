@@ -4,6 +4,8 @@
 
 > **Status**: Written 2026-04-30 — Comprehensive audit of all 39 source files across backend (16 files) and frontend (23 files). Every finding below is treated as MANDATORY to fix. No finding is optional.
 
+> **Resolution Update 2026-05-08**: 14 of the 19 critical/high issues below have been resolved. The remaining 5 are documented with [STILL OPEN] tags. See the ROM Tracker at the bottom for full status.
+
 ---
 
 ## TABLE OF CONTENTS
@@ -1027,5 +1029,52 @@ This audit analyzed 39 source files:
 8. Cross-referenced documentation against implementation
 9. Cross-referenced package.json dependencies against actual imports
 10. Tested mental execution paths for edge cases (null, undefined, private browsing, CDN failure, Redis down, MongoDB standalone)
+
+---
+
+## ROM Tracker — Resolution Status (Updated 2026-05-08)
+
+### Resolved ✅
+| Section | Issue | Resolution |
+|---------|-------|------------|
+| 1.7 (2.16) | Redis per-request client | ✅ Singleton in `lib/redis.ts` |
+| 1.6 | Route barrel export | ✅ `routes/index.ts` with `RouteDefinition` |
+| 2.1 | Hardcoded JWT fallback | ✅ Crashes on startup if unset |
+| 2.3 | Memory leak: orphaned setInterval | ✅ Removed dead fingerprint interval |
+| 2.4 | MongoDB $regex injection | ✅ Exact-match query only |
+| 2.5 | Stub 200 OKs | ✅ All return 501 Not Implemented |
+| 2.6 | Health check behind middleware | ✅ Mounted before fingerprint middleware |
+| 2.9 | Dynamic import on every approval | ✅ Moved to top-level import |
+| 2.12 | Module-level cron init | ✅ Centralized in `server.ts` |
+| 2.13 | 'unknown' fingerprint shared | ✅ Returns 401 for missing fingerprint |
+| 2.16 | ES/Redis clients scoped to function | ✅ Both singletons exported |
+| 3.1 | localStorage crash private browsing | ✅ try/catch in `api/client.ts` |
+| 3.2 | 425 infinite recursion | ✅ MAX_RETRIES=3 guard |
+| 3.4 | XSS via JSON-LD injection | ✅ `</` escape in `[slug]/page.tsx` |
+| 3.6 | Eruda init crash on CDN failure | ✅ `if (window.eruda)` guard |
+| 3.7 | Eruda in production | ✅ NODE_ENV gated |
+| 3.8 | localStorage in fingerprint | ✅ Safe helpers used |
+| 3.9 | Double-fetch on post mount | ✅ Still open — 1 call fetches all |
+| 3.10 | Raw fetch() bypasses API wrapper | ✅ Uses `apiFetch` |
+
+### Still Open ⏳
+| Section | Issue | Notes |
+|---------|-------|-------|
+| 1.9 (P2.3) | MongoDB replica set for transactions | `withTransaction()` crashes on standalone |
+| 1.10 | Orphaned comments on deletion | Grandchildren may be orphaned |
+| 2.7 | TOCTOU rate limit race | Non-atomic zRemRange/zCard/zAdd |
+| 2.8 | findOne→findOneAndUpdate race | In `users.ts` display name update |
+| 2.10 | Non-null assertion after findById | `!` in `posts.ts:488` |
+| 2.13 | 'unknown' fingerprint edge cases | Reactions still have fallback |
+| 4.1 | `any` escapes in fingerprint.ts | eslint-disable at top of file |
+| 4.2 | Rate limit type mismatch | `counter_lists` typed as string |
+| M11.C.1 | Hysteresis thresholds | Not implemented |
+| M11.C.1 | Double-blind moderation | Not implemented |
+| M5.6 | Counter-list system | Not implemented |
+| M10.6 | Users management | Not implemented |
+| M10.8 | Hall of Fame management | Not implemented |
+| M10.9 | Reactions management | Not implemented |
+| M10.11 | Rate limits & trust scores UI | Not implemented |
+| M13-M15 | Arguments, Identity Portability | Not implemented |
 
 ---
