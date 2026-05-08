@@ -55,6 +55,7 @@ export default function AdminCommentsPage() {
 
   const applyPenalty = async (commentId: string, minutes: number, trustPenalty: number) => {
     try {
+      await apiFetch(`/admin/comments/${commentId}/flag`, { method: 'POST', body: JSON.stringify({ flag_type: 'manual', evidence: { flagged_by: 'admin', penalty_min: minutes, penalty_trust: trustPenalty } }) });
       await apiFetch(`/admin/comments/${commentId}/apply-penalty`, { method: 'POST', body: JSON.stringify({ minutes, trust_penalty: trustPenalty }) });
       alert(`${minutes}min + ${trustPenalty} trust applied`);
       setFlagModal(null);
