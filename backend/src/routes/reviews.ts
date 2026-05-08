@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 
 const router: Router = Router();
 router.get('/', (_req, res) => res.status(501).json({ error: 'Not implemented' }));

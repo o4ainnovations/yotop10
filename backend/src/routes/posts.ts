@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import { body, validationResult } from 'express-validator';
 import crypto from 'crypto';
 import mongoose from 'mongoose';

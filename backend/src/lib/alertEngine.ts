@@ -1,14 +1,12 @@
 import { AlertThreshold } from '../models/AlertThreshold';
 import { AlertHistory } from '../models/AlertHistory';
-import { AlertNotificationModel } from '../models/AlertNotification';
+import { AlertNotificationModel, type AlertMetric } from '../models/AlertNotification';
 import { Post } from '../models/Post';
 import { Comment } from '../models/Comment';
 import { User } from '../models/User';
-import { AuditLog } from '../models/AuditLog';
 import { PlatformSnapshot } from '../models/PlatformSnapshot';
 import { redis } from './redis';
 import { countDocs } from '../elasticsearch/lib/indexWriter';
-import type { AlertMetric } from '../models/AlertNotification';
 
 const ALERT_REDIS_PREFIX = 'alert:';
 const ALERT_TICK_MS = 60_000;

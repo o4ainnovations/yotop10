@@ -4,7 +4,6 @@ import { Category } from '../../models/Category';
 import { User } from '../../models/User';
 import { countDocs } from './indexWriter';
 import { bulkReindexPosts, bulkReindexComments, bulkReindexCategories, bulkReindexUsers } from './bulkWriter';
-import { Notification } from '../../models/Notification';
 
 const GAP_THRESHOLD_PCT = 5;
 const GAP_PERSIST_CHECKS = 2;

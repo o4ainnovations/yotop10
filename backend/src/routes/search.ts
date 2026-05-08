@@ -1,8 +1,6 @@
-import { Router, Request, Response, RequestHandler } from 'express';
+import { Router, RequestHandler } from 'express';
 import { es } from '../lib/elasticsearch';
-import { INDEX_PREFIX } from '../elasticsearch/lib/indexer';
-import { ensureIndices } from '../elasticsearch/lib/indexer';
-import { indexPost, indexComment, indexCategory, indexUser, removeCategory } from '../elasticsearch/lib/indexWriter';
+import { INDEX_PREFIX, ensureIndices } from '../elasticsearch/lib/indexer';
 import { bulkReindexPosts, bulkReindexComments, bulkReindexCategories, bulkReindexUsers } from '../elasticsearch/lib/bulkWriter';
 import { adminAuthMiddleware } from '../lib/adminAuth';
 import { searchRateLimit, autocompleteRateLimit } from '../lib/searchRateLimit';

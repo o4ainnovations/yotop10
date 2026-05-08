@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import { body, validationResult } from 'express-validator';
 import mongoose from 'mongoose';
 import { Comment } from '../models/Comment';

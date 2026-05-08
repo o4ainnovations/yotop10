@@ -1,6 +1,5 @@
 import { Comment } from '../models/Comment';
 import { User } from '../models/User';
-import { PageVisit } from '../models/PageVisit';
 
 export async function runFlagDetection(): Promise<void> {
   try {
@@ -22,7 +21,7 @@ export async function runFlagDetection(): Promise<void> {
       byUser.get(c.author_id)!.push({ content: c.content, id: c._id.toString(), post_id: c.post_id.toString() });
     }
 
-    for (const [userId, comments] of byUser) {
+    for (const [, comments] of byUser) {
       if (comments.length < 2) continue;
       const groups: Array<{ ids: string[]; content: string }> = [];
       for (let i = 0; i < comments.length; i++) {

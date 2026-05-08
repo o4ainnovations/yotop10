@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { Request, Response, NextFunction, RequestHandler } from 'express';
+import { Request, RequestHandler } from 'express';
 import { AdminUser } from '../models/AdminUser';
 import { getEnv } from './env';
 

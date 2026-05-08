@@ -1,5 +1,4 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { Category } from './Category';
 // import { updateUserTrustScore } from '../lib/trustScore';
 
 export interface IPost extends Document {

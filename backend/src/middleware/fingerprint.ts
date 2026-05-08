@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { User } from '../models/User';
 import crypto from 'crypto';
 import { redis } from '../lib/redis';
-import { findMatchingUser, storeFingerprintObservation } from '../lib/fingerprintMatching';
+import { findMatchingUser } from '../lib/fingerprintMatching';
 
 declare module 'express' {
   interface Request {

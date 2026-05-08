@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction, RequestHandler } from 'express';
+import { RequestHandler } from 'express';
 import { atomicCheckRateLimit } from './redis';
 import { getClientIp } from '../middleware/fingerprint';
 

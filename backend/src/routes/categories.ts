@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import { Category } from '../models/Category';
 import { Post } from '../models/Post';
 import { adminAuthMiddleware } from '../lib/adminAuth';

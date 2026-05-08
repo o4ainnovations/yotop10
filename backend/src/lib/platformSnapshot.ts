@@ -4,9 +4,7 @@ import { Comment } from '../models/Comment';
 import { User } from '../models/User';
 import { Category } from '../models/Category';
 import { PageVisit } from '../models/PageVisit';
-import { UserEvent } from '../models/UserEvent';
 import { Notification } from '../models/Notification';
-import { AuditLog } from '../models/AuditLog';
 import { AlertThreshold } from '../models/AlertThreshold';
 import { AlertHistory } from '../models/AlertHistory';
 import { redis } from './redis';
@@ -31,7 +29,7 @@ async function computeSnapshot(dateStr: string) {
     trollsActive24h,
     fireTotal,
     pageVisitsTotal, pageVisitsToday,
-    reviewsToday, approvedToday, rejectedToday, retryToday,
+    _reviewsToday, approvedToday, rejectedToday, retryToday,
     categoryDocs,
     topComments,
     topFired,
@@ -85,7 +83,7 @@ async function computeSnapshot(dateStr: string) {
   }
 
   const categoryChildren = categoryDocs.filter((c: Record<string, unknown>) => c.parent_id);
-  const categoryParents = categoryDocs.filter((c: Record<string, unknown>) => !c.parent_id);
+  const _categoryParents = categoryDocs.filter((c: Record<string, unknown>) => !c.parent_id);
   const topCategories = [...categoryDocs]
     .sort((a: Record<string, unknown>, b: Record<string, unknown>) => (b.post_count as number) - (a.post_count as number))
     .slice(0, 10)
@@ -185,7 +183,7 @@ async function writeCronHeartbeat(name: string, success: boolean, error?: string
       last_success: success ? new Date().toISOString() : null,
       last_error: error || null,
     }));
-  } catch {}
+  } catch { /* Redis may be down — heartbeat write is best-effort */ }
 }
 
 let cronHandle: NodeJS.Timeout | null = null;
@@ -214,7 +212,7 @@ export function startSnapshotCron(): void {
   runSnapshotNow();
 
   // Auto hard-delete expired soft-deleted posts every 60 seconds
-  const hardDeleteInterval = setInterval(async () => {
+  setInterval(async () => {
     try {
       const result = await Post.deleteMany({ auto_hard_delete_at: { $lt: new Date(), $ne: null } });
       if (result.deletedCount > 0) console.log(`[HardDelete] Removed ${result.deletedCount} expired soft-deleted posts`);

@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import { findMatchingUser, storeFingerprintObservation } from '../lib/fingerprintMatching';
 import { User } from '../models/User';
 
