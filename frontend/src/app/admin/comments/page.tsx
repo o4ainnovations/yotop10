@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 
-interface Comment { _id: string; id: string; content: string; author_username: string; post_id: string; post_slug: string | null; post_title: string | null; spark_score: number; fire_count: number; reply_count: number; depth: number; is_item_anchored: boolean; depth_badge: string | null; created_at: string; deleted: boolean; hidden: boolean; highlighted: boolean; }
+interface Comment { _id: string; id: string; content: string; author_username: string; post_id: string; post_slug: string | null; post_title: string | null; spark_score: number; fire_count: number; reply_count: number; depth: number; is_item_anchored: boolean; depth_badge: string | null; created_at: string; deleted: boolean; hidden: boolean; highlighted: boolean; flag_type: string | null; flag_evidence: Record<string, unknown> | null; }
 
 export default function AdminCommentsPage() {
   const router = useRouter();
@@ -15,6 +15,8 @@ export default function AdminCommentsPage() {
   const [pagination, setPagination] = useState({ total: 0, pages: 0 });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [actionLoading, setActionLoading] = useState(false);
+  const [flagModal, setFlagModal] = useState<{ comment: Comment } | null>(null);
+  const [customMin, setCustomMin] = useState(''); const [customTrust, setCustomTrust] = useState('');
   const [filters, setFilters] = useState({ type: '', sort: 'newest', search: '', has_replies: '' });
   const [stats, setStats] = useState<Record<string, number>>({});
 
@@ -47,6 +49,37 @@ export default function AdminCommentsPage() {
       fetchComments(page);
     } catch {}
   };
+
+  const applyPenalty = async (commentId: string, minutes: number, trustPenalty: number) => {
+    try {
+      await apiFetch(`/admin/comments/${commentId}/apply-penalty`, { method: 'POST', body: JSON.stringify({ minutes, trust_penalty: trustPenalty }) });
+      toast.success(`${minutes}min pause + ${trustPenalty} trust applied.`);
+      setFlagModal(null); fetchComments(page);
+    } catch {}
+  };
+
+  const dismissFlag = async (commentId: string) => {
+    try {
+      await apiFetch(`/admin/comments/${commentId}/dismiss-flag`, { method: 'POST' });
+      toast.success('Flag dismissed.');
+      setFlagModal(null); fetchComments(page);
+    } catch {}
+  };
+
+  const flagBadge = (type: string) => {
+    const map: Record<string, { label: string; color: string }> = { spam_repetition: { label: '⚠️ Spam', color: '#e65100' }, spam_link_first: { label: '🔗 Spam', color: '#e65100' }, brigade_referrer: { label: '🚨 Brigade', color: '#c62828' }, brigade_fresh: { label: '🚨 Brigade', color: '#c62828' } };
+    const m = map[type] || { label: '⚠️', color: '#999' };
+    return <span style={{ background: m.color, color: 'white', padding: '1px 5px', borderRadius: '3px', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer' }}>{m.label}</span>;
+  };
+
+  function getRecommended(comment: Comment): { minutes: number; trust_penalty: number } {
+    if (!comment.flag_type || !comment.flag_evidence) return { minutes: 5, trust_penalty: -0.01 };
+    const e = comment.flag_evidence;
+    if (comment.flag_type === 'spam_repetition') return { minutes: Math.min(30, (e.duplicates as number) * 5), trust_penalty: -0.01 * (e.duplicates as number) };
+    if (comment.flag_type === 'spam_link_first') return { minutes: 5, trust_penalty: -0.01 };
+    if (comment.flag_type.includes('brigade')) return { minutes: (e.count as number) ? Math.min(60, Math.floor((e.count as number) / 5) * 30) : 30, trust_penalty: -0.01 * Math.floor((e.count as number || 5) / 5) };
+    return { minutes: 5, trust_penalty: -0.01 };
+  }
 
   const bulkAction = async (action: string) => {
     const ids = Array.from(selected);
@@ -116,7 +149,7 @@ export default function AdminCommentsPage() {
               </a>
             </td>
             <td style={{ padding: '4px' }}>{c.author_username}</td>
-            <td style={{ padding: '4px', fontSize: '11px' }}>{c.is_item_anchored ? '🎯 Item' : '💬 Post'}</td>
+            <td style={{ padding: '4px', fontSize: '11px' }}>{c.is_item_anchored ? '🎯 Item' : '💬 Post'} {c.flag_type && <span onClick={e => { e.stopPropagation(); setFlagModal({ comment: c }); }}>{flagBadge(c.flag_type)}</span>}</td>
             <td style={{ padding: '4px' }}>{c.fire_count}</td>
             <td style={{ padding: '4px' }}>{c.reply_count}</td>
             <td style={{ padding: '4px', fontSize: '11px' }}>{Number(c.spark_score).toFixed(2)}</td>
@@ -138,5 +171,33 @@ export default function AdminCommentsPage() {
       <span>Page {page} of {pagination.pages}</span>
       <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)}>Next</button>
     </div>
+
+    {flagModal && (() => { const rec = getRecommended(flagModal.comment); const ev = flagModal.comment.flag_evidence || {};
+      return <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.3)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setFlagModal(null)}>
+        <div style={{ background: 'white', padding: '20px', borderRadius: '8px', minWidth: '400px', maxWidth: '500px' }} onClick={e => e.stopPropagation()}>
+          <h3>Flag: {flagModal.comment.flag_type?.replace(/_/g, ' ')}</h3>
+          <div style={{ background: '#f5f5f5', padding: '10px', borderRadius: '4px', marginBottom: '12px', fontSize: '12px' }}>
+            <p><strong>Comment:</strong> "{flagModal.comment.content?.substring(0, 100)}"</p>
+            <p><strong>Author:</strong> {flagModal.comment.author_username}</p>
+            <p><strong>Evidence:</strong> {JSON.stringify(ev)}</p>
+          </div>
+          <p style={{ fontSize: '13px', color: '#666' }}>Recommended: <strong>{rec.minutes}min pause, {rec.trust_penalty} trust</strong></p>
+          <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+            <button onClick={() => applyPenalty(flagModal.comment._id, rec.minutes, rec.trust_penalty)} style={{ padding: '8px 16px', cursor: 'pointer', background: '#e65100', color: 'white', border: 'none', borderRadius: '4px', fontSize: '13px' }}>Apply Recommended</button>
+            <button onClick={() => dismissFlag(flagModal.comment._id)} style={{ padding: '8px 16px', cursor: 'pointer', fontSize: '13px' }}>Dismiss Flag</button>
+          </div>
+          <div style={{ marginTop: '12px', borderTop: '1px solid #eee', paddingTop: '12px' }}>
+            <p style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>Custom:</p>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input value={customMin} onChange={e => setCustomMin(e.target.value)} placeholder={`${rec.minutes} min`} style={{ width: '70px', padding: '6px', fontSize: '12px' }} />
+              <span>min</span>
+              <input value={customTrust} onChange={e => setCustomTrust(e.target.value)} placeholder={`${rec.trust_penalty} trust`} style={{ width: '90px', padding: '6px', fontSize: '12px' }} />
+              <span>trust</span>
+              <button onClick={() => { const m = parseInt(customMin) || rec.minutes; const t = parseFloat(customTrust) || rec.trust_penalty; applyPenalty(flagModal.comment._id, m, t); }} style={{ padding: '6px 12px', cursor: 'pointer', fontSize: '12px' }}>Apply</button>
+            </div>
+          </div>
+        </div>
+      </div>;
+    })()}
   </div>);
 }

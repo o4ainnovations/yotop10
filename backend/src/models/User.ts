@@ -86,6 +86,7 @@ const userSchema = new Schema<IUser>(
       expires_at: { type: Date },
     },
     last_boost_granted_at: { type: Date },
+    restricted_until: { type: Date, default: null },
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

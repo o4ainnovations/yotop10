@@ -19,6 +19,8 @@ export interface IComment extends Document {
   hidden_reason: string | null;
   highlighted: boolean;
   content_history: Array<{ content: string; changed_at: Date }>;
+  flag_type: string | null;
+  flag_evidence: Record<string, unknown> | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -90,6 +92,8 @@ const commentSchema = new Schema<IComment>(
     hidden_reason: { type: String, default: null },
     highlighted: { type: Boolean, default: false },
     content_history: { type: [{ content: String, changed_at: Date }], default: [] },
+    flag_type: { type: String, default: null },
+    flag_evidence: { type: Schema.Types.Mixed, default: null },
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

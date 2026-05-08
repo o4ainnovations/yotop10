@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 import { AdminUser } from '../models/AdminUser';
+import { User } from '../models/User';
 import { SetupToken } from '../models/SetupToken';
 import { Post } from '../models/Post';
 import { ListItem } from '../models/ListItem';
@@ -1003,6 +1004,34 @@ router.get('/comments/:id/activity', async (req: AdminAuthRequest, res: Response
   const c = await Comment.findById(req.params.id).select('content_history').lean();
   if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
   res.json({ content_history: c.content_history || [] });
+});
+
+// 15. Apply penalty
+router.post('/comments/:id/apply-penalty', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const comment = await Comment.findById(req.params.id);
+    if (!comment) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
+
+    const minutes = Math.min(12 * 60, Math.max(1, parseInt(req.body.minutes) || 5));
+    const trustPenalty = Math.max(-1.0, Math.min(0, parseFloat(req.body.trust_penalty) || -0.01));
+
+    const user = await User.findOne({ user_id: comment.author_id });
+    if (user) {
+      const newTrust = Math.max(0.1, (user.trust_score || 1.0) + trustPenalty);
+      const newRestricted = new Date(Date.now() + minutes * 60 * 1000);
+      await User.findByIdAndUpdate(user._id, { trust_score: newTrust, restricted_until: newRestricted });
+    }
+
+    await Comment.findByIdAndUpdate(req.params.id, { $set: { flag_type: null, flag_evidence: null } });
+
+    res.json({ success: true, penalty: { minutes, trust_penalty: trustPenalty } });
+  } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to apply penalty' }); }
+});
+
+// 16. Dismiss flag
+router.post('/comments/:id/dismiss-flag', async (req: AdminAuthRequest, res: Response) => {
+  await Comment.findByIdAndUpdate(req.params.id, { $set: { flag_type: null, flag_evidence: null } });
+  res.json({ success: true });
 });
 
 // ═══ Stats Endpoints ═══════════════════════════════════════════════

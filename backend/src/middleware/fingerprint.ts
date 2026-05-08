@@ -17,6 +17,7 @@ declare module 'express' {
         comments_per_hour?: number | null;
       };
       is_admin: boolean;
+      restricted_until: Date | null;
       created_at?: Date;
     };
     fingerprint?: string;
@@ -70,6 +71,7 @@ export const fingerprintMiddleware = async (req: Request, res: Response, next: N
         trust_locked: user.trust_locked,
         rate_limit_override: user.rate_limit_override,
         is_admin: user.is_admin,
+        restricted_until: user.restricted_until || null,
         created_at: user.created_at,
       };
 

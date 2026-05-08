@@ -94,6 +94,9 @@ const startServer = async () => {
     const { startSnapshotCron } = await import('./lib/platformSnapshot');
     startSnapshotCron();
 
+    const { startFlagCron } = await import('./lib/flagEngine');
+    startFlagCron();
+
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
