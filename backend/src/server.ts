@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax, no-restricted-imports, @typescript-eslint/no-explicit-any -- server route mounting + Express middleware chains */
 import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';

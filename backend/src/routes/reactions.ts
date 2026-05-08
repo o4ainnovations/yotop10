@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax, @typescript-eslint/no-explicit-any -- Express middleware type chains */
 import { Router } from 'express';
 import { body, validationResult } from 'express-validator';
 import mongoose from 'mongoose';

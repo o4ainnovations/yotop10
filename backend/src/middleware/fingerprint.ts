@@ -50,7 +50,7 @@ export const fingerprintMiddleware = async (req: Request, res: Response, next: N
 
     // Parse Tier 0 signals from header for cross-browser matching
     let tier0: Record<string, string | number | boolean> = {};
-    try { const t0 = req.headers['x-tier0'] as string; if (t0) tier0 = JSON.parse(t0); } catch {}
+    try { const t0 = req.headers['x-tier0'] as string; if (t0) tier0 = JSON.parse(t0); } catch { /* bad header — ignore */ }
 
     try {
       let user = await User.findOne({ device_fingerprint: fingerprint });

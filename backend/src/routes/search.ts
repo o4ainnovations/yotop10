@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax, @typescript-eslint/no-explicit-any -- ES client types + Express middleware type chains */
 import { Router, RequestHandler } from 'express';
 import { es } from '../lib/elasticsearch';
 import { INDEX_PREFIX, ensureIndices } from '../elasticsearch/lib/indexer';

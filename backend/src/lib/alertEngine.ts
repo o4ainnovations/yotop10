@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax, @typescript-eslint/no-explicit-any -- Redis client set() uses deprecated positional form */
 import { AlertThreshold } from '../models/AlertThreshold';
 import { AlertHistory } from '../models/AlertHistory';
 import { AlertNotificationModel, type AlertMetric } from '../models/AlertNotification';

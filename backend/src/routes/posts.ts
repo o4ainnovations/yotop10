@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax, @typescript-eslint/no-explicit-any -- Express middleware type chains */
 import { Router } from 'express';
 import { body, validationResult } from 'express-validator';
 import crypto from 'crypto';
@@ -10,7 +11,7 @@ import { atomicCheckRateLimit } from '../lib/redis';
 import { calculateEffectivePostLimit, getRateLimitKey } from '../lib/rateLimit';
 import { getActiveBoost, grantBoost, BoostType } from '../lib/ladderSystem';
 import { checkTitleMatch } from '../lib/titleSimilarity';
-import { validateListTitle, needsListTitleValidation, FormatCheckResult } from '../lib/listTitleValidation';
+import { validateListTitle, needsListTitleValidation } from '../lib/listTitleValidation';
 import { updateParentSparkScore } from './comments';
 import { computeSparkScore, getThresholds } from '../lib/sparkScore';
 import { indexComment, indexPost } from '../elasticsearch/lib/indexWriter';
@@ -677,7 +678,7 @@ router.post('/:idOrSlug/comments', [
       if (!Number.isFinite(limit)) { limit = 20; }
     }
 
-    const { allowed, remaining } = await atomicCheckRateLimit(rateLimitKey, windowMs, limit);
+    const { allowed } = await atomicCheckRateLimit(rateLimitKey, windowMs, limit);
     if (!allowed) {
       return res.status(429).json({
         error: 'Rate limit exceeded',

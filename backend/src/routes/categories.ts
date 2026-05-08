@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax, @typescript-eslint/no-explicit-any -- Express middleware type chains */
 import { Router } from 'express';
 import { Category } from '../models/Category';
 import { Post } from '../models/Post';

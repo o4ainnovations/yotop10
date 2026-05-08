@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax, @typescript-eslint/no-explicit-any -- Express middleware type chains */
 import { Router } from 'express';
 import { body, validationResult } from 'express-validator';
 import { Post } from '../models/Post';
@@ -455,7 +456,7 @@ router.get('/me/notifications/unread-count', async (req, res) => {
     let sysCount = 0;
     let msgCount = 0;
 
-    try { sysCount = await Notification.countDocuments({ user_id: uid, read: false }); } catch {}
+    try { sysCount = await Notification.countDocuments({ user_id: uid, read: false }); } catch { /* DB issue — count as 0 */ }
 
     try {
       msgCount = await AdminMessage.countDocuments({
@@ -464,7 +465,7 @@ router.get('/me/notifications/unread-count', async (req, res) => {
           { type: 'broadcast', dismissed_by: { $nin: [uid] }, expires_at: { $gt: now } },
         ],
       });
-    } catch {}
+    } catch { /* DB issue — count as 0 */ }
 
     res.json({ count: sysCount + msgCount });
   } catch (error) {

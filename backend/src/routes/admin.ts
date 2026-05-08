@@ -1210,7 +1210,7 @@ router.get('/stats/health', async (req, res) => {
 router.get('/stats/overview', async (req, res) => {
   try {
     const today = new Date(); today.setHours(0, 0, 0, 0);
-    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 3600000);
+    const _threeDaysAgo = new Date(Date.now() - 3 * 24 * 3600000);
     const [tp, tc, tu, pn, orphans, peakQueueHour, peakSubmitHour, totalPosts, approved, rejected, totalComments] = await Promise.all([
       Post.countDocuments({ created_at: { $gte: today }, deleted: false }),
       Comment.countDocuments({ created_at: { $gte: today }, deleted: false, hidden: false }),
@@ -1384,7 +1384,7 @@ router.get('/stats/traffic', async (req, res) => {
       if (existing) { existing.count += r.count; }
       else { topRefs.push(r); }
     }
-    let population: Record<string,number>={}; try { population = require('../data/countryPopulation.json'); } catch {}
+    let population: Record<string,number>={}; try { population = require('../data/countryPopulation.json'); } catch { /* file may not exist in dev */ }
     const countriesWithPop = countries.map((c: Record<string,unknown>)=>{const code=c._id as string; const pop=population[code]||null; return {code,count:c.count,population:pop,visits_per_million:pop?Math.round((c.count as number/pop)*1000000*100)/100:null};});
     res.json({ visits_today: visitsToday, unique_today: uniqueFps.length, top_paths: topPaths.map((p:Record<string,unknown>)=>({path:p._id,count:p.count})), browsers: browserMap, os: osMap, peak_hours: peakHours.map((h:Record<string,unknown>)=>({hour:h._id,count:h.count})), top_referrers: topRefs, countries: countriesWithPop, top_engaged: engagement.map((e:Record<string,unknown>)=>({slug:e.slug,title:e.title,ratio:Math.round((e.ratio as number)*1000)/10})), top_engaged_items: itemEngagement.map((i:Record<string,unknown>)=>({title:i.item_title,rank:i.item_rank,comment_count:i.comment_count})), new_users_by_referrer: newUserByRef.map((r:Record<string,unknown>)=>({source:r._id,count:r.count})) });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
@@ -1619,8 +1619,6 @@ router.get('/alerts/notifications/:id', async (req, res) => {
     if (!n) return res.status(404).json({ code: 'NOT_FOUND', error: 'Notification not found' });
 
     // Compute current metric value for the alert type
-    const { tickAlertEngine } = await import('../lib/alertEngine');
-    // We just need the current value, not a full tick — re-import computeMetric
     let currentValue: number | null = null;
     try {
       const { computeMetric } = await import('../lib/alertEngine');

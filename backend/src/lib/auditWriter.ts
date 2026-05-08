@@ -40,7 +40,7 @@ export async function getAuditStats(): Promise<Record<string, unknown>> {
   try {
     const cached = await redis.get(STATS_CACHE_KEY);
     if (cached) return JSON.parse(cached);
-  } catch {}
+  } catch { /* cache miss or Redis down — compute live */ }
 
   const twentyFourH = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
@@ -63,7 +63,7 @@ export async function getAuditStats(): Promise<Record<string, unknown>> {
 
   try {
     await redis.set(STATS_CACHE_KEY, JSON.stringify(stats), { EX: STATS_CACHE_TTL });
-  } catch {}
+  } catch { /* cache miss or Redis down — compute live */ }
 
   return stats;
 }
