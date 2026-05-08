@@ -21,7 +21,6 @@ import {
 import { PlatformSnapshot } from '../models/PlatformSnapshot';
 import { Category } from '../models/Category';
 import { PageVisit } from '../models/PageVisit';
-import { User } from '../models/User';
 import { Comment } from '../models/Comment';
 import { AlertThreshold } from '../models/AlertThreshold';
 import { AlertHistory } from '../models/AlertHistory';

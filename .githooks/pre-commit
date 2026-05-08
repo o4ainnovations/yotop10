@@ -12,21 +12,27 @@ if [ -z "$STAGED_TS" ]; then
   exit 0
 fi
 
-# Try backend tsc
+# Try backend tsc (preferred — uses project's TypeScript version)
 if [ -d "backend" ] && [ -f "backend/node_modules/.bin/tsc" ]; then
   cd backend
   node_modules/.bin/tsc --noEmit 2>&1
-  if [ $? -ne 0 ]; then
+  RESULT=$?
+  cd ..
+  if [ $RESULT -ne 0 ]; then
     echo ""
     echo "❌ TypeScript compilation failed on staged files."
     echo "   See AGENTS.md Section 3.2."
     exit 1
   fi
   echo "✅ Backend typecheck passed."
+elif command -v tsc >/dev/null 2>&1; then
+  cd backend 2>/dev/null && tsc --noEmit 2>&1
+  if [ $? -ne 0 ]; then
+    echo "❌ TypeScript compilation failed."
+    exit 1
+  fi
   cd ..
-elif command -v npx >/dev/null 2>&1; then
-  npx -p typescript tsc --noEmit 2>/dev/null || true
-  echo "⚠️  tsc not fully available — CI will enforce. Commit allowed."
+  echo "✅ Backend typecheck passed."
 else
   echo "⚠️  tsc not available locally — CI will enforce. Commit allowed."
 fi
