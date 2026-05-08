@@ -873,7 +873,7 @@ router.get('/comments', async (req: AdminAuthRequest, res: Response) => {
     const sortDir = (req.query.sort as string) === 'oldest' ? 1 : -1;
 
     const [comments, total] = await Promise.all([
-      Comment.find(query).sort({ [sortField]: sortDir }).skip(skip).limit(limit).lean(),
+      Comment.find(query).sort({ deleted: 1, [sortField]: sortDir }).skip(skip).limit(limit).lean(),
       Comment.countDocuments(query),
     ]);
 
