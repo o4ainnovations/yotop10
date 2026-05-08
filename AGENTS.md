@@ -46,6 +46,24 @@ Before milestone completion:
 - Never commit .env files or secrets
 - Commit message format: `[MXX.X] Description`
 
+### 3.0 🔄 Commit & Documentation Sync (NON-NEGOTIABLE)
+
+After EVERY significant implementation (any task that creates or modifies
+more than trivial code):
+
+1. **Commit** — Stage ALL changes with `git add .` and commit with proper format
+2. **Push** — `git push` to origin immediately after commit
+3. **Documentation sync** — ALL documentation files MUST be updated to match
+   the current state of the codebase before the task is considered complete:
+   - `ram.md` — Current task status, completed items, next steps
+   - `docs/milestones.md` — Checkbox status for all affected milestone items
+   - `docs/rom.md` — Any resolved issues, new architectural decisions
+   - `docs/product_spec.md` — Feature additions, API changes
+   - `docs/plans.md` — Implementation details if applicable
+
+**This is a mandatory step. A task is NOT complete until code is committed,
+pushed, and ALL documentation reflects reality.**
+
 ---
 
 ## 3.1 🏭 Enterprise-Grade Implementation Standards (NON-NEGOTIABLE)
