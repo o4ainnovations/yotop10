@@ -1,3 +1,6 @@
+const ALL_TIME_REGEX = /\b(all time|of all time)\b/i;
+const YEAR_ANYWHERE = /\b(19[5-9]\d|20[0-3]\d)\b/;
+
 const RANKING_KEYWORDS = /\b(top|best|worst|greatest|most|least|finest|favorite|iconic|legendary|essential|influential|underrated|overrated|controversial|important|hidden|all.time|must.know|must.see|must.read|must.watch)\b/i;
 
 const LIST_POST_TYPES = new Set([
@@ -6,7 +9,7 @@ const LIST_POST_TYPES = new Set([
 
 export interface FormatCheckResult {
   valid: boolean;
-  code?: 'NO_NUMBER' | 'NUMBER_TOO_SMALL' | 'NUMBER_TOO_LARGE' | 'NO_RANKING_KEYWORD' | 'NOT_LIST_TYPE';
+  code?: 'NO_NUMBER' | 'NUMBER_TOO_SMALL' | 'NUMBER_TOO_LARGE' | 'NO_RANKING_KEYWORD' | 'NOT_LIST_TYPE' | 'ALL_TIME_WITH_YEAR';
   error?: string;
   number?: number;
 }
@@ -16,6 +19,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   NUMBER_TOO_SMALL: 'Minimum list size is 3. Use 3-100.',
   NUMBER_TOO_LARGE: 'Maximum list size is 100. Use 3-100.',
   NO_RANKING_KEYWORD: 'Title must indicate a ranked list (e.g., Top 10, Best 5, 10 Greatest)',
+  ALL_TIME_WITH_YEAR: 'Titles with "of all time" or "all time" cannot include a year — they are contradictory',
 };
 
 export function needsListTitleValidation(postType: string): boolean {
@@ -25,6 +29,10 @@ export function needsListTitleValidation(postType: string): boolean {
 export function validateListTitle(title: string): FormatCheckResult {
   if (!title || typeof title !== 'string') {
     return { valid: false, code: 'NO_NUMBER', error: ERROR_MESSAGES.NO_NUMBER };
+  }
+
+  if (ALL_TIME_REGEX.test(title) && YEAR_ANYWHERE.test(title)) {
+    return { valid: false, code: 'ALL_TIME_WITH_YEAR', error: ERROR_MESSAGES.ALL_TIME_WITH_YEAR };
   }
 
   const numberMatch = title.match(/\b(\d{1,3})\b/);
