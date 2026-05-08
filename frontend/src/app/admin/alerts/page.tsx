@@ -64,7 +64,7 @@ export default function AdminAlertsPage() {
   const [history, setHistory] = useState<AlertHistoryItem[]>([]);
   const [historyTotal, setHistoryTotal] = useState(0);
   const [historyPage, setHistoryPage] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
   const [activeAlerts, setActiveAlerts] = useState<Map<string, { value: number; severity: string }>>(new Map());
 
   // ─── Form state ──────────────────────────────────────────────
@@ -122,8 +122,8 @@ export default function AdminAlertsPage() {
       setShowForm(false);
       fetchThresholds();
       toast.success('Threshold created');
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to create threshold');
+    } catch (e) {
+      toast.error((e as Error)?.message || 'Failed to create threshold');
     }
   };
 
@@ -131,7 +131,7 @@ export default function AdminAlertsPage() {
     try {
       await apiFetch(`/admin/alerts/thresholds/${id}/toggle`, { method: 'PATCH' });
       fetchThresholds();
-    } catch (e: any) { toast.error('Toggle failed'); }
+    } catch { toast.error('Toggle failed'); }
   };
 
   const handleDelete = async (id: string) => {
@@ -140,7 +140,7 @@ export default function AdminAlertsPage() {
       await apiFetch(`/admin/alerts/thresholds/${id}`, { method: 'DELETE' });
       fetchThresholds();
       toast.success('Threshold deleted');
-    } catch (e: any) { toast.error('Delete failed'); }
+    } catch { toast.error('Delete failed'); }
   };
 
   const handleMarkAllRead = async () => {

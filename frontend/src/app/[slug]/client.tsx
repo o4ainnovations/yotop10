@@ -18,13 +18,6 @@ interface ListItem {
   source_url?: string;
 }
 
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  icon?: string;
-}
-
 interface Post {
   id: string;
   slug: string;

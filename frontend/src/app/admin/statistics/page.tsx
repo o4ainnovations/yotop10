@@ -6,8 +6,6 @@ import { apiFetch } from '@/lib/api';
 interface PanelState { loading: boolean; data: unknown; error?: string; open: boolean }
 
 function n(v: unknown): string { if (v === null || v === undefined) return 'N/A'; return String(v); }
-function pct(v: unknown): string { if (v === null || v === undefined) return 'N/A'; return `${v}%`; }
-function hrs(v: unknown): string { if (v === null || v === undefined) return 'N/A'; return `${v}h`; }
 function arr(v: unknown): unknown[] { return Array.isArray(v) ? v : []; }
 
 const L = ({ children }: { children: React.ReactNode }) => <div style={{ marginBottom: '4px', fontSize: '13px', lineHeight: '1.6' }}>{children}</div>;
@@ -110,7 +108,7 @@ export default function StatisticsDashboard() {
       </Panel>
 
       <Panel scope="health" title="🫀 Platform Health">
-        {panels.health.data ? ((): React.ReactNode => { const d = panels.health.data as Record<string, unknown>; const s = d.services as Record<string, unknown>; const mem = d.memory as Record<string, number>; const crons = d.crons as Record<string, Record<string, string>>; const deps = d.dependency_map as Record<string, { depends_on: string[]; degradation: string }>;
+        {panels.health.data ? ((): React.ReactNode => { const d = panels.health.data as Record<string, unknown>; const s = d.services as Record<string, unknown>; const mem = d.memory as Record<string, number>; const crons = d.crons as Record<string, Record<string, string>>;
           const ups = Number(d.uptime_seconds) || 0;
           const uptimeHrs = Math.floor(ups / 3600); const uptimeMin = Math.floor((ups % 3600) / 60);
           const leak = mem?.rss_mb > (mem?.heap_mb * 3) ? '⚠️ Possible memory leak (RSS 3x heap)' : '✅ Normal';

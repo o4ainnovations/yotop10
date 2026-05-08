@@ -77,7 +77,7 @@ export default function AlertDetailPage() {
   if (loading) return <div style={{ padding: '20px' }}>Loading...</div>;
   if (!detail) return <div style={{ padding: '20px' }}>Alert not found</div>;
 
-  const { notification: n, current_value, threshold_config: tc, still_breaching, active } = detail;
+  const { notification: n, current_value, threshold_config: tc, still_breaching } = detail;
   const STATUS = still_breaching ? (n.severity === 'critical' ? '🔴 Critical' : '🟠 Warning') : '🟢 Resolved';
   const STATUS_COLOR = still_breaching ? (n.severity === 'critical' ? '#d32f2f' : '#f57c00') : '#2e7d32';
   const STATUS_BG = still_breaching ? (n.severity === 'critical' ? '#ffcdd2' : '#fff3e0') : '#e8f5e9';
