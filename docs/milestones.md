@@ -553,17 +553,30 @@ Single unified notification system that handles all user feedback across the ent
   - Low controversy (more CONFIRMED than CONTESTED)
 - [ ] Featured badge customization
 
-#### M10.9 — Reactions Management
-- [ ] `GET /api/admin/reactions` — All reactions
-- [ ] `GET /api/admin/reactions/fire` — Fire reactions breakdown
-  - By post, by list item, by comment
-  - Top fired posts
-  - Most fired items
-- [ ] `DELETE /api/admin/reactions/:id` — Remove reaction (admin can delete any)
-- [ ] Anti-fraud:
-  - Detect bulk voting (same fingerprint multiple votes)
-  - Detect coordinated voting (multiple fingerprints from same IP)
-  - Auto-remove suspicious reactions
+#### M10.9 — Alert System ✅ COMPLETED
+- [x] Alert engine — 12 metrics evaluated every 60s with breach/resolution/cooldown logic
+- [x] Threshold CRUD — create, update, delete, toggle enable/disable
+- [x] Alert notifications — admin bell badge with unread count, dropdown with severity colors
+- [x] Alert history — permanent audit trail of all triggered alerts with resolution tracking
+- [x] Alert detail page — `/admin/alerts/[id]` with live status, resolution guide, settle button
+- [x] Default thresholds seeded for 12 metrics on first startup
+- [x] Live status badges — 🟢🟠🔴 in thresholds table reflecting real-time Redis state
+
+#### M10.9b — Admin Outbound Notifications (NEW)
+- [ ] `AdminMessage` model — separate from user `Notification`, supports individual + broadcast
+- [ ] `POST /api/admin/messages` — Send individual or broadcast message
+  - Request: `{ type: 'individual'|'broadcast', recipient_id?, title, body, priority }`
+  - Broadcast creates 1 document, `dismissed_by[]` tracks per-user read state
+  - Zod validated
+- [ ] `GET /api/admin/messages` — List sent messages (paginated, filterable)
+- [ ] `DELETE /api/admin/messages/:id` — Retract/expire a message
+- [ ] `GET /api/admin/messages/:id/stats` — Delivery stats (sent, seen_by count, dismissed_by count)
+- [ ] `POST /api/admin/messages/templates` — Save reusable message template
+- [ ] `GET /api/admin/messages/templates` — List all templates
+- [ ] `DELETE /api/admin/messages/templates/:id` — Delete template
+- [ ] `GET /api/users/me/messages` — User-facing: merged feed of personal + active broadcasts
+- [ ] Frontend: `/admin/notifications` page in sidebar — Compose (user search + broadcast toggle), Sent history, Templates tabs
+- [ ] React Hooks for every blueprint: client-side typing, SWR/re-fetch, toast, error handling
 
 #### M10.10 — Search & Elasticsearch Management
 - [x] `GET /api/admin/search/status` — Elasticsearch connection status (at `/api/search/admin/status`)
@@ -626,38 +639,42 @@ Single unified notification system that handles all user feedback across the ent
 - [ ] Export: CSV export for compliance
 
 #### M10.13 — Frontend Admin Pages
-- [ ] `/admin` — Redirect to dashboard (or login if not authenticated)
-- [ ] `/admin/login` — Login page
-  - Username input
-  - Password input
-- [ ] `/admin/dashboard` — Overview with stats cards and charts
-- [ ] `/admin/posts/pending` — Review queue
-- [ ] `/admin/posts` — All posts management
-- [ ] `/admin/comments` — Comments management
+- [x] `/admin` — Redirect to dashboard (or login if not authenticated)
+- [x] `/admin/login` — Login page
+- [x] `/admin/setup` — One-time setup token page
+- [x] `/admin/dashboard` — Overview with stats cards and charts
+- [x] `/admin/statistics` — Full analytics with 15 collapsible panels
+- [x] `/admin/posts/pending` — Review queue
+- [x] `/admin/posts` — All posts management
+- [x] `/admin/posts/:id/edit` — Post edit page with version conflict detection
+- [x] `/admin/comments` — Comments management
+- [x] `/admin/alerts` — Alert management (thresholds, notifications, history)
+- [x] `/admin/alerts/[id]` — Alert detail with live status + resolution guide
+- [x] `/admin/audit` — Audit logs
+- [x] `/admin/profile` — Admin profile
 - [ ] `/admin/users` — Anonymous users management
 - [ ] `/admin/categories` — Categories CRUD
-- [ ] `/admin/hall-of-fame` — Featured posts
-- [ ] `/admin/reactions` — Reactions overview
+- [ ] `/admin/notifications` — Outbound messaging (individual + broadcast)
 - [ ] `/admin/search` — Search management
 - [ ] `/admin/settings` — Rate limits, trust scores
-- [ ] `/admin/audit` — Audit logs
 
 #### M10.14 — Admin UI Components
-- [ ] `AdminLayout` — Sidebar navigation + header
-- [ ] `AdminSidebar` — Collapsible, icons + labels
-- [ ] `StatsCard` — Metric with trend indicator
-- [ ] `StatsChart` — Line/bar charts (use Recharts)
-- [ ] `DataTable` — Sortable, filterable, paginated
-- [ ] `BulkActionsBar` — Appears when items selected
-- [ ] `ReviewCard` — Pending post preview card
-- [ ] `ApprovalModal` — Approve with optional note
-- [ ] `RejectionModal` — Reject with reason dropdown + custom reason
+- [x] `AdminLayout` — Sidebar navigation + header
+- [x] `AdminAlertBell` — Admin-only alert bell with unread badge + dropdown
+- [x] `HeaderBells` — Route-aware bell switcher (user vs admin)
+- [x] `ToastContainer` — Toast notifications with success/error/info types
+- [x] `NotificationBell` — User-facing notification bell with unread badge
+- [x] `StatsCard` — Metric with trend indicator (in statistics dashboard)
+- [x] `DataTable` — Sortable, filterable, paginated (posts/comments/alerts)
+- [x] `BulkActionsBar` — Appears when items selected
+- [x] `ReviewCard` — Pending post preview card (inline expand)
+- [x] `RejectionModal` — Reject with reason dropdown + custom reason
+- [ ] `StatsChart` — Line/bar charts
 - [ ] `CategoryTree` — Drag-drop tree view
 - [ ] `UserBadge` — Trust score badge (Scholar/Neutral/Troll)
 - [ ] `SearchInput` — Global admin search
 - [ ] `DateRangePicker` — Filter by date
 - [ ] `ExportButton` — CSV/Excel export
-
 - [ ] `ConfirmDialog` — Destructive action confirmation
 
 ---
@@ -968,46 +985,74 @@ PATCH  /api/users/me/display-name  # Update display name
 POST   /api/admin/login                # Admin login
 POST   /api/admin/logout               # Admin logout
 GET    /api/admin/me                   # Current admin user
-POST   /api/admin/refresh              # Refresh JWT token
-GET    /api/admin/stats                # Dashboard stats
+GET    /api/admin/stats/*              # Dashboard stats (17 endpoints: overview, content, community, moderation, categories, trends, quality, traffic, alerts, compare, notifications)
 GET    /api/admin/posts/pending        # Review queue
 GET    /api/admin/posts/pending/:id   # Preview pending post
 PATCH  /api/admin/posts/:id/approve    # Approve post
 PATCH  /api/admin/posts/:id/reject     # Reject post
-PATCH  /api/admin/posts/:id/request_changes  # Request changes
+POST   /api/admin/posts/:id/retry      # Request revision
 POST   /api/admin/posts/bulk/approve   # Bulk approve
 POST   /api/admin/posts/bulk/reject    # Bulk reject
 GET    /api/admin/posts                # All posts
 PATCH  /api/admin/posts/:id            # Edit post
-DELETE /api/admin/posts/:id            # Delete post
+DELETE /api/admin/posts/:id            # Soft delete post
+DELETE /api/admin/posts/:id/permanent  # Hard delete post
+POST   /api/admin/posts/:id/restore    # Restore soft-deleted
 POST   /api/admin/posts/:id/feature    # Add to Hall of Fame
 POST   /api/admin/posts/:id/unfeature  # Remove from Hall of Fame
+POST   /api/admin/posts/:id/lock       # Lock comments
+POST   /api/admin/posts/:id/bump       # Bump to top
+POST   /api/admin/posts/bulk/delete    # Bulk delete
+POST   /api/admin/posts/bulk/change-category  # Bulk recategorize
 GET    /api/admin/comments             # All comments
 PATCH  /api/admin/comments/:id        # Edit comment
-DELETE /api/admin/comments/:id         # Delete comment
+DELETE /api/admin/comments/:id         # Soft delete
+POST   /api/admin/comments/:id/restore # Restore comment
+POST   /api/admin/comments/:id/hide    # Hide comment
 POST   /api/admin/comments/:id/highlight  # Pin comment
-GET    /api/admin/users                # All anonymous users
-PATCH  /api/admin/users/:fingerprint/ban     # Ban user
-PATCH  /api/admin/users/:fingerprint/whitelist  # Whitelist user
-PATCH  /api/admin/users/:fingerprint/trust     # Set trust score
-GET    /api/admin/categories           # All categories
-POST   /api/admin/categories          # Create category
-PATCH  /api/admin/categories/:id     # Update category
-DELETE /api/admin/categories/:id      # Archive category
-GET    /api/admin/hall-of-fame        # Featured posts
-POST   /api/admin/hall-of-fame        # Add to Hall of Fame
-DELETE /api/admin/hall-of-fame/:id   # Remove from Hall of Fame
-PATCH  /api/admin/hall-of-fame/reorder  # Reorder
-GET    /api/admin/reactions           # All reactions
-DELETE /api/admin/reactions/:id      # Delete reaction
-GET    /api/admin/search/status       # ES status
-POST   /api/admin/search/reindex/posts    # Reindex posts
-POST   /api/admin/search/reindex/comments # Reindex comments
-POST   /api/admin/search/reindex/all      # Full reindex
-GET    /api/admin/rate-limits         # View rate limits
-PATCH  /api/admin/rate-limits        # Update rate limits
-GET    /api/admin/trust-scores        # Trust score distribution
-GET    /api/admin/audit-logs          # Audit logs
+POST   /api/admin/comments/:id/flag    # Manual flag
+POST   /api/admin/comments/bulk/flag   # Bulk flag
+POST   /api/admin/comments/bulk/unflag # Bulk unflag
+
+# Alert System
+GET    /api/admin/stats/alerts         # Active alerts from Redis + history
+GET    /api/admin/alerts/thresholds    # List thresholds
+POST   /api/admin/alerts/thresholds    # Create threshold
+PATCH  /api/admin/alerts/thresholds/:id  # Update threshold
+DELETE /api/admin/alerts/thresholds/:id  # Delete threshold
+PATCH  /api/admin/alerts/thresholds/:id/toggle  # Enable/disable
+GET    /api/admin/alerts/notifications       # List notifications
+GET    /api/admin/alerts/notifications/count # Unread count
+GET    /api/admin/alerts/notifications/:id   # Detail with live value
+PATCH  /api/admin/alerts/notifications/:id/read    # Mark read
+PATCH  /api/admin/alerts/notifications/:id/settle  # Mark settled
+PATCH  /api/admin/alerts/notifications/read-all     # Mark all read
+PATCH  /api/admin/alerts/notifications/settle-all   # Settle all
+DELETE /api/admin/alerts/notifications/:id  # Dismiss
+GET    /api/admin/alerts/history          # Alert history (paginated, filterable)
+
+# Search
+GET    /api/search                    # Public search (facets, highlights, suggestions)
+GET    /api/search/autocomplete       # Autocomplete (rate limited)
+GET    /api/search/admin/status       # ES status + DB/ES gap
+POST   /api/search/admin/reindex      # Reindex (scope: all|posts|comments|categories|users)
+DELETE /api/search/admin/index        # Delete + recreate index
+GET    /api/search/admin/mappings     # View ES mappings
+GET    /api/search/admin/preview      # Test search query
+
+# Outbound Messaging (planned)
+POST   /api/admin/messages            # Send individual or broadcast
+GET    /api/admin/messages            # List sent messages
+DELETE /api/admin/messages/:id        # Retract/expire
+GET    /api/admin/messages/:id/stats  # Delivery stats
+POST   /api/admin/messages/templates  # Save template
+GET    /api/admin/messages/templates  # List templates
+DELETE /api/admin/messages/templates/:id  # Delete template
+GET    /api/users/me/messages         # User-facing: personal + broadcasts
+
+# Audit
+GET    /api/admin/audit-logs          # Audit logs (filterable, paginated)
+GET    /api/admin/audit-logs/stats    # Quick audit stats (cached 30s)
 ```
 
 ---
