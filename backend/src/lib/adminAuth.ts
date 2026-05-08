@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { AdminUser } from '../models/AdminUser';
 import { getEnv } from './env';
 
@@ -34,7 +34,7 @@ export const generateAdminToken = (adminId: string, username: string, tokenVersi
   );
 };
 
-export const adminAuthMiddleware: any = async (req: Request, res: Response, next: NextFunction) => {
+export const adminAuthMiddleware: RequestHandler = async (req, res, next) => {
   const token = req.cookies?.admin_token;
 
   if (!token) {

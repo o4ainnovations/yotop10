@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { atomicCheckRateLimit } from './redis';
 import { getClientIp } from '../middleware/fingerprint';
 
@@ -20,8 +20,8 @@ const AUTOCOMPLETE_CONFIG: RateLimitConfig = {
   keyPrefix: 'autocomplete_rate:',
 };
 
-function createRateLimitMiddleware(config: RateLimitConfig) {
-  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+function createRateLimitMiddleware(config: RateLimitConfig): RequestHandler {
+  return async (req, res, next) => {
     const ip = getClientIp(req);
     const key = `${config.keyPrefix}${ip}`;
     const windowMs = config.windowSeconds * 1000;

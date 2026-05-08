@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, RequestHandler } from 'express';
 import { es } from '../lib/elasticsearch';
 import { INDEX_PREFIX } from '../elasticsearch/lib/indexer';
 import { ensureIndices } from '../elasticsearch/lib/indexer';
@@ -14,8 +14,8 @@ import { User } from '../models/User';
 
 const router = Router();
 
-function validate(schema: { parse: (data: unknown) => unknown }) {
-  return (req: any, res: any, next: () => void): void => {
+function validate(schema: { parse: (data: unknown) => unknown }): RequestHandler {
+  return (req: any, res: any, next): void => {
     try {
       (req as any).validated = schema.parse(req.method === 'GET' ? req.query : req.body);
       next();
