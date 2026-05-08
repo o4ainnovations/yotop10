@@ -5,6 +5,7 @@ export interface IAlertThreshold extends Document {
   threshold: number;
   operator: 'gt' | 'lt';
   severity: 'warning' | 'critical';
+  cooldown_minutes: number;
   enabled: boolean;
   last_triggered_at: Date | null;
   notification_sent: boolean;
@@ -16,6 +17,7 @@ const alertThresholdSchema = new Schema<IAlertThreshold>(
     threshold: { type: Number, required: true },
     operator: { type: String, required: true, enum: ['gt', 'lt'] },
     severity: { type: String, required: true, enum: ['warning', 'critical'] },
+    cooldown_minutes: { type: Number, default: 30 },
     enabled: { type: Boolean, default: true },
     last_triggered_at: { type: Date, default: null },
     notification_sent: { type: Boolean, default: false },

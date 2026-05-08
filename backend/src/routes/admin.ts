@@ -25,6 +25,7 @@ import { User } from '../models/User';
 import { Comment } from '../models/Comment';
 import { AlertThreshold } from '../models/AlertThreshold';
 import { AlertHistory } from '../models/AlertHistory';
+import { AlertNotificationModel } from '../models/AlertNotification';
 import { UserEvent } from '../models/UserEvent';
 import { redis } from '../lib/redis';
 import { trustScoreWorker } from '../lib/trustScoreWorker';
@@ -1458,7 +1459,138 @@ router.get('/stats/alerts', async (req: AdminAuthRequest, res: Response) => {
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
-// 13. Comparison Mode
+// ═══ Alert Management ═══════════════════════════════════════════════
+
+import { createThresholdSchema, updateThresholdSchema, notificationQuerySchema, historyQuerySchema } from '../schemas/alert';
+
+// Thresholds CRUD
+router.get('/alerts/thresholds', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const thresholds = await AlertThreshold.find().sort({ metric: 1 }).lean();
+    res.json({ thresholds });
+  } catch (e) { res.status(500).json({ error: 'Failed to list thresholds' }); }
+});
+
+router.post('/alerts/thresholds', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const body = createThresholdSchema.parse(req.body);
+    const exists = await AlertThreshold.findOne({ metric: body.metric });
+    if (exists) return res.status(409).json({ code: 'DUPLICATE', error: `Threshold for ${body.metric} already exists. Use PATCH to update.` });
+    const t = await AlertThreshold.create(body);
+    res.status(201).json({ success: true, threshold: t });
+  } catch (e: any) {
+    if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
+    res.status(500).json({ error: 'Failed to create threshold' });
+  }
+});
+
+router.patch('/alerts/thresholds/:id', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const body = updateThresholdSchema.parse(req.body);
+    const t = await AlertThreshold.findByIdAndUpdate(req.params.id, { $set: body }, { new: true });
+    if (!t) return res.status(404).json({ code: 'NOT_FOUND', error: 'Threshold not found' });
+    res.json({ success: true, threshold: t });
+  } catch (e: any) {
+    if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
+    res.status(500).json({ error: 'Failed to update threshold' });
+  }
+});
+
+router.delete('/alerts/thresholds/:id', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const t = await AlertThreshold.findByIdAndDelete(req.params.id);
+    if (!t) return res.status(404).json({ code: 'NOT_FOUND', error: 'Threshold not found' });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: 'Failed to delete threshold' }); }
+});
+
+router.patch('/alerts/thresholds/:id/toggle', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const t = await AlertThreshold.findById(req.params.id);
+    if (!t) return res.status(404).json({ code: 'NOT_FOUND', error: 'Threshold not found' });
+    t.enabled = !t.enabled;
+    await t.save();
+    res.json({ success: true, enabled: t.enabled });
+  } catch (e) { res.status(500).json({ error: 'Failed to toggle threshold' }); }
+});
+
+// Notifications
+router.get('/alerts/notifications', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const { page, limit, severity, read } = notificationQuerySchema.parse(req.query);
+    const skip = (page - 1) * limit;
+    const query: Record<string, unknown> = { dismissed: false };
+    if (severity) query.severity = severity;
+    if (read === 'true') query.read = true;
+    else if (read === 'false') query.read = false;
+
+    const [notifications, total] = await Promise.all([
+      AlertNotificationModel.find(query).sort({ created_at: -1 }).skip(skip).limit(limit).lean(),
+      AlertNotificationModel.countDocuments(query),
+    ]);
+
+    res.json({ notifications, pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
+  } catch (e: any) {
+    if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
+    res.status(500).json({ error: 'Failed to list notifications' });
+  }
+});
+
+router.get('/alerts/notifications/count', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const unread = await AlertNotificationModel.countDocuments({ read: false, dismissed: false });
+    res.json({ unread });
+  } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+router.patch('/alerts/notifications/:id/read', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const n = await AlertNotificationModel.findByIdAndUpdate(req.params.id, { read: true }, { new: true });
+    if (!n) return res.status(404).json({ code: 'NOT_FOUND', error: 'Notification not found' });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+router.patch('/alerts/notifications/read-all', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const result = await AlertNotificationModel.updateMany({ read: false }, { read: true });
+    res.json({ success: true, marked: result.modifiedCount });
+  } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+router.delete('/alerts/notifications/:id', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const n = await AlertNotificationModel.findByIdAndUpdate(req.params.id, { dismissed: true }, { new: true });
+    if (!n) return res.status(404).json({ code: 'NOT_FOUND', error: 'Notification not found' });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+// History
+router.get('/alerts/history', async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const { page, limit, metric, severity, resolved, date_from, date_to } = historyQuerySchema.parse(req.query);
+    const skip = (page - 1) * limit;
+    const query: Record<string, unknown> = {};
+    if (metric) query.metric = metric;
+    if (severity) query.severity = severity;
+    if (resolved === 'true') query.resolved_at = { $ne: null };
+    else if (resolved === 'false') query.resolved_at = null;
+    if (date_from || date_to) { query.triggered_at = {}; if (date_from) (query.triggered_at as Record<string, unknown>).$gte = new Date(date_from); if (date_to) (query.triggered_at as Record<string, unknown>).$lte = new Date(date_to); }
+
+    const [history, total] = await Promise.all([
+      AlertHistory.find(query).sort({ triggered_at: -1 }).skip(skip).limit(limit).lean(),
+      AlertHistory.countDocuments(query),
+    ]);
+
+    res.json({ history, pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
+  } catch (e: any) {
+    if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
+    res.status(500).json({ error: 'Failed to list history' });
+  }
+});
+
+// ═══ Comparison & Notifications ════════════════════════════════════
 router.get('/stats/compare', async (req: AdminAuthRequest, res: Response) => {
   try {
     const { date1, date2 } = req.query;

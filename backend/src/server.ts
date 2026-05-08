@@ -105,6 +105,9 @@ const startServer = async () => {
     const { startAutoHeal } = await import('./elasticsearch/lib/searchAutoHeal');
     startAutoHeal();
 
+    const { startAlertEngine } = await import('./lib/alertEngine');
+    startAlertEngine();
+
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
