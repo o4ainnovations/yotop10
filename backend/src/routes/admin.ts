@@ -859,6 +859,10 @@ router.get('/comments', async (req: AdminAuthRequest, res: Response) => {
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
     const skip = (page - 1) * limit;
     const query: Record<string, unknown> = {};
+    if (req.query.filter === 'deleted') query.deleted = true;
+    else if (req.query.filter === 'hidden') query.hidden = true;
+    else if (req.query.filter === 'flagged') query.flag_type = { $ne: null };
+    else if (req.query.filter === 'highlighted') query.highlighted = true;
     if (req.query.post_id) query.post_id = req.query.post_id;
     if (req.query.author) query.author_username = { $regex: req.query.author, $options: 'i' };
     if (req.query.type === 'item_anchored') query.list_item_id = { $ne: null };

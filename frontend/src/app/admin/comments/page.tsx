@@ -27,6 +27,7 @@ export default function AdminCommentsPage() {
       if (filters.type) params.set('type', filters.type);
       if (filters.search) params.set('search', filters.search);
       if (filters.has_replies) params.set('has_replies', filters.has_replies);
+      if ((filters as any).filter) params.set('filter', (filters as any).filter);
       const data = await apiFetch<{ comments: Comment[]; pagination: { total: number; pages: number }; stats: Record<string, number> }>(`/admin/comments?${params}`);
       setComments(data.comments); setPagination(data.pagination); setStats(data.stats || {});
     } catch {} finally { setLoading(false); }
@@ -105,11 +106,22 @@ export default function AdminCommentsPage() {
 
   const statCards = ['total', 'item_anchored', 'post_comment', 'deleted', 'hidden', 'highlighted', 'flagged'];
 
+  const applyStatFilter = (key: string) => {
+    if (key === 'total') { setFilters(f => ({ ...f, type: '', search: '', has_replies: '' })); }
+    else if (key === 'item_anchored') setFilters(f => ({ ...f, type: 'item_anchored' }));
+    else if (key === 'post_comment') setFilters(f => ({ ...f, type: 'post_comment' }));
+    else if (key === 'deleted') setFilters(f => ({ ...f, type: '', search: 'deleted:true' }));
+    else if (key === 'hidden') setFilters(f => ({ ...f, type: '', search: 'hidden:true' }));
+    else if (key === 'highlighted') setFilters(f => ({ ...f, type: '', search: 'highlighted:true' }));
+    else if (key === 'flagged') setFilters(f => ({ ...f, type: '', search: 'flagged:true' }));
+    setPage(1);
+  };
+
   return (<div>
     <h2>All Comments ({pagination.total})</h2>
 
     <div style={{ display: 'flex', gap: '8px', margin: '12px 0', flexWrap: 'wrap' }}>
-      {statCards.map(k => <div key={k} style={{ background: '#f5f5f5', padding: '4px 10px', borderRadius: '4px', fontSize: '12px' }}><strong>{k}</strong>: {stats[k] ?? 0}</div>)}
+      {statCards.map(k => <div key={k} onClick={() => applyStatFilter(k)} style={{ background: '#f5f5f5', padding: '4px 10px', borderRadius: '4px', fontSize: '12px', cursor: 'pointer' }}><strong>{k}</strong>: {stats[k] ?? 0}</div>)}
     </div>
 
     <div style={{ display: 'flex', gap: '8px', margin: '12px 0', flexWrap: 'wrap' }}>
