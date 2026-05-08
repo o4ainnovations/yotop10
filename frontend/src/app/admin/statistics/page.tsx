@@ -110,7 +110,7 @@ export default function StatisticsDashboard() {
       </Panel>
 
       <Panel scope="health" title="🫀 Platform Health">
-        {panels.health.data && (() => { const d = panels.health.data as Record<string, unknown>; const s = d.services as Record<string, unknown>; const mem = d.memory as Record<string, number>; const crons = d.crons as Record<string, Record<string, string>>; const deps = d.dependency_map as Record<string, { depends_on: string[]; degradation: string }>;
+        {panels.health.data ? ((): React.ReactNode => { const d = panels.health.data as Record<string, unknown>; const s = d.services as Record<string, unknown>; const mem = d.memory as Record<string, number>; const crons = d.crons as Record<string, Record<string, string>>; const deps = d.dependency_map as Record<string, { depends_on: string[]; degradation: string }>;
           const ups = Number(d.uptime_seconds) || 0;
           const uptimeHrs = Math.floor(ups / 3600); const uptimeMin = Math.floor((ups % 3600) / 60);
           const leak = mem?.rss_mb > (mem?.heap_mb * 3) ? '⚠️ Possible memory leak (RSS 3x heap)' : '✅ Normal';
@@ -124,11 +124,11 @@ export default function StatisticsDashboard() {
               {(arr(d.affected_features) as Array<{ feature: string; degradation: string; depends_on: string[] }>).map(f => <L key={f.feature}>  — <B>{f.feature}</B>: {f.degradation} (needs {f.depends_on.join(', ')})</L>)}
             </>}
           </>;
-        })()}
+        })() : null}
       </Panel>
 
       <Panel scope="content" title="📂 Content Pipeline + Age Distribution">
-        {panels.content.data && (() => { const d = panels.content.data as Record<string, unknown>; const p = d.posts as Record<string, number>; const ag = d.approval_gap as Record<string, number>; const age = d.age_distribution as Record<string, number>; const tp = arr(d.throughput_7d) as Array<{ day: number; count: number }>;
+        {panels.content.data ? ((): React.ReactNode => { const d = panels.content.data as Record<string, unknown>; const p = d.posts as Record<string, number>; const ag = d.approval_gap as Record<string, number>; const age = d.age_distribution as Record<string, number>; const tp = arr(d.throughput_7d) as Array<{ day: number; count: number }>;
           const gapContext = ag?.avg_hours ? (ag.avg_hours < 1 ? 'Same-day moderation (excellent).' : ag.avg_hours < 24 ? 'Within 24 hours (good).' : ag.avg_hours < 72 ? '2-3 days (acceptable).' : 'Over 3 days (backlog risk).') : '';
           return <>
             <T>📝 Posts</T>
@@ -140,11 +140,11 @@ export default function StatisticsDashboard() {
             {age && Object.entries(age).map(([k,v]) => <L key={k}>{k}: <B>{v}</B> posts</L>)}
             {(!age || Object.keys(age).length === 0) && <L>No age data yet.</L>}
           </>;
-        })()}
+        })() : null}
       </Panel>
 
       <Panel scope="community" title="👥 Community + Fan-Out">
-        {panels.community.data && (() => { const d = panels.community.data as Record<string, unknown>; const u = d.users as Record<string, number>; const tr = d.trust as Record<string, number>; const ti = d.user_tiers as Record<string, number>;
+        {panels.community.data ? ((): React.ReactNode => { const d = panels.community.data as Record<string, unknown>; const u = d.users as Record<string, number>; const tr = d.trust as Record<string, number>; const ti = d.user_tiers as Record<string, number>;
           return <>
             <L>Total users: <B>{n(u?.total)}</B>. New today: <B>{n(u?.new_today)}</B>. New this week: <B>{n(u?.new_this_week)}</B>.</L>
             <L>Active (30d): <B>{n(u?.active_30d)}</B> ({n(d.active_pct)}%). Lurkers: <B>{n(d.lurkers)}</B> ({n(d.lurker_pct)}%).</L>
@@ -154,11 +154,11 @@ export default function StatisticsDashboard() {
             {ti && <L>Tiers: <B>{n(ti?.casual)}</B> casual (1-2 posts) · <B>{n(ti?.regular)}</B> regular (3-9) · <B>{n(ti?.power)}</B> power (10+).</L>}
             <L>Retained creators: <B>{n(d.retained_creators)}</B>. Deep lurkers (10+ visits, 0 posts): <B>{n(d.lurker_depth_10plus)}</B>.</L>
           </>;
-        })()}
+        })() : null}
       </Panel>
 
       <Panel scope="moderation" title="⏳ Moderation + Velocity">
-        {panels.moderation.data && (() => { const d = panels.moderation.data as Record<string, unknown>; const pq = d.pending_queue as Record<string, number>; const qv = d.queue_velocity as Record<string, number>; const wv = d.weekend_vs_weekday as Record<string, number>; const rbd = arr(d.reviews_by_day_of_week) as Array<{ day: number; count: number }>;
+        {panels.moderation.data ? ((): React.ReactNode => { const d = panels.moderation.data as Record<string, unknown>; const pq = d.pending_queue as Record<string, number>; const qv = d.queue_velocity as Record<string, number>; const wv = d.weekend_vs_weekday as Record<string, number>; const rbd = arr(d.reviews_by_day_of_week) as Array<{ day: number; count: number }>;
           const dayNames: Record<string, string> = { '1': 'Sun', '2': 'Mon', '3': 'Tue', '4': 'Wed', '5': 'Thu', '6': 'Fri', '7': 'Sat' };
           const vContext = qv?.days_to_clear ? (qv.days_to_clear <= 1 ? 'Queue will clear within a day.' : qv.days_to_clear <= 3 ? 'Manageable — clears within 3 days.' : 'Backlog — may take over 3 days.') : '';
           const flipContext = (d.decision_flips as number) > 0 ? `⚠️ ${n(d.decision_flips)} posts changed from approved to rejected. Review these.` : '✅ No approval reversals.';
@@ -171,11 +171,11 @@ export default function StatisticsDashboard() {
             {wv && <L>Weekend share: <B>{n(wv?.weekend)}</B> reviews ({n(wv?.weekend_pct)}%) vs weekday <B>{n(wv?.weekday)}</B>.</L>}
             <L>{flipContext}</L>
           </>;
-        })()}
+        })() : null}
       </Panel>
 
       <Panel scope="categories" title="📁 Category Heatmap">
-        {panels.categories.data && (() => { const d = panels.categories.data as Record<string, unknown>; const top = arr(d.top_by_posts) as Array<{ slug: string; post_count: number }>; const eng = arr(d.per_category_engagement) as Array<{ slug: string; post_count: number; avg_comments: number; avg_views: number }>;
+        {panels.categories.data ? ((): React.ReactNode => { const d = panels.categories.data as Record<string, unknown>; const top = arr(d.top_by_posts) as Array<{ slug: string; post_count: number }>; const eng = arr(d.per_category_engagement) as Array<{ slug: string; post_count: number; avg_comments: number; avg_views: number }>;
           return <>
             <L>Utilization: <B>{n(d.utilization_pct)}%</B>. Empty children: <B>{n(d.empty_children)}</B>.</L>
             <T>Top Categories</T>
@@ -183,11 +183,11 @@ export default function StatisticsDashboard() {
             <T>Engagement Per Category</T>
             {eng.slice(0, 10).map(c => <L key={c.slug}><B>{c.slug}</B>: {c.post_count} posts, avg {Math.round(c.avg_comments)} comments, avg {Math.round(c.avg_views)} views</L>)}
           </>;
-        })()}
+        })() : null}
       </Panel>
 
       <Panel scope="trends" title="📉 Trends with Deltas">
-        {panels.trends.data && (() => { const d = panels.trends.data as Record<string, unknown>; const weeks = arr(d.weeks) as Array<Record<string, unknown>>;
+        {panels.trends.data ? ((): React.ReactNode => { const d = panels.trends.data as Record<string, unknown>; const weeks = arr(d.weeks) as Array<Record<string, unknown>>;
           const arrow = (dir: string) => dir === 'up' ? '↑' : dir === 'down' ? '↓' : '→';
           const c = (col: string) => col === 'green' ? '#2e7d32' : col === 'red' ? '#c62828' : '#999';
           return <>
@@ -204,21 +204,21 @@ export default function StatisticsDashboard() {
               </L>;
             })}
           </>;
-        })()}
+        })() : null}
       </Panel>
 
       <Panel scope="quality" title="✅ Quality + Correlations">
-        {panels.quality.data && (() => { const d = panels.quality.data as Record<string, unknown>; const corr = arr(d.intro_length_correlation) as Array<{ bucket: string; count: number; avg_comments: number; avg_fire: number }>;
+        {panels.quality.data ? ((): React.ReactNode => { const d = panels.quality.data as Record<string, unknown>; const corr = arr(d.intro_length_correlation) as Array<{ bucket: string; count: number; avg_comments: number; avg_fire: number }>;
           return <>
             <L>Revision rate: <B>{n(d.revision_rate)}%</B> of submissions requested revision.</L>
             <T>Intro Length → Comments/Fire</T>
             {corr.map(c => <L key={c.bucket}><B>{c.bucket}</B>: {c.count} posts, avg {c.avg_comments} comments, avg {c.avg_fire} fire</L>)}
           </>;
-        })()}
+        })() : null}
       </Panel>
 
       <Panel scope="traffic" title="🌐 Traffic Analytics">
-        {panels.traffic.data && (() => { const d = panels.traffic.data as Record<string, unknown>; const refs = arr(d.top_referrers) as Array<{ domain: string; count: number }>; const peaks = arr(d.peak_hours) as Array<{ hour: number; count: number }>; const countries = arr(d.countries) as Array<{ code: string; count: number; population: number; visits_per_million: number }>; const engaged = arr(d.top_engaged) as Array<{ slug: string; title: string; ratio: number }>; const items = arr(d.top_engaged_items) as Array<{ title: string; rank: number; comment_count: number }>; const newUser = arr(d.new_users_by_referrer) as Array<{ source: string; count: number }>; const paths = arr(d.top_paths) as Array<{ path: string; count: number }>;
+        {panels.traffic.data ? ((): React.ReactNode => { const d = panels.traffic.data as Record<string, unknown>; const refs = arr(d.top_referrers) as Array<{ domain: string; count: number }>; const peaks = arr(d.peak_hours) as Array<{ hour: number; count: number }>; const countries = arr(d.countries) as Array<{ code: string; count: number; population: number; visits_per_million: number }>; const engaged = arr(d.top_engaged) as Array<{ slug: string; title: string; ratio: number }>; const items = arr(d.top_engaged_items) as Array<{ title: string; rank: number; comment_count: number }>; const newUser = arr(d.new_users_by_referrer) as Array<{ source: string; count: number }>; const paths = arr(d.top_paths) as Array<{ path: string; count: number }>;
           const browserStr = d.browsers ? Object.entries(d.browsers as Record<string, number>).map(([k,v]) => `${k}: ${v}`).join(' · ') : 'N/A';
           const osStr = d.os ? Object.entries(d.os as Record<string, number>).map(([k,v]) => `${k}: ${v}`).join(' · ') : 'N/A';
           const engageContext = engaged.length > 0 ? `Top post "${engaged[0]?.title}" has ${engaged[0]?.ratio}% engagement rate (comments+fire/views).` : '';
@@ -238,11 +238,11 @@ export default function StatisticsDashboard() {
             {items.length > 0 && <><T>Top Debated Items</T>{items.map(i => <L key={`${i.rank}-${i.title}`}><B>#{i.rank} {i.title}</B>: {i.comment_count} item-anchored comments</L>)}</>}
             {newUser.length > 0 && <><T>New Users by Source</T>{newUser.map(r => <L key={r.source}><B>{r.source}</B>: {r.count} new users</L>)}</>}
           </>;
-        })()}
+        })() : null}
       </Panel>
 
       <Panel scope="submissions" title="✍️ Submission Patterns">
-        {panels.submissions.data && (() => { const d = panels.submissions.data as Record<string, unknown>; const hr = arr(d.by_hour) as Array<{ hour: number; count: number }>; const tp = arr(d.by_type) as Array<{ type: string; count: number }>; const tm = d.type_migration as Record<string, unknown>;
+        {panels.submissions.data ? ((): React.ReactNode => { const d = panels.submissions.data as Record<string, unknown>; const hr = arr(d.by_hour) as Array<{ hour: number; count: number }>; const tp = arr(d.by_type) as Array<{ type: string; count: number }>; const tm = d.type_migration as Record<string, unknown>;
           return <>
             <L>Avg items per post: <B>{n(d.avg_items_per_post)}</B>.</L>
             {tp.length > 0 && <><T>By Post Type</T>{tp.map(t => <L key={t.type}><B>{t.type}</B>: {t.count} posts</L>)}</>}
@@ -252,11 +252,11 @@ export default function StatisticsDashboard() {
               {(arr(tm.paths) as Array<{ from: string; to: string; count: number }>).map(p => <L key={`${p.from}-${p.to}`}><B>{p.from}</B> → <B>{p.to}</B>: {p.count} users</L>)}
             </>}
           </>;
-        })()}
+        })() : null}
       </Panel>
 
       <Panel scope="lifecycle" title="🔄 User Lifecycle">
-        {panels.lifecycle.data && (() => { const d = panels.lifecycle.data as Record<string, unknown>; const lc = arr(d.lifecycle) as Array<{ bucket: string; count: number }>; const drop = arr(d.drop_off_distribution) as Array<{ posts_made: number; users: number }>;
+        {panels.lifecycle.data ? ((): React.ReactNode => { const d = panels.lifecycle.data as Record<string, unknown>; const lc = arr(d.lifecycle) as Array<{ bucket: string; count: number }>; const drop = arr(d.drop_off_distribution) as Array<{ posts_made: number; users: number }>;
           return <>
             <L>Total posters: <B>{n(d.total_posters)}</B>. Avg lifetime posts: <B>{n(d.avg_lifetime_posts)}</B>.</L>
             <L>Activation gap (creation → first post): <B>{n(d.activation_gap_hours)}h</B>. Converted within 24h: <B>{n(d.converted_within_24h)}</B>.</L>
@@ -264,40 +264,40 @@ export default function StatisticsDashboard() {
             {lc.length > 0 && <><T>Time to Second Post</T>{lc.map(b => <L key={b.bucket}><B>{b.bucket}</B>: {b.count} users</L>)}</>}
             {drop.length > 0 && <><T>Drop-off Distribution</T>{drop.map(b => <L key={b.posts_made}>{b.posts_made} post(s): {b.users} users</L>)}</>}
           </>;
-        })()}
+        })() : null}
       </Panel>
 
       <Panel scope="lurkers" title="👻 Lurker Analysis">
-        {panels.lurkers.data && (() => { const d = panels.lurkers.data as Record<string, unknown>;
+        {panels.lurkers.data ? ((): React.ReactNode => { const d = panels.lurkers.data as Record<string, unknown>;
           return <>
             <L>Total lurkers: <B>{n(d.total_lurkers)}</B>.</L>
             <L>Ghosts (1 visit, never returned): <B>{n(d.ghosts)}</B> ({n(d.ghosts_pct)}%).</L>
             <L>Repeat lurkers (2-10 visits): <B>{n(d.repeat_lurkers)}</B> ({n(d.repeat_pct)}%).</L>
             <L>Deep lurkers (10+ visits, 0 posts): <B>{n(d.deep_lurkers)}</B> ({n(d.deep_pct)}%).</L>
           </>;
-        })()}
+        })() : null}
       </Panel>
 
       <Panel scope="conversion" title="🔄 Lurker → Poster Conversion">
-        {panels.conversion.data && (() => { const d = panels.conversion.data as Record<string, unknown>; const paths = arr(d.converting_paths) as Array<{ path: string; count: number }>;
+        {panels.conversion.data ? ((): React.ReactNode => { const d = panels.conversion.data as Record<string, unknown>; const paths = arr(d.converting_paths) as Array<{ path: string; count: number }>;
           return <>
             {paths.length === 0 ? <L>No conversion data yet — needs page visit traffic and user events.</L>
               : paths.map(p => <L key={p.path}><B>{p.path}</B> converted {p.count} lurker(s) into posters</L>)}
           </>;
-        })()}
+        })() : null}
       </Panel>
 
       <Panel scope="reengagement" title="🔁 Re-Engagement Triggers">
-        {panels.reengagement.data && (() => { const d = panels.reengagement.data as Record<string, unknown>; const triggers = arr(d.triggers) as Array<{ path: string; count: number }>;
+        {panels.reengagement.data ? ((): React.ReactNode => { const d = panels.reengagement.data as Record<string, unknown>; const triggers = arr(d.triggers) as Array<{ path: string; count: number }>;
           return <>
             <L>Re-engaged users (30+ day gap): <B>{n(d.reengaged_users)}</B>.</L>
             {triggers.map(t => <L key={t.path}><B>{t.path}</B> triggered {t.count} re-engagement(s)</L>)}
           </>;
-        })()}
+        })() : null}
       </Panel>
 
       <Panel scope="alerts" title="🚨 Alerts">
-        {panels.alerts.data && (() => { const d = panels.alerts.data as Record<string, unknown>; const th = arr(d.thresholds) as Array<{ metric: string; threshold: number; severity: string; enabled: boolean }>; const active = arr(d.active) as Array<{ metric: string; severity: string; value: number; threshold: number }>; const hist = arr(d.history) as Array<{ metric: string; severity: string; triggered_at: string; resolved_at: string | null }>;
+        {panels.alerts.data ? ((): React.ReactNode => { const d = panels.alerts.data as Record<string, unknown>; const th = arr(d.thresholds) as Array<{ metric: string; threshold: number; operator: string; severity: string; enabled: boolean }>; const active = arr(d.active) as Array<{ metric: string; severity: string; value: number; threshold: number }>; const hist = arr(d.history) as Array<{ metric: string; severity: string; triggered_at: string; resolved_at: string | null }>;
           return <>
             {active.length > 0 && <><L>🔴 <B>{active.length}</B> active alerts:</L>
               {active.map(a => <L key={a.metric}>⚠️ <B>{a.metric}</B>: {a.value} (threshold {a.threshold})</L>)}</>}
@@ -306,16 +306,16 @@ export default function StatisticsDashboard() {
             {th.map(t => <L key={t.metric}><B>{t.metric}</B>: {t.operator} {t.threshold} [{t.severity}] {t.enabled ? '✅' : '⏸️'}</L>)}
             {hist.length > 0 && <><T>Recent History</T>{hist.slice(0, 5).map(h => <L key={`${h.metric}-${h.triggered_at}`}><B>{h.metric}</B>: triggered {new Date(h.triggered_at).toLocaleString()} {h.resolved_at ? '✅ resolved' : '🔴 unresolved'}</L>)}</>}
           </>;
-        })()}
+        })() : null}
       </Panel>
 
       <Panel scope="notifications" title="🔔 Notification Analytics">
-        {panels.notifications.data && (() => { const d = panels.notifications.data as Record<string, unknown>; const bt = arr(d.by_type) as Array<{ type: string; sent: number; delivered: number; clicked: number }>;
+        {panels.notifications.data ? ((): React.ReactNode => { const d = panels.notifications.data as Record<string, unknown>; const bt = arr(d.by_type) as Array<{ type: string; sent: number; delivered: number; clicked: number }>;
           return <>
             <L>Total sent: <B>{n(d.total_sent)}</B>. Delivered: <B>{n(d.total_delivered)}</B> ({n(d.delivery_rate)}%). Clicked: <B>{n(d.total_clicked)}</B> ({n(d.click_rate)}%).</L>
             {bt.map(b => <L key={b.type}><B>{b.type}</B>: {b.sent} sent, {b.delivered} delivered, {b.clicked} clicked</L>)}
           </>;
-        })()}
+        })() : null}
       </Panel>
 
     </div>
