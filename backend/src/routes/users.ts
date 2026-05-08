@@ -394,37 +394,65 @@ router.get('/me/rate-limits', async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/users/me/notifications — Get user notifications
+// GET /api/users/me/notifications — Get merged feed (system + admin messages)
 router.get('/me/notifications', async (req: Request, res: Response) => {
   if (!req.user) return res.status(401).json({ error: 'Authentication required' });
   try {
+    const uid = req.user.user_id;
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
-    const notifications = await Notification.find({ user_id: req.user.user_id })
-      .sort({ created_at: -1 })
-      .limit(limit)
-      .lean();
+    const now = new Date();
 
-    const unreadCount = await Notification.countDocuments({
-      user_id: req.user.user_id,
-      read: false,
-    });
+    const [sysNotifs, adminMsgs] = await Promise.all([
+      Notification.find({ user_id: uid }).sort({ created_at: -1 }).limit(limit).lean(),
+      AdminMessage.find({
+        $or: [
+          { type: 'individual', recipient_id: uid, expires_at: { $gt: now } },
+          { type: 'broadcast', dismissed_by: { $ne: uid }, expires_at: { $gt: now } },
+        ],
+      }).sort({ created_at: -1 }).limit(20).lean(),
+    ]);
 
-    res.json({ notifications, unreadCount });
+    const unreadCount = await Notification.countDocuments({ user_id: uid, read: false });
+
+    const adminItems = adminMsgs.map((m) => ({
+      _id: m._id,
+      type: 'admin_message' as const,
+      title: m.title,
+      body: m.body,
+      priority: m.priority,
+      created_by: m.created_by,
+      message_type: m.type,
+      read: false, // admin messages are always "unread" until dismissed
+      created_at: m.created_at,
+    }));
+
+    const merged = [...sysNotifs.map((n: Record<string, unknown>) => ({ ...n, is_admin: false })), ...adminItems.map((a) => ({ ...a, is_admin: true }))]
+      .sort((a, b) => new Date(b.created_at as string).getTime() - new Date(a.created_at as string).getTime())
+      .slice(0, limit);
+
+    res.json({ notifications: merged, unreadCount });
   } catch (error) {
     console.error('Error fetching notifications:', error);
     res.status(500).json({ error: 'Failed to fetch notifications' });
   }
 });
 
-// GET /api/users/me/notifications/unread-count — Quick badge count
+// GET /api/users/me/notifications/unread-count — Quick badge count (system + admin messages)
 router.get('/me/notifications/unread-count', async (req: Request, res: Response) => {
   if (!req.user) return res.status(401).json({ error: 'Authentication required' });
   try {
-    const count = await Notification.countDocuments({
-      user_id: req.user.user_id,
-      read: false,
-    });
-    res.json({ count });
+    const uid = req.user.user_id;
+    const now = new Date();
+    const [sysCount, msgCount] = await Promise.all([
+      Notification.countDocuments({ user_id: uid, read: false }),
+      AdminMessage.countDocuments({
+        $or: [
+          { type: 'individual', recipient_id: uid, expires_at: { $gt: now } },
+          { type: 'broadcast', dismissed_by: { $ne: uid }, expires_at: { $gt: now } },
+        ],
+      }),
+    ]);
+    res.json({ count: sysCount + msgCount });
   } catch (error) {
     console.error('Error fetching unread count:', error);
     res.status(500).json({ error: 'Failed to fetch unread count' });
