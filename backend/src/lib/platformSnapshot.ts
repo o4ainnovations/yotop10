@@ -20,7 +20,7 @@ async function computeSnapshot(dateStr: string) {
   const weekStart = new Date(dayStart);
   weekStart.setDate(weekStart.getDate() - 7);
 
-  const postPipeline = (match: Record<string, unknown>) => Post.countDocuments(match);
+  const postPipeline = (match: Record<string, unknown>) => Post.countDocuments({ ...match, deleted: false });
 
   const [
     postsSubmitted, postsApproved, postsRejected, postsPending,
@@ -46,9 +46,9 @@ async function computeSnapshot(dateStr: string) {
     postPipeline({}),
     postPipeline({ created_at: { $gte: weekStart, $lte: dayEnd } }),
     postPipeline({ created_at: { $gte: monthStart, $lte: dayEnd } }),
-    Comment.countDocuments({}),
-    Comment.countDocuments({ created_at: { $gte: weekStart, $lte: dayEnd } }),
-    Comment.countDocuments({ created_at: { $gte: dayStart, $lte: dayEnd } }),
+    Comment.countDocuments({ deleted: false, hidden: false }),
+    Comment.countDocuments({ created_at: { $gte: weekStart, $lte: dayEnd }, deleted: false, hidden: false }),
+    Comment.countDocuments({ created_at: { $gte: dayStart, $lte: dayEnd }, deleted: false, hidden: false }),
     User.countDocuments({}),
     User.countDocuments({ created_at: { $gte: dayStart, $lte: dayEnd } }),
     User.countDocuments({ created_at: { $gte: weekStart, $lte: dayEnd } }),
@@ -58,23 +58,23 @@ async function computeSnapshot(dateStr: string) {
     User.countDocuments({ trust_score: { $gte: 0.5, $lt: 1.8 } }),
     User.countDocuments({ trust_score: { $lt: 0.5 } }),
     User.countDocuments({ trust_score: { $lt: 0.5 }, updated_at: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } }),
-    Post.aggregate([{ $group: { _id: null, total: { $sum: '$fire_count' } } }]).then(r => (r[0]?.total || 0)),
+    Post.aggregate([{ $match: { deleted: false } }, { $group: { _id: null, total: { $sum: '$fire_count' } } }]).then(r => (r[0]?.total || 0)),
     PageVisit.countDocuments({}),
     PageVisit.countDocuments({ created_at: { $gte: dayStart, $lte: dayEnd } }),
-    Post.countDocuments({ status: 'approved', published_at: { $gte: dayStart, $lte: dayEnd } }),
-    Post.countDocuments({ status: 'approved', published_at: { $gte: dayStart, $lte: dayEnd } }),
-    Post.countDocuments({ status: 'rejected', updated_at: { $gte: dayStart, $lte: dayEnd } }),
-    Post.countDocuments({ revision_count: { $gt: 0 }, updated_at: { $gte: dayStart, $lte: dayEnd } }),
+    Post.countDocuments({ status: 'approved', published_at: { $gte: dayStart, $lte: dayEnd }, deleted: false }),
+    Post.countDocuments({ status: 'approved', published_at: { $gte: dayStart, $lte: dayEnd }, deleted: false }),
+    Post.countDocuments({ status: 'rejected', updated_at: { $gte: dayStart, $lte: dayEnd }, deleted: false }),
+    Post.countDocuments({ revision_count: { $gt: 0 }, updated_at: { $gte: dayStart, $lte: dayEnd }, deleted: false }),
     Category.find({ is_archived: false }).select('slug name post_count parent_id').lean(),
-    Post.find({ status: 'approved' }).sort({ comment_count: -1 }).limit(10).select('slug title comment_count').lean(),
-    Post.find({ status: 'approved' }).sort({ fire_count: -1 }).limit(10).select('slug title fire_count').lean(),
-    Post.find({ status: 'approved' }).sort({ view_count: -1 }).limit(10).select('slug title view_count').lean(),
+    Post.find({ status: 'approved', deleted: false }).sort({ comment_count: -1 }).limit(10).select('slug title comment_count').lean(),
+    Post.find({ status: 'approved', deleted: false }).sort({ fire_count: -1 }).limit(10).select('slug title fire_count').lean(),
+    Post.find({ status: 'approved', deleted: false }).sort({ view_count: -1 }).limit(10).select('slug title view_count').lean(),
     Notification.countDocuments({ delivered_at: { $ne: null } }),
     Notification.countDocuments({ clicked_at: { $ne: null } }),
   ]);
 
   const rejectionReasons = await Post.aggregate([
-    { $match: { status: 'rejected', updated_at: { $gte: dayStart, $lte: dayEnd } } },
+    { $match: { status: 'rejected', updated_at: { $gte: dayStart, $lte: dayEnd }, deleted: false } },
     { $group: { _id: '$rejection_reason', count: { $sum: 1 } } },
   ]);
 

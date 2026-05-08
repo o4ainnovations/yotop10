@@ -1130,11 +1130,11 @@ router.get('/stats/overview', async (req: AdminAuthRequest, res: Response) => {
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const threeDaysAgo = new Date(Date.now() - 3 * 24 * 3600000);
     const [tp, tc, tu, pn, orphans, peakQueueHour, peakSubmitHour] = await Promise.all([
-      Post.countDocuments({ created_at: { $gte: today } }),
-      Comment.countDocuments({ created_at: { $gte: today } }),
+      Post.countDocuments({ created_at: { $gte: today }, deleted: false }),
+      Comment.countDocuments({ created_at: { $gte: today }, deleted: false, hidden: false }),
       User.countDocuments({ created_at: { $gte: today } }),
-      Post.countDocuments({ status: 'pending_review' }),
-      Post.countDocuments({ status: 'pending_review', created_at: { $lt: new Date(Date.now() - 72 * 3600000) }, revision_guidance: null }),
+      Post.countDocuments({ status: 'pending_review', deleted: false }),
+      Post.countDocuments({ status: 'pending_review', created_at: { $lt: new Date(Date.now() - 72 * 3600000) }, revision_guidance: null, deleted: false }),
       Post.aggregate([{ $match: { status: 'pending_review' } }, { $group: { _id: { $hour: '$created_at' }, count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }]),
       Post.aggregate([{ $group: { _id: { $hour: '$created_at' }, count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }]),
     ]);
