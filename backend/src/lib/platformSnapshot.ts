@@ -142,11 +142,11 @@ async function computeSnapshot(dateStr: string) {
   return snapshot;
 }
 
-async function evaluateAlerts(snapshot: Record<string, Record<string, unknown>>) {
+async function evaluateAlerts(snapshot: Record<string, unknown>) {
   const alerts = await AlertThreshold.find({ enabled: true });
   for (const alert of alerts) {
-    const value = alert.metric === 'queue_length' ? (snapshot.moderation?.pending_queue as Record<string, number>)?.total
-      : alert.metric === 'trolls_active' ? (snapshot.community as Record<string, number>)?.trolls_active_24h
+    const value = alert.metric === 'queue_length' ? ((snapshot.moderation as Record<string, unknown>)?.pending_queue as number)
+      : alert.metric === 'trolls_active' ? ((snapshot.community as Record<string, unknown>)?.trolls_active_24h as number)
       : null;
 
     if (value === null || value === undefined) continue;
