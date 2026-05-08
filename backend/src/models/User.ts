@@ -19,6 +19,7 @@ export interface IUser extends Document {
     expires_at: Date;
   };
   last_boost_granted_at?: Date;
+  restricted_until?: Date | null;
   last_50_reviews: Array<{
     status: 'approved' | 'rejected';
     timestamp: Date;
