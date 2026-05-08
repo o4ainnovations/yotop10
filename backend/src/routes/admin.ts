@@ -19,6 +19,7 @@ import {
   AdminAuthRequest,
 } from '../lib/adminAuth';
 import { PlatformSnapshot } from '../models/PlatformSnapshot';
+import { Category } from '../models/Category';
 import { PageVisit } from '../models/PageVisit';
 import { User } from '../models/User';
 import { Comment } from '../models/Comment';
@@ -1141,95 +1142,100 @@ router.get('/stats/overview', async (req: AdminAuthRequest, res: Response) => {
       Comment.countDocuments({ deleted: false, hidden: false }),
     ]);
     const peakHr = peakQueueHour[0] || {}; const peakSubHr = peakSubmitHour[0] || {};
-    const [scholars, neutrals, trolls, trolls24h] = await Promise.all([
+    const [scholars, neutrals, trolls, trolls24h, totalUsers] = await Promise.all([
       User.countDocuments({ trust_score: { $gte: 1.8 } }),
       User.countDocuments({ trust_score: { $gte: 0.5, $lt: 1.8 } }),
       User.countDocuments({ trust_score: { $lt: 0.5 } }),
       User.countDocuments({ trust_score: { $lt: 0.5 }, updated_at: { $gte: new Date(Date.now() - 24 * 3600000) } }),
+      User.countDocuments({}),
     ]);
-    res.json({ posts: { total: totalPosts, today: tp, submitted: tp, approved, rejected }, comments: { total: totalComments, today: tc }, users: { total: tu }, pending: pn, queue: { pending: pn, oldest_age_hours: 0, peak_queue_hour: peakHr._id || null, peak_queue_hour_count: peakHr.count || 0 }, trust: { scholars, neutrals, trolls }, trolls_active: trolls24h, orphans_72h_no_guidance: orphans, peak_submission_hour: peakSubHr._id || null, peak_submission_hour_count: peakSubHr.count || 0 });
+    res.json({ posts: { total: totalPosts, today: tp, submitted: tp, approved, rejected }, comments: { total: totalComments, today: tc }, users: { total: totalUsers, today: tu }, pending: pn, queue: { pending: pn, oldest_age_hours: 0, peak_queue_hour: peakHr._id || null, peak_queue_hour_count: peakHr.count || 0 }, trust: { scholars, neutrals, trolls }, trolls_active: trolls24h, orphans_72h_no_guidance: orphans, peak_submission_hour: peakSubHr._id || null, peak_submission_hour_count: peakSubHr.count || 0 });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
-// 3. Content + age distribution + approval gap + throughput
+// 3. Content + age distribution + approval gap + throughput (fully live)
 router.get('/stats/content', async (req: AdminAuthRequest, res: Response) => {
   try {
-    const s = await PlatformSnapshot.findOne().sort({ date: -1 }).lean();
-    const now = new Date();
-    const [ageBuckets, approvalGap, throughput7d] = await Promise.all([
-      Post.aggregate([{ $bucket: { groupBy: { $subtract: [now, '$created_at'] }, boundaries: [0, 3600000, 86400000, 259200000, 604800000, 2592000000, 31536000000], default: 'ancient', output: { count: { $sum: 1 } } } }]),
-      Post.aggregate([{ $match: { status: 'approved', published_at: { $ne: null } } }, { $project: { gap_hours: { $divide: [{ $subtract: ['$published_at', '$created_at'] }, 3600000] } } }, { $group: { _id: null, avg_hours: { $avg: '$gap_hours' }, max_hours: { $max: '$gap_hours' }, min_hours: { $min: '$gap_hours' } } }]),
-      Post.aggregate([{ $match: { status: { $in: ['approved', 'rejected'] }, updated_at: { $gte: new Date(Date.now() - 7 * 86400000) } } }, { $group: { _id: { $dayOfWeek: '$updated_at' }, count: { $sum: 1 } } }, { $sort: { _id: 1 } }]),
+    const now = new Date(); const today = new Date(); today.setHours(0,0,0,0);
+    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000);
+    const [totalPosts, totalApproved, totalRejected, totalPending, inRevision, totalComments, commentsToday, commentsWeek, ageBuckets, approvalGap, throughput7d] = await Promise.all([
+      Post.countDocuments({ deleted: false }),
+      Post.countDocuments({ status: 'approved', deleted: false }),
+      Post.countDocuments({ status: 'rejected', deleted: false }),
+      Post.countDocuments({ status: 'pending_review', deleted: false }),
+      Post.countDocuments({ status: 'pending_review', revision_guidance: { $ne: null }, deleted: false }),
+      Comment.countDocuments({ deleted: false, hidden: false }),
+      Comment.countDocuments({ created_at: { $gte: today }, deleted: false, hidden: false }),
+      Comment.countDocuments({ created_at: { $gte: new Date(Date.now() - 7 * 86400000) }, deleted: false, hidden: false }),
+      Post.aggregate([{ $match: { deleted: false } }, { $bucket: { groupBy: { $subtract: [now, '$created_at'] }, boundaries: [0, 3600000, 86400000, 259200000, 604800000, 2592000000, 31536000000], default: 'ancient', output: { count: { $sum: 1 } } } }]),
+      Post.aggregate([{ $match: { status: 'approved', published_at: { $ne: null }, deleted: false } }, { $project: { gap_hours: { $divide: [{ $subtract: ['$published_at', '$created_at'] }, 3600000] } } }, { $group: { _id: null, avg_hours: { $avg: '$gap_hours' }, max_hours: { $max: '$gap_hours' }, min_hours: { $min: '$gap_hours' } } }]),
+      Post.aggregate([{ $match: { status: { $in: ['approved', 'rejected'] }, updated_at: { $gte: sevenDaysAgo }, deleted: false } }, { $group: { _id: { $dayOfWeek: '$updated_at' }, count: { $sum: 1 } } }, { $sort: { _id: 1 } }]),
     ]);
     const bucketMap: Record<string, number> = {};
     for (const b of ageBuckets) { const key = String(b._id).replace(/\d+/g, m => { const v = parseInt(m); return v < 3600000 ? '<1h' : v < 86400000 ? '1-24h' : v < 259200000 ? '1-3d' : v < 604800000 ? '3-7d' : v < 2592000000 ? '7-30d' : '30d+'; }) || 'ancient'; bucketMap[key] = (bucketMap[key] || 0) + b.count; }
     const gap = approvalGap[0] || {};
-    res.json({ ...(s?.content || {}), age_distribution: bucketMap, approval_gap: { avg_hours: gap.avg_hours ? Math.round(gap.avg_hours) : null, max_hours: gap.max_hours ? Math.round(gap.max_hours) : null, min_hours: gap.min_hours ? Math.round(gap.min_hours) : null }, throughput_7d: throughput7d.map((t: Record<string, unknown>) => ({ day: t._id, count: t.count })) });
+    res.json({ posts: { total: totalPosts, submitted: totalPending + totalApproved + totalRejected, approved: totalApproved, rejected: totalRejected, pending: totalPending, in_revision: inRevision }, comments: { total: totalComments, today: commentsToday, this_week: commentsWeek }, age_distribution: bucketMap, approval_gap: { avg_hours: gap.avg_hours ? Math.round(gap.avg_hours) : null, max_hours: gap.max_hours ? Math.round(gap.max_hours) : null, min_hours: gap.min_hours ? Math.round(gap.min_hours) : null }, throughput_7d: throughput7d.map((t: Record<string, unknown>) => ({ day: t._id, count: t.count })) });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
-// 4. Community + fan-out + churn + conversion + tiers + retained + lurker depth
+// 4. Community + fan-out (fully live)
 router.get('/stats/community', async (req: AdminAuthRequest, res: Response) => {
   try {
-    const s = await PlatformSnapshot.findOne().sort({ date: -1 }).lean();
-    if (!s) return res.json({});
-    const co = s.community as Record<string, unknown>; const u = co.users as Record<string, number>;
-    const active = u?.active_30d || 0; const total = u?.total || 1;
-    const monthAgo = new Date(Date.now() - 30 * 86400000);
-    const [newUsers24hConverted, usersOver30d, powerUsersAgg, retainedCreators, lurkerDeep] = await Promise.all([
-      UserEvent.aggregate([{ $match: { event: 'post_submitted' } }, { $sort: { created_at: 1 } }, { $group: { _id: '$user_id', first_post: { $first: '$created_at' }, first_created: { $first: '$created_at' } } }, { $project: { converted_24h: { $cond: [{ $lte: [{ $subtract: ['$first_post', '$first_created'] }, 86400000] }, 1, 0] } } }, { $group: { _id: null, count: { $sum: '$converted_24h' }, total: { $sum: 1 } } }]),
+    const today = new Date(); today.setHours(0,0,0,0); const weekAgo = new Date(Date.now() - 7*86400000); const monthAgo = new Date(Date.now() - 30*86400000);
+    const [total, newToday, newWeek, active30d, active7d, scholars, neutrals, trolls, trolls24h, usersOver30d, powerUsers, postersThisMonth, postersLastMonth, lurkerDeep] = await Promise.all([
+      User.countDocuments({}), User.countDocuments({ created_at: { $gte: today } }), User.countDocuments({ created_at: { $gte: weekAgo } }), User.countDocuments({ created_at: { $lte: new Date(), $gte: monthAgo } }), User.countDocuments({ created_at: { $lte: new Date(), $gte: weekAgo } }),
+      User.countDocuments({ trust_score: { $gte: 1.8 } }), User.countDocuments({ trust_score: { $gte: 0.5, $lt: 1.8 } }), User.countDocuments({ trust_score: { $lt: 0.5 } }), User.countDocuments({ trust_score: { $lt: 0.5 }, updated_at: { $gte: new Date(Date.now() - 24*3600000) } }),
       User.countDocuments({ created_at: { $lt: monthAgo } }),
-      Post.aggregate([{ $group: { _id: '$author_id', count: { $sum: 1 } } }, { $sort: { count: -1 } }]),
-      Post.aggregate([{ $match: { created_at: { $gte: monthAgo } } }, { $group: { _id: '$author_id' } }, { $lookup: { from: 'posts', let: { uid: '$_id' }, pipeline: [{ $match: { $expr: { $and: [{ $eq: ['$author_id', '$$uid'] }, { $lt: ['$created_at', monthAgo] }] } } }, { $limit: 1 }], as: 'prev' } }, { $match: { prev: { $ne: [] } } }, { $count: 'count' }]),
+      Post.aggregate([{ $match: { deleted: false } }, { $group: { _id: '$author_id', count: { $sum: 1 } } }, { $sort: { count: -1 } }]),
+      Post.distinct('author_id', { created_at: { $gte: monthAgo }, deleted: false }),
+      Post.distinct('author_id', { created_at: { $lt: monthAgo, $gte: new Date(Date.now() - 60*86400000) }, deleted: false }),
       PageVisit.aggregate([{ $group: { _id: '$fingerprint', count: { $sum: 1 } } }, { $match: { count: { $gt: 10 }, _id: { $ne: null } } }, { $lookup: { from: 'posts', localField: '_id', foreignField: 'author_id', as: 'posts' } }, { $match: { posts: [] } }, { $count: 'count' }]),
     ]);
-    const cv = newUsers24hConverted[0] as Record<string, number> | undefined;
-    const usersLastMonth = usersOver30d || 0;
-    const churn = total > 0 && usersLastMonth > 0 ? Math.round((1 - (active / usersLastMonth)) * 100) : null;
-    const sortedPosts = powerUsersAgg as { _id: string; count: number }[];
-    const top5Posts = sortedPosts.slice(0, 5).reduce((a, b) => a + b.count, 0);
-    const totalPosts = sortedPosts.reduce((a, b) => a + b.count, 0);
-    const fanOut = active > 0 ? Math.round(((s.content as Record<string, unknown>)?.posts as Record<string, number>)?.total || 0 / active) : 0;
-    res.json({ ...s.community, lurkers: Math.max(0, total - active), lurker_pct: Math.round((Math.max(0, total - active) / total) * 100), active_pct: Math.round((active / total) * 100), fan_out: fanOut, churn_pct: churn, new_user_conversion_24h_pct: cv && cv.total > 0 ? Math.round((cv.count / cv.total) * 100) : null, maturity_pct: Math.round((usersLastMonth / total) * 100), user_tiers: { casual: sortedPosts.filter((p: { count: number }) => p.count <= 2).length, regular: sortedPosts.filter((p: { count: number }) => p.count >= 3 && p.count <= 9).length, power: sortedPosts.filter((p: { count: number }) => p.count >= 10).length }, pareto_pct: totalPosts > 0 ? Math.round((top5Posts / totalPosts) * 100) : 0, retained_creators: (retainedCreators?.[0] as Record<string, number>)?.count || 0, lurker_depth_10plus: (lurkerDeep?.[0] as Record<string, number>)?.count || 0 });
+    const sorted = powerUsers as { _id: string; count: number }[]; const top5 = sorted.slice(0,5).reduce((a,b)=>a+b.count,0); const allPosts = sorted.reduce((a,b)=>a+b.count,0);
+    const active = active30d || 0; const lurkerCount = Math.max(0, total - active);
+    const retained = postersThisMonth.filter((id: string) => (postersLastMonth as string[]).includes(id)).length;
+    res.json({ users: { total, new_today: newToday, new_this_week: newWeek, active_30d: active, active_7d: active7d }, trust: { scholars, neutrals, trolls }, trolls_active_24h: trolls24h, lurkers: lurkerCount, lurker_pct: Math.round((lurkerCount/total)*100), active_pct: Math.round((active/total)*100), fan_out: active>0?Math.round(allPosts/active):0, churn_pct: usersOver30d>0?Math.round((1-active/usersOver30d)*100):null, maturity_pct: Math.round((usersOver30d/total)*100), user_tiers: { casual: sorted.filter((p:{count:number})=>p.count<=2).length, regular: sorted.filter((p:{count:number})=>p.count>=3&&p.count<=9).length, power: sorted.filter((p:{count:number})=>p.count>=10).length }, pareto_pct: allPosts>0?Math.round((top5/allPosts)*100):0, retained_creators: retained, lurker_depth_10plus: (lurkerDeep?.[0] as Record<string,number>)?.count||0 });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
-// 5. Moderation + velocity + weekend gap + decision confidence
+// 5. Moderation (fully live)
 router.get('/stats/moderation', async (req: AdminAuthRequest, res: Response) => {
   try {
-    const snapshots = await PlatformSnapshot.find().sort({ date: -1 }).limit(8).lean();
-    const s = snapshots[0]; if (!s) return res.json({});
-    const oldest = await Post.findOne({ status: 'pending_review' }).sort({ created_at: 1 }).select('created_at').lean();
-    const ageHours = oldest ? Math.round((Date.now() - new Date(oldest.created_at).getTime()) / 3600000) : 0;
-    const pastReviews = snapshots.slice(1).map(sn => ((sn.moderation as Record<string, unknown>) as Record<string, number>)?.reviews_today || 0);
-    const avgReviews = pastReviews.length > 0 ? pastReviews.reduce((a: number, b: number) => a + b, 0) / pastReviews.length : 0;
-    const pq = ((s.moderation as Record<string, unknown>)?.pending_queue as Record<string, number>);
-    const pending = pq?.total || 0;
-    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000);
-    const [weekendReviews, peakModHour, decisionFlips] = await Promise.all([
-      Post.aggregate([{ $match: { status: { $in: ['approved', 'rejected'] }, updated_at: { $gte: sevenDaysAgo } } }, { $group: { _id: { $dayOfWeek: '$updated_at' }, count: { $sum: 1 } } }, { $sort: { _id: 1 } }]),
+    const today = new Date(); today.setHours(0,0,0,0); const sevenDaysAgo = new Date(Date.now() - 7*86400000);
+    const [pending, approvedToday, rejectedToday, retryToday, oldestPending, weekendReviews, peakModHour, decisionFlips] = await Promise.all([
+      Post.countDocuments({ status: 'pending_review', deleted: false }),
+      Post.countDocuments({ status: 'approved', published_at: { $gte: today }, deleted: false }),
+      Post.countDocuments({ status: 'rejected', updated_at: { $gte: today }, deleted: false }),
+      Post.countDocuments({ revision_count: { $gt: 0 }, updated_at: { $gte: today }, deleted: false }),
+      Post.findOne({ status: 'pending_review', deleted: false }).sort({ created_at: 1 }).select('created_at').lean(),
+      Post.aggregate([{ $match: { status: { $in: ['approved', 'rejected'] }, updated_at: { $gte: sevenDaysAgo }, deleted: false } }, { $group: { _id: { $dayOfWeek: '$updated_at' }, count: { $sum: 1 } } }, { $sort: { _id: 1 } }]),
       AuditLog.aggregate([{ $match: { action: { $in: ['approve_post', 'reject_post', 'retry_post'] }, created_at: { $gte: sevenDaysAgo } } }, { $group: { _id: { $hour: '$created_at' }, count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }]),
-      Post.countDocuments({ status: 'rejected', 'status_history.2': { $exists: true }, 'status_history.status': 'approved' }),
+      Post.countDocuments({ status: 'rejected', 'status_history.status': 'approved', deleted: false }),
     ]);
+    const ageHours = oldestPending ? Math.round((Date.now() - new Date(oldestPending.created_at).getTime()) / 3600000) : 0;
+    const reviewsToday = approvedToday + rejectedToday + retryToday;
+    const weekendDays = [1, 7]; const wc = weekendReviews.filter((r: Record<string,unknown>)=>weekendDays.includes(r._id as number)).reduce((a:number,r:Record<string,number>)=>a+(r.count||0),0);
+    const wdc = weekendReviews.filter((r: Record<string,unknown>)=>!weekendDays.includes(r._id as number)).reduce((a:number,r:Record<string,number>)=>a+(r.count||0),0);
     const peakHr = peakModHour[0] || {};
-    const weekendDays = [1, 7]; // Sunday=1, Saturday=7
-    const weekendCount = weekendReviews.filter((r: Record<string, unknown>) => weekendDays.includes(r._id as number)).reduce((a: number, r: Record<string, number>) => a + (r.count || 0), 0);
-    const weekdayCount = weekendReviews.filter((r: Record<string, unknown>) => !weekendDays.includes(r._id as number)).reduce((a: number, r: Record<string, number>) => a + (r.count || 0), 0);
-    res.json({ ...s.moderation, pending_queue: { total: pending, oldest_age_hours: ageHours }, queue_velocity: { avg_reviews_per_day: Math.round(avgReviews * 10) / 10, days_to_clear: avgReviews > 0 ? Math.ceil(pending / avgReviews) : null }, reviews_by_day_of_week: weekendReviews.map((r: Record<string, unknown>) => ({ day: r._id, count: r.count })), weekend_vs_weekday: { weekend: weekendCount, weekday: weekdayCount, weekend_pct: (weekendCount + weekdayCount) > 0 ? Math.round((weekendCount / (weekendCount + weekdayCount)) * 100) : 0 }, peak_moderation_hour: peakHr._id || null, peak_moderation_hour_count: peakHr.count || 0, decision_flips: decisionFlips });
+    // 7-day rolling average
+    const past7Snapshots = await PlatformSnapshot.find().sort({ date: -1 }).limit(7).lean();
+    const pastReviews = past7Snapshots.map(sn => ((sn.moderation as Record<string,unknown>) as Record<string,number>)?.reviews_today || 0);
+    const avgReviews = pastReviews.length > 0 ? pastReviews.reduce((a,b)=>a+b,0) / pastReviews.length : 0;
+    res.json({ reviews_today: reviewsToday, approved_today: approvedToday, rejected_today: rejectedToday, retry_today: retryToday, pending_queue: { total: pending, oldest_age_hours: ageHours }, queue_velocity: { avg_reviews_per_day: Math.round(avgReviews*10)/10, days_to_clear: avgReviews>0?Math.ceil(pending/avgReviews):null }, reviews_by_day_of_week: weekendReviews.map((r: Record<string,unknown>)=>({day:r._id,count:r.count})), weekend_vs_weekday: { weekend: wc, weekday: wdc, weekend_pct: (wc+wdc)>0?Math.round((wc/(wc+wdc))*100):0 }, peak_moderation_hour: peakHr._id||null, peak_moderation_hour_count: peakHr.count||0, decision_flips: decisionFlips });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
-// 6. Categories + engagement per category
+// 6. Categories (fully live)
 router.get('/stats/categories', async (req: AdminAuthRequest, res: Response) => {
   try {
-    const s = await PlatformSnapshot.findOne().sort({ date: -1 }).lean();
-    const engagementByCat = await Post.aggregate([
-      { $match: { status: 'approved' } },
-      { $group: { _id: '$category_slug', post_count: { $sum: 1 }, total_comments: { $sum: '$comment_count' }, total_views: { $sum: '$view_count' } } },
-      { $project: { slug: '$_id', post_count: 1, avg_comments: { $cond: [{ $gt: ['$post_count', 0] }, { $divide: ['$total_comments', '$post_count'] }, 0] }, avg_views: { $cond: [{ $gt: ['$post_count', 0] }, { $divide: ['$total_views', '$post_count'] }, 0] } } },
-      { $sort: { post_count: -1 } },
+    const [categoryDocs, engagementByCat] = await Promise.all([
+      Category.find({ is_archived: false }).select('slug name post_count parent_id').lean(),
+      Post.aggregate([{ $match: { status: 'approved', deleted: false } }, { $group: { _id: '$category_slug', post_count: { $sum: 1 }, total_comments: { $sum: '$comment_count' }, total_views: { $sum: '$view_count' } } }, { $project: { slug: '$_id', post_count: 1, avg_comments: { $cond: [{ $gt: ['$post_count', 0] }, { $divide: ['$total_comments', '$post_count'] }, 0] }, avg_views: { $cond: [{ $gt: ['$post_count', 0] }, { $divide: ['$total_views', '$post_count'] }, 0] } } }, { $sort: { post_count: -1 } }]),
     ]);
-    res.json({ ...(s?.categories || {}), per_category_engagement: engagementByCat });
+    const children = categoryDocs.filter((c: Record<string,unknown>) => c.parent_id);
+    const top = [...categoryDocs].sort((a: Record<string,unknown>, b: Record<string,unknown>) => (b.post_count as number) - (a.post_count as number)).slice(0,10).map((c: Record<string,unknown>) => ({ slug: c.slug, post_count: c.post_count }));
+    const emptyChildren = children.filter((c: Record<string,unknown>) => (c.post_count as number) === 0).length;
+    res.json({ top_by_posts: top, empty_children: emptyChildren, utilization_pct: children.length>0?Math.round(((children.length-emptyChildren)/children.length)*100):0, per_category_engagement: engagementByCat });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
@@ -1255,27 +1261,25 @@ router.get('/stats/trends', async (req: AdminAuthRequest, res: Response) => {
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
-// 8. Quality + correlations
+// 8. Quality (fully live)
 router.get('/stats/quality', async (req: AdminAuthRequest, res: Response) => {
   try {
-    const s = await PlatformSnapshot.findOne().sort({ date: -1 }).lean();
-    const c = s?.content as Record<string, unknown>; const p = c?.posts as Record<string, number>;
-    const revisionRate = (p?.submitted || 0) > 0 ? Math.round(((p?.in_revision || 0) / (p?.submitted || 1)) * 100) : 0;
-    const correlations = await Post.aggregate([
-      { $project: { intro_len: { $strLenCP: '$intro' }, comment_count: 1, fire_count: 1 } },
-      { $bucket: { groupBy: '$intro_len', boundaries: [0, 50, 100, 200, 500, 1000, 2000, 10000], default: 'other', output: { count: { $sum: 1 }, avg_comments: { $avg: '$comment_count' }, avg_fire: { $avg: '$fire_count' } } } }
+    const [totalSubmissions, inRevision, rejectionReasons, correlations] = await Promise.all([
+      Post.countDocuments({ deleted: false }),
+      Post.countDocuments({ revision_guidance: { $ne: null }, deleted: false }),
+      Post.aggregate([{ $match: { status: 'rejected', deleted: false } }, { $group: { _id: '$rejection_reason', count: { $sum: 1 } } }]),
+      Post.aggregate([{ $match: { deleted: false } }, { $project: { intro_len: { $strLenCP: '$intro' }, comment_count: 1, fire_count: 1 } }, { $bucket: { groupBy: '$intro_len', boundaries: [0, 50, 100, 200, 500, 1000, 2000, 10000], default: 'other', output: { count: { $sum: 1 }, avg_comments: { $avg: '$comment_count' }, avg_fire: { $avg: '$fire_count' } } } }]),
     ]);
-    res.json({ revision_rate: revisionRate, rejection_reasons: (s?.moderation as Record<string, unknown>)?.rejection_reasons || {}, intro_length_correlation: correlations.map((c: Record<string, unknown>) => ({ bucket: String(c._id), count: c.count, avg_comments: Math.round((c.avg_comments as number) * 10) / 10, avg_fire: Math.round((c.avg_fire as number) * 10) / 10 })) });
+    const rrMap: Record<string,number> = {}; for (const r of rejectionReasons) rrMap[r._id || 'other'] = (rrMap[r._id || 'other'] || 0) + r.count;
+    res.json({ revision_rate: totalSubmissions>0?Math.round((inRevision/totalSubmissions)*100):0, rejection_reasons: rrMap, intro_length_correlation: correlations.map((c: Record<string,unknown>)=>({bucket:String(c._id),count:c.count,avg_comments:Math.round((c.avg_comments as number)*10)/10,avg_fire:Math.round((c.avg_fire as number)*10)/10})) });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
-// 9. Traffic (enhanced)
+// 9. Traffic (fully live)
 router.get('/stats/traffic', async (req: AdminAuthRequest, res: Response) => {
   try {
-    const today = new Date().toISOString().substring(0, 10);
-    const todayStart = new Date(today + 'T00:00:00.000Z');
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const [visitsToday, uniqueFps, topPaths, browsers, peakHours, referrers, countries, itemEngagement, newUserByRef] = await Promise.all([
+    const today = new Date().toISOString().substring(0,10); const todayStart = new Date(today+'T00:00:00.000Z'); const sevenDaysAgo = new Date(Date.now()-7*86400000);
+    const [visitsToday, uniqueFps, topPaths, browsers, peakHours, referrers, countries, itemEngagement, newUserByRef, engagement] = await Promise.all([
       PageVisit.countDocuments({ created_at: { $gte: todayStart } }),
       PageVisit.distinct('fingerprint', { created_at: { $gte: todayStart }, fingerprint: { $ne: null } }),
       PageVisit.aggregate([{ $group: { _id: '$path', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 10 }]),
@@ -1283,26 +1287,17 @@ router.get('/stats/traffic', async (req: AdminAuthRequest, res: Response) => {
       PageVisit.aggregate([{ $match: { created_at: { $gte: sevenDaysAgo } } }, { $group: { _id: { $hour: '$created_at' }, count: { $sum: 1 } } }, { $sort: { _id: 1 } }]),
       PageVisit.aggregate([{ $match: { created_at: { $gte: todayStart }, referer: { $ne: null, $ne: '' } } }, { $group: { _id: '$referer', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 10 }]),
       PageVisit.aggregate([{ $match: { created_at: { $gte: sevenDaysAgo }, country: { $ne: null } } }, { $group: { _id: '$country', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 15 }]),
-      Comment.aggregate([{ $match: { list_item_id: { $ne: null } } }, { $group: { _id: '$list_item_id', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 10 }, { $lookup: { from: 'listitems', localField: '_id', foreignField: '_id', as: 'item' } }, { $unwind: '$item' }, { $project: { item_title: '$item.title', item_rank: '$item.rank', comment_count: '$count' } }]),
-      PageVisit.aggregate([{ $match: { fingerprint: { $ne: null }, created_at: { $gte: new Date(Date.now() - 30 * 86400000) } } }, { $sort: { created_at: 1 } }, { $group: { _id: '$fingerprint', first_visit: { $first: '$created_at' }, first_referer: { $first: '$referer' } } }, { $lookup: { from: 'users', localField: '_id', foreignField: 'device_fingerprint', as: 'u' } }, { $unwind: '$u' }, { $match: { $expr: { $gte: ['$u.created_at', '$first_visit'] } } }, { $group: { _id: { $cond: [{ $regexMatch: { input: '$first_referer', regex: /google\.|bing\.|duckduckgo\.|yahoo\./i } }, 'search', { $cond: [{ $eq: ['$first_referer', null] }, 'direct', 'other'] }] }, count: { $sum: 1 } } }]),
+      Comment.aggregate([{ $match: { list_item_id: { $ne: null }, deleted: false, hidden: false } }, { $group: { _id: '$list_item_id', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 10 }, { $lookup: { from: 'listitems', localField: '_id', foreignField: '_id', as: 'item' } }, { $unwind: '$item' }, { $project: { item_title: '$item.title', item_rank: '$item.rank', comment_count: '$count' } }]),
+      PageVisit.aggregate([{ $match: { fingerprint: { $ne: null }, created_at: { $gte: new Date(Date.now()-30*86400000) } } }, { $sort: { created_at: 1 } }, { $group: { _id: '$fingerprint', first_referer: { $first: '$referer' } } }, { $lookup: { from: 'users', localField: '_id', foreignField: 'device_fingerprint', as: 'u' } }, { $unwind: '$u' }, { $group: { _id: { $cond: [{ $regexMatch: { input: '$first_referer', regex: /google\.|bing\.|duckduckgo\.|yahoo\./i } }, 'search', { $cond: [{ $eq: ['$first_referer', null] }, 'direct', 'other'] }] }, count: { $sum: 1 } } }]),
+      Post.aggregate([{ $match: { status: 'approved', view_count: { $gt: 0 }, deleted: false } }, { $project: { title: 1, slug: 1, comment_count: 1, fire_count: 1, view_count: 1, ratio: { $divide: [{ $add: ['$comment_count', '$fire_count'] }, '$view_count'] } } }, { $sort: { ratio: -1 } }, { $limit: 10 }]),
     ]);
-    const browserMap: Record<string, number> = {}; const osMap: Record<string, number> = {};
-    for (const b of browsers) { browserMap[parseBrowser(b._id)] = (browserMap[parseBrowser(b._id)] || 0) + b.count; osMap[parseOS(b._id)] = (osMap[parseOS(b._id)] || 0) + b.count; }
-    const extractDomain = (ref: string) => { try { return new URL(ref).hostname.replace('www.', ''); } catch { return ref.substring(0, 50); } };
-    const topRefs = referrers.map((r: Record<string, unknown>) => ({ domain: extractDomain(r._id as string), count: r.count }));
-    let population: Record<string, number> = {};
-    try { population = require('../data/countryPopulation.json'); } catch {}
-    const countriesWithPop = countries.map((c: Record<string, unknown>) => {
-      const code = c._id as string;
-      const pop = population[code] || null;
-      return { code, count: c.count, population: pop, visits_per_million: pop ? Math.round((c.count as number / pop) * 1000000 * 100) / 100 : null };
-    });
-    const engagement = await Post.aggregate([
-      { $match: { status: 'approved', view_count: { $gt: 0 } } },
-      { $project: { title: 1, slug: 1, comment_count: 1, fire_count: 1, view_count: 1, ratio: { $divide: [{ $add: ['$comment_count', '$fire_count'] }, '$view_count'] } } },
-      { $sort: { ratio: -1 } }, { $limit: 10 }
-    ]);
-    res.json({ visits_today: visitsToday, unique_today: uniqueFps.length, top_paths: topPaths.map((p: Record<string, unknown>) => ({ path: p._id, count: p.count })), browsers: browserMap, os: osMap, peak_hours: peakHours.map((h: Record<string, unknown>) => ({ hour: h._id, count: h.count })), top_referrers: topRefs, countries: countriesWithPop, top_engaged: engagement.map((e: Record<string, unknown>) => ({ slug: e.slug, title: e.title, ratio: Math.round((e.ratio as number) * 1000) / 10 })), top_engaged_items: itemEngagement.map((i: Record<string, unknown>) => ({ title: i.item_title, rank: i.item_rank, comment_count: i.comment_count })), new_users_by_referrer: newUserByRef.map((r: Record<string, unknown>) => ({ source: r._id, count: r.count })) });
+    const browserMap: Record<string,number>={}; const osMap: Record<string,number>={};
+    for (const b of browsers) { browserMap[parseBrowser(b._id)]=(browserMap[parseBrowser(b._id)]||0)+b.count; osMap[parseOS(b._id)]=(osMap[parseOS(b._id)]||0)+b.count; }
+    const extractDomain = (ref: string) => { try { return new URL(ref).hostname.replace('www.',''); } catch { return ref.substring(0,50); } };
+    const topRefs = referrers.map((r: Record<string,unknown>)=>({domain:extractDomain(r._id as string),count:r.count}));
+    let population: Record<string,number>={}; try { population = require('../data/countryPopulation.json'); } catch {}
+    const countriesWithPop = countries.map((c: Record<string,unknown>)=>{const code=c._id as string; const pop=population[code]||null; return {code,count:c.count,population:pop,visits_per_million:pop?Math.round((c.count as number/pop)*1000000*100)/100:null};});
+    res.json({ visits_today: visitsToday, unique_today: uniqueFps.length, top_paths: topPaths.map((p:Record<string,unknown>)=>({path:p._id,count:p.count})), browsers: browserMap, os: osMap, peak_hours: peakHours.map((h:Record<string,unknown>)=>({hour:h._id,count:h.count})), top_referrers: topRefs, countries: countriesWithPop, top_engaged: engagement.map((e:Record<string,unknown>)=>({slug:e.slug,title:e.title,ratio:Math.round((e.ratio as number)*1000)/10})), top_engaged_items: itemEngagement.map((i:Record<string,unknown>)=>({title:i.item_title,rank:i.item_rank,comment_count:i.comment_count})), new_users_by_referrer: newUserByRef.map((r:Record<string,unknown>)=>({source:r._id,count:r.count})) });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
