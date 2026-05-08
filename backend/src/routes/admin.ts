@@ -1,4 +1,4 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router, Request, Response, NextFunction, RequestHandler } from 'express';
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 import { AdminUser } from '../models/AdminUser';
@@ -16,7 +16,6 @@ import {
   checkAccountLock,
   recordFailedLogin,
   resetLoginAttempts,
-  AdminAuthRequest,
 } from '../lib/adminAuth';
 import { PlatformSnapshot } from '../models/PlatformSnapshot';
 import { Category } from '../models/Category';
@@ -36,16 +35,16 @@ const router: Router = Router();
 
 const PUBLIC_PATHS = new Set(['/login', '/setup', '/setup/validate']);
 
-router.use((req: AdminAuthRequest, res: Response, next: NextFunction) => {
+router.use((req, res, next) => {
   if (PUBLIC_PATHS.has(req.path)) return next();
-  return adminAuthMiddleware(req, res, next);
+  return adminAuthMiddleware(req as any, res, next);
 });
 
 /**
  * POST /api/admin/login
  * Public — brute-force protected via IP rate limit + account lock
  */
-router.post('/login', async (req: Request, res: Response) => {
+router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
     const clientIp = getClientIp(req);
@@ -132,7 +131,7 @@ router.post('/login', async (req: Request, res: Response) => {
  * POST /api/admin/setup
  * Public — one-time setup token required
  */
-router.post('/setup', async (req: Request, res: Response) => {
+router.post('/setup', async (req, res) => {
   try {
     const { token, username, password } = req.body;
 
@@ -191,7 +190,7 @@ router.post('/setup', async (req: Request, res: Response) => {
  * GET /api/admin/setup/validate
  * Public — checks if a setup token is still valid
  */
-router.get('/setup/validate', async (req: Request, res: Response) => {
+router.get('/setup/validate', async (req, res) => {
   const { token } = req.query;
 
   if (!token || typeof token !== 'string' || token.length < 8) {
@@ -211,7 +210,7 @@ router.get('/setup/validate', async (req: Request, res: Response) => {
  * GET /api/admin/me
  * Protected — get current admin user
  */
-router.get('/me', async (req: AdminAuthRequest, res: Response) => {
+router.get('/me', async (req, res) => {
   res.json({
     id: req.admin!.id,
     username: req.admin!.username,
@@ -222,7 +221,7 @@ router.get('/me', async (req: AdminAuthRequest, res: Response) => {
  * POST /api/admin/logout
  * Protected — invalidate admin session
  */
-router.post('/logout', async (req: AdminAuthRequest, res: Response) => {
+router.post('/logout', async (req, res) => {
   await AdminUser.findByIdAndUpdate(req.admin!.id, { $inc: { token_version: 1 } });
   logAudit({
     admin_id: req.admin!.id,
@@ -238,7 +237,7 @@ router.post('/logout', async (req: AdminAuthRequest, res: Response) => {
  * GET /api/admin/posts/pending
  * Protected — list pending posts for review
  */
-router.get('/posts/pending', async (req: AdminAuthRequest, res: Response) => {
+router.get('/posts/pending', async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
@@ -301,7 +300,7 @@ router.get('/posts/pending', async (req: AdminAuthRequest, res: Response) => {
  * GET /api/admin/posts/pending/:id
  * Protected — get full pending post preview
  */
-router.get('/posts/pending/:id', async (req: AdminAuthRequest, res: Response) => {
+router.get('/posts/pending/:id', async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
 
@@ -336,7 +335,7 @@ router.get('/posts/pending/:id', async (req: AdminAuthRequest, res: Response) =>
  * PATCH /api/admin/posts/:id/approve
  * Protected — approve post and publish to public feed
  */
-router.patch('/posts/:id/approve', async (req: AdminAuthRequest, res: Response) => {
+router.patch('/posts/:id/approve', async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
 
@@ -389,7 +388,7 @@ router.patch('/posts/:id/approve', async (req: AdminAuthRequest, res: Response) 
  * POST /api/admin/posts/:id/retry
  * Protected — request revision without trust score penalty
  */
-router.post('/posts/:id/retry', async (req: AdminAuthRequest, res: Response) => {
+router.post('/posts/:id/retry', async (req, res) => {
   try {
     const { guidance } = req.body;
 
@@ -437,7 +436,7 @@ router.post('/posts/:id/retry', async (req: AdminAuthRequest, res: Response) => 
  * PATCH /api/admin/posts/:id/reject
  * Protected — reject pending post
  */
-router.patch('/posts/:id/reject', async (req: AdminAuthRequest, res: Response) => {
+router.patch('/posts/:id/reject', async (req, res) => {
   try {
     const { reason } = req.body;
 
@@ -492,7 +491,7 @@ router.patch('/posts/:id/reject', async (req: AdminAuthRequest, res: Response) =
 /**
  * POST /api/admin/posts/bulk/approve — Bulk approve multiple posts
  */
-router.post('/posts/bulk/approve', async (req: AdminAuthRequest, res: Response) => {
+router.post('/posts/bulk/approve', async (req, res) => {
   try {
     const { ids } = req.body;
     if (!Array.isArray(ids) || ids.length === 0 || ids.length > 50) {
@@ -523,7 +522,7 @@ router.post('/posts/bulk/approve', async (req: AdminAuthRequest, res: Response) 
 /**
  * POST /api/admin/posts/bulk/reject — Bulk reject multiple posts
  */
-router.post('/posts/bulk/reject', async (req: AdminAuthRequest, res: Response) => {
+router.post('/posts/bulk/reject', async (req, res) => {
   try {
     const { ids, reason } = req.body;
     if (!Array.isArray(ids) || ids.length === 0 || ids.length > 50) {
@@ -556,7 +555,7 @@ router.post('/posts/bulk/reject', async (req: AdminAuthRequest, res: Response) =
  * GET /api/admin/audit-logs/stats
  * Protected — quick dashboard summary, Redis-cached 30s
  */
-router.get('/audit-logs/stats', async (req: AdminAuthRequest, res: Response) => {
+router.get('/audit-logs/stats', async (req, res) => {
   try {
     const stats = await getAuditStats();
     res.json(stats);
@@ -570,7 +569,7 @@ router.get('/audit-logs/stats', async (req: AdminAuthRequest, res: Response) => 
  * GET /api/admin/audit-logs
  * Protected — paginated, filterable audit trail
  */
-router.get('/audit-logs', async (req: AdminAuthRequest, res: Response) => {
+router.get('/audit-logs', async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
@@ -580,9 +579,9 @@ router.get('/audit-logs', async (req: AdminAuthRequest, res: Response) => {
     if (req.query.action) query.action = req.query.action;
     if (req.query.ip) query.ip = { $regex: req.query.ip, $options: 'i' };
     if (req.query.date_from || req.query.date_to) {
-      query.created_at = {};
-      if (req.query.date_from) query.created_at.$gte = new Date(req.query.date_from as string);
-      if (req.query.date_to) query.created_at.$lte = new Date(req.query.date_to as string);
+      query.created_at = {} as Record<string, unknown>;
+      if (req.query.date_from) (query.created_at as Record<string, unknown>).$gte = new Date(req.query.date_from as string);
+      if (req.query.date_to) (query.created_at as Record<string, unknown>).$lte = new Date(req.query.date_to as string);
     }
 
     const [logs, total] = await Promise.all([
@@ -607,7 +606,7 @@ router.get('/audit-logs', async (req: AdminAuthRequest, res: Response) => {
 // ═══ M10.4 All Posts Management ══════════════════════════════════
 
 // 1. List all posts
-router.get('/posts', async (req: AdminAuthRequest, res: Response) => {
+router.get('/posts', async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
@@ -659,7 +658,7 @@ router.get('/posts', async (req: AdminAuthRequest, res: Response) => {
 });
 
 // 2. Edit post
-router.patch('/posts/:id', async (req: AdminAuthRequest, res: Response) => {
+router.patch('/posts/:id', async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
@@ -689,7 +688,7 @@ router.patch('/posts/:id', async (req: AdminAuthRequest, res: Response) => {
 });
 
 // 3. Soft delete
-router.delete('/posts/:id', async (req: AdminAuthRequest, res: Response) => {
+router.delete('/posts/:id', async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
@@ -701,7 +700,7 @@ router.delete('/posts/:id', async (req: AdminAuthRequest, res: Response) => {
 });
 
 // 4. Restore soft-deleted
-router.post('/posts/:id/restore', async (req: AdminAuthRequest, res: Response) => {
+router.post('/posts/:id/restore', async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
     if (!post || !post.deleted) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found or not deleted' });
@@ -713,7 +712,7 @@ router.post('/posts/:id/restore', async (req: AdminAuthRequest, res: Response) =
 });
 
 // 5. Hard delete (permanent)
-router.delete('/posts/:id/permanent', async (req: AdminAuthRequest, res: Response) => {
+router.delete('/posts/:id/permanent', async (req, res) => {
   try {
     const post = await Post.findByIdAndDelete(req.params.id);
     if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
@@ -725,7 +724,7 @@ router.delete('/posts/:id/permanent', async (req: AdminAuthRequest, res: Respons
 });
 
 // 6. Feature
-router.post('/posts/:id/feature', async (req: AdminAuthRequest, res: Response) => {
+router.post('/posts/:id/feature', async (req, res) => {
   const post = await Post.findById(req.params.id);
   if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
   post.featured = true; post.featured_at = new Date();
@@ -736,7 +735,7 @@ router.post('/posts/:id/feature', async (req: AdminAuthRequest, res: Response) =
 });
 
 // 7. Unfeature
-router.post('/posts/:id/unfeature', async (req: AdminAuthRequest, res: Response) => {
+router.post('/posts/:id/unfeature', async (req, res) => {
   const post = await Post.findById(req.params.id);
   if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
   post.featured = false; post.featured_at = null; post.editorial_note = null;
@@ -746,7 +745,7 @@ router.post('/posts/:id/unfeature', async (req: AdminAuthRequest, res: Response)
 });
 
 // 8. Lock comments
-router.post('/posts/:id/lock', async (req: AdminAuthRequest, res: Response) => {
+router.post('/posts/:id/lock', async (req, res) => {
   const post = await Post.findById(req.params.id);
   if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
   post.comments_locked = true;
@@ -756,7 +755,7 @@ router.post('/posts/:id/lock', async (req: AdminAuthRequest, res: Response) => {
 });
 
 // 9. Unlock comments
-router.post('/posts/:id/unlock', async (req: AdminAuthRequest, res: Response) => {
+router.post('/posts/:id/unlock', async (req, res) => {
   const post = await Post.findById(req.params.id);
   if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
   post.comments_locked = false;
@@ -766,7 +765,7 @@ router.post('/posts/:id/unlock', async (req: AdminAuthRequest, res: Response) =>
 });
 
 // 10. Bump
-router.post('/posts/:id/bump', async (req: AdminAuthRequest, res: Response) => {
+router.post('/posts/:id/bump', async (req, res) => {
   const post = await Post.findById(req.params.id);
   if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
   post.bumped_at = new Date();
@@ -776,7 +775,7 @@ router.post('/posts/:id/bump', async (req: AdminAuthRequest, res: Response) => {
 });
 
 // 11. Quick stats
-router.get('/posts/stats', async (req: AdminAuthRequest, res: Response) => {
+router.get('/posts/stats', async (req, res) => {
   const [total, pending, approved, rejected, del, featured, locked] = await Promise.all([
     Post.countDocuments({ deleted: false }), Post.countDocuments({ status: 'pending_review', deleted: false }), Post.countDocuments({ status: 'approved', deleted: false }), Post.countDocuments({ status: 'rejected', deleted: false }), Post.countDocuments({ deleted: true }), Post.countDocuments({ featured: true }), Post.countDocuments({ comments_locked: true }),
   ]);
@@ -784,7 +783,7 @@ router.get('/posts/stats', async (req: AdminAuthRequest, res: Response) => {
 });
 
 // 12-14. Item-level operations
-router.patch('/posts/:id/items/:itemId', async (req: AdminAuthRequest, res: Response) => {
+router.patch('/posts/:id/items/:itemId', async (req, res) => {
   try {
     const { ListItem } = await import('../models/ListItem');
     const item = await ListItem.findOneAndUpdate({ _id: req.params.itemId, post_id: req.params.id }, { $set: req.body }, { new: true });
@@ -792,7 +791,7 @@ router.patch('/posts/:id/items/:itemId', async (req: AdminAuthRequest, res: Resp
     res.json({ success: true, item });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to edit item' }); }
 });
-router.post('/posts/:id/items', async (req: AdminAuthRequest, res: Response) => {
+router.post('/posts/:id/items', async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
@@ -801,7 +800,7 @@ router.post('/posts/:id/items', async (req: AdminAuthRequest, res: Response) => 
     res.status(201).json({ success: true, item });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to add item' }); }
 });
-router.delete('/posts/:id/items/:itemId', async (req: AdminAuthRequest, res: Response) => {
+router.delete('/posts/:id/items/:itemId', async (req, res) => {
   try {
     const { ListItem } = await import('../models/ListItem');
     await ListItem.findOneAndDelete({ _id: req.params.itemId, post_id: req.params.id });
@@ -810,7 +809,7 @@ router.delete('/posts/:id/items/:itemId', async (req: AdminAuthRequest, res: Res
 });
 
 // 15-17. Bulk operations
-router.post('/posts/bulk/delete', async (req: AdminAuthRequest, res: Response) => {
+router.post('/posts/bulk/delete', async (req, res) => {
   try {
     const { ids } = req.body;
     if (!Array.isArray(ids) || ids.length === 0 || ids.length > 50) return res.status(400).json({ code: 'VALIDATION', error: 'Provide 1-50 post IDs' });
@@ -819,7 +818,7 @@ router.post('/posts/bulk/delete', async (req: AdminAuthRequest, res: Response) =
     res.json({ success: true, deleted: result.modifiedCount });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Bulk delete failed' }); }
 });
-router.post('/posts/bulk/change-category', async (req: AdminAuthRequest, res: Response) => {
+router.post('/posts/bulk/change-category', async (req, res) => {
   try {
     const { ids, category_slug } = req.body;
     if (!Array.isArray(ids) || !category_slug) return res.status(400).json({ code: 'VALIDATION', error: 'Provide ids array and category_slug' });
@@ -829,7 +828,7 @@ router.post('/posts/bulk/change-category', async (req: AdminAuthRequest, res: Re
     res.json({ success: true, changed: result.modifiedCount });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Bulk recategorize failed' }); }
 });
-router.post('/posts/bulk/status', async (req: AdminAuthRequest, res: Response) => {
+router.post('/posts/bulk/status', async (req, res) => {
   try {
     const { ids, status } = req.body;
     if (!Array.isArray(ids) || !['approved', 'rejected', 'pending_review'].includes(status)) return res.status(400).json({ code: 'VALIDATION', error: 'Provide ids and valid status' });
@@ -849,13 +848,13 @@ router.post('/posts/bulk/status', async (req: AdminAuthRequest, res: Response) =
 });
 
 // 18. Export
-router.get('/posts/export', async (req: AdminAuthRequest, res: Response) => {
+router.get('/posts/export', async (req, res) => {
   try {
     const query: Record<string, unknown> = { deleted: false };
     if (req.query.status) query.status = req.query.status;
     const posts = await Post.find(query).sort({ created_at: -1 }).limit(10000).lean();
     const header = 'ID,Title,Author,Category,Type,Status,Fire,Comments,Views,Created,Published\n';
-    const rows = posts.map(p => [`"${p._id}"`, `"${(p.title || '').replace(/"/g, '""')}"`, p.author_username, p.category_slug, p.post_type, p.status, p.fire_count, p.comment_count, p.view_count, p.created_at, p.published_at || ''].join(',')).join('\n');
+    const rows = posts.map(p => [`"${p._id}"`, `"${(p.title || '').replace(/"/g, '""')}"`, p.author_username, p.category_slug, p.post_type, p.status, (p as any).fire_count, p.comment_count, p.view_count, p.created_at, p.published_at || ''].join(',')).join('\n');
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename="posts_export_${new Date().toISOString().substring(0,10)}.csv"`);
     res.send(header + rows);
@@ -863,7 +862,7 @@ router.get('/posts/export', async (req: AdminAuthRequest, res: Response) => {
 });
 
 // 19. Revisions
-router.get('/posts/:id/revisions', async (req: AdminAuthRequest, res: Response) => {
+router.get('/posts/:id/revisions', async (req, res) => {
   try {
     const post = await Post.findById(req.params.id).select('status_history title intro created_at updated_at').lean();
     if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
@@ -872,7 +871,7 @@ router.get('/posts/:id/revisions', async (req: AdminAuthRequest, res: Response) 
 });
 
 // 20. Compare
-router.get('/posts/compare', async (req: AdminAuthRequest, res: Response) => {
+router.get('/posts/compare', async (req, res) => {
   try {
     const ids = (req.query.ids as string || '').split(',');
     if (ids.length !== 2) return res.status(400).json({ code: 'VALIDATION', error: 'Provide exactly 2 IDs' });
@@ -882,7 +881,7 @@ router.get('/posts/compare', async (req: AdminAuthRequest, res: Response) => {
 });
 
 // 21. Duplicate
-router.post('/posts/:id/duplicate', async (req: AdminAuthRequest, res: Response) => {
+router.post('/posts/:id/duplicate', async (req, res) => {
   try {
     const post = await Post.findById(req.params.id).lean();
     if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
@@ -893,7 +892,7 @@ router.post('/posts/:id/duplicate', async (req: AdminAuthRequest, res: Response)
 });
 
 // 22. Activity
-router.get('/posts/:id/activity', async (req: AdminAuthRequest, res: Response) => {
+router.get('/posts/:id/activity', async (req, res) => {
   try {
     const logs = await AuditLog.find({ 'metadata.post_id': req.params.id }).sort({ created_at: -1 }).limit(50).lean();
     res.json({ activity: logs });
@@ -901,7 +900,7 @@ router.get('/posts/:id/activity', async (req: AdminAuthRequest, res: Response) =
 });
 
 // 23. Admin view comments
-router.get('/posts/:id/comments', async (req: AdminAuthRequest, res: Response) => {
+router.get('/posts/:id/comments', async (req, res) => {
   try {
     const { Comment } = await import('../models/Comment');
     const comments = await Comment.find({ post_id: req.params.id }).sort({ created_at: -1 }).limit(100).lean();
@@ -910,7 +909,7 @@ router.get('/posts/:id/comments', async (req: AdminAuthRequest, res: Response) =
 });
 
 // 24. Quality check
-router.post('/posts/quality-check', async (req: AdminAuthRequest, res: Response) => {
+router.post('/posts/quality-check', async (req, res) => {
   try {
     const flags = await Post.find({ status: 'approved', deleted: false, intro: { $exists: true, $not: { $regex: /.{100,}/ } } }).select('title intro').lean();
     res.json({ low_quality_count: flags.length, flagged: flags.slice(0, 20) });
@@ -920,7 +919,7 @@ router.post('/posts/quality-check', async (req: AdminAuthRequest, res: Response)
 // ═══ M10.5 All Comments Management ════════════════════════════════
 
 // 1. List all comments
-router.get('/comments', async (req: AdminAuthRequest, res: Response) => {
+router.get('/comments', async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
@@ -970,7 +969,7 @@ router.get('/comments', async (req: AdminAuthRequest, res: Response) => {
 });
 
 // 2. Admin edit comment (any age, override 2hr window)
-router.patch('/comments/:id', async (req: AdminAuthRequest, res: Response) => {
+router.patch('/comments/:id', async (req, res) => {
   try {
     const comment = await Comment.findById(req.params.id);
     if (!comment) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
@@ -982,7 +981,7 @@ router.patch('/comments/:id', async (req: AdminAuthRequest, res: Response) => {
 });
 
 // 3. Soft delete
-router.delete('/comments/:id', async (req: AdminAuthRequest, res: Response) => {
+router.delete('/comments/:id', async (req, res) => {
   try {
     const c = await Comment.findById(req.params.id);
     if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
@@ -994,7 +993,7 @@ router.delete('/comments/:id', async (req: AdminAuthRequest, res: Response) => {
 });
 
 // 4. Restore
-router.post('/comments/:id/restore', async (req: AdminAuthRequest, res: Response) => {
+router.post('/comments/:id/restore', async (req, res) => {
   const c = await Comment.findById(req.params.id);
   if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
   c.deleted = false; c.deleted_at = null;
@@ -1004,7 +1003,7 @@ router.post('/comments/:id/restore', async (req: AdminAuthRequest, res: Response
 });
 
 // 5. Hard delete
-router.delete('/comments/:id/permanent', async (req: AdminAuthRequest, res: Response) => {
+router.delete('/comments/:id/permanent', async (req, res) => {
   const c = await Comment.findByIdAndDelete(req.params.id);
   if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
   removeComment((c._id as { toString(): string }).toString());
@@ -1012,7 +1011,7 @@ router.delete('/comments/:id/permanent', async (req: AdminAuthRequest, res: Resp
 });
 
 // 6-7. Hide / Unhide
-router.post('/comments/:id/hide', async (req: AdminAuthRequest, res: Response) => {
+router.post('/comments/:id/hide', async (req, res) => {
   const c = await Comment.findById(req.params.id);
   if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
   c.hidden = true; c.hidden_reason = req.body.reason || null; c.flag_type = null; c.flag_evidence = null;
@@ -1020,7 +1019,7 @@ router.post('/comments/:id/hide', async (req: AdminAuthRequest, res: Response) =
   removeComment((c._id as { toString(): string }).toString());
   res.json({ success: true });
 });
-router.post('/comments/:id/unhide', async (req: AdminAuthRequest, res: Response) => {
+router.post('/comments/:id/unhide', async (req, res) => {
   const c = await Comment.findById(req.params.id);
   if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
   c.hidden = false; c.hidden_reason = null;
@@ -1030,7 +1029,7 @@ router.post('/comments/:id/unhide', async (req: AdminAuthRequest, res: Response)
 });
 
 // 8-9. Highlight / Unhighlight
-router.post('/comments/:id/highlight', async (req: AdminAuthRequest, res: Response) => {
+router.post('/comments/:id/highlight', async (req, res) => {
   const c = await Comment.findById(req.params.id);
   if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
   c.highlighted = true;
@@ -1038,7 +1037,7 @@ router.post('/comments/:id/highlight', async (req: AdminAuthRequest, res: Respon
   indexComment(c as unknown as Record<string, unknown>);
   res.json({ success: true });
 });
-router.post('/comments/:id/unhighlight', async (req: AdminAuthRequest, res: Response) => {
+router.post('/comments/:id/unhighlight', async (req, res) => {
   const c = await Comment.findById(req.params.id);
   if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
   c.highlighted = false;
@@ -1048,14 +1047,14 @@ router.post('/comments/:id/unhighlight', async (req: AdminAuthRequest, res: Resp
 });
 
 // 10-11. Bulk
-router.post('/comments/bulk/delete', async (req: AdminAuthRequest, res: Response) => {
+router.post('/comments/bulk/delete', async (req, res) => {
   const { ids } = req.body;
   if (!Array.isArray(ids) || ids.length === 0 || ids.length > 50) return res.status(400).json({ code: 'VALIDATION', error: 'Provide 1-50 IDs' });
   const r = await Comment.updateMany({ _id: { $in: ids } }, { $set: { deleted: true, deleted_at: new Date(), flag_type: null, flag_evidence: null } });
   for (const id of ids) removeComment(id);
   res.json({ success: true, deleted: r.modifiedCount });
 });
-router.post('/comments/bulk/hide', async (req: AdminAuthRequest, res: Response) => {
+router.post('/comments/bulk/hide', async (req, res) => {
   const { ids, reason } = req.body;
   if (!Array.isArray(ids) || ids.length === 0 || ids.length > 50) return res.status(400).json({ code: 'VALIDATION', error: 'Provide 1-50 IDs' });
   const r = await Comment.updateMany({ _id: { $in: ids } }, { $set: { hidden: true, hidden_reason: reason || null, flag_type: null, flag_evidence: null } });
@@ -1064,7 +1063,7 @@ router.post('/comments/bulk/hide', async (req: AdminAuthRequest, res: Response) 
 });
 
 // 12. Quick stats
-router.get('/comments/stats', async (req: AdminAuthRequest, res: Response) => {
+router.get('/comments/stats', async (req, res) => {
     const [total, del, hid, hi, itemAnchored, postComment, flagged] = await Promise.all([
       Comment.countDocuments({}), Comment.countDocuments({ deleted: true }), Comment.countDocuments({ hidden: true }), Comment.countDocuments({ highlighted: true }), Comment.countDocuments({ list_item_id: { $ne: null } }), Comment.countDocuments({ list_item_id: null }), Comment.countDocuments({ deleted: { $ne: true }, flag_type: { $ne: null } }),
     ]);
@@ -1072,7 +1071,7 @@ router.get('/comments/stats', async (req: AdminAuthRequest, res: Response) => {
 });
 
 // 13. Export
-router.get('/comments/export', async (req: AdminAuthRequest, res: Response) => {
+router.get('/comments/export', async (req, res) => {
   const comments = await Comment.find({}).sort({ created_at: -1 }).limit(10000).lean();
   const header = 'ID,Content,Author,PostID,Type,Fire,Replies,SparkScore,Depth,Created\n';
   const rows = comments.map(c => [`"${c._id}"`, `"${(c.content || '').substring(0, 200).replace(/"/g, '""')}"`, c.author_username, c.post_id, c.list_item_id ? 'item_anchored' : 'post_comment', c.fire_count, c.reply_count, c.spark_score, c.depth, c.created_at].join(',')).join('\n');
@@ -1082,14 +1081,14 @@ router.get('/comments/export', async (req: AdminAuthRequest, res: Response) => {
 });
 
 // 14. Activity
-router.get('/comments/:id/activity', async (req: AdminAuthRequest, res: Response) => {
+router.get('/comments/:id/activity', async (req, res) => {
   const c = await Comment.findById(req.params.id).select('content_history').lean();
   if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
   res.json({ content_history: c.content_history || [] });
 });
 
 // 15. Apply penalty
-router.post('/comments/:id/apply-penalty', async (req: AdminAuthRequest, res: Response) => {
+router.post('/comments/:id/apply-penalty', async (req, res) => {
   try {
     const comment = await Comment.findById(req.params.id);
     if (!comment) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
@@ -1109,7 +1108,7 @@ router.post('/comments/:id/apply-penalty', async (req: AdminAuthRequest, res: Re
 });
 
 // 16. Dismiss flag
-router.post('/comments/:id/dismiss-flag', async (req: AdminAuthRequest, res: Response) => {
+router.post('/comments/:id/dismiss-flag', async (req, res) => {
   const comment = await Comment.findById(req.params.id);
   if (!comment) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
   comment.flag_type = null;
@@ -1120,7 +1119,7 @@ router.post('/comments/:id/dismiss-flag', async (req: AdminAuthRequest, res: Res
 });
 
 // 17. Manual flag
-router.post('/comments/:id/flag', async (req: AdminAuthRequest, res: Response) => {
+router.post('/comments/:id/flag', async (req, res) => {
   const comment = await Comment.findById(req.params.id);
   if (!comment) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
   comment.flag_type = req.body.flag_type || 'manual';
@@ -1131,7 +1130,7 @@ router.post('/comments/:id/flag', async (req: AdminAuthRequest, res: Response) =
 });
 
 // 18. Bulk flag
-router.post('/comments/bulk/flag', async (req: AdminAuthRequest, res: Response) => {
+router.post('/comments/bulk/flag', async (req, res) => {
   const { ids } = req.body;
   if (!Array.isArray(ids) || ids.length === 0 || ids.length > 50) return res.status(400).json({ code: 'VALIDATION', error: 'Provide 1-50 IDs' });
   const r = await Comment.updateMany({ _id: { $in: ids } }, { $set: { flag_type: 'manual', flag_evidence: { flagged_by: 'admin', bulk: true } } });
@@ -1139,7 +1138,7 @@ router.post('/comments/bulk/flag', async (req: AdminAuthRequest, res: Response) 
 });
 
 // 19. Bulk unflag
-router.post('/comments/bulk/unflag', async (req: AdminAuthRequest, res: Response) => {
+router.post('/comments/bulk/unflag', async (req, res) => {
   const { ids } = req.body;
   if (!Array.isArray(ids) || ids.length === 0 || ids.length > 50) return res.status(400).json({ code: 'VALIDATION', error: 'Provide 1-50 IDs' });
   const r = await Comment.updateMany({ _id: { $in: ids } }, { $set: { flag_type: null, flag_evidence: null } });
@@ -1157,14 +1156,14 @@ function parseBrowser(ua: string) { if (!ua) return 'unknown'; if (/Edg/.test(ua
 function parseOS(ua: string) { if (!ua) return 'unknown'; if (/Windows/.test(ua)) return 'windows'; if (/Mac/.test(ua)) return 'macos'; if (/Linux/.test(ua) && !/Android/.test(ua)) return 'linux'; if (/Android/.test(ua)) return 'android'; if (/iPhone|iPad|iPod/.test(ua)) return 'ios'; return 'other'; }
 
 // 1. Health Pulse
-router.get('/stats/health', async (req: AdminAuthRequest, res: Response) => {
+router.get('/stats/health', async (req, res) => {
   try {
     const [mongoState, redisPing, esPing, heartbeats, mongoLatency, redisInfo] = await Promise.all([
       mongoose.connection.readyState,
       redis.ping().then(() => 'ok').catch(() => 'down'),
       (async () => { try { const { es } = await import('../lib/elasticsearch'); await es.ping(); return 'ok'; } catch { return 'down'; } })(),
       redis.hGetAll('cron:heartbeats'),
-      (async () => { try { const start = Date.now(); await mongoose.connection.db.admin().ping(); return Date.now() - start; } catch { return null; } })(),
+      (async () => { try { const start = Date.now(); await mongoose.connection.db?.admin().ping(); return Date.now() - start; } catch { return null; } })(),
       (async () => { try { return await redis.info('memory'); } catch { return ''; } })(),
     ]);
 
@@ -1206,7 +1205,7 @@ router.get('/stats/health', async (req: AdminAuthRequest, res: Response) => {
 });
 
 // 2. Overview (fully live)
-router.get('/stats/overview', async (req: AdminAuthRequest, res: Response) => {
+router.get('/stats/overview', async (req, res) => {
   try {
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const threeDaysAgo = new Date(Date.now() - 3 * 24 * 3600000);
@@ -1236,7 +1235,7 @@ router.get('/stats/overview', async (req: AdminAuthRequest, res: Response) => {
 });
 
 // 3. Content + age distribution + approval gap + throughput (fully live)
-router.get('/stats/content', async (req: AdminAuthRequest, res: Response) => {
+router.get('/stats/content', async (req, res) => {
   try {
     const now = new Date(); const today = new Date(); today.setHours(0,0,0,0);
     const sevenDaysAgo = new Date(Date.now() - 7 * 86400000);
@@ -1261,7 +1260,7 @@ router.get('/stats/content', async (req: AdminAuthRequest, res: Response) => {
 });
 
 // 4. Community + fan-out (fully live)
-router.get('/stats/community', async (req: AdminAuthRequest, res: Response) => {
+router.get('/stats/community', async (req, res) => {
   try {
     const today = new Date(); today.setHours(0,0,0,0); const weekAgo = new Date(Date.now() - 7*86400000); const monthAgo = new Date(Date.now() - 30*86400000);
     const [total, newToday, newWeek, active30d, active7d, scholars, neutrals, trolls, trolls24h, usersOver30d, powerUsers, postersThisMonth, postersLastMonth, lurkerDeep] = await Promise.all([
@@ -1281,7 +1280,7 @@ router.get('/stats/community', async (req: AdminAuthRequest, res: Response) => {
 });
 
 // 5. Moderation (fully live)
-router.get('/stats/moderation', async (req: AdminAuthRequest, res: Response) => {
+router.get('/stats/moderation', async (req, res) => {
   try {
     const today = new Date(); today.setHours(0,0,0,0); const sevenDaysAgo = new Date(Date.now() - 7*86400000);
     const [pending, approvedToday, rejectedToday, retryToday, oldestPending, weekendReviews, peakModHour, decisionFlips] = await Promise.all([
@@ -1308,7 +1307,7 @@ router.get('/stats/moderation', async (req: AdminAuthRequest, res: Response) => 
 });
 
 // 6. Categories (fully live)
-router.get('/stats/categories', async (req: AdminAuthRequest, res: Response) => {
+router.get('/stats/categories', async (req, res) => {
   try {
     const [categoryDocs, engagementByCat] = await Promise.all([
       Category.find({ is_archived: false }).select('slug name post_count parent_id').lean(),
@@ -1322,7 +1321,7 @@ router.get('/stats/categories', async (req: AdminAuthRequest, res: Response) => 
 });
 
 // 7. Trends + deltas (enhanced)
-router.get('/stats/trends', async (req: AdminAuthRequest, res: Response) => {
+router.get('/stats/trends', async (req, res) => {
   try {
     const snapshots = await PlatformSnapshot.find().sort({ date: -1 }).limit(14).lean();
     const weeks = snapshots.map(s => { const c = s.content as Record<string, unknown>; const co = s.community as Record<string, unknown>; const m = s.moderation as Record<string, unknown>; const p = c.posts as Record<string, number>; const cu = co.users as Record<string, number>; return { date: s.date, posts_total: p?.total || 0, posts_submitted: p?.submitted || 0, comments_total: (c.comments as Record<string, number>)?.total || 0, users_total: cu?.total || 0, users_new: cu?.new_today || 0, reviews: (m as Record<string, number>)?.reviews_today || 0, pending: ((m as Record<string, unknown>)?.pending_queue as Record<string, number>)?.total || 0 }; });
@@ -1330,8 +1329,8 @@ router.get('/stats/trends', async (req: AdminAuthRequest, res: Response) => {
       if (i >= weeks.length - 1) return w;
       const prev = weeks[i + 1];
       const delta = (field: string, goodWhenUp: boolean) => {
-        const cur = (w as Record<string, number>)[field] || 0;
-        const prv = (prev as Record<string, number>)[field] || 0;
+        const cur = (w as Record<string, any>)[field] || 0;
+        const prv = (prev as Record<string, any>)[field] || 0;
         const pct = prv > 0 ? Math.round(((cur - prv) / prv) * 100) : (cur > 0 ? 100 : 0);
         const dir = pct > 5 ? 'up' : pct < -5 ? 'down' : 'flat';
         const color = goodWhenUp ? (dir === 'up' ? 'green' : dir === 'down' ? 'red' : 'grey') : (dir === 'up' ? 'red' : dir === 'down' ? 'green' : 'grey');
@@ -1344,7 +1343,7 @@ router.get('/stats/trends', async (req: AdminAuthRequest, res: Response) => {
 });
 
 // 8. Quality (fully live)
-router.get('/stats/quality', async (req: AdminAuthRequest, res: Response) => {
+router.get('/stats/quality', async (req, res) => {
   try {
     const [totalSubmissions, inRevision, rejectionReasons, correlations] = await Promise.all([
       Post.countDocuments({ deleted: false }),
@@ -1358,7 +1357,7 @@ router.get('/stats/quality', async (req: AdminAuthRequest, res: Response) => {
 });
 
 // 9. Traffic (fully live)
-router.get('/stats/traffic', async (req: AdminAuthRequest, res: Response) => {
+router.get('/stats/traffic', async (req, res) => {
   try {
     const today = new Date().toISOString().substring(0,10); const todayStart = new Date(today+'T00:00:00.000Z'); const sevenDaysAgo = new Date(Date.now()-7*86400000);
     const [visitsToday, uniqueFps, topPaths, browsers, peakHours, referrers, countries, itemEngagement, newUserByRef, engagement] = await Promise.all([
@@ -1367,7 +1366,7 @@ router.get('/stats/traffic', async (req: AdminAuthRequest, res: Response) => {
       PageVisit.aggregate([{ $group: { _id: '$path', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 10 }]),
       PageVisit.aggregate([{ $match: { created_at: { $gte: todayStart } } }, { $group: { _id: '$user_agent', count: { $sum: 1 } } }, { $limit: 100 }]),
       PageVisit.aggregate([{ $match: { created_at: { $gte: sevenDaysAgo } } }, { $group: { _id: { $hour: '$created_at' }, count: { $sum: 1 } } }, { $sort: { _id: 1 } }]),
-      PageVisit.aggregate([{ $match: { created_at: { $gte: todayStart }, referer: { $ne: null, $ne: '' } } }, { $group: { _id: '$referer', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 10 }]),
+      PageVisit.aggregate([{ $match: { created_at: { $gte: todayStart }, referer: { $nin: [null, ''] } } }, { $group: { _id: '$referer', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 10 }]),
       PageVisit.aggregate([{ $match: { created_at: { $gte: sevenDaysAgo }, country: { $ne: null } } }, { $group: { _id: '$country', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 15 }]),
       Comment.aggregate([{ $match: { list_item_id: { $ne: null }, deleted: false, hidden: false } }, { $group: { _id: '$list_item_id', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 10 }, { $lookup: { from: 'listitems', localField: '_id', foreignField: '_id', as: 'item' } }, { $unwind: '$item' }, { $project: { item_title: '$item.title', item_rank: '$item.rank', comment_count: '$count' } }]),
       PageVisit.aggregate([{ $match: { fingerprint: { $ne: null }, created_at: { $gte: new Date(Date.now()-30*86400000) } } }, { $sort: { created_at: 1 } }, { $group: { _id: '$fingerprint', first_referer: { $first: '$referer' } } }, { $lookup: { from: 'users', localField: '_id', foreignField: 'device_fingerprint', as: 'u' } }, { $unwind: '$u' }, { $group: { _id: { $cond: [{ $regexMatch: { input: '$first_referer', regex: /google\.|bing\.|duckduckgo\.|yahoo\./i } }, 'search', { $cond: [{ $eq: ['$first_referer', null] }, 'direct', 'other'] }] }, count: { $sum: 1 } } }]),
@@ -1376,7 +1375,7 @@ router.get('/stats/traffic', async (req: AdminAuthRequest, res: Response) => {
     const browserMap: Record<string,number>={}; const osMap: Record<string,number>={};
     for (const b of browsers) { browserMap[parseBrowser(b._id)]=(browserMap[parseBrowser(b._id)]||0)+b.count; osMap[parseOS(b._id)]=(osMap[parseOS(b._id)]||0)+b.count; }
     const extractDomain = (ref: string) => { try { return new URL(ref).hostname.replace('www.',''); } catch { return ref.substring(0,50); } };
-    const refAgg = referrers.map((r: Record<string,unknown>) => { const domain = extractDomain(r._id as string); return { domain, count: r.count }; });
+    const refAgg = referrers.map((r: Record<string,unknown>) => { const domain = extractDomain(r._id as string); return { domain, count: r.count as number }; });
     const topRefs: Array<{ domain: string; count: number }> = [];
     for (const r of refAgg) {
       const existing = topRefs.find(t => t.domain === r.domain);
@@ -1390,12 +1389,12 @@ router.get('/stats/traffic', async (req: AdminAuthRequest, res: Response) => {
 });
 
 // 9b. Traffic Lurkers — Ghost ratio
-router.get('/stats/traffic/lurkers', async (req: AdminAuthRequest, res: Response) => {
+router.get('/stats/traffic/lurkers', async (req, res) => {
   try {
     const allFingerprints = await PageVisit.distinct('fingerprint', { fingerprint: { $ne: null } });
     const posters = await Post.distinct('author_id');
     const posterSet = new Set(posters);
-    const neverPosted = allFingerprints.filter((fp: string) => !posterSet.has(fp));
+    const neverPosted = allFingerprints.filter((fp) => fp && !posterSet.has(fp));
 
     const visitCounts = await PageVisit.aggregate([
       { $match: { fingerprint: { $in: neverPosted } } },
@@ -1412,7 +1411,7 @@ router.get('/stats/traffic/lurkers', async (req: AdminAuthRequest, res: Response
 });
 
 // 9c. Content That Converts Lurkers
-router.get('/stats/traffic/conversion', async (req: AdminAuthRequest, res: Response) => {
+router.get('/stats/traffic/conversion', async (req, res) => {
   try {
     const convertingPaths = await UserEvent.aggregate([
       { $match: { event: 'post_submitted' } },
@@ -1433,7 +1432,7 @@ router.get('/stats/traffic/conversion', async (req: AdminAuthRequest, res: Respo
 });
 
 // 9d. Re-Engagement Triggers
-router.get('/stats/users/reengagement', async (req: AdminAuthRequest, res: Response) => {
+router.get('/stats/users/reengagement', async (req, res) => {
   try {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
     const reengaged = await UserEvent.aggregate([
@@ -1456,7 +1455,7 @@ router.get('/stats/users/reengagement', async (req: AdminAuthRequest, res: Respo
 });
 
 // 10. Submissions + type migration
-router.get('/stats/submissions', async (req: AdminAuthRequest, res: Response) => {
+router.get('/stats/submissions', async (req, res) => {
   try {
     const d = new Date(); d.setDate(d.getDate() - 7);
     const [byHour, byType, avgItems, typeMigration, typePaths] = await Promise.all([
@@ -1472,7 +1471,7 @@ router.get('/stats/submissions', async (req: AdminAuthRequest, res: Response) =>
 });
 
 // 11. User Lifecycle + activation gap + time-to-second + drop-off + lifetime
-router.get('/stats/users/lifecycle', async (req: AdminAuthRequest, res: Response) => {
+router.get('/stats/users/lifecycle', async (req, res) => {
   try {
     const [pipeline, activationGap, dropOff, lifetime, allUsers] = await Promise.all([
       UserEvent.aggregate([{ $match: { event: 'post_submitted' } }, { $sort: { created_at: 1 } }, { $group: { _id: '$user_id', posts: { $push: '$created_at' } } }, { $project: { first_post: { $arrayElemAt: ['$posts', 0] }, second_post: { $arrayElemAt: ['$posts', 1] } } }, { $match: { second_post: { $ne: null } } }, { $project: { days_between: { $divide: [{ $subtract: ['$second_post', '$first_post'] }, 86400000] } } }, { $bucket: { groupBy: '$days_between', boundaries: [0, 1, 4, 8, 31, 365], default: 'never', output: { count: { $sum: 1 } } } }]),
@@ -1493,7 +1492,7 @@ router.get('/stats/users/lifecycle', async (req: AdminAuthRequest, res: Response
 });
 
 // 12. Alerts
-router.get('/stats/alerts', async (req: AdminAuthRequest, res: Response) => {
+router.get('/stats/alerts', async (req, res) => {
   try {
     const [thresholds, history, active] = await Promise.all([
       AlertThreshold.find({ enabled: true }).lean(),
@@ -1509,14 +1508,14 @@ router.get('/stats/alerts', async (req: AdminAuthRequest, res: Response) => {
 import { createThresholdSchema, updateThresholdSchema, notificationQuerySchema, historyQuerySchema } from '../schemas/alert';
 
 // Thresholds CRUD
-router.get('/alerts/thresholds', async (req: AdminAuthRequest, res: Response) => {
+router.get('/alerts/thresholds', async (req, res) => {
   try {
     const thresholds = await AlertThreshold.find().sort({ metric: 1 }).lean();
     res.json({ thresholds });
   } catch (e) { res.status(500).json({ error: 'Failed to list thresholds' }); }
 });
 
-router.post('/alerts/thresholds', async (req: AdminAuthRequest, res: Response) => {
+router.post('/alerts/thresholds', async (req, res) => {
   try {
     const body = createThresholdSchema.parse(req.body);
     const exists = await AlertThreshold.findOne({ metric: body.metric });
@@ -1529,7 +1528,7 @@ router.post('/alerts/thresholds', async (req: AdminAuthRequest, res: Response) =
   }
 });
 
-router.patch('/alerts/thresholds/:id', async (req: AdminAuthRequest, res: Response) => {
+router.patch('/alerts/thresholds/:id', async (req, res) => {
   try {
     const body = updateThresholdSchema.parse(req.body);
     const t = await AlertThreshold.findByIdAndUpdate(req.params.id, { $set: body }, { new: true });
@@ -1541,7 +1540,7 @@ router.patch('/alerts/thresholds/:id', async (req: AdminAuthRequest, res: Respon
   }
 });
 
-router.delete('/alerts/thresholds/:id', async (req: AdminAuthRequest, res: Response) => {
+router.delete('/alerts/thresholds/:id', async (req, res) => {
   try {
     const t = await AlertThreshold.findByIdAndDelete(req.params.id);
     if (!t) return res.status(404).json({ code: 'NOT_FOUND', error: 'Threshold not found' });
@@ -1549,7 +1548,7 @@ router.delete('/alerts/thresholds/:id', async (req: AdminAuthRequest, res: Respo
   } catch (e) { res.status(500).json({ error: 'Failed to delete threshold' }); }
 });
 
-router.patch('/alerts/thresholds/:id/toggle', async (req: AdminAuthRequest, res: Response) => {
+router.patch('/alerts/thresholds/:id/toggle', async (req, res) => {
   try {
     const t = await AlertThreshold.findById(req.params.id);
     if (!t) return res.status(404).json({ code: 'NOT_FOUND', error: 'Threshold not found' });
@@ -1560,7 +1559,7 @@ router.patch('/alerts/thresholds/:id/toggle', async (req: AdminAuthRequest, res:
 });
 
 // Notifications
-router.get('/alerts/notifications', async (req: AdminAuthRequest, res: Response) => {
+router.get('/alerts/notifications', async (req, res) => {
   try {
     const { page, limit, severity, read } = notificationQuerySchema.parse(req.query);
     const skip = (page - 1) * limit;
@@ -1581,14 +1580,14 @@ router.get('/alerts/notifications', async (req: AdminAuthRequest, res: Response)
   }
 });
 
-router.get('/alerts/notifications/count', async (req: AdminAuthRequest, res: Response) => {
+router.get('/alerts/notifications/count', async (req, res) => {
   try {
     const unread = await AlertNotificationModel.countDocuments({ read: false, dismissed: false });
     res.json({ unread });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
-router.patch('/alerts/notifications/:id/read', async (req: AdminAuthRequest, res: Response) => {
+router.patch('/alerts/notifications/:id/read', async (req, res) => {
   try {
     const n = await AlertNotificationModel.findByIdAndUpdate(req.params.id, { read: true }, { new: true });
     if (!n) return res.status(404).json({ code: 'NOT_FOUND', error: 'Notification not found' });
@@ -1596,14 +1595,14 @@ router.patch('/alerts/notifications/:id/read', async (req: AdminAuthRequest, res
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
-router.patch('/alerts/notifications/read-all', async (req: AdminAuthRequest, res: Response) => {
+router.patch('/alerts/notifications/read-all', async (req, res) => {
   try {
     const result = await AlertNotificationModel.updateMany({ read: false }, { read: true });
     res.json({ success: true, marked: result.modifiedCount });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
-router.delete('/alerts/notifications/:id', async (req: AdminAuthRequest, res: Response) => {
+router.delete('/alerts/notifications/:id', async (req, res) => {
   try {
     const n = await AlertNotificationModel.findByIdAndUpdate(req.params.id, { dismissed: true }, { new: true });
     if (!n) return res.status(404).json({ code: 'NOT_FOUND', error: 'Notification not found' });
@@ -1612,7 +1611,7 @@ router.delete('/alerts/notifications/:id', async (req: AdminAuthRequest, res: Re
 });
 
 // Get single alert notification with live metric value
-router.get('/alerts/notifications/:id', async (req: AdminAuthRequest, res: Response) => {
+router.get('/alerts/notifications/:id', async (req, res) => {
   try {
     const n = await AlertNotificationModel.findById(req.params.id).lean();
     if (!n) return res.status(404).json({ code: 'NOT_FOUND', error: 'Notification not found' });
@@ -1646,7 +1645,7 @@ router.get('/alerts/notifications/:id', async (req: AdminAuthRequest, res: Respo
 });
 
 // Settle alert notification (admin acknowledges and addresses)
-router.patch('/alerts/notifications/:id/settle', async (req: AdminAuthRequest, res: Response) => {
+router.patch('/alerts/notifications/:id/settle', async (req, res) => {
   try {
     const n = await AlertNotificationModel.findByIdAndUpdate(
       req.params.id,
@@ -1659,7 +1658,7 @@ router.patch('/alerts/notifications/:id/settle', async (req: AdminAuthRequest, r
 });
 
 // Settle all alert notifications
-router.patch('/alerts/notifications/settle-all', async (req: AdminAuthRequest, res: Response) => {
+router.patch('/alerts/notifications/settle-all', async (req, res) => {
   try {
     const result = await AlertNotificationModel.updateMany(
       { $or: [{ settled: false }, { settled: { $exists: false } }], dismissed: false },
@@ -1670,7 +1669,7 @@ router.patch('/alerts/notifications/settle-all', async (req: AdminAuthRequest, r
 });
 
 // History
-router.get('/alerts/history', async (req: AdminAuthRequest, res: Response) => {
+router.get('/alerts/history', async (req, res) => {
   try {
     const { page, limit, metric, severity, resolved, date_from, date_to } = historyQuerySchema.parse(req.query);
     const skip = (page - 1) * limit;
@@ -1698,7 +1697,7 @@ router.get('/alerts/history', async (req: AdminAuthRequest, res: Response) => {
 import { sendMessageSchema, messageListQuerySchema, templateSchema } from '../schemas/message';
 
 // Send individual or broadcast message
-router.post('/messages', async (req: AdminAuthRequest, res: Response) => {
+router.post('/messages', async (req, res) => {
   try {
     const body = sendMessageSchema.parse(req.body);
 
@@ -1720,7 +1719,7 @@ router.post('/messages', async (req: AdminAuthRequest, res: Response) => {
 });
 
 // List sent messages
-router.get('/messages', async (req: AdminAuthRequest, res: Response) => {
+router.get('/messages', async (req, res) => {
   try {
     const { page, limit, type } = messageListQuerySchema.parse(req.query);
     const skip = (page - 1) * limit;
@@ -1740,7 +1739,7 @@ router.get('/messages', async (req: AdminAuthRequest, res: Response) => {
 });
 
 // Retract/expire a message
-router.delete('/messages/:id', async (req: AdminAuthRequest, res: Response) => {
+router.delete('/messages/:id', async (req, res) => {
   try {
     const m = await AdminMessage.findByIdAndUpdate(req.params.id, { expires_at: new Date() }, { new: true });
     if (!m) return res.status(404).json({ code: 'NOT_FOUND', error: 'Message not found' });
@@ -1749,7 +1748,7 @@ router.delete('/messages/:id', async (req: AdminAuthRequest, res: Response) => {
 });
 
 // Delivery stats for one message
-router.get('/messages/:id/stats', async (req: AdminAuthRequest, res: Response) => {
+router.get('/messages/:id/stats', async (req, res) => {
   try {
     const m = await AdminMessage.findById(req.params.id).lean();
     if (!m) return res.status(404).json({ code: 'NOT_FOUND', error: 'Message not found' });
@@ -1766,7 +1765,7 @@ router.get('/messages/:id/stats', async (req: AdminAuthRequest, res: Response) =
 });
 
 // Templates CRUD
-router.post('/messages/templates', async (req: AdminAuthRequest, res: Response) => {
+router.post('/messages/templates', async (req, res) => {
   try {
     const body = templateSchema.parse(req.body);
     const t = await MessageTemplate.create(body);
@@ -1777,14 +1776,14 @@ router.post('/messages/templates', async (req: AdminAuthRequest, res: Response) 
   }
 });
 
-router.get('/messages/templates', async (req: AdminAuthRequest, res: Response) => {
+router.get('/messages/templates', async (req, res) => {
   try {
     const templates = await MessageTemplate.find().sort({ name: 1 }).lean();
     res.json({ templates });
   } catch (e) { res.status(500).json({ error: 'Failed to list templates' }); }
 });
 
-router.delete('/messages/templates/:id', async (req: AdminAuthRequest, res: Response) => {
+router.delete('/messages/templates/:id', async (req, res) => {
   try {
     const t = await MessageTemplate.findByIdAndDelete(req.params.id);
     if (!t) return res.status(404).json({ code: 'NOT_FOUND', error: 'Template not found' });
@@ -1793,7 +1792,7 @@ router.delete('/messages/templates/:id', async (req: AdminAuthRequest, res: Resp
 });
 
 // ═══ Comparison & Notifications ════════════════════════════════════
-router.get('/stats/compare', async (req: AdminAuthRequest, res: Response) => {
+router.get('/stats/compare', async (req, res) => {
   try {
     const { date1, date2 } = req.query;
     if (!date1 || !date2) return res.status(400).json({ error: 'date1 and date2 required' });
@@ -1806,7 +1805,7 @@ router.get('/stats/compare', async (req: AdminAuthRequest, res: Response) => {
 });
 
 // 14. Notification Analytics
-router.get('/stats/notifications', async (req: AdminAuthRequest, res: Response) => {
+router.get('/stats/notifications', async (req, res) => {
   try {
     const [total, delivered, clicked, byType] = await Promise.all([
       Notification.countDocuments({}),

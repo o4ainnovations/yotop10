@@ -28,7 +28,7 @@ declare module 'express' {
 const GRACE_PERIOD_MS = 3500;
 const MAX_GRACE_REQUESTS = 3;
 
-export const getClientIp = (req: Request): string => {
+export const getClientIp = (req: { headers: Record<string, string | string[] | undefined>; ip?: string; socket?: { remoteAddress?: string } }): string => {
   const xForwardedFor = req.headers['x-forwarded-for'] as string;
   if (xForwardedFor) {
     const ips = xForwardedFor.split(',').map(ip => ip.trim());

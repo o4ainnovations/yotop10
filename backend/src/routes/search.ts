@@ -4,7 +4,7 @@ import { INDEX_PREFIX } from '../elasticsearch/lib/indexer';
 import { ensureIndices } from '../elasticsearch/lib/indexer';
 import { indexPost, indexComment, indexCategory, indexUser, removeCategory } from '../elasticsearch/lib/indexWriter';
 import { bulkReindexPosts, bulkReindexComments, bulkReindexCategories, bulkReindexUsers } from '../elasticsearch/lib/bulkWriter';
-import { adminAuthMiddleware, AdminAuthRequest } from '../lib/adminAuth';
+import { adminAuthMiddleware } from '../lib/adminAuth';
 import { searchRateLimit, autocompleteRateLimit } from '../lib/searchRateLimit';
 import { searchQuerySchema, autocompleteQuerySchema, adminReindexSchema, adminPreviewQuerySchema, adminDeleteIndexSchema } from '../schemas/search';
 import { Post } from '../models/Post';
@@ -183,7 +183,7 @@ router.get(
 // Admin
 // ══════════════════════════════════════════════════════════════════════
 
-router.get('/admin/status', adminAuthMiddleware, async (_req: AdminAuthRequest, res: Response) => {
+router.get('/admin/status', adminAuthMiddleware, async (_req: Request, res: Response) => {
   try {
     const health = await es.cat.health({ format: 'json' });
     const indices = await es.cat.indices({ index: `${INDEX_PREFIX}_*`, format: 'json' });
@@ -220,7 +220,7 @@ router.post(
   '/admin/reindex',
   adminAuthMiddleware,
   validate(adminReindexSchema),
-  async (req: AdminAuthRequest, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const { scope } = (req as any).validated;
       const results: Record<string, { indexed: number; errors: number }> = {};
@@ -265,7 +265,7 @@ router.delete(
   '/admin/index',
   adminAuthMiddleware,
   validate(adminDeleteIndexSchema),
-  async (req: AdminAuthRequest, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const { index } = (req as any).validated;
       const indexName = `${INDEX_PREFIX}_${index}`;
@@ -281,7 +281,7 @@ router.delete(
   }
 );
 
-router.get('/admin/mappings', adminAuthMiddleware, async (_req: AdminAuthRequest, res: Response) => {
+router.get('/admin/mappings', adminAuthMiddleware, async (_req: Request, res: Response) => {
   try {
     const results: Record<string, unknown> = {};
     const allIndices = ['posts', 'comments', 'categories', 'users'];
@@ -303,7 +303,7 @@ router.get(
   '/admin/preview',
   adminAuthMiddleware,
   validate(adminPreviewQuerySchema),
-  async (req: AdminAuthRequest, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const { q } = (req as any).validated;
       if (!q) return res.json({ results: 0 });
