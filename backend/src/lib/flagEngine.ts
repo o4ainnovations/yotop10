@@ -11,6 +11,8 @@ export async function runFlagDetection(): Promise<void> {
     // Spam: Repetition — same user, near-identical content across posts
     const recentComments = await Comment.find({
       created_at: { $gte: sixHoursAgo },
+      deleted: false,
+      hidden: false,
       flag_type: null,
     }).select('author_id content post_id').lean();
 
@@ -41,9 +43,9 @@ export async function runFlagDetection(): Promise<void> {
       }
     }
 
-    // Spam: Link-first
+    // Spam: Link-first — skip deleted/hidden
     const firstComments = await Comment.aggregate([
-      { $match: { created_at: { $gte: twentyFourHAgo }, flag_type: null } },
+      { $match: { created_at: { $gte: twentyFourHAgo }, deleted: false, hidden: false, flag_type: null } },
       { $sort: { author_id: 1, created_at: 1 } },
       { $group: { _id: '$author_id', first: { $first: '$$ROOT' } } },
       { $match: { 'first.content': { $regex: /https?:\/\// } } },
@@ -54,9 +56,9 @@ export async function runFlagDetection(): Promise<void> {
       });
     }
 
-    // Brigade: Referrer analysis
+    // Brigade: Referrer analysis — skip deleted/hidden
     const brigadeReferrer = await Comment.aggregate([
-      { $match: { created_at: { $gte: oneHourAgo } } },
+      { $match: { created_at: { $gte: oneHourAgo }, deleted: false, hidden: false } },
       { $lookup: { from: 'pagevisits', let: { fp: '$author_id' }, pipeline: [
         { $match: { $expr: { $and: [{ $eq: ['$fingerprint', '$$fp'] }, { $ne: ['$referer', null] }, { $ne: ['$referer', ''] }] } } },
         { $sort: { created_at: -1 } }, { $limit: 1 }, { $project: { referer: 1 } },
@@ -73,11 +75,9 @@ export async function runFlagDetection(): Promise<void> {
       );
     }
 
-    // Brigade: Fresh fingerprints
-    const recentUsers = await User.find({ created_at: { $gte: twentyFourHAgo } }).select('user_id').lean();
-    const freshUserIds = new Set(recentUsers.map(u => u.user_id));
+    // Brigade: Fresh fingerprints — skip deleted/hidden
     const brigadeFresh = await Comment.aggregate([
-      { $match: { created_at: { $gte: oneHourAgo }, flag_type: null } },
+      { $match: { created_at: { $gte: oneHourAgo }, deleted: false, hidden: false, flag_type: null } },
       { $group: { _id: '$post_id', commenters: { $addToSet: '$author_id' }, total: { $sum: 1 }, ids: { $push: '$_id' } } },
       { $match: { total: { $gte: 8 } } },
     ]);
