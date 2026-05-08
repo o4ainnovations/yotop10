@@ -9,5 +9,8 @@ fi
 
 echo "Starting dev servers under PM2..."
 
+# Clean stale Next.js build cache to prevent ENOENT/module-not-found errors
+rm -rf /app/frontend/.next
+
 pm2 start /app/ecosystem.config.dev.json
 exec pm2 logs
