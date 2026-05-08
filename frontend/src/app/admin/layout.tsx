@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAdminStore } from '@/stores/admin';
-import AdminAlertBell from '@/components/AdminAlertBell';
 
 const SIDEBAR_STYLE: Record<string, React.CSSProperties> = {
   sidebar: { width: '200px', minHeight: '100vh', borderRight: '1px solid #ddd', padding: '16px 0', background: '#fafafa', flexShrink: 0 },
@@ -40,11 +39,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <button onClick={async () => { const { API } = await import('@/lib/api'); await API.adminLogout(); router.push('/admin/login'); }} style={{ ...SIDEBAR_STYLE.navItem, color: '#c62828' }}>Logout</button>
       </div>
     </div>
-    <div style={SIDEBAR_STYLE.main}>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid #eee' }}>
-        <AdminAlertBell />
-      </div>
-      {children}
-    </div>
+    <div style={SIDEBAR_STYLE.main}>{children}</div>
   </div>;
 }

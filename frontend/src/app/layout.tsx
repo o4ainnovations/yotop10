@@ -3,7 +3,7 @@ import "./globals.css";
 import Eruda from "./Eruda";
 import AuthInitializer from "@/components/AuthInitializer";
 import ToastContainer from "@/components/Toast";
-import NotificationBell from "@/components/NotificationBell";
+import HeaderBells from "@/components/HeaderBells";
 import AnalyticsBeacon from "@/components/AnalyticsBeacon";
 
 export const metadata: Metadata = {
@@ -20,7 +20,7 @@ export default function RootLayout({
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
         <header style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 20px', borderBottom: '1px solid #eee', background: '#fafafa', position: 'sticky', top: 0, zIndex: 50 }}>
-          <NotificationBell />
+          <HeaderBells />
         </header>
         <AuthInitializer />
         {children}
