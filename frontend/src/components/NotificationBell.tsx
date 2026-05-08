@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 
 interface NotificationItem {
@@ -33,6 +34,7 @@ const PRIORITY_COLORS: Record<string, { bg: string; border: string }> = {
 };
 
 export default function NotificationBell() {
+  const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [open, setOpen] = useState(false);
@@ -164,7 +166,7 @@ export default function NotificationBell() {
                 return (
                   <div
                     key={n._id}
-                    onClick={() => !isAdmin && setOpen(false)}
+                    onClick={() => { setOpen(false); router.push(`/notifications/${n._id}`); }}
                     style={{
                       padding: '10px 16px',
                       color: n.read && !isAdmin ? '#666' : '#000',
@@ -213,7 +215,9 @@ export default function NotificationBell() {
             )}
 
             <div style={{ padding: '8px 16px', borderTop: '1px solid #eee', textAlign: 'center' }}>
-              <span style={{ fontSize: '13px', color: '#999' }}>Notifications are per-device</span>
+              <a href="/notifications" style={{ fontSize: '13px', color: '#1565c0', textDecoration: 'none' }} onClick={() => setOpen(false)}>
+                See all notifications →
+              </a>
             </div>
           </div>
         </>
