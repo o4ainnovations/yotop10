@@ -394,6 +394,11 @@ router.post('/', validatePostSubmission, async (req: Request, res: Response) => 
     // User is guaranteed to exist by fingerprint middleware
     const user = req.user!;
 
+    if (user.restricted_until && new Date() < new Date(user.restricted_until)) {
+      const remaining = Math.ceil((new Date(user.restricted_until).getTime() - Date.now()) / 60000);
+      return res.status(429).json({ error: `Account restricted. Resumes in ${remaining} minutes.`, resetTime: user.restricted_until });
+    }
+
     // Validate list title format for list-type posts
     if (needsListTitleValidation(post_type)) {
       const formatResult = validateListTitle(title);
@@ -632,6 +637,11 @@ router.post('/:idOrSlug/comments', [
 
     const user = req.user!;
     const fingerprint = deviceFingerprint;
+
+    if (user.restricted_until && new Date() < new Date(user.restricted_until)) {
+      const remaining = Math.ceil((new Date(user.restricted_until).getTime() - Date.now()) / 60000);
+      return res.status(429).json({ error: `Account restricted. Resumes in ${remaining} minutes.`, resetTime: user.restricted_until });
+    }
 
     const rateLimitKey = getRateLimitKey('comments', fingerprint);
     const windowMs = 60 * 60 * 1000;

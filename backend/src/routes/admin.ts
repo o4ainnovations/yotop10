@@ -1012,7 +1012,7 @@ router.post('/comments/:id/apply-penalty', async (req: AdminAuthRequest, res: Re
     const comment = await Comment.findById(req.params.id);
     if (!comment) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
 
-    const minutes = Math.min(12 * 60, Math.max(1, parseInt(req.body.minutes) || 5));
+    const minutes = Math.min(7200, Math.max(1, parseInt(req.body.minutes) || 5)); // max 5 days
     const trustPenalty = Math.max(-1.0, Math.min(0, parseFloat(req.body.trust_penalty) || -0.01));
 
     const user = await User.findOne({ user_id: comment.author_id });
@@ -1031,6 +1031,16 @@ router.post('/comments/:id/apply-penalty', async (req: AdminAuthRequest, res: Re
 // 16. Dismiss flag
 router.post('/comments/:id/dismiss-flag', async (req: AdminAuthRequest, res: Response) => {
   await Comment.findByIdAndUpdate(req.params.id, { $set: { flag_type: null, flag_evidence: null } });
+  res.json({ success: true });
+});
+
+// 17. Manual flag
+router.post('/comments/:id/flag', async (req: AdminAuthRequest, res: Response) => {
+  const comment = await Comment.findById(req.params.id);
+  if (!comment) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
+  comment.flag_type = req.body.flag_type || 'manual';
+  comment.flag_evidence = req.body.evidence || { flagged_by: 'admin' };
+  await comment.save();
   res.json({ success: true });
 });
 

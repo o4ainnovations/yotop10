@@ -45,6 +45,7 @@ export default function AdminCommentsPage() {
       else if (action === 'unhide') await apiFetch(`/admin/comments/${id}/unhide`, { method: 'POST' });
       else if (action === 'highlight') await apiFetch(`/admin/comments/${id}/highlight`, { method: 'POST' });
       else if (action === 'unhighlight') await apiFetch(`/admin/comments/${id}/unhighlight`, { method: 'POST' });
+      else if (action === 'flag') await apiFetch(`/admin/comments/${id}/flag`, { method: 'POST', body: JSON.stringify({ flag_type: 'manual', evidence: { flagged_by: 'admin' } }) });
       toast.success(`${action} done.`);
       fetchComments(page);
     } catch {}
@@ -159,6 +160,7 @@ export default function AdminCommentsPage() {
                 <button onClick={() => quickAction(c._id, 'delete')} style={{ fontSize: '11px', cursor: 'pointer', color: '#c62828' }}>Del</button>
                 {c.hidden ? <button onClick={() => quickAction(c._id, 'unhide')} style={{ fontSize: '11px', cursor: 'pointer' }}>Show</button> : <button onClick={() => quickAction(c._id, 'hide')} style={{ fontSize: '11px', cursor: 'pointer' }}>Hide</button>}
                 {c.highlighted ? <button onClick={() => quickAction(c._id, 'unhighlight')} style={{ fontSize: '11px', cursor: 'pointer' }}>Unpin</button> : <button onClick={() => quickAction(c._id, 'highlight')} style={{ fontSize: '11px', cursor: 'pointer' }}>Pin</button>}
+                <button onClick={() => quickAction(c._id, 'flag')} style={{ fontSize: '11px', cursor: 'pointer', color: '#e65100' }}>Flag</button>
               </>}
             </td>
           </tr>))}
