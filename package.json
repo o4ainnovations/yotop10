@@ -6,6 +6,16 @@
     "dev:docker": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up",
     "dev:docker:build": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
     "dev:docker:down": "docker compose -f docker-compose.yml -f docker-compose.dev.yml down",
-    "prod:docker": "docker compose up -d"
+    "prod:docker": "docker compose up -d",
+    "prepare": "git config core.hooksPath .githooks"
+  },
+  "lint-staged": {
+    "backend/src/**/*.ts": [
+      "cd backend && npx tsc --noEmit",
+      "cd backend && npx eslint --fix"
+    ],
+    "frontend/src/**/*.{ts,tsx}": [
+      "cd frontend && npx eslint --fix"
+    ]
   }
 }

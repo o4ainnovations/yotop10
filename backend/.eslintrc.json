@@ -19,6 +19,22 @@
         "varsIgnorePattern": "^_"
       }
     ],
+    "no-duplicate-imports": "error",
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "CallExpression[callee.name='set'][arguments.length>=3][arguments.2.value='EX']",
+        "message": "Use redis.set(key, val, { EX: ttl }) instead of positional redis.set(key, val, 'EX', ttl)"
+      },
+      {
+        "selector": "TSAsExpression[typeAnnotation.type='TSAnyKeyword']",
+        "message": "Do not use 'as any'. Use proper type declarations in backend/src/types/ instead."
+      },
+      {
+        "selector": "TSAsExpression[typeAnnotation.typeName.left.name='unknown'][typeAnnotation.typeName.right.name='Record']",
+        "message": "Do not use 'as unknown as Record<string, unknown>'. Fix the underlying type instead."
+      }
+    ],
     "no-restricted-imports": ["error", {
       "patterns": [{
         "group": ["**/routes/*"],
