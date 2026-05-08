@@ -888,10 +888,10 @@ router.get('/comments', async (req: AdminAuthRequest, res: Response) => {
 
     const result: Record<string, unknown> = { comments: withSlugs, pagination: { page, limit, total, pages: Math.ceil(total / limit) } };
     if (req.query.stats === 'true') {
-      const [totalAll, del, hid, hi] = await Promise.all([
-        Comment.countDocuments({}), Comment.countDocuments({ deleted: true }), Comment.countDocuments({ hidden: true }), Comment.countDocuments({ highlighted: true }),
+      const [totalAll, del, hid, hi, flg] = await Promise.all([
+        Comment.countDocuments({}), Comment.countDocuments({ deleted: true }), Comment.countDocuments({ hidden: true }), Comment.countDocuments({ highlighted: true }), Comment.countDocuments({ flag_type: { $ne: null } }),
       ]);
-      result.stats = { total: totalAll, deleted: del, hidden: hid, highlighted: hi };
+      result.stats = { total: totalAll, deleted: del, hidden: hid, highlighted: hi, flagged: flg };
     }
     res.json(result);
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch comments' }); }
