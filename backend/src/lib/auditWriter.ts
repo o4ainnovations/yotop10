@@ -62,7 +62,7 @@ export async function getAuditStats(): Promise<Record<string, unknown>> {
   };
 
   try {
-    await redis.set(STATS_CACHE_KEY, JSON.stringify(stats), 'EX', STATS_CACHE_TTL);
+    await redis.set(STATS_CACHE_KEY, JSON.stringify(stats), { EX: STATS_CACHE_TTL });
   } catch {}
 
   return stats;
