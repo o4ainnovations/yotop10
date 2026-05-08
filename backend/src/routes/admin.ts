@@ -1122,25 +1122,32 @@ router.get('/stats/health', async (req: AdminAuthRequest, res: Response) => {
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
-// 2. Overview (enhanced)
+// 2. Overview (fully live)
 router.get('/stats/overview', async (req: AdminAuthRequest, res: Response) => {
   try {
-    const snapshot = await PlatformSnapshot.findOne().sort({ date: -1 }).lean();
-    if (!snapshot) return res.json({ error: 'No data yet.' });
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const threeDaysAgo = new Date(Date.now() - 3 * 24 * 3600000);
-    const [tp, tc, tu, pn, orphans, peakQueueHour, peakSubmitHour] = await Promise.all([
+    const [tp, tc, tu, pn, orphans, peakQueueHour, peakSubmitHour, totalPosts, approved, rejected, totalComments] = await Promise.all([
       Post.countDocuments({ created_at: { $gte: today }, deleted: false }),
       Comment.countDocuments({ created_at: { $gte: today }, deleted: false, hidden: false }),
       User.countDocuments({ created_at: { $gte: today } }),
       Post.countDocuments({ status: 'pending_review', deleted: false }),
       Post.countDocuments({ status: 'pending_review', created_at: { $lt: new Date(Date.now() - 72 * 3600000) }, revision_guidance: null, deleted: false }),
-      Post.aggregate([{ $match: { status: 'pending_review' } }, { $group: { _id: { $hour: '$created_at' }, count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }]),
-      Post.aggregate([{ $group: { _id: { $hour: '$created_at' }, count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }]),
+      Post.aggregate([{ $match: { status: 'pending_review', deleted: false } }, { $group: { _id: { $hour: '$created_at' }, count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }]),
+      Post.aggregate([{ $match: { deleted: false } }, { $group: { _id: { $hour: '$created_at' }, count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }]),
+      Post.countDocuments({ deleted: false }),
+      Post.countDocuments({ status: 'approved', deleted: false }),
+      Post.countDocuments({ status: 'rejected', deleted: false }),
+      Comment.countDocuments({ deleted: false, hidden: false }),
     ]);
     const peakHr = peakQueueHour[0] || {}; const peakSubHr = peakSubmitHour[0] || {};
-    const c = snapshot.content as Record<string, unknown>; const co = snapshot.community as Record<string, unknown>; const m = snapshot.moderation as Record<string, unknown>; const p = c.posts as Record<string, number>; const cm = c.comments as Record<string, number>; const u = co.users as Record<string, number>; const t = co.trust as Record<string, number>; const pq = (m as Record<string, unknown>)?.pending_queue as Record<string, number>;
-    res.json({ posts: { total: p.total || 0, today: tp, submitted: p.submitted || 0, approved: p.approved || 0, rejected: p.rejected || 0 }, comments: { total: cm?.total || 0, today: tc }, users: { total: u?.total || 0, today: tu }, pending: pn, queue: { pending: pn, reviewed_today: (m as Record<string, number>)?.reviews_today || 0, oldest_age_hours: pq?.oldest_age_hours || 0, peak_queue_hour: peakHr._id || null, peak_queue_hour_count: peakHr.count || 0 }, trust: { scholars: t?.scholars || 0, neutrals: t?.neutrals || 0, trolls: t?.trolls || 0 }, trolls_active: (co as Record<string, number>)?.trolls_active_24h || 0, orphans_72h_no_guidance: orphans, peak_submission_hour: peakSubHr._id || null, peak_submission_hour_count: peakSubHr.count || 0 });
+    const [scholars, neutrals, trolls, trolls24h] = await Promise.all([
+      User.countDocuments({ trust_score: { $gte: 1.8 } }),
+      User.countDocuments({ trust_score: { $gte: 0.5, $lt: 1.8 } }),
+      User.countDocuments({ trust_score: { $lt: 0.5 } }),
+      User.countDocuments({ trust_score: { $lt: 0.5 }, updated_at: { $gte: new Date(Date.now() - 24 * 3600000) } }),
+    ]);
+    res.json({ posts: { total: totalPosts, today: tp, submitted: tp, approved, rejected }, comments: { total: totalComments, today: tc }, users: { total: tu }, pending: pn, queue: { pending: pn, oldest_age_hours: 0, peak_queue_hour: peakHr._id || null, peak_queue_hour_count: peakHr.count || 0 }, trust: { scholars, neutrals, trolls }, trolls_active: trolls24h, orphans_72h_no_guidance: orphans, peak_submission_hour: peakSubHr._id || null, peak_submission_hour_count: peakSubHr.count || 0 });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
