@@ -1647,7 +1647,7 @@ router.patch('/alerts/notifications/:id/settle', async (req: AdminAuthRequest, r
 router.patch('/alerts/notifications/settle-all', async (req: AdminAuthRequest, res: Response) => {
   try {
     const result = await AlertNotificationModel.updateMany(
-      { settled: false },
+      { $or: [{ settled: false }, { settled: { $exists: false } }], dismissed: false },
       { settled: true, settled_at: new Date(), read: true }
     );
     res.json({ success: true, settled: result.modifiedCount });
