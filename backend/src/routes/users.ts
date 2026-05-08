@@ -395,15 +395,20 @@ router.get('/me/rate-limits', async (req: Request, res: Response) => {
 });
 
 // GET /api/users/me/notifications — Get merged feed (system + admin messages)
+// Query: ?unread=true returns only unread system notifications (for bell)
 router.get('/me/notifications', async (req: Request, res: Response) => {
   if (!req.user) return res.status(401).json({ error: 'Authentication required' });
   try {
     const uid = req.user.user_id;
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
+    const unreadOnly = req.query.unread === 'true';
     const now = new Date();
 
+    const sysQuery: Record<string, unknown> = { user_id: uid };
+    if (unreadOnly) sysQuery.read = false;
+
     const [sysNotifs, adminMsgs] = await Promise.all([
-      Notification.find({ user_id: uid }).sort({ created_at: -1 }).limit(limit).lean(),
+      Notification.find(sysQuery).sort({ created_at: -1 }).limit(limit).lean(),
       AdminMessage.find({
         $or: [
           { type: 'individual', recipient_id: uid, expires_at: { $gt: now } },

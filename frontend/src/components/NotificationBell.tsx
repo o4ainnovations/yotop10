@@ -49,7 +49,7 @@ export default function NotificationBell() {
   const fetchNotifications = useCallback(async () => {
     try {
       const data = await apiFetch<{ notifications: NotificationItem[]; unreadCount: number }>(
-        '/users/me/notifications?limit=10'
+        '/users/me/notifications?limit=10&unread=true'
       );
       setNotifications(data.notifications);
       setUnreadCount(data.unreadCount);
@@ -61,6 +61,18 @@ export default function NotificationBell() {
     const interval = setInterval(fetchCount, 30000);
     return () => clearInterval(interval);
   }, [fetchCount]);
+
+  const handleClick = async (n: NotificationItem) => {
+    setOpen(false);
+    if (n.is_admin || n.type === 'admin_message') {
+      try { await apiFetch(`/users/me/messages/${n._id}/dismiss`, { method: 'PATCH' }); } catch {}
+    } else {
+      try { await apiFetch(`/users/me/notifications/${n._id}/read`, { method: 'PATCH' }); } catch {}
+    }
+    fetchCount();
+    setNotifications((prev) => prev.filter((x) => x._id !== n._id));
+    router.push(`/notifications/${n._id}`);
+  };
 
   const handleBellClick = () => {
     if (!open) fetchNotifications();
@@ -147,12 +159,12 @@ export default function NotificationBell() {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 16px', borderBottom: '1px solid #eee' }}>
               <strong>Notifications</strong>
-              {unreadCount > 0 && (
+              {notifications.length > 0 && (
                 <button
                   onClick={handleMarkAllRead}
-                  style={{ background: 'none', border: 'none', color: '#2196f3', cursor: 'pointer', fontSize: '13px' }}
+                  style={{ background: 'none', border: 'none', color: '#2196f3', cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}
                 >
-                  Mark all read
+                  Mark all as read
                 </button>
               )}
             </div>
@@ -166,7 +178,7 @@ export default function NotificationBell() {
                 return (
                   <div
                     key={n._id}
-                    onClick={() => { setOpen(false); router.push(`/notifications/${n._id}`); }}
+                    onClick={() => handleClick(n)}
                     style={{
                       padding: '10px 16px',
                       color: n.read && !isAdmin ? '#666' : '#000',

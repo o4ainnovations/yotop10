@@ -45,7 +45,12 @@ export default function NotificationsPage() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  const handleDismissAdmin = async (e: React.MouseEvent, id: string) => {
+  const handleClick = async (n: NotifItem) => {
+    if (!n.is_admin && n.type !== 'admin_message') {
+      try { await apiFetch(`/users/me/notifications/${n._id}/read`, { method: 'PATCH' }); } catch {}
+    }
+    router.push(`/notifications/${n._id}`);
+  };
     e.stopPropagation();
     try {
       await apiFetch(`/users/me/messages/${id}/dismiss`, { method: 'PATCH' });
@@ -70,7 +75,7 @@ export default function NotificationsPage() {
           return (
             <div
               key={n._id}
-              onClick={() => router.push(`/notifications/${n._id}`)}
+              onClick={() => handleClick(n)}
               style={{
                 padding: '14px 16px',
                 cursor: 'pointer',
