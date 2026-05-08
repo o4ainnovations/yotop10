@@ -63,10 +63,12 @@ export default function AdminCommentsPage() {
   const dismissFlag = async (commentId: string) => {
     try {
       await apiFetch(`/admin/comments/${commentId}/dismiss-flag`, { method: 'POST' });
-      toast.success('Flag dismissed.');
+      toast.success('Auto-flag dismissed.');
       setFlagModal(null); fetchComments(page);
     } catch {}
   };
+
+  const isAutoFlag = (type: string | null) => type && type !== 'manual';
 
   const flagBadge = (type: string) => {
     const map: Record<string, { label: string; color: string }> = { spam_repetition: { label: '⚠️ Spam', color: '#e65100' }, spam_link_first: { label: '🔗 Spam', color: '#e65100' }, brigade_referrer: { label: '🚨 Brigade', color: '#c62828' }, brigade_fresh: { label: '🚨 Brigade', color: '#c62828' } };
@@ -161,7 +163,7 @@ export default function AdminCommentsPage() {
                 <button onClick={() => quickAction(c._id, 'delete')} style={{ fontSize: '11px', cursor: 'pointer', color: '#c62828' }}>Del</button>
                 {c.hidden ? <button onClick={() => quickAction(c._id, 'unhide')} style={{ fontSize: '11px', cursor: 'pointer' }}>Show</button> : <button onClick={() => quickAction(c._id, 'hide')} style={{ fontSize: '11px', cursor: 'pointer' }}>Hide</button>}
                 {c.highlighted ? <button onClick={() => quickAction(c._id, 'unhighlight')} style={{ fontSize: '11px', cursor: 'pointer' }}>Unpin</button> : <button onClick={() => quickAction(c._id, 'highlight')} style={{ fontSize: '11px', cursor: 'pointer' }}>Pin</button>}
-                {c.flag_type ? <button onClick={() => quickAction(c._id, 'unflag')} style={{ fontSize: '11px', cursor: 'pointer', color: '#2e7d32' }}>Unf</button> : <button onClick={() => setFlagModal({ comment: c })} style={{ fontSize: '11px', cursor: 'pointer', color: '#e65100' }}>Flag</button>}
+                {c.flag_type ? <button onClick={() => quickAction(c._id, 'unflag')} style={{ fontSize: '11px', cursor: 'pointer', color: '#2e7d32' }}>{isAutoFlag(c.flag_type) ? 'Dismiss' : 'Unf'}</button> : <button onClick={() => setFlagModal({ comment: c })} style={{ fontSize: '11px', cursor: 'pointer', color: '#e65100' }}>Flag</button>}
               </>}
             </td>
           </tr>))}
@@ -187,7 +189,7 @@ export default function AdminCommentsPage() {
           <p style={{ fontSize: '13px', color: '#666' }}>Recommended: <strong>{rec.minutes}min pause, {rec.trust_penalty} trust</strong></p>
           <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
             <button onClick={() => applyPenalty(flagModal.comment._id, rec.minutes, rec.trust_penalty)} style={{ padding: '8px 16px', cursor: 'pointer', background: '#e65100', color: 'white', border: 'none', borderRadius: '4px', fontSize: '13px' }}>Apply Recommended</button>
-            <button onClick={() => dismissFlag(flagModal.comment._id)} style={{ padding: '8px 16px', cursor: 'pointer', fontSize: '13px' }}>Dismiss Flag</button>
+            {isAutoFlag(flagModal.comment.flag_type) && <button onClick={() => dismissFlag(flagModal.comment._id)} style={{ padding: '8px 16px', cursor: 'pointer', fontSize: '13px' }}>Dismiss Warning</button>}
           </div>
           <div style={{ marginTop: '12px', borderTop: '1px solid #eee', paddingTop: '12px' }}>
             <p style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>Custom:</p>
