@@ -35,7 +35,7 @@ interface Post {
   view_count: number;
   author_username: string;
   author_display_name: string;
-  category: Category;
+  category_slug: string;
   created_at: string;
 }
 
