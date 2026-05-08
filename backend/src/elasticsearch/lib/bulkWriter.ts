@@ -109,6 +109,44 @@ export async function bulkReindexComments(
   }
 
   return executeBulkChunks('comments', operations);
+}
+
+export async function bulkReindexCategories(
+  categories: Array<Record<string, unknown>>
+): Promise<BulkResult> {
+  const operations: string[] = [];
+
+  for (const cat of categories) {
+    const docId = (cat._id as { toString(): string }).toString();
+    const doc: Record<string, unknown> = {
+      name: cat.name, slug: cat.slug,
+      description: cat.description, post_count: cat.post_count || 0,
+    };
+
+    operations.push(JSON.stringify({ index: { _id: docId } }));
+    operations.push(JSON.stringify(doc));
+  }
+
   return executeBulkChunks('categories', operations);
+}
+
+export async function bulkReindexUsers(
+  users: Array<Record<string, unknown>>
+): Promise<BulkResult> {
+  const operations: string[] = [];
+
+  for (const user of users) {
+    const docId = (user._id as { toString(): string }).toString();
+    const doc: Record<string, unknown> = {
+      username: user.username,
+      display_name: user.custom_display_name || user.username,
+      trust_score: user.trust_score || 1,
+      created_at: user.created_at,
+    };
+
+    operations.push(JSON.stringify({ index: { _id: docId } }));
+    operations.push(JSON.stringify(doc));
+  }
+
   return executeBulkChunks('users', operations);
 }

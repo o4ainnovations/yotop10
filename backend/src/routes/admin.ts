@@ -1,5 +1,5 @@
 /* eslint-disable no-restricted-syntax, @typescript-eslint/no-explicit-any -- dynamic MongoDB queries + Express middleware require type casts */
-import { Router, RequestHandler } from 'express';
+import { Router, RequestHandler, Request } from 'express';
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 import { AdminUser } from '../models/AdminUser';
