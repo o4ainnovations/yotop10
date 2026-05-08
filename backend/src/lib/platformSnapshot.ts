@@ -167,7 +167,7 @@ async function evaluateAlerts(snapshot: Record<string, Record<string, unknown>>)
       await redis.set(`alert:${alert.metric}`, JSON.stringify({
         metric: alert.metric, severity: alert.severity, value, threshold: alert.threshold,
         triggered_at: new Date().toISOString(),
-      }), 'EX', 24 * 60 * 60);
+      }), { EX: 24 * 60 * 60 });
     } else {
       await AlertHistory.findOneAndUpdate(
         { metric: alert.metric, resolved_at: null },
