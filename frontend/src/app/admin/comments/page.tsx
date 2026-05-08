@@ -164,7 +164,7 @@ export default function AdminCommentsPage() {
                 <button onClick={() => quickAction(c._id, 'delete')} style={{ fontSize: '11px', cursor: 'pointer', color: '#c62828' }}>Del</button>
                 {c.hidden ? <button onClick={() => quickAction(c._id, 'unhide')} style={{ fontSize: '11px', cursor: 'pointer' }}>Show</button> : <button onClick={() => quickAction(c._id, 'hide')} style={{ fontSize: '11px', cursor: 'pointer' }}>Hide</button>}
                 {c.highlighted ? <button onClick={() => quickAction(c._id, 'unhighlight')} style={{ fontSize: '11px', cursor: 'pointer' }}>Unpin</button> : <button onClick={() => quickAction(c._id, 'highlight')} style={{ fontSize: '11px', cursor: 'pointer' }}>Pin</button>}
-                {c.flag_type ? <button onClick={() => quickAction(c._id, 'unflag')} style={{ fontSize: '11px', cursor: 'pointer', color: '#2e7d32' }}>Unf</button> : <button onClick={() => setFlagModal({ comment: c })} style={{ fontSize: '11px', cursor: 'pointer', color: '#e65100' }}>Flag</button>}
+                {c.flag_type ? <button onClick={() => quickAction(c._id, 'unflag')} style={{ fontSize: '11px', cursor: 'pointer', color: '#2e7d32' }}>Unf</button> : <button onClick={() => quickAction(c._id, 'flag')} style={{ fontSize: '11px', cursor: 'pointer', color: '#e65100' }}>Flag</button>}
               </>}
             </td>
           </tr>))}
