@@ -76,6 +76,10 @@ export async function runFlagDetection(): Promise<void> {
     }
 
     // Brigade: Fresh fingerprints — skip deleted/hidden
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const freshUsers = await User.find({ created_at: { $gte: oneDayAgo } }).select('user_id').lean();
+    const freshUserIds = new Set(freshUsers.map((u: Record<string, unknown>) => u.user_id as string));
+
     const brigadeFresh = await Comment.aggregate([
       { $match: { created_at: { $gte: oneHourAgo }, deleted: false, hidden: false, flag_type: null } },
       { $group: { _id: '$post_id', commenters: { $addToSet: '$author_id' }, total: { $sum: 1 }, ids: { $push: '$_id' } } },
