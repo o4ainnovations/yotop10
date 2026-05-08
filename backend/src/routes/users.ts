@@ -442,6 +442,52 @@ router.get('/me/notifications', async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/users/me/notifications/:id — Single notification (bypasses all filters, used by detail page)
+router.get('/me/notifications/:id', async (req: Request, res: Response) => {
+  if (!req.user) return res.status(401).json({ error: 'Authentication required' });
+  try {
+    const uid = req.user.user_id;
+    let notification: Record<string, unknown> | null = null;
+
+    // Try system notification first
+    const sysNotif = await Notification.findOne({ _id: req.params.id, user_id: uid }).lean();
+    if (sysNotif) {
+      notification = { ...sysNotif, is_admin: false };
+    } else {
+      // Try admin message
+      const adminMsg = await AdminMessage.findOne({
+        _id: req.params.id,
+        $or: [
+          { type: 'individual', recipient_id: uid },
+          { type: 'broadcast' },
+        ],
+      }).lean();
+      if (adminMsg) {
+        const dismissed = adminMsg.dismissed_by.includes(uid);
+        notification = {
+          _id: adminMsg._id,
+          type: 'admin_message',
+          title: adminMsg.title,
+          body: adminMsg.body,
+          priority: adminMsg.priority,
+          created_by: adminMsg.created_by,
+          message_type: adminMsg.type,
+          expires_at: adminMsg.expires_at,
+          dismissed,
+          read: false,
+          is_admin: true,
+          created_at: adminMsg.created_at,
+        };
+      }
+    }
+
+    if (!notification) return res.status(404).json({ code: 'NOT_FOUND', error: 'Notification not found' });
+    res.json({ notification });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed' });
+  }
+});
+
 // GET /api/users/me/notifications/unread-count — Quick badge count (system + admin messages)
 router.get('/me/notifications/unread-count', async (req: Request, res: Response) => {
   if (!req.user) return res.status(401).json({ error: 'Authentication required' });

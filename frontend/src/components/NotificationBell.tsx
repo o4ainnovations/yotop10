@@ -62,15 +62,8 @@ export default function NotificationBell() {
     return () => clearInterval(interval);
   }, [fetchCount]);
 
-  const handleClick = async (n: NotificationItem) => {
+  const handleClick = (n: NotificationItem) => {
     setOpen(false);
-    if (n.is_admin || n.type === 'admin_message') {
-      try { await apiFetch(`/users/me/messages/${n._id}/dismiss`, { method: 'PATCH' }); } catch {}
-    } else {
-      try { await apiFetch(`/users/me/notifications/${n._id}/read`, { method: 'PATCH' }); } catch {}
-    }
-    fetchCount();
-    setNotifications((prev) => prev.filter((x) => x._id !== n._id));
     router.push(`/notifications/${n._id}`);
   };
 
