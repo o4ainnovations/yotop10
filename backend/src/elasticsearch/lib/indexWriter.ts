@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax, @typescript-eslint/no-explicit-any -- ES client types reject dynamic body objects */
 import { es } from '../../lib/elasticsearch';
 import { INDEX_PREFIX } from './indexer';
 import { SearchDeadLetter } from '../../models/SearchDeadLetter';

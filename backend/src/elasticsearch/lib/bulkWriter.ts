@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax, @typescript-eslint/no-explicit-any -- ES client types reject dynamic body objects */
 import { es } from '../../lib/elasticsearch';
 import { INDEX_PREFIX } from './indexer';
 
@@ -19,8 +20,7 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
 
 async function executeBulkChunks(
   index: string,
-  operations: string[],
-  total: number
+  operations: string[]
 ): Promise<BulkResult> {
   const result: BulkResult = { indexed: 0, errors: 0, errorDetails: [] };
 
@@ -75,7 +75,7 @@ export async function bulkReindexPosts(posts: Array<Record<string, unknown>>): P
     operations.push(JSON.stringify(doc));
   }
 
-  return executeBulkChunks('posts', operations, posts.length);
+  return executeBulkChunks('posts', operations);
 }
 
 interface PostLookup {
@@ -108,45 +108,7 @@ export async function bulkReindexComments(
     operations.push(JSON.stringify(doc));
   }
 
-  return executeBulkChunks('comments', operations, comments.length);
-}
-
-export async function bulkReindexCategories(
-  categories: Array<Record<string, unknown>>
-): Promise<BulkResult> {
-  const operations: string[] = [];
-
-  for (const cat of categories) {
-    const docId = (cat._id as { toString(): string }).toString();
-    const doc: Record<string, unknown> = {
-      name: cat.name, slug: cat.slug,
-      description: cat.description, post_count: cat.post_count || 0,
-    };
-
-    operations.push(JSON.stringify({ index: { _id: docId } }));
-    operations.push(JSON.stringify(doc));
-  }
-
-  return executeBulkChunks('categories', operations, categories.length);
-}
-
-export async function bulkReindexUsers(
-  users: Array<Record<string, unknown>>
-): Promise<BulkResult> {
-  const operations: string[] = [];
-
-  for (const user of users) {
-    const docId = (user._id as { toString(): string }).toString();
-    const doc: Record<string, unknown> = {
-      username: user.username,
-      display_name: user.custom_display_name || user.username,
-      trust_score: user.trust_score || 1,
-      created_at: user.created_at,
-    };
-
-    operations.push(JSON.stringify({ index: { _id: docId } }));
-    operations.push(JSON.stringify(doc));
-  }
-
-  return executeBulkChunks('users', operations, users.length);
+  return executeBulkChunks('comments', operations);
+  return executeBulkChunks('categories', operations);
+  return executeBulkChunks('users', operations);
 }

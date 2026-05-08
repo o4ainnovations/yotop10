@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax, @typescript-eslint/no-explicit-any -- dynamic MongoDB queries + Express middleware require type casts */
 import { Router, RequestHandler } from 'express';
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
@@ -1147,6 +1148,7 @@ router.post('/comments/bulk/unflag', async (req, res) => {
 
 // ═══ Stats Endpoints ═══════════════════════════════════════════════
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const SNAPSHOT_OR_LIVE = async (req: Request, computeSnapshot: () => Promise<unknown>, computeLive: () => Promise<unknown>) => {
   if (req.query.from || req.query.to) return computeLive();
   return computeSnapshot();
