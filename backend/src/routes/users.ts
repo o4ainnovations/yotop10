@@ -531,13 +531,22 @@ router.patch('/me/notifications/:id/read', async (req: Request, res: Response) =
   }
 });
 
-// PATCH /api/users/me/notifications/read-all — Mark all as read
+// PATCH /api/users/me/notifications/read-all — Mark all as read (system + dismiss admin messages)
 router.patch('/me/notifications/read-all', async (req: Request, res: Response) => {
   if (!req.user) return res.status(401).json({ error: 'Authentication required' });
   try {
+    const uid = req.user.user_id;
     await Notification.updateMany(
-      { user_id: req.user.user_id, read: false },
+      { user_id: uid, read: false },
       { read: true }
+    );
+    await AdminMessage.updateMany(
+      { type: 'broadcast', dismissed_by: { $nin: [uid] } },
+      { $addToSet: { dismissed_by: uid } }
+    );
+    await AdminMessage.updateMany(
+      { type: 'individual', recipient_id: uid, dismissed_by: { $nin: [uid] } },
+      { $addToSet: { dismissed_by: uid } }
     );
     res.json({ success: true });
   } catch (error) {
