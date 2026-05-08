@@ -107,13 +107,14 @@ export default function AdminCommentsPage() {
   const statCards = ['total', 'item_anchored', 'post_comment', 'deleted', 'hidden', 'highlighted', 'flagged'];
 
   const applyStatFilter = (key: string) => {
-    if (key === 'total') { setFilters(f => ({ ...f, type: '', search: '', has_replies: '' })); }
-    else if (key === 'item_anchored') setFilters(f => ({ ...f, type: 'item_anchored' }));
-    else if (key === 'post_comment') setFilters(f => ({ ...f, type: 'post_comment' }));
-    else if (key === 'deleted') setFilters(f => ({ ...f, type: '', search: 'deleted:true' }));
-    else if (key === 'hidden') setFilters(f => ({ ...f, type: '', search: 'hidden:true' }));
-    else if (key === 'highlighted') setFilters(f => ({ ...f, type: '', search: 'highlighted:true' }));
-    else if (key === 'flagged') setFilters(f => ({ ...f, type: '', search: 'flagged:true' }));
+    const reset = { type: '', search: '', has_replies: '', filter: '' };
+    if (key === 'total') setFilters(f => ({ ...f, ...reset }));
+    else if (key === 'item_anchored') setFilters(f => ({ ...f, ...reset, type: 'item_anchored' }));
+    else if (key === 'post_comment') setFilters(f => ({ ...f, ...reset, type: 'post_comment' }));
+    else if (key === 'deleted') setFilters(f => ({ ...f, ...reset, filter: 'deleted' }));
+    else if (key === 'hidden') setFilters(f => ({ ...f, ...reset, filter: 'hidden' }));
+    else if (key === 'flagged') setFilters(f => ({ ...f, ...reset, filter: 'flagged' }));
+    else if (key === 'highlighted') setFilters(f => ({ ...f, ...reset, filter: 'highlighted' }));
     setPage(1);
   };
 
