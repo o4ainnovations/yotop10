@@ -47,6 +47,7 @@ export default function AdminCommentsPage() {
       else if (action === 'unhighlight') await apiFetch(`/admin/comments/${id}/unhighlight`, { method: 'POST' });
       else if (action === 'flag') { await apiFetch(`/admin/comments/${id}/flag`, { method: 'POST', body: JSON.stringify({ flag_type: 'manual', evidence: { flagged_by: 'admin' } }) }); }
       else if (action === 'unflag') { await apiFetch(`/admin/comments/${id}/dismiss-flag`, { method: 'POST' }); }
+      else if (action === 'remove') { await apiFetch(`/admin/comments/${id}/permanent`, { method: 'DELETE' }); }
       toast.success(`${action} done.`);
       fetchComments(page);
     } catch {}
@@ -159,7 +160,7 @@ export default function AdminCommentsPage() {
             <td style={{ padding: '4px', fontSize: '11px' }}>{Number(c.spark_score).toFixed(2)}</td>
             <td style={{ padding: '4px', fontSize: '11px' }}>{new Date(c.created_at).toLocaleDateString()}</td>
             <td style={{ padding: '4px' }}>
-              {c.deleted ? <button onClick={() => quickAction(c._id, 'restore')} style={{ fontSize: '11px', cursor: 'pointer' }}>Restore</button> : <>
+              {c.deleted ? <><button onClick={() => quickAction(c._id, 'restore')} style={{ fontSize: '11px', cursor: 'pointer' }}>Restore</button><button onClick={() => { if (confirm('Permanently delete this comment?')) quickAction(c._id, 'remove'); }} style={{ fontSize: '11px', cursor: 'pointer', color: '#b71c1c' }}>Rem</button></> : <>
                 <button onClick={() => quickAction(c._id, 'delete')} style={{ fontSize: '11px', cursor: 'pointer', color: '#c62828' }}>Del</button>
                 {c.hidden ? <button onClick={() => quickAction(c._id, 'unhide')} style={{ fontSize: '11px', cursor: 'pointer' }}>Show</button> : <button onClick={() => quickAction(c._id, 'hide')} style={{ fontSize: '11px', cursor: 'pointer' }}>Hide</button>}
                 {c.highlighted ? <button onClick={() => quickAction(c._id, 'unhighlight')} style={{ fontSize: '11px', cursor: 'pointer' }}>Unpin</button> : <button onClick={() => quickAction(c._id, 'highlight')} style={{ fontSize: '11px', cursor: 'pointer' }}>Pin</button>}
