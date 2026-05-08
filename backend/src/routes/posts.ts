@@ -208,17 +208,25 @@ router.get('/check-title', async (req: Request, res: Response) => {
       });
     }
 
-    const posts = await Post.find({ status: 'approved' })
-      .select('title slug normalized_title category_slug')
-      .sort({ created_at: -1 })
-      .limit(200)
-      .lean();
+    const [approvedPosts, pendingPosts] = await Promise.all([
+      Post.find({ status: 'approved' })
+        .select('title slug normalized_title category_slug')
+        .sort({ created_at: -1 })
+        .limit(200)
+        .lean(),
+      Post.find({ status: 'pending_review', deleted: false })
+        .select('title created_at')
+        .sort({ created_at: -1 })
+        .limit(200)
+        .lean(),
+    ]);
 
     const matches: Array<{ title: string; slug: string; category_slug: string; similarity: number }> = [];
+    const pendingConflicts: Array<{ title: string; submitted_at: string }> = [];
     let blocked = false;
     let warned = false;
 
-    for (const post of posts) {
+    for (const post of approvedPosts) {
       const result = checkTitleMatch(q, post.title as string);
       if (result.similarity >= 50) {
         matches.push({
@@ -232,6 +240,16 @@ router.get('/check-title', async (req: Request, res: Response) => {
       }
     }
 
+    for (const post of pendingPosts) {
+      const result = checkTitleMatch(q, post.title as string);
+      if (result.similarity >= 80) {
+        pendingConflicts.push({
+          title: post.title as string,
+          submitted_at: (post as any).created_at,
+        });
+      }
+    }
+
     matches.sort((a, b) => b.similarity - a.similarity);
 
     const etag = `"${Buffer.from(q).toString('base64').substring(0, 16)}"`;
@@ -242,6 +260,7 @@ router.get('/check-title', async (req: Request, res: Response) => {
       blocked,
       warning: warned,
       matches: matches.slice(0, 5),
+      pending_conflicts: pendingConflicts.slice(0, 5),
       suggestion: matches.length > 0 && !blocked
         ? `${q} — Part 2`
         : undefined,

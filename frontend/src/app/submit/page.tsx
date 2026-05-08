@@ -93,6 +93,7 @@ export default function SubmitPage() {
     blocked: boolean;
     warning: boolean;
     matches: Array<{ title: string; slug: string }>;
+    pendingConflicts: Array<{ title: string; submitted_at: string }>;
     suggestion?: string;
   } | null>(null);
 
@@ -203,7 +204,7 @@ export default function SubmitPage() {
         return;
       }
 
-      setTitleCheck(prev => prev ? { ...prev, checking: true } : { checking: true, allowed: true, blocked: false, warning: false, matches: [] });
+      setTitleCheck(prev => prev ? { ...prev, checking: true } : { checking: true, allowed: true, blocked: false, warning: false, matches: [], pendingConflicts: [] });
 
       try {
         const response = await API.checkTitle(titleValue, catId) as TitleCheckResponse;
@@ -213,6 +214,7 @@ export default function SubmitPage() {
           blocked: response.blocked,
           warning: response.warning,
           matches: response.matches || [],
+          pendingConflicts: response.pending_conflicts || [],
           suggestion: response.suggestion,
         });
       } catch (err) {
@@ -537,6 +539,7 @@ export default function SubmitPage() {
                 {titleCheck?.allowed && !titleCheck.blocked && ' ✅ Title available'}
                 {titleCheck?.warning && ' ⚠️ Similar titles found'}
                 {titleCheck?.blocked && ' ❌ This title is blocked'}
+                {titleCheck?.pendingConflicts && titleCheck.pendingConflicts.length > 0 && ' ⏳ Already pending review'}
               </span>
               <span style={{ color: title.length > 240 ? '#ff9800' : title.length > 285 ? '#d32f2f' : '#666' }}>
                 {title.length}/300
@@ -553,6 +556,24 @@ export default function SubmitPage() {
                         <li key={idx}>{match.title}</li>
                       ))}
                     </ul>
+                  </div>
+                )}
+                {titleCheck?.pendingConflicts && titleCheck.pendingConflicts.length > 0 && (
+                  <div style={{ marginTop: '10px', background: '#fff3e0', padding: '8px 12px', borderRadius: '4px', fontSize: '13px' }}>
+                    <strong>⏳ This title is already pending review:</strong>
+                    <ul style={{ margin: '5px 0', paddingLeft: '20px' }}>
+                      {titleCheck.pendingConflicts.map((pc, idx) => (
+                        <li key={idx}>
+                          {pc.title}
+                          <span style={{ color: '#888', fontSize: '11px', marginLeft: '8px' }}>
+                            (submitted {new Date(pc.submitted_at).toLocaleDateString()})
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    <p style={{ margin: '4px 0 0', color: '#e65100', fontSize: '11px' }}>
+                      You can still submit, but the first to be approved claims the title.
+                    </p>
                   </div>
                 )}
                 {titleCheck?.suggestion && (
