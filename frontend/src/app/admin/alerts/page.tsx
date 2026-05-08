@@ -64,7 +64,7 @@ export default function AdminAlertsPage() {
   const [history, setHistory] = useState<AlertHistoryItem[]>([]);
   const [historyTotal, setHistoryTotal] = useState(0);
   const [historyPage, setHistoryPage] = useState(1);
-  const [_loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [activeAlerts, setActiveAlerts] = useState<Map<string, { value: number; severity: string }>>(new Map());
 
   // ─── Form state ──────────────────────────────────────────────

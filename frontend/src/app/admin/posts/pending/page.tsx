@@ -79,7 +79,7 @@ export default function PendingPostsPage() {
     } catch {} finally { setActionLoading(false); }
   };
 
-  const singleAction = async (id: string, action: string) => {
+  const singleAction = useCallback(async (id: string, action: string) => {
     setActionLoading(true);
     try {
       if (action === 'approve') await apiFetch(`/admin/posts/${id}/approve`, { method: 'PATCH' });
@@ -89,7 +89,7 @@ export default function PendingPostsPage() {
       if (action !== 'retry') { setRejectReason(''); setRetryGuidance(''); setShowRejectModal(false); setShowRetryModal(false); }
       fetchPosts(page);
     } catch {} finally { setActionLoading(false); }
-  };
+  }, [rejectReason, retryGuidance, fetchPosts, page]);
 
   // Keyboard shortcuts
   useEffect(() => {

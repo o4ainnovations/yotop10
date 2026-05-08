@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 
 interface AuditEntry {
@@ -19,7 +19,7 @@ export default function AdminAuditPage() {
   const [pagination, setPagination] = useState({ total: 0, pages: 0 });
   const [filterAction, setFilterAction] = useState('');
 
-  const fetchLogs = async (p: number) => {
+  const fetchLogs = useCallback(async (p: number) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(p), limit: '20' });
@@ -31,7 +31,7 @@ export default function AdminAuditPage() {
       setPagination(data.pagination);
     } catch { /* auth guard redirects */ }
     finally { setLoading(false); }
-  };
+  }, [filterAction]);
 
   useEffect(() => { fetchLogs(page); }, [page, filterAction, fetchLogs]);
 
