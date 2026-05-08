@@ -34,7 +34,7 @@ export const generateAdminToken = (adminId: string, username: string, tokenVersi
   );
 };
 
-export const adminAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+export const adminAuthMiddleware: any = async (req: Request, res: Response, next: NextFunction) => {
   const token = req.cookies?.admin_token;
 
   if (!token) {

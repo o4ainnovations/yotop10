@@ -6,7 +6,7 @@ import { adminAuthMiddleware } from '../lib/adminAuth';
 const router: Router = Router();
 
 // GET /api/categories — All categories with hierarchy
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (req: any, res: any) => {
   try {
     const { include_children = 'true' } = req.query;
 
@@ -60,7 +60,7 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // GET /api/categories/:slug — Single category by slug (supports nested slugs like "business/accounting-tax")
-router.get('/:slug(*)', async (req: Request, res: Response) => {
+router.get('/:slug(*)', async (req: any, res: any) => {
   try {
     const { slug } = req.params;
 
@@ -107,7 +107,7 @@ router.get('/:slug(*)', async (req: Request, res: Response) => {
 });
 
 // POST /api/categories — Create category (admin)
-router.post('/', adminAuthMiddleware, async (req: Request, res: Response) => {
+router.post('/', adminAuthMiddleware, async (req: any, res: any) => {
   try {
     const { name, slug, description, icon, parent_id, is_featured } = req.body;
 
@@ -139,7 +139,7 @@ router.post('/', adminAuthMiddleware, async (req: Request, res: Response) => {
 });
 
 // PATCH /api/categories/:id — Update category (admin)
-router.patch('/:id', adminAuthMiddleware, async (req: Request, res: Response) => {
+router.patch('/:id', adminAuthMiddleware, async (req: any, res: any) => {
   try {
     const { id } = req.params;
     const { name, description, icon, is_featured } = req.body;
@@ -162,7 +162,7 @@ router.patch('/:id', adminAuthMiddleware, async (req: Request, res: Response) =>
 });
 
 // DELETE /api/categories/:id — Archive category (admin)
-router.delete('/:id', adminAuthMiddleware, async (req: Request, res: Response) => {
+router.delete('/:id', adminAuthMiddleware, async (req: any, res: any) => {
   try {
     const { id } = req.params;
 
@@ -195,7 +195,7 @@ router.delete('/:id', adminAuthMiddleware, async (req: Request, res: Response) =
 });
 
 // POST /api/categories/recalculate-post-counts — Recalculate post counts for all categories (maintenance)
-router.post('/recalculate-post-counts', adminAuthMiddleware, async (req: Request, res: Response) => {
+router.post('/recalculate-post-counts', adminAuthMiddleware, async (req: any, res: any) => {
   try {
     // Get all categories
     const categories = await Category.find({ is_archived: false }).lean();

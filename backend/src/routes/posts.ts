@@ -113,7 +113,7 @@ const validatePostSubmission = [
 ];
 
 // GET /api/posts — Approved posts with filtering, sorting, pagination
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (req, res) => {
   try {
     const {
       page = '1',
@@ -197,7 +197,7 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // GET /api/posts/check-title — Global similarity check (no category silo)
-router.get('/check-title', async (req: Request, res: Response) => {
+router.get('/check-title', async (req, res) => {
   try {
     const q = (req.query.q as string || '').trim();
 
@@ -274,7 +274,7 @@ router.get('/check-title', async (req: Request, res: Response) => {
 });
 
 // GET /api/posts/:idOrSlug — Single post with items and comments
-router.get('/:idOrSlug', async (req: Request, res: Response) => {
+router.get('/:idOrSlug', async (req, res) => {
   try {
     const { idOrSlug } = req.params;
 
@@ -354,7 +354,7 @@ router.get('/:idOrSlug', async (req: Request, res: Response) => {
 });
 
 // POST /api/posts — Submit post (no auth)
-router.post('/', validatePostSubmission, async (req: Request, res: Response) => {
+router.post('/', ...validatePostSubmission as any[], async (req, res) => {
   try {
     // Check validation errors
     const errors = validationResult(req);
@@ -519,7 +519,7 @@ router.post('/', validatePostSubmission, async (req: Request, res: Response) => 
 });
 
 // GET /api/posts/:idOrSlug/history — Get post revision history
-router.get('/:idOrSlug/history', async (req: Request, res: Response) => {
+router.get('/:idOrSlug/history', async (req, res) => {
   try {
     const { idOrSlug } = req.params;
 
@@ -562,7 +562,7 @@ router.get('/:idOrSlug/history', async (req: Request, res: Response) => {
 });
 
 // GET /api/posts/:idOrSlug/comments — Get comments for a post
-router.get('/:idOrSlug/comments', async (req: Request, res: Response) => {
+router.get('/:idOrSlug/comments', async (req, res) => {
   try {
     const { idOrSlug } = req.params;
     const { list_item_id } = req.query;
@@ -627,7 +627,7 @@ router.post('/:idOrSlug/comments', [
   body('content').trim().notEmpty().withMessage('Content is required').isLength({ max: 2000 }).withMessage('Content must be less than 2000 characters'),
   body('list_item_id').optional().isMongoId().withMessage('Invalid list item ID'),
   body('parent_comment_id').optional().isMongoId().withMessage('Invalid parent comment ID'),
-], async (req: Request, res: Response) => {
+], async (req: any, res: any) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

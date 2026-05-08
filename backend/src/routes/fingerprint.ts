@@ -12,7 +12,7 @@ const router: Router = Router();
  * Request body: { tier1, tier2, hash }
  * Response: { match_found: boolean, trust_score?: number }
  */
-router.post('/submit', async (req: Request, res: Response) => {
+router.post('/submit', async (req, res) => {
   try {
     const { tier0, tier1, tier2, hash } = req.body;
 

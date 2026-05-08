@@ -20,7 +20,7 @@ const getFingerprint = (req: Request): string | undefined => {
 };
 
 // POST /api/reactions - Toggle fire reaction
-router.post('/', validateReaction, async (req: Request, res: Response) => {
+router.post("/", ...validateReaction, async (req: any, res: any) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -155,10 +155,10 @@ router.post('/', validateReaction, async (req: Request, res: Response) => {
 });
 
 // GET /api/reactions/state - Check reaction status for multiple targets
-router.get('/state', async (req: Request, res: Response) => {
+router.get('/state', async (req, res) => {
   try {
     const { targets } = req.query;
-    const device_fingerprint = getFingerprint(req);
+    const device_fingerprint = getFingerprint(req as any);
 
     if (!targets) {
       return res.status(400).json({ error: 'No targets provided' });
@@ -201,10 +201,10 @@ router.get('/state', async (req: Request, res: Response) => {
 });
 
 // GET /api/reactions/:targetType/:targetId - Get reaction count and user status
-router.get('/:targetType/:targetId', async (req: Request, res: Response) => {
+router.get('/:targetType/:targetId', async (req, res) => {
   try {
     const { targetType, targetId } = req.params;
-    const device_fingerprint = getFingerprint(req);
+    const device_fingerprint = getFingerprint(req as any);
 
     // Only allow comments
     if (targetType !== 'comment') {

@@ -174,14 +174,14 @@ const startThresholdCron = () => {
 // PATCH /api/comments/:id - Edit comment (within 2hr window)
 router.patch('/comments/:id', 
   body('content').trim().notEmpty().isLength({ max: 2000 }),
-  async (req: Request, res: Response) => {
+  async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const commentId = req.params.id;
+    const commentId = req.params?.id;
     const { content } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(commentId)) {
@@ -219,9 +219,9 @@ router.patch('/comments/:id',
 });
 
 // DELETE /api/comments/:id - Delete own comment
-router.delete('/comments/:id', async (req: Request, res: Response) => {
+router.delete('/comments/:id', async (req, res) => {
   try {
-    const commentId = req.params.id;
+    const commentId = req.params?.id;
     const deviceFingerprint = req.user?.device_fingerprint;
     if (!deviceFingerprint || deviceFingerprint === 'unknown') {
       return res.status(401).json({ error: 'Device identity required' });
@@ -289,9 +289,9 @@ router.delete('/comments/:id', async (req: Request, res: Response) => {
 });
 
 // POST /api/comments/:id/spark - Recalculate spark score for a comment
-router.post('/comments/:id/spark', async (req: Request, res: Response) => {
+router.post('/comments/:id/spark', async (req, res) => {
   try {
-    const commentId = req.params.id;
+    const commentId = req.params?.id;
 
     if (!mongoose.Types.ObjectId.isValid(commentId)) {
       return res.status(400).json({ error: 'Invalid comment ID' });

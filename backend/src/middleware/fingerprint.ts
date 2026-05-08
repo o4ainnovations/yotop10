@@ -35,7 +35,7 @@ export const getClientIp = (req: { headers: Record<string, string | string[] | u
     if (ips.length >= 2) return ips[ips.length - 2];
     return ips[0];
   }
-  return req.ip || req.socket.remoteAddress || 'unknown';
+  return req.ip || req.socket?.remoteAddress || 'unknown';
 };
 
 const generateFingerprint = (): string => crypto.randomBytes(16).toString('hex');

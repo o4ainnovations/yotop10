@@ -12,6 +12,10 @@ declare global {
         created_at?: Date | string;
         restricted_until?: Date | string;
         custom_display_name?: string;
+        rate_limit_override?: {
+          posts_per_hour?: number | null;
+          comments_per_hour?: number | null;
+        } | null;
       };
       admin?: {
         id: string;

@@ -15,7 +15,7 @@ import { User } from '../models/User';
 const router = Router();
 
 function validate(schema: { parse: (data: unknown) => unknown }) {
-  return (req: Request, res: Response, next: () => void): void => {
+  return (req: any, res: any, next: () => void): void => {
     try {
       (req as any).validated = schema.parse(req.method === 'GET' ? req.query : req.body);
       next();
@@ -31,9 +31,8 @@ function validate(schema: { parse: (data: unknown) => unknown }) {
 
 router.get(
   '/',
-  searchRateLimit,
-  validate(searchQuerySchema),
-  async (req: Request, res: Response) => {
+  searchRateLimit as any,
+  validate(searchQuerySchema), async (req: any, res: any) => {
     try {
       const { q, page, sort, category_slug, post_type, author } = (req as any).validated;
       const size = 10;
@@ -131,9 +130,9 @@ router.get(
 
 router.get(
   '/autocomplete',
-  autocompleteRateLimit,
+  autocompleteRateLimit as any,
   validate(autocompleteQuerySchema),
-  async (req: Request, res: Response) => {
+  async (req: any, res: any) => {
     try {
       const { q } = (req as any).validated;
       if (!q || q.length < 2) return res.json({ titles: [], categories: [] });
@@ -183,7 +182,7 @@ router.get(
 // Admin
 // ══════════════════════════════════════════════════════════════════════
 
-router.get('/admin/status', adminAuthMiddleware, async (_req: Request, res: Response) => {
+router.get('/admin/status', adminAuthMiddleware, async (_req: any, res: any) => {
   try {
     const health = await es.cat.health({ format: 'json' });
     const indices = await es.cat.indices({ index: `${INDEX_PREFIX}_*`, format: 'json' });
@@ -218,9 +217,9 @@ router.get('/admin/status', adminAuthMiddleware, async (_req: Request, res: Resp
 
 router.post(
   '/admin/reindex',
-  adminAuthMiddleware,
+  adminAuthMiddleware as any,
   validate(adminReindexSchema),
-  async (req: Request, res: Response) => {
+  async (req: any, res: any) => {
     try {
       const { scope } = (req as any).validated;
       const results: Record<string, { indexed: number; errors: number }> = {};
@@ -263,9 +262,9 @@ router.post(
 
 router.delete(
   '/admin/index',
-  adminAuthMiddleware,
+  adminAuthMiddleware as any,
   validate(adminDeleteIndexSchema),
-  async (req: Request, res: Response) => {
+  async (req: any, res: any) => {
     try {
       const { index } = (req as any).validated;
       const indexName = `${INDEX_PREFIX}_${index}`;
@@ -281,7 +280,7 @@ router.delete(
   }
 );
 
-router.get('/admin/mappings', adminAuthMiddleware, async (_req: Request, res: Response) => {
+router.get('/admin/mappings', adminAuthMiddleware, async (_req: any, res: any) => {
   try {
     const results: Record<string, unknown> = {};
     const allIndices = ['posts', 'comments', 'categories', 'users'];
@@ -301,9 +300,9 @@ router.get('/admin/mappings', adminAuthMiddleware, async (_req: Request, res: Re
 
 router.get(
   '/admin/preview',
-  adminAuthMiddleware,
+  adminAuthMiddleware as any,
   validate(adminPreviewQuerySchema),
-  async (req: Request, res: Response) => {
+  async (req: any, res: any) => {
     try {
       const { q } = (req as any).validated;
       if (!q) return res.json({ results: 0 });

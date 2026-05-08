@@ -30,7 +30,7 @@ app.use(express.urlencoded({ extended: true }));
 
 import { fingerprintMiddleware } from './middleware/fingerprint';
 
-app.get('/api/health', (_req: Request, res: Response) => {
+app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
@@ -45,13 +45,13 @@ const FINGERPRINT_EXEMPT = new Set(['/api/admin', '/api/analytics']);
 
 for (const route of routes) {
   const middleware = FINGERPRINT_EXEMPT.has(route.path) ? [route.router] : [fingerprintMiddleware, route.router];
-  app.use(route.path, ...middleware);
+  (app.use as any)(route.path, ...middleware);
   console.log(`Mounted route: ${route.path}`);
 }
 
 console.log('\nAll routes mounted successfully\n');
 
-app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+app.use((err: Error, _req: any, res: any, _next: any) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
 });
