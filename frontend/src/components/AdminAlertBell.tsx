@@ -138,36 +138,36 @@ export default function AdminAlertBell() {
               width: '400px',
               maxHeight: '480px',
               overflowY: 'auto',
-              backgroundColor: '#1e1e1e',
-              border: '1px solid #333',
+              backgroundColor: '#FFF8F0',
+              border: '1px solid #E8D5C4',
               borderRadius: '8px',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+              boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
               zIndex: 100,
               padding: '8px 0',
             }}
           >
             <div style={{
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              padding: '10px 16px', borderBottom: '1px solid #333',
+              padding: '10px 16px', borderBottom: '1px solid #EFEBE0',
             }}>
-              <strong style={{ color: '#e0e0e0', fontSize: '14px' }}>🚨 Alerts</strong>
+              <strong style={{ color: '#3E2723', fontSize: '14px' }}>🚨 Alerts</strong>
               <div style={{ display: 'flex', gap: '8px' }}>
                 {unreadCount > 0 && (
                   <button
                     onClick={handleMarkAllRead}
-                    style={{ background: 'none', border: 'none', color: '#ff9800', cursor: 'pointer', fontSize: '12px' }}
+                    style={{ background: 'none', border: 'none', color: '#D84315', cursor: 'pointer', fontSize: '12px' }}
                   >
                     Mark all read
                   </button>
                 )}
-                <a href="/admin/alerts" style={{ color: '#888', fontSize: '12px', textDecoration: 'none' }} onClick={() => setOpen(false)}>
+                <a href="/admin/alerts" style={{ color: '#8D6E63', fontSize: '12px', textDecoration: 'none' }} onClick={() => setOpen(false)}>
                   View all →
                 </a>
               </div>
             </div>
 
             {notifications.length === 0 ? (
-              <div style={{ padding: '24px 16px', textAlign: 'center', color: '#666', fontSize: '13px' }}>
+              <div style={{ padding: '24px 16px', textAlign: 'center', color: '#A1887F', fontSize: '13px' }}>
                 ✅ No active alerts
               </div>
             ) : (
@@ -177,7 +177,7 @@ export default function AdminAlertBell() {
                   style={{
                     padding: '10px 16px',
                     backgroundColor: n.read ? 'transparent' : severityBg(n.severity),
-                    borderBottom: '1px solid #2a2a2a',
+                    borderBottom: '1px solid #EFEBE0',
                     fontSize: '13px',
                     lineHeight: '1.5',
                     cursor: 'pointer',
@@ -189,24 +189,24 @@ export default function AdminAlertBell() {
                       [{n.severity.toUpperCase()}]
                     </span>
                     <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                      <span style={{ color: '#888', fontSize: '11px' }}>
+                      <span style={{ color: '#A1887F', fontSize: '11px' }}>
                         {new Date(n.created_at).toLocaleTimeString()}
                       </span>
                       <button
                         onClick={(e) => handleDismiss(e, n._id)}
-                        style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontSize: '14px', padding: 0, lineHeight: 1 }}
+                        style={{ background: 'none', border: 'none', color: '#8D6E63', cursor: 'pointer', fontSize: '14px', padding: 0, lineHeight: 1 }}
                         title="Dismiss"
                       >
                         ×
                       </button>
                     </div>
                   </div>
-                  <div style={{ color: '#ccc', marginTop: '2px' }}>
-                    <span style={{ color: '#888', fontSize: '11px' }}>
+                  <div style={{ color: '#5D4037', marginTop: '2px' }}>
+                    <span style={{ color: '#8D6E63', fontSize: '11px' }}>
                       {TYPE_LABELS[n.alert_type] || n.alert_type}
                     </span>
                   </div>
-                  <div style={{ color: '#e0e0e0', marginTop: '2px' }}>
+                  <div style={{ color: '#3E2723', marginTop: '2px' }}>
                     {n.message}
                   </div>
                 </div>
@@ -214,10 +214,10 @@ export default function AdminAlertBell() {
             )}
 
             <div style={{
-              padding: '8px 16px', borderTop: '1px solid #333', textAlign: 'center',
-              fontSize: '11px', color: '#555',
+              padding: '8px 16px', borderTop: '1px solid #EFEBE0', textAlign: 'center',
+              fontSize: '11px', color: '#A1887F',
             }}>
-              Runs every 60s · <a href="/admin/alerts" style={{ color: '#888' }}>Manage thresholds</a>
+              Runs every 60s · <a href="/admin/alerts" style={{ color: '#8D6E63' }}>Manage thresholds</a>
             </div>
           </div>
         </>
