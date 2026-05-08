@@ -64,6 +64,21 @@ more than trivial code):
 **This is a mandatory step. A task is NOT complete until code is committed,
 pushed, and ALL documentation reflects reality.**
 
+### 3.0b 🚫 BANNED: `sed` Edits (NON-NEGOTIABLE)
+
+The `sed` command is PERMANENTLY BANNED for editing source code files.
+It is error-prone, strips context, and causes invisible corruption (e.g.,
+replacing text inside import statements, string literals, or comments).
+
+- NEVER use `sed -i` on TypeScript, JavaScript, JSX, TSX, JSON, YAML, or HTML files
+- NEVER use `sed` for bulk find-and-replace operations on source code
+- Use the dedicated `Edit` tool (with exact oldString/newString context) instead
+- The `sed` command may ONLY be used for one-off diagnostic grep pipelines
+  that do NOT modify files
+
+**Violation consequence**: Any file touched by `sed` MUST be reverted and
+reconstructed using the `Edit` tool with proper contextual matches.
+
 ---
 
 ## 3.1 🏭 Enterprise-Grade Implementation Standards (NON-NEGOTIABLE)
