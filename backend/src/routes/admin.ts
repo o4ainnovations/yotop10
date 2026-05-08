@@ -939,7 +939,7 @@ router.delete('/comments/:id/permanent', async (req: AdminAuthRequest, res: Resp
 router.post('/comments/:id/hide', async (req: AdminAuthRequest, res: Response) => {
   const c = await Comment.findById(req.params.id);
   if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
-  c.hidden = true; c.hidden_reason = req.body.reason || null;
+  c.hidden = true; c.hidden_reason = req.body.reason || null; c.flag_type = null; c.flag_evidence = null;
   await c.save();
   res.json({ success: true });
 });
@@ -971,13 +971,13 @@ router.post('/comments/:id/unhighlight', async (req: AdminAuthRequest, res: Resp
 router.post('/comments/bulk/delete', async (req: AdminAuthRequest, res: Response) => {
   const { ids } = req.body;
   if (!Array.isArray(ids) || ids.length === 0 || ids.length > 50) return res.status(400).json({ code: 'VALIDATION', error: 'Provide 1-50 IDs' });
-  const r = await Comment.updateMany({ _id: { $in: ids } }, { $set: { deleted: true, deleted_at: new Date() } });
+  const r = await Comment.updateMany({ _id: { $in: ids } }, { $set: { deleted: true, deleted_at: new Date(), flag_type: null, flag_evidence: null } });
   res.json({ success: true, deleted: r.modifiedCount });
 });
 router.post('/comments/bulk/hide', async (req: AdminAuthRequest, res: Response) => {
   const { ids, reason } = req.body;
   if (!Array.isArray(ids) || ids.length === 0 || ids.length > 50) return res.status(400).json({ code: 'VALIDATION', error: 'Provide 1-50 IDs' });
-  const r = await Comment.updateMany({ _id: { $in: ids } }, { $set: { hidden: true, hidden_reason: reason || null } });
+  const r = await Comment.updateMany({ _id: { $in: ids } }, { $set: { hidden: true, hidden_reason: reason || null, flag_type: null, flag_evidence: null } });
   res.json({ success: true, hidden: r.modifiedCount });
 });
 
