@@ -106,6 +106,20 @@ export default function AdminNotificationsPage() {
     } catch { toast.error('Failed'); }
   };
 
+  const handleSaveTemplate = async () => {
+    if (!templateName.trim() || !templateTitle.trim() || !templateBody.trim()) return toast.error('All fields required');
+    try {
+      await apiFetch('/admin/messages/templates', {
+        method: 'POST',
+        body: JSON.stringify({ name: templateName.trim(), title: templateTitle.trim(), body: templateBody.trim(), priority: templatePriority }),
+      });
+      fetchTemplates();
+      setTemplateName(''); setTemplateTitle(''); setTemplateBody('');
+      setShowTemplateForm(false);
+      toast.success('Template saved');
+    } catch (e) { toast.error((e as Error)?.message || 'Failed'); }
+  };
+
   const applyTemplate = (t: Template) => {
     setTitle(t.title);
     setBody(t.body);

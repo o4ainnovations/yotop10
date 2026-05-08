@@ -47,19 +47,6 @@ export default function PendingPostsPage() {
 
   useEffect(() => { apiFetch<{ categories: CategoryOption[] }>('/categories').then(d => setCategories(d.categories || [])).catch(() => {}); }, []);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
-      const posts = postsRef.current;
-      if (e.key === 'a' || e.key === 'A') { e.preventDefault(); if (posts.length > 0) singleAction(posts[0]._id, 'approve'); }
-      else if (e.key === 'r' || e.key === 'R') { e.preventDefault(); setSelected(new Set([posts[0]?._id].filter(Boolean) as string[])); setShowRejectModal(true); }
-      else if (e.key === 'e' || e.key === 'E') { e.preventDefault(); setSelected(new Set([posts[0]?._id].filter(Boolean) as string[])); setShowRetryModal(true); }
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [singleAction]);
-
   const toggleSelect = (id: string) => setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   const selectAll = () => { if (selected.size === posts.length) setSelected(new Set()); else setSelected(new Set(posts.map(p => p._id))); };
 
@@ -103,6 +90,19 @@ export default function PendingPostsPage() {
       fetchPosts(page);
     } catch {} finally { setActionLoading(false); }
   };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
+      const posts = postsRef.current;
+      if (e.key === 'a' || e.key === 'A') { e.preventDefault(); if (posts.length > 0) singleAction(posts[0]._id, 'approve'); }
+      else if (e.key === 'r' || e.key === 'R') { e.preventDefault(); setSelected(new Set([posts[0]?._id].filter(Boolean) as string[])); setShowRejectModal(true); }
+      else if (e.key === 'e' || e.key === 'E') { e.preventDefault(); setSelected(new Set([posts[0]?._id].filter(Boolean) as string[])); setShowRetryModal(true); }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [singleAction]);
 
   const ageStr = (d: string) => { const h = Math.round((Date.now() - new Date(d).getTime()) / 3600000); return h < 1 ? 'now' : h < 24 ? `${h}h` : `${Math.floor(h / 24)}d`; };
   const ageColor = (d: string) => { const h = Math.round((Date.now() - new Date(d).getTime()) / 3600000); return h > 168 ? '#c62828' : h > 48 ? '#e65100' : '#666'; };
