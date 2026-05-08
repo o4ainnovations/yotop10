@@ -46,6 +46,7 @@ export const adminAuthMiddleware = async (req: AdminAuthRequest, res: Response, 
       id: string;
       username: string;
       token_version: number;
+      exp?: number;
     };
 
     const admin = await AdminUser.findById(decoded.id);
