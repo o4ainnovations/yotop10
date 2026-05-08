@@ -19,4 +19,32 @@ export const adminApi = {
 
   validateSetupToken: (token: string) =>
     apiFetch(`/admin/setup/validate?token=${token}`),
+
+  // Alert system
+  getAlertThresholds: () => apiFetch('/admin/alerts/thresholds'),
+  createAlertThreshold: (body: Record<string, unknown>) =>
+    apiFetch('/admin/alerts/thresholds', { method: 'POST', body: JSON.stringify(body) }),
+  updateAlertThreshold: (id: string, body: Record<string, unknown>) =>
+    apiFetch(`/admin/alerts/thresholds/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  deleteAlertThreshold: (id: string) =>
+    apiFetch(`/admin/alerts/thresholds/${id}`, { method: 'DELETE' }),
+  toggleAlertThreshold: (id: string) =>
+    apiFetch(`/admin/alerts/thresholds/${id}/toggle`, { method: 'PATCH' }),
+
+  getAlertNotifications: (params: Record<string, string> = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return apiFetch(`/admin/alerts/notifications${qs ? '?' + qs : ''}`);
+  },
+  getAlertNotificationCount: () => apiFetch('/admin/alerts/notifications/count'),
+  markAlertNotificationRead: (id: string) =>
+    apiFetch(`/admin/alerts/notifications/${id}/read`, { method: 'PATCH' }),
+  markAllAlertNotificationsRead: () =>
+    apiFetch('/admin/alerts/notifications/read-all', { method: 'PATCH' }),
+  dismissAlertNotification: (id: string) =>
+    apiFetch(`/admin/alerts/notifications/${id}`, { method: 'DELETE' }),
+
+  getAlertHistory: (params: Record<string, string> = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return apiFetch(`/admin/alerts/history${qs ? '?' + qs : ''}`);
+  },
 };
