@@ -84,7 +84,7 @@ export default function SubmitPage() {
   const saveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // UI state
-  const [categories, setCategories] = useState<Array<{ id: string; name: string; icon?: string }>>([]);
+  const [categories, setCategories] = useState<Array<{ id: string; name: string; slug: string; icon?: string }>>([]);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [titleCheck, setTitleCheck] = useState<{
@@ -110,7 +110,7 @@ export default function SubmitPage() {
   useEffect(() => {
     API.getCategories()
       .then(data => {
-        setCategories((data as { categories?: Array<{ id: string; name: string; icon?: string }> }).categories || []);
+        setCategories((data as { categories?: Array<{ id: string; name: string; slug: string; icon?: string }> }).categories || []);
       })
       .catch(err => console.error('Failed to load categories:', err));
   }, []);
