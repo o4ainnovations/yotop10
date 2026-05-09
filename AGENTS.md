@@ -20,7 +20,9 @@ READ EVERY LINE. DO NOT SKIM. DO NOT USE CACHED VERSIONS.
 
 ---
 
-## 2. ✅ Task Completion Checklist
+## 2. ✅ Task Completion Checklist (NON-NEGOTIABLE)
+
+**A task is NOT complete until ALL of the following pass. No exceptions. No shortcuts.**
 
 Before declaring ANY sub-task done:
 1. Run targeted lint/test on affected files only
@@ -31,9 +33,29 @@ Before declaring ANY sub-task done:
 6. No debug logs/console.log remaining
 7. Documentation updated
 
-Before milestone completion:
-1. Run full `pnpm build` with 0 errors
-2. Run full `pnpm lint` with 0 warnings
+**Before marking any task/PR as complete, you MUST run and pass ALL of:**
+
+| Check | Command | Must Return |
+|-------|---------|-------------|
+| Backend typecheck | `cd backend && pnpm typecheck` | Exit 0 |
+| Frontend typecheck | `cd frontend && pnpm typecheck` | Exit 0 |
+| Backend lint | `cd backend && pnpm lint` | 0 errors, 0 warnings |
+| Frontend lint | `cd frontend && pnpm lint` | 0 errors, 0 warnings |
+| Backend build | `cd backend && pnpm build` | Exit 0 |
+| Frontend build | `cd frontend && pnpm build` | Exit 0 |
+| Backend tests | `cd backend && pnpm test` | All passing |
+
+**If any check fails, the task is NOT complete. Fix the failure before declaring done.**
+
+### 2.1 🚫 Completion Gate (NON-NEGOTIABLE)
+
+The following are HARD BLOCKS. You may NOT claim a task is complete if:
+- `pnpm lint` has ANY errors or warnings (backend or frontend)
+- `pnpm typecheck` (tsc --noEmit) has ANY errors (backend or frontend)
+- `pnpm build` fails (backend or frontend)
+- `pnpm test` has ANY failures
+
+**No task is ever "done enough" with failing CI. Zero tolerance.**
 
 ---
 
