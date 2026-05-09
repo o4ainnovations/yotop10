@@ -540,18 +540,47 @@ Single unified notification system that handles all user feedback across the ent
   - Approved posts
   - Most active authors
 
-#### M10.8 — Hall of Fame Management
-- [ ] `GET /api/admin/hall-of-fame` — All featured posts
-- [ ] `POST /api/admin/hall-of-fame` — Add to Hall of Fame
-  - Request: `{ post_id, editorial_note, featured_date }`
-  - Editorial note: Short text explaining why featured
-- [ ] `DELETE /api/admin/hall-of-fame/:id` — Remove from Hall of Fame
-- [ ] `PATCH /api/admin/hall-of-fame/reorder` — Reorder featured posts
-- [ ] Auto-candidate suggestions:
-  - Posts with 50+ item-anchored comments
-  - Posts active for 3+ months
-  - Low controversy (more CONFIRMED than CONTESTED)
-- [ ] Featured badge customization
+#### M10.8 — Hall of Fame
+
+Six competitive rankings, each displaying top 10 only (#11 gets booted). Admin manages all from `/admin/hall-of-fame` with six tabs. Public page at `/hall-of-fame`.
+
+**Post Scoring Infrastructure (prerequisites):**
+- [ ] `Post.fire_count` — aggregated from all comments on the post
+- [ ] `Post.spark_score` — SparkScore formula applied to posts (same algorithm as comments but post-level signals)
+- [ ] `Post.category_champion` — admin-selected best post per parent category
+- [ ] Fire count aggregation cron — updates `Post.fire_count` periodically from Comment collection
+
+**SparkScore for Posts (formula):**
+```
+postBase  = (comments × 2.0) + (fires × 1.5) + (views × 0.1) + 5
+gamma     = max(1.1, 2.0 − fires / (fires + comments + 1))
+score     = postBase / (ageInDays + 1)^gamma
+```
+
+**Six Hall of Fame Rankings:**
+
+| # | Tab | What it shows | How it works |
+|---|-----|--------------|--------------|
+| 1 | Editor's Choice | Admin hand-picks posts with editorial notes | `Post.featured: true` — admin selects, writes `editorial_note`. Already exists. |
+| 2 | Most Discussed | Top 10 by total comments (nested included) | `Post.find().sort({ comment_count: -1 }).limit(10)` |
+| 3 | Most Controversial | Top 10 with most counter-lists | Requires M5.6 counter-list system — `Post.find().sort({ counter_count: -1 }).limit(10)` |
+| 4 | Hidden Gems | Top 10 by engagement ratio where views < avg | `(comments + fires) / max(views, 1)` — below-average views, top-tier engagement |
+| 5 | Category Champions | Best post in each parent category (admin-selected) | Admin picks one `Post` per top-level category as `category_champion` |
+| 6 | Scholar Picks | Top 10 posts by Scholar-tier authors | `$lookup` User.trust_score ≥ 1.8, sort by spark_score |
+
+**Endpoints:**
+| Method | Path | Purpose |
+|--------|------|---------|
+| `GET` | `/api/hall-of-fame` | Public: all 6 sections as a merged response |
+| `GET` | `/api/hall-of-fame/:section` | Public: single section (discussed, controversial, gems, champions, scholars) |
+| `GET` | `/api/admin/hall-of-fame` | Admin: all sections + candidates |
+| `POST` | `/api/admin/hall-of-fame/editors-choice` | Admin: add/update Editor's Choice with editorial note |
+| `DELETE` | `/api/admin/hall-of-fame/editors-choice/:postId` | Admin: remove from Editor's Choice |
+| `PATCH` | `/api/admin/hall-of-fame/category-champion` | Admin: set champion for a parent category |
+
+**Frontend:**
+- [ ] `/hall-of-fame` — public page with hero section + 6 category grids
+- [ ] `/admin/hall-of-fame` — admin page with 6 tabs, Editor's Choice form, Champion selector
 
 #### M10.9 — Alert System ✅ COMPLETED
 - [x] Alert engine — 12 metrics evaluated every 60s with breach/resolution/cooldown logic
@@ -562,21 +591,19 @@ Single unified notification system that handles all user feedback across the ent
 - [x] Default thresholds seeded for 12 metrics on first startup
 - [x] Live status badges — 🟢🟠🔴 in thresholds table reflecting real-time Redis state
 
-#### M10.9b — Admin Outbound Notifications (NEW)
-- [ ] `AdminMessage` model — separate from user `Notification`, supports individual + broadcast
-- [ ] `POST /api/admin/messages` — Send individual or broadcast message
-  - Request: `{ type: 'individual'|'broadcast', recipient_id?, title, body, priority }`
-  - Broadcast creates 1 document, `dismissed_by[]` tracks per-user read state
-  - Zod validated
-- [ ] `GET /api/admin/messages` — List sent messages (paginated, filterable)
-- [ ] `DELETE /api/admin/messages/:id` — Retract/expire a message
-- [ ] `GET /api/admin/messages/:id/stats` — Delivery stats (sent, seen_by count, dismissed_by count)
-- [ ] `POST /api/admin/messages/templates` — Save reusable message template
-- [ ] `GET /api/admin/messages/templates` — List all templates
-- [ ] `DELETE /api/admin/messages/templates/:id` — Delete template
-- [ ] `GET /api/users/me/messages` — User-facing: merged feed of personal + active broadcasts
-- [ ] Frontend: `/admin/notifications` page in sidebar — Compose (user search + broadcast toggle), Sent history, Templates tabs
-- [ ] React Hooks for every blueprint: client-side typing, SWR/re-fetch, toast, error handling
+#### M10.9b — Admin Outbound Notifications ✅ COMPLETED
+- [x] `AdminMessage` model — separate from user `Notification`, supports individual + broadcast
+- [x] `POST /api/admin/messages` — Send individual or broadcast message
+- [x] `GET /api/admin/messages` — List sent messages (paginated, filterable)
+- [x] `DELETE /api/admin/messages/:id` — Retract/expire a message
+- [x] `GET /api/admin/messages/:id/stats` — Delivery stats
+- [x] `POST /api/admin/messages/templates` — Save reusable message template
+- [x] `GET /api/admin/messages/templates` — List all templates
+- [x] `DELETE /api/admin/messages/templates/:id` — Delete template
+- [x] `GET /api/users/me/messages` — User-facing: merged feed of personal + active broadcasts
+- [x] Frontend: `/admin/notifications` page in sidebar — Compose, Sent, Templates tabs
+- [x] NotificationBell merged feed — admin messages appear in user bell with priority colors
+- [x] `/notifications` and `/notifications/[id]` user-facing pages
 
 #### M10.10 — Search & Elasticsearch Management
 - [x] `GET /api/admin/search/status` — Elasticsearch connection status (at `/api/search/admin/status`)
@@ -863,7 +890,7 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 - [x] `GET /api/search/autocomplete` — Autocomplete (with highlighting)
 - [x] Filters: category, post type, author (date range not in public search)
 - [x] Sort: relevance, newest, most comments, most liked (fires)
-- [ ] Frontend: `/search`
+- [x] Frontend: `/search` (real-time autocomplete, instant results, filters, tabs, highlights, suggestions)
 
 ### M13 — Arguments Page
 - [ ] `GET /api/arguments` — Hot debates
@@ -895,9 +922,9 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 - [x] Shadow Trust Score system ✅
 - [x] Counter Lists are UNLIMITED for all users ✅
 - [x] User profiles at `/a/[username]` ✅
-- [x] Elasticsearch search with autocomplete (backend: 4 indices, search, autocomplete, admin management; frontend page pending)
+- [x] Elasticsearch search with autocomplete (backend + frontend: real-time, autocomplete dropdown, facets, highlights, suggestions)
 - [ ] Arguments page (hot debates)
-- [ ] Hall of Fame
+- [ ] Hall of Fame (6-section competitive rankings — see M10.8)
 - [ ] Deployed and verified
 
 ---
