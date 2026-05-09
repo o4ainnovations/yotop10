@@ -510,30 +510,53 @@ Single unified notification system that handles all user feedback across the ent
   - By date range
 
 #### M10.7 — Categories Management
+
+**Backend (Completed):**
 - [x] `GET /api/admin/categories` — All categories (tree view) (via public `/api/categories`)
-- [x] `POST /api/admin/categories` — Create category
-  - Request: `{ name, slug, description, icon, parent_id, is_featured }`
-  - Auto-generate slug from name if not provided
-  - Validate: unique name, unique slug
-- [x] `PATCH /api/admin/categories/:id` — Update category
-  - Edit any field
-  - Reorder within parent
-- [x] `DELETE /api/admin/categories/:id` — Archive category
-  - Soft delete (is_archived: true)
-  - Require: select replacement category for all posts
-  - Move all posts to replacement category
-- [ ] Tree structure:
-  - Drag-and-drop reordering
-  - Expand/collapse parent categories
-  - View subcategories under parent
-- [ ] Bulk actions:
-  - Bulk feature/unfeature
-  - Bulk archive
-- [ ] Stats per category:
-  - Post count
-  - Pending posts
-  - Approved posts
-  - Most active authors
+- [x] `POST /api/admin/categories` — Create category (name, slug, description, icon, parent_id, is_featured, sort_order)
+- [x] `PATCH /api/admin/categories/:id` — Update category (any field, reorder within parent)
+- [x] `DELETE /api/admin/categories/:id` — Archive category (soft delete, requires replacement)
+
+**Frontend — Tree Management:**
+- [ ] `/admin/categories` page with sidebar link
+- [ ] Tree structure: collapsible parent/child hierarchy, drag-and-drop reorder
+- [ ] View toggle: Tree | Table | Flat List
+- [ ] Inline edit: click category to edit name/slug/description/icon/parent inline
+- [ ] Create category modal with auto-slug generation and duplicate detection
+
+**Category Metadata & Workflow:**
+- [ ] `sort_order` field — custom ordering of children under each parent
+- [ ] `status` field — `draft` | `published` | `hidden` — ghost categories for planning
+- [ ] `publish_at` / `archive_at` — scheduled activation and archival
+- [ ] `featured_in` — multiple curated lists: "popular", "trending", "editor picks"
+- [ ] `category_template` — preset icon + description + parent for common patterns
+- [ ] Slug history tracking — redirect old slugs to new ones on rename
+- [ ] Circular reference guard — prevent parent pointing to own child
+
+**Analytics & Health:**
+- [ ] `GET /api/admin/categories/:id/stats` — per-category stats (post count, pending, approved, most active authors)
+- [ ] `GET /api/admin/categories/health` — category health score: `posts/month`, growth rate, dead categories
+- [ ] `GET /api/admin/categories/analytics` — content distribution chart, overloaded categories, cross-category overlap
+- [ ] `GET /api/admin/categories/growth` — growth over time per category (line chart data)
+
+**Bulk Operations:**
+- [ ] `POST /api/admin/categories/bulk/feature` — bulk feature/unfeature
+- [ ] `POST /api/admin/categories/bulk/archive` — bulk archive with preview (shows affected posts)
+- [ ] `POST /api/admin/categories/bulk/merge` — merge category A into B, moving all posts and children
+- [ ] `POST /api/admin/categories/bulk/reparent` — move multiple children to new parent
+- [ ] `POST /api/admin/categories/import` — CSV import (batch create from file)
+- [ ] `GET /api/admin/categories/export` — CSV export of full tree with all metadata
+
+**Quality & Governance:**
+- [ ] Duplicate detection — warn when new category name 80% matches existing
+- [ ] Orphan detection — flag children whose parent was archived
+- [ ] Description validation — min length, must differ from name
+- [ ] Category activity audit log — "admin created X", "admin moved X from Y to Z"
+
+**Public-Facing (Separate Milestone):**
+- [ ] Category stats on `/c/:slug` — total posts, active authors, top posts, subcategories
+- [ ] Related categories — based on user browsing overlap
+- [ ] Category RSS feeds — `/c/:slug/feed`
 
 #### M10.8 — Hall of Fame Management
 - [ ] `GET /api/admin/hall-of-fame` — All featured posts
