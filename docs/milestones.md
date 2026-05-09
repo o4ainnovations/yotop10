@@ -679,10 +679,11 @@ score     = postBase / (ageInDays + 1)^gamma
 - [x] `/admin/alerts/[id]` — Alert detail with live status + resolution guide
 - [x] `/admin/audit` — Audit logs
 - [x] `/admin/profile` — Admin profile
-- [ ] `/admin/users` — Anonymous users management
-- [ ] `/admin/categories` — Categories CRUD
-- [ ] `/admin/notifications` — Outbound messaging (individual + broadcast)
-- [ ] `/admin/search` — Search management
+- [ ] `/admin/users` — Anonymous users management (backend endpoints exist, no frontend page)
+- [ ] `/admin/categories` — Categories CRUD (backend endpoints on categories router, no frontend page)
+- [x] `/admin/notifications` — Outbound messaging ✅
+- [x] `/admin/search` — Search management ✅
+- [ ] `/admin/hall-of-fame` — Hall of Fame management
 - [ ] `/admin/settings` — Rate limits, trust scores
 
 #### M10.14 — Admin UI Components
