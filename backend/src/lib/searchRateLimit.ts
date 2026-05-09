@@ -49,5 +49,5 @@ function createRateLimitMiddleware(config: RateLimitConfig): RequestHandler {
   };
 }
 
-export const searchRateLimit = createRateLimitMiddleware(SEARCH_CONFIG);
-export const autocompleteRateLimit = createRateLimitMiddleware(AUTOCOMPLETE_CONFIG);
+export const searchRateLimit: RequestHandler = createRateLimitMiddleware(SEARCH_CONFIG);
+export const autocompleteRateLimit: RequestHandler = createRateLimitMiddleware(AUTOCOMPLETE_CONFIG);

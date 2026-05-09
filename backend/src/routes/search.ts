@@ -11,7 +11,7 @@ import { Comment } from '../models/Comment';
 import { Category } from '../models/Category';
 import { User } from '../models/User';
 
-const router = Router();
+const router: Router = Router();
 
 function validate(schema: { parse: (data: unknown) => unknown }): RequestHandler {
   return (req: any, res: any, next): void => {

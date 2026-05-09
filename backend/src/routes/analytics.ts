@@ -2,7 +2,7 @@
 import { Router } from 'express';
 import { logPageVisit, getClientIp } from '../lib/pageVisitWriter';
 
-const router = Router();
+const router: Router = Router();
 
 router.post('/visit', async (req, res) => {
   try {
