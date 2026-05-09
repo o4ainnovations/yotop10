@@ -197,6 +197,11 @@ below is a compile error in production builds.
 - Docker Compose, Dockerfile, CI configs, and nginx templates are production
   artifacts. They must be secure, pinned to versions, and follow least-privilege.
 - No default passwords, no disabled security, no root containers.
+- **Docker staleness is FORBIDDEN.** If the dev container's source code is out of
+  sync with the host (stale image), it MUST be repaired immediately via rebuild:
+  `docker compose build app && docker compose up -d app`. A stale container
+  produces false test/lint/typecheck results and hides real bugs.
+  Verify sync with: `docker exec yotop10_dev diff /app/backend/package.json /root/yotop10/backend/package.json`
 
 ### Testing
 - Every pure function in `lib/` MUST have a corresponding `*.test.ts` file.
