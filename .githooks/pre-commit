@@ -1,5 +1,6 @@
 #!/bin/sh
-# Pre-commit hook — enforces zero new TypeScript errors + zero lint errors
+# Pre-commit hook — enforces zero new TypeScript + zero lint errors
+# Runs checks inside Docker container when available (tsc/eslint live there)
 
 echo "🔍 Pre-commit checks..."
 
@@ -10,44 +11,51 @@ if [ -z "$STAGED_TS" ]; then
   exit 0
 fi
 
+DOCKER_EXEC="docker exec yotop10_dev"
+
+# Check if dev container is running
+if ! docker ps -q --filter "name=yotop10_dev" | grep -q .; then
+  echo "⚠️  Dev container not running — CI will enforce. Commit allowed."
+  exit 0
+fi
+
+HAS_BACKEND=$(echo "$STAGED_TS" | grep -q '^backend/' && echo 1 || echo 0)
+HAS_FRONTEND=$(echo "$STAGED_TS" | grep -q '^frontend/' && echo 1 || echo 0)
+
 # ─── Backend typecheck ───────────────────────────────────────────
-if [ -d "backend" ] && [ -f "backend/node_modules/.bin/tsc" ]; then
-  cd backend
-  node_modules/.bin/tsc --noEmit 2>&1
+if [ "$HAS_BACKEND" = "1" ]; then
+  $DOCKER_EXEC sh -c 'cd /app/backend && npx tsc --noEmit 2>&1'
   if [ $? -ne 0 ]; then
     echo "❌ Backend TypeScript compilation failed."
     exit 1
   fi
   echo "✅ Backend typecheck passed."
-  cd ..
-else
-  echo "⚠️  Backend tsc not available locally — CI will enforce."
-fi
 
-# ─── Backend lint on staged files ───────────────────────────────
-BACKEND_STAGED=$(echo "$STAGED_TS" | grep '^backend/' | tr '\n' ' ')
-if [ -n "$BACKEND_STAGED" ] && [ -f "backend/node_modules/.bin/eslint" ]; then
-  cd backend
-  echo "$BACKEND_STAGED" | xargs node_modules/.bin/eslint --quiet 2>&1
+  # Backend lint
+  $DOCKER_EXEC sh -c 'cd /app/backend && npx eslint src --ext .ts --quiet 2>&1'
   if [ $? -ne 0 ]; then
     echo "❌ Backend lint failed."
     exit 1
   fi
   echo "✅ Backend lint passed."
-  cd ..
 fi
 
-# ─── Frontend lint on staged files ──────────────────────────────
-FRONTEND_STAGED=$(echo "$STAGED_TS" | grep '^frontend/' | tr '\n' ' ')
-if [ -n "$FRONTEND_STAGED" ] && [ -f "frontend/node_modules/.bin/eslint" ]; then
-  cd frontend
-  echo "$FRONTEND_STAGED" | xargs npx eslint --quiet 2>&1
+# ─── Frontend typecheck ──────────────────────────────────────────
+if [ "$HAS_FRONTEND" = "1" ]; then
+  $DOCKER_EXEC sh -c 'cd /app/frontend && npx tsc --noEmit 2>&1'
+  if [ $? -ne 0 ]; then
+    echo "❌ Frontend TypeScript compilation failed."
+    exit 1
+  fi
+  echo "✅ Frontend typecheck passed."
+
+  # Frontend lint
+  $DOCKER_EXEC sh -c 'cd /app/frontend && ESLINT_USE_FLAT_CONFIG=false npx eslint src/ --quiet 2>&1'
   if [ $? -ne 0 ]; then
     echo "❌ Frontend lint failed."
     exit 1
   fi
   echo "✅ Frontend lint passed."
-  cd ..
 fi
 
 echo "✅ All checks passed."
