@@ -59,7 +59,7 @@
     "overrides": {
       "validator": ">=13.15.22",
       "lodash": ">=4.18.0",
-      "path-to-regexp": ">=0.1.13"
+      "path-to-regexp": "^0.1.13"
     }
   }
 }
