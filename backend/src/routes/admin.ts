@@ -2015,4 +2015,127 @@ router.get('/stats/search/behavior', async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
+// Trending queries — EMA spike detection (current hour vs 24h exponential moving average)
+router.get('/stats/search/trending', async (req, res) => {
+  try {
+    const hourAgo = new Date(Date.now() - 3600000);
+    const dayAgo = new Date(Date.now() - 86400000);
+
+    // Current hour counts
+    const currentHour = await SearchEvent.aggregate([
+      { $match: { timestamp: { $gte: hourAgo } } },
+      { $group: { _id: '$normalized_query', count: { $sum: 1 } } },
+    ]);
+
+    // Last 24h hourly counts for EMA baseline
+    const last24h = await SearchEvent.aggregate([
+      { $match: { timestamp: { $gte: dayAgo } } },
+      { $group: { _id: '$normalized_query', count: { $sum: 1 } } },
+    ]);
+
+    const total24h = last24h.reduce((s, q) => s + q.count, 0) || 1;
+
+    // EMA: smoothing factor α for 24-period
+    const alpha = 2 / (24 + 1);
+    const trending: Array<{ query: string; count: number; trending_score: number; level: string }> = [];
+
+    for (const curr of currentHour as Array<{ _id: string; count: number }>) {
+      const dayCount = last24h.find((d) => d._id === curr._id)?.count || 0;
+      const ema = alpha * curr.count + (1 - alpha) * (dayCount / 24);
+      const score = curr.count / (ema + 0.001);
+
+      if (score >= 2.0) {
+        trending.push({
+          query: curr._id,
+          count: curr.count,
+          trending_score: Math.round(score * 10) / 10,
+          level: score >= 4.0 ? 'hot' : 'trending',
+        });
+      }
+    }
+
+    trending.sort((a, b) => b.trending_score - a.trending_score);
+
+    res.json({ trending: trending.slice(0, 20), total_queries_24h: total24h });
+  } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+// Popular queries — decay-weighted 7-day rank
+router.get('/stats/search/popular', async (req, res) => {
+  try {
+    const days = Math.min(30, Math.max(7, parseInt(req.query.days as string) || 7));
+    const since = new Date(Date.now() - days * 86400000);
+
+    const daily = await SearchEvent.aggregate([
+      { $match: { timestamp: { $gte: since } } },
+      { $group: {
+        _id: { query: '$normalized_query', day: { $dateToString: { format: '%Y-%m-%d', date: '$timestamp' } } },
+        count: { $sum: 1 },
+      } },
+    ]);
+
+    const today = new Date().toISOString().substring(0, 10);
+    const scores: Record<string, number> = {};
+    const totalCounts: Record<string, number> = {};
+    const uniqueDays: Record<string, number> = {};
+
+    for (const d of daily as Array<{ _id: { query: string; day: string }; count: number }>) {
+      const query = d._id.query;
+      const dayDiff = Math.round((new Date(today).getTime() - new Date(d._id.day).getTime()) / 86400000);
+      const weight = Math.pow(0.95, dayDiff);
+      scores[query] = (scores[query] || 0) + d.count * weight;
+      totalCounts[query] = (totalCounts[query] || 0) + d.count;
+      uniqueDays[query] = (uniqueDays[query] || 0) + 1;
+    }
+
+    const popular = Object.entries(scores)
+      .map(([query, score]) => ({ query, popularity_score: Math.round(score * 10) / 10, total: totalCounts[query], days_present: uniqueDays[query] }))
+      .sort((a, b) => b.popularity_score - a.popularity_score)
+      .slice(0, 30);
+
+    res.json({ popular });
+  } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+// Most engaged queries — Bayesian CTR smoothing
+router.get('/stats/search/engaged', async (req, res) => {
+  try {
+    const days = Math.min(90, Math.max(1, parseInt(req.query.days as string) || 7));
+    const since = new Date(Date.now() - days * 86400000);
+
+    const [impressions, clicks] = await Promise.all([
+      SearchEvent.aggregate([
+        { $match: { timestamp: { $gte: since } } },
+        { $group: { _id: '$normalized_query', impressions: { $sum: 1 } } },
+      ]),
+      SearchClick.aggregate([
+        { $match: { timestamp: { $gte: since } } },
+        { $group: { _id: '$query', clicks: { $sum: 1 } } },
+      ]),
+    ]);
+
+    // Bayesian smoothing with prior of 1% CTR (α=1, β=99)
+    const ALPHA = 1;
+    const BETA = 99;
+    const engaged: Array<{ query: string; impressions: number; clicks: number; bayesian_ctr: number; engagement_score: number }> = [];
+
+    for (const imp of impressions as Array<{ _id: string; impressions: number }>) {
+      const clk = clicks.find((c) => c._id === imp._id)?.clicks || 0;
+      const bayesianCtr = (clk + ALPHA) / (imp.impressions + ALPHA + BETA);
+      const engagementScore = bayesianCtr * Math.log(imp.impressions + 1);
+      engaged.push({
+        query: imp._id,
+        impressions: imp.impressions,
+        clicks: clk,
+        bayesian_ctr: Math.round(bayesianCtr * 1000) / 10,
+        engagement_score: Math.round(engagementScore * 1000) / 1000,
+      });
+    }
+
+    engaged.sort((a, b) => b.engagement_score - a.engagement_score);
+
+    res.json({ engaged: engaged.slice(0, 30) });
+  } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
 export default router;
