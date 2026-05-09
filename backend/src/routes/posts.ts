@@ -7,7 +7,7 @@ import { Post, generateUniqueSlug } from '../models/Post';
 import { ListItem } from '../models/ListItem';
 import { Category } from '../models/Category';
 import { Comment } from '../models/Comment';
-import { atomicCheckRateLimit } from '../lib/redis';
+import { atomicCheckRateLimit, redis } from '../lib/redis';
 import { calculateEffectivePostLimit, getRateLimitKey } from '../lib/rateLimit';
 import { getActiveBoost, grantBoost, BoostType } from '../lib/ladderSystem';
 import { checkTitleMatch } from '../lib/titleSimilarity';
@@ -293,8 +293,16 @@ router.get('/:idOrSlug', async (req, res) => {
       return res.status(404).json({ error: 'Post not found' });
     }
 
-    // Increment view count
-    await Post.findByIdAndUpdate(post._id, { $inc: { view_count: 1 } });
+    // Unique view counting: same fingerprint + same post = 1 view per 30 min
+    const viewerFp = req.user?.device_fingerprint || req.headers['x-device-fingerprint'] as string || req.ip || 'unknown';
+    const viewKey = `post_view:${post._id}:${viewerFp}`;
+    const alreadyViewed = await redis.get(viewKey);
+    if (!alreadyViewed) {
+      await Promise.all([
+        Post.findByIdAndUpdate(post._id, { $inc: { view_count: 1 } }),
+        redis.set(viewKey, '1', { EX: 1800 }),
+      ]);
+    }
 
     // Get list items for this post
     const listItems = await ListItem.find({ post_id: post._id })
