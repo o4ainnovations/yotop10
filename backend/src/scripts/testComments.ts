@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax, @typescript-eslint/no-explicit-any -- test script */
 /**
  * Critical integration tests for the comments endpoint.
  * Run: npx tsx backend/src/scripts/testComments.ts

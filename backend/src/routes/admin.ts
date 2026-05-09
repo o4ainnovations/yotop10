@@ -1,11 +1,11 @@
 /* eslint-disable no-restricted-syntax, @typescript-eslint/no-explicit-any -- dynamic MongoDB queries + Express middleware require type casts */
-import { Router, RequestHandler, Request } from 'express';
+import { Router, Request } from 'express';
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 import { AdminUser } from '../models/AdminUser';
 import { User } from '../models/User';
 import { SetupToken } from '../models/SetupToken';
-import { Post } from '../models/Post';
+import { Post, generateUniqueSlug } from '../models/Post';
 import { ListItem } from '../models/ListItem';
 import { Notification, createNotification } from '../models/Notification';
 import { AuditLog } from '../models/AuditLog';
@@ -636,7 +636,7 @@ router.get('/posts', async (req, res) => {
 
     // Enrich with comment fire count
     const postIds = posts.map(p => p._id);
-    const fireAgg = postIds.length > 0 ? await require('../models/Comment').Comment.aggregate([
+    const fireAgg = postIds.length > 0 ? await Comment.aggregate([
       { $match: { post_id: { $in: postIds } } },
       { $group: { _id: '$post_id', total_fire: { $sum: '$fire_count' } } },
     ]) : [];
@@ -668,9 +668,9 @@ router.patch('/posts/:id', async (req, res) => {
       return res.status(409).json({ code: 'CONFLICT', error: 'Post was modified by another session. Reload and retry.' });
     }
 
-    if (req.body.title) { post.title = req.body.title; post.slug = require('../models/Post').generateUniqueSlug(post.title, (post._id as { toString(): string }).toString()); }
+    if (req.body.title) { post.title = req.body.title; post.slug = generateUniqueSlug(post.title, (post._id as { toString(): string }).toString()); }
     if (req.body.intro !== undefined) post.intro = req.body.intro;
-    if (req.body.category_slug) { const cat = await require('../models/Category').Category.findOne({ slug: req.body.category_slug }); if (!cat) return res.status(400).json({ code: 'NOT_FOUND', error: 'Category not found' }); post.category_slug = req.body.category_slug; }
+    if (req.body.category_slug) { const cat = await Category.findOne({ slug: req.body.category_slug }); if (!cat) return res.status(400).json({ code: 'NOT_FOUND', error: 'Category not found' }); post.category_slug = req.body.category_slug; }
     if (req.body.editorial_note !== undefined) post.editorial_note = req.body.editorial_note || null;
     await post.save();
 
@@ -823,7 +823,7 @@ router.post('/posts/bulk/change-category', async (req, res) => {
   try {
     const { ids, category_slug } = req.body;
     if (!Array.isArray(ids) || !category_slug) return res.status(400).json({ code: 'VALIDATION', error: 'Provide ids array and category_slug' });
-    const cat = await require('../models/Category').Category.findOne({ slug: category_slug });
+    const cat = await Category.findOne({ slug: category_slug });
     if (!cat) return res.status(400).json({ code: 'NOT_FOUND', error: 'Category not found' });
     const result = await Post.updateMany({ _id: { $in: ids } }, { $set: { category_slug } });
     res.json({ success: true, changed: result.modifiedCount });
@@ -1181,6 +1181,7 @@ router.get('/stats/health', async (req, res) => {
     if (redisPing !== 'ok') downServices.push('redis');
     if (esPing !== 'ok') downServices.push('elasticsearch');
 
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const deps = require('../data/serviceDependencies.json') as Record<string, { depends_on: string[]; degradation: string }>;
     const affectedFeatures = downServices.length > 0
       ? Object.entries(deps).filter(([, v]) => v.depends_on.some((s: string) => downServices.includes(s)))
