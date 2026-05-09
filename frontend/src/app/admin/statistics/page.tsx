@@ -330,7 +330,7 @@ export default function StatisticsDashboard() {
           return <>
             <L>Today: <B>{n(d.searches_today)}</B> searches by <B>{n(d.unique_searchers_today)}</B> users. Zero results: <B>{n(d.zero_result_today)}</B> ({n(d.zero_result_pct)}%).</L>
             {d.rollup && (() => { const r = d.rollup as Record<string, unknown>; return <>
-              <T>Yesterday's Rollup</T>
+              <T>Yesterday&rsquo;s Rollup</T>
               <L>Searches: <B>{n(r.total_searches)}</B> · Unique: <B>{n(r.unique_searchers)}</B> · Zero: <B>{n(r.zero_result_searches)}</B> ({n(r.zero_result_pct)}%)</L>
               <L>Avg latency: <B>{n(r.avg_response_time_ms)}ms</B> · P99: <B>{n(r.p99_response_time_ms)}ms</B></L>
               <L>Avg query length: <B>{n(r.query_length_avg)}</B> chars · CTR by top position: {(arr(r.ctr_by_position) as number[]).slice(0,5).join(', ')}</L>
