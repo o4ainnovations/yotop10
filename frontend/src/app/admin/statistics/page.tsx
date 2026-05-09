@@ -30,6 +30,12 @@ export default function StatisticsDashboard() {
     reengagement: { loading: false, data: null, open: false },
     alerts: { loading: false, data: null, open: false },
     notifications: { loading: false, data: null, open: false },
+    'search/overview': { loading: false, data: null, open: false },
+    'search/queries': { loading: false, data: null, open: false },
+    'search/relevance': { loading: false, data: null, open: false },
+    'search/trends': { loading: false, data: null, open: false },
+    'search/infrastructure': { loading: false, data: null, open: false },
+    'search/behavior': { loading: false, data: null, open: false },
   });
 
   const fetchPanel = useCallback(async (scope: string) => {
@@ -312,6 +318,90 @@ export default function StatisticsDashboard() {
           return <>
             <L>Total sent: <B>{n(d.total_sent)}</B>. Delivered: <B>{n(d.total_delivered)}</B> ({n(d.delivery_rate)}%). Clicked: <B>{n(d.total_clicked)}</B> ({n(d.click_rate)}%).</L>
             {bt.map(b => <L key={b.type}><B>{b.type}</B>: {b.sent} sent, {b.delivered} delivered, {b.clicked} clicked</L>)}
+          </>;
+        })() : null}
+      </Panel>
+
+      {/* ═══ Search Analytics ══════════════════════════════════════ */}
+
+      <Panel scope="search/overview" title="🔍 Search Overview">
+        {panels['search/overview'].data ? ((): React.ReactNode => {
+          const d = panels['search/overview'].data as Record<string, unknown>;
+          return <>
+            <L>Today: <B>{n(d.searches_today)}</B> searches by <B>{n(d.unique_searchers_today)}</B> users. Zero results: <B>{n(d.zero_result_today)}</B> ({n(d.zero_result_pct)}%).</L>
+            {d.rollup && (() => { const r = d.rollup as Record<string, unknown>; return <>
+              <T>Yesterday's Rollup</T>
+              <L>Searches: <B>{n(r.total_searches)}</B> · Unique: <B>{n(r.unique_searchers)}</B> · Zero: <B>{n(r.zero_result_searches)}</B> ({n(r.zero_result_pct)}%)</L>
+              <L>Avg latency: <B>{n(r.avg_response_time_ms)}ms</B> · P99: <B>{n(r.p99_response_time_ms)}ms</B></L>
+              <L>Avg query length: <B>{n(r.query_length_avg)}</B> chars · CTR by top position: {(arr(r.ctr_by_position) as number[]).slice(0,5).join(', ')}</L>
+              <L>Suggestion rate: <B>{n(r.suggestion_rate)}%</B> · Accept rate: <B>{n(r.suggestion_accept_rate)}%</B></L>
+            </>; })()}
+          </>;
+        })() : null}
+      </Panel>
+
+      <Panel scope="search/queries" title="📊 Top Queries">
+        {panels['search/queries'].data ? ((): React.ReactNode => {
+          const d = panels['search/queries'].data as Record<string, unknown>;
+          const top = arr(d.top_queries) as Array<{ query: string; count: number; zero_result_pct: number }>;
+          const zero = arr(d.zero_result_queries) as Array<{ query: string; count: number }>;
+          return <>
+            <L><B>{n(d.total_searches)}</B> searches over <B>{n(d.period_days)}</B> days.</L>
+            <T>Top Queries</T>
+            {top.slice(0, 10).map(q => <L key={q.query}><B>{q.query}</B>: {q.count}x · {q.zero_result_pct}% zero</L>)}
+            {zero.length > 0 && <><T>Zero-Result Queries</T>
+            {zero.slice(0, 5).map(q => <L key={q.query}><B>{q.query}</B>: {q.count}x</L>)}</>}
+          </>;
+        })() : null}
+      </Panel>
+
+      <Panel scope="search/relevance" title="🎯 Relevance">
+        {panels['search/relevance'].data ? ((): React.ReactNode => {
+          const d = panels['search/relevance'].data as Record<string, unknown>;
+          const ctr = arr(d.ctr_by_position) as number[];
+          const avg = d.avg_results as Record<string, number> | undefined;
+          return <>
+            <L><B>{n(d.total_clicks)}</B> clicks from <B>{n(d.total_searches)}</B> searches → <B>{n(d.ctr)}%</B> CTR over <B>{n(d.period_days)}</B> days.</L>
+            <L>Avg results: <B>{n(avg?.avg_posts)}</B> posts, <B>{n(avg?.avg_comments)}</B> comments per search.</L>
+            <T>CTR by Position</T>
+            {ctr.slice(0, 5).map((c, i) => <L key={i}>Position <B>#{i + 1}</B>: <B>{c}</B> clicks</L>)}
+          </>;
+        })() : null}
+      </Panel>
+
+      <Panel scope="search/trends" title="📈 Search Trends">
+        {panels['search/trends'].data ? ((): React.ReactNode => {
+          const d = panels['search/trends'].data as Record<string, unknown>;
+          const vol = arr(d.volume) as Array<{ date: string; count: number }>;
+          const zr = arr(d.zero_result_rate) as Array<{ date: string; rate: number }>;
+          return <>
+            <L>Daily volume over <B>{n(d.period_days)}</B> days:</L>
+            <L>{vol.slice(0, 10).map(v => `${v.date}: ${v.count}`).join(' · ')}</L>
+            <L>Zero-result rate trend: {zr.slice(0, 10).map(z => `${z.date}: ${z.rate}%`).join(' · ')}</L>
+          </>;
+        })() : null}
+      </Panel>
+
+      <Panel scope="search/infrastructure" title="⚙️ Search Infrastructure">
+        {panels['search/infrastructure'].data ? ((): React.ReactNode => {
+          const d = panels['search/infrastructure'].data as Record<string, unknown>;
+          const gap = arr(d.index_gap_trend) as Array<{ date: string; gap_pct: number; dlq: number }>;
+          return <>
+            <L>Avg latency: <B>{n(d.avg_latency_ms)}ms</B> · P99: <B>{n(d.p99_latency_ms)}ms</B></L>
+            <L>Dead letter queue: <B>{n(d.dead_letter_queue)}</B> documents awaiting retry</L>
+            {gap.length > 0 && <><T>Index Gap Trend</T>
+            {gap.slice(0, 10).map(g => <L key={g.date}>{g.date}: gap <B>{g.gap_pct}%</B> · DLQ <B>{g.dlq}</B></L>)}</>}
+          </>;
+        })() : null}
+      </Panel>
+
+      <Panel scope="search/behavior" title="👤 Search Behavior">
+        {panels['search/behavior'].data ? ((): React.ReactNode => {
+          const d = panels['search/behavior'].data as Record<string, unknown>;
+          return <>
+            <L><B>{n(d.search_sessions)}</B> search sessions over <B>{n(d.period_days)}</B> days.</L>
+            <L>Search-to-post ratio: <B>{n(d.search_and_post_ratio)}%</B> of users who posted also searched.</L>
+            <L>Total clicks from search: <B>{n(d.total_clicks_from_search)}</B></L>
           </>;
         })() : null}
       </Panel>
