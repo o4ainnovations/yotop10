@@ -12,7 +12,7 @@ vi.mock('../models/ListItem', () => ({
 }));
 
 vi.mock('../models/Category', () => ({
-  Category: { findById: vi.fn(), findByIdAndUpdate: vi.fn() },
+  Category: { findById: vi.fn(), findByIdAndUpdate: vi.fn(), findOne: vi.fn(() => ({ _id: 'cat123', slug: 'tech' })) },
 }));
 
 vi.mock('../models/Comment', () => ({}));
@@ -49,7 +49,7 @@ describe('POST /api/posts — rate limit integrity', () => {
     vi.clearAllMocks();
   });
 
-  it('returns 401 when fingerprint is missing', async () => {
+    it('returns 401 when fingerprint is missing', async () => {
     const res = await request(createApp())
       .post('/api/posts')
       .send({
@@ -57,7 +57,11 @@ describe('POST /api/posts — rate limit integrity', () => {
         post_type: 'top_list',
         intro: 'Test intro',
         category_slug: 'tech',
-        items: [{ rank: 1, title: 'Item 1', justification: 'Justification' }],
+        items: [
+          { rank: 1, title: 'Item 1', justification: 'Justification' },
+          { rank: 2, title: 'Item 2', justification: 'Justification 2' },
+          { rank: 3, title: 'Item 3', justification: 'Justification 3' },
+        ],
       });
 
     expect(res.status).toBe(401);
@@ -75,7 +79,11 @@ describe('POST /api/posts — rate limit integrity', () => {
         post_type: 'top_list',
         intro: 'Test intro',
         category_slug: 'tech',
-        items: [{ rank: 1, title: 'Item 1', justification: 'Justification' }],
+        items: [
+          { rank: 1, title: 'Item 1', justification: 'Justification' },
+          { rank: 2, title: 'Item 2', justification: 'Justification 2' },
+          { rank: 3, title: 'Item 3', justification: 'Justification 3' },
+        ],
         device_fingerprint: 'test-fp-123',
       });
 
