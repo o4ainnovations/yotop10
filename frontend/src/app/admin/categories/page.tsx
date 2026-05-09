@@ -7,8 +7,9 @@ import { toast } from '@/lib/toast';
 interface Cat {
   _id: string; name: string; slug: string; description?: string; icon?: string;
   parent_id?: string; post_count: number; is_featured: boolean; is_archived: boolean;
-  sort_order: number; status: string; health_score?: number; grown?: boolean;
-  dead?: boolean; children?: Cat[];
+  sort_order: number; status: string;
+  health_score?: number; grown?: boolean; dead?: boolean;
+  children?: Cat[];
 }
 
 type Tab = 'tree' | 'table' | 'analytics' | 'bulk';
@@ -234,9 +235,9 @@ export default function AdminCategoriesPage() {
                   <div><label style={lbl}><input type="checkbox" checked={editFeatured} onChange={e => setEditFeatured(e.target.checked)} style={{ marginRight: '4px' }} />Featured</label></div>
                 </div>
                 <div style={{ marginTop: '14px', fontSize: '12px', color: '#666' }}>
-                  Posts: <strong>{selected.post_count}</strong> · Health: <strong style={{ color: (selected as any).grown ? '#2e7d32' : '#999' }}>{(selected as any).health_score || '—'}</strong>
-                  {(selected as any).grown && ' ✅ Growing'}
-                  {(selected as any).dead && ' ⚠️ Dead'}
+                  Posts: <strong>{selected.post_count}</strong> · Health: <strong style={{ color: selected.grown ? '#2e7d32' : '#999' }}>{selected.health_score || '—'}</strong>
+                  {selected.grown && ' ✅ Growing'}
+                  {selected.dead && ' ⚠️ Dead'}
                 </div>
                 <div style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   <button onClick={handleSave} disabled={saving} style={btn(saving)}>{saving ? '...' : 'Save'}</button>
