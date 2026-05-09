@@ -56,7 +56,7 @@ describe('POST /api/posts — rate limit integrity', () => {
         title: 'Test Post Title Long Enough',
         post_type: 'top_list',
         intro: 'Test intro',
-        category_id: '507f1f77bcf86cd799439011',
+        category_slug: 'tech',
         items: [{ rank: 1, title: 'Item 1', justification: 'Justification' }],
       });
 
@@ -74,7 +74,7 @@ describe('POST /api/posts — rate limit integrity', () => {
         title: 'Test Post Title Long Enough',
         post_type: 'top_list',
         intro: 'Test intro',
-        category_id: '507f1f77bcf86cd799439011',
+        category_slug: 'tech',
         items: [{ rank: 1, title: 'Item 1', justification: 'Justification' }],
         device_fingerprint: 'test-fp-123',
       });
