@@ -109,6 +109,9 @@ const startServer = async () => {
     const { startAlertEngine } = await import('./lib/alertEngine');
     startAlertEngine();
 
+    const { startSearchAnalyticsCron } = await import('./lib/searchAnalyticsCron');
+    startSearchAnalyticsCron();
+
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });

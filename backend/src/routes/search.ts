@@ -10,6 +10,8 @@ import { Post } from '../models/Post';
 import { Comment } from '../models/Comment';
 import { Category } from '../models/Category';
 import { User } from '../models/User';
+import { SearchEvent } from '../models/SearchEvent';
+import { SearchClick } from '../models/SearchClick';
 
 const router: Router = Router();
 
@@ -106,6 +108,31 @@ router.get(
       const didYouMean = (postResults.suggest as any)?.did_you_mean?.[0]?.options?.[0]?.text || null;
       const suggestions = totalPosts < 3 && didYouMean && didYouMean !== q ? { original: q, suggestion: didYouMean } : null;
 
+      // Fire-and-forget search analytics
+      SearchEvent.create({
+        query: q,
+        normalized_query: q.toLowerCase().trim(),
+        query_length: q.length,
+        fingerprint: (req as any).fingerprint || null,
+        session_id: req.headers['x-session-id'] as string || 'unknown',
+        filters_applied: {
+          ...(category_slug ? { category_slug } : {}),
+          ...(post_type ? { post_type } : {}),
+          ...(author ? { author } : {}),
+        },
+        sort_used: sort,
+        total_results: { posts: totalPosts, comments: totalComments },
+        had_suggestion: !!(suggestions),
+        suggestion_text: suggestions?.suggestion || null,
+        suggestion_accepted: false,
+        zero_results: totalPosts === 0 && totalComments === 0,
+        page,
+        response_time_ms: 0,
+        country: null,
+        referer: (req.headers.referer as string) || '',
+        timestamp: new Date(),
+      }).catch(() => {}); // fire-and-forget
+
       res.json({
         posts: postResults.hits.hits.map((h: any) => ({
           ...h._source, id: h._id, _score: h._score,
@@ -176,6 +203,26 @@ router.get(
     }
   }
 );
+
+// Record search result click (beacon — no auth)
+router.post('/click', async (req, res) => {
+  try {
+    await SearchClick.create({
+      search_event_id: req.body.search_event_id || 'unknown',
+      result_type: req.body.result_type || 'post',
+      result_id: req.body.result_id || '',
+      result_title: req.body.result_title || '',
+      result_position: req.body.result_position || 1,
+      result_score: req.body.result_score || 0,
+      query: req.body.query || '',
+      fingerprint: (req as any).fingerprint || null,
+      session_id: req.headers['x-session-id'] as string || 'unknown',
+      click_time_ms: req.body.click_time_ms || 0,
+      timestamp: new Date(),
+    });
+    res.json({ success: true });
+  } catch { res.status(500).json({ error: 'Failed' }); }
+});
 
 // ══════════════════════════════════════════════════════════════════════
 // Admin

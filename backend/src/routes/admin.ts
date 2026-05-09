@@ -1818,4 +1818,202 @@ router.get('/stats/notifications', async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
+// ═══ Search Analytics ═══════════════════════════════════════════════
+
+import { SearchEvent } from '../models/SearchEvent';
+import { SearchClick } from '../models/SearchClick';
+import { SearchDeadLetter } from '../models/SearchDeadLetter';
+import { SearchDailyStats } from '../models/SearchDailyStats';
+
+// Search overview
+router.get('/stats/search/overview', async (req, res) => {
+  try {
+    const today = new Date().toISOString().substring(0, 10);
+    const todayStart = new Date(today + 'T00:00:00.000Z');
+    const yesterday = new Date(Date.now() - 86400000).toISOString().substring(0, 10);
+    const yesterdayStart = new Date(yesterday + 'T00:00:00.000Z');
+
+    const [todaySearches, todayZeroResults, todayUnique, todayRollup, yesterdayRollup] = await Promise.all([
+      SearchEvent.countDocuments({ timestamp: { $gte: todayStart } }),
+      SearchEvent.countDocuments({ timestamp: { $gte: todayStart }, zero_results: true }),
+      SearchEvent.distinct('fingerprint', { timestamp: { $gte: todayStart }, fingerprint: { $ne: null } }),
+      SearchDailyStats.findOne({ date: today }).lean(),
+      SearchDailyStats.findOne({ date: yesterday }).lean(),
+    ]);
+
+    res.json({
+      searches_today: todaySearches,
+      zero_result_today: todayZeroResults,
+      unique_searchers_today: todayUnique.length,
+      zero_result_pct: todaySearches > 0 ? Math.round((todayZeroResults / todaySearches) * 100) : 0,
+      rollup: todayRollup,
+      yesterday_rollup: yesterdayRollup,
+    });
+  } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+// Top queries
+router.get('/stats/search/queries', async (req, res) => {
+  try {
+    const days = Math.min(90, Math.max(1, parseInt(req.query.days as string) || 7));
+    const since = new Date(Date.now() - days * 86400000);
+    const limit = Math.min(100, Math.max(10, parseInt(req.query.limit as string) || 20));
+
+    const [topQueries, zeroResultQueries] = await Promise.all([
+      SearchEvent.aggregate([
+        { $match: { timestamp: { $gte: since } } },
+        { $group: { _id: '$normalized_query', count: { $sum: 1 }, zero_results: { $sum: { $cond: ['$zero_results', 1, 0] } } } },
+        { $sort: { count: -1 } }, { $limit: limit },
+      ]),
+      SearchEvent.aggregate([
+        { $match: { timestamp: { $gte: since }, zero_results: true } },
+        { $group: { _id: '$normalized_query', count: { $sum: 1 } } },
+        { $sort: { count: -1 } }, { $limit: 20 },
+      ]),
+    ]);
+
+    const totalSearches = await SearchEvent.countDocuments({ timestamp: { $gte: since } });
+
+    res.json({
+      top_queries: topQueries.map((q: Record<string, unknown>) => ({ query: q._id, count: q.count, zero_result_pct: Math.round(((q.zero_results as number || 0) / (q.count as number)) * 100) })),
+      zero_result_queries: zeroResultQueries.map((q: Record<string, unknown>) => ({ query: q._id, count: q.count })),
+      total_searches: totalSearches,
+      period_days: days,
+    });
+  } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+// Relevance
+router.get('/stats/search/relevance', async (req, res) => {
+  try {
+    const days = Math.min(90, Math.max(1, parseInt(req.query.days as string) || 7));
+    const since = new Date(Date.now() - days * 86400000);
+
+    const [clicks, searches, ctrByPos, avgResults] = await Promise.all([
+      SearchClick.countDocuments({ timestamp: { $gte: since } }),
+      SearchEvent.countDocuments({ timestamp: { $gte: since } }),
+      SearchClick.aggregate([
+        { $match: { timestamp: { $gte: since } } },
+        { $group: { _id: '$result_position', count: { $sum: 1 } } },
+        { $sort: { _id: 1 } }, { $limit: 10 },
+      ]),
+      SearchEvent.aggregate([
+        { $match: { timestamp: { $gte: since } } },
+        { $group: { _id: null, avg_posts: { $avg: '$total_results.posts' }, avg_comments: { $avg: '$total_results.comments' } } },
+      ]),
+    ]);
+
+    const ctrMap: Record<number, number> = {};
+    for (const c of ctrByPos as Array<{ _id: number; count: number }>) ctrMap[c._id] = c.count;
+
+    res.json({
+      total_clicks: clicks,
+      total_searches: searches,
+      ctr: searches > 0 ? Math.round((clicks / searches) * 100) : 0,
+      ctr_by_position: Array.from({ length: 10 }, (_, i) => ctrMap[i + 1] || 0),
+      avg_results: (avgResults[0] as Record<string, number> | undefined) || { avg_posts: 0, avg_comments: 0 },
+      period_days: days,
+    });
+  } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+// Trends (daily query volume over time)
+router.get('/stats/search/trends', async (req, res) => {
+  try {
+    const days = Math.min(90, Math.max(7, parseInt(req.query.days as string) || 30));
+    const since = new Date(Date.now() - days * 86400000);
+
+    const [volume, suggestionRate, zeroRate] = await Promise.all([
+      SearchEvent.aggregate([
+        { $match: { timestamp: { $gte: since } } },
+        { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$timestamp' } }, count: { $sum: 1 } } },
+        { $sort: { _id: 1 } },
+      ]),
+      SearchEvent.aggregate([
+        { $match: { timestamp: { $gte: since }, had_suggestion: true } },
+        { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$timestamp' } }, total: { $sum: 1 }, accepted: { $sum: { $cond: ['$suggestion_accepted', 1, 0] } } } },
+        { $sort: { _id: 1 } },
+      ]),
+      SearchEvent.aggregate([
+        { $match: { timestamp: { $gte: since } } },
+        { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$timestamp' } }, total: { $sum: 1 }, zero: { $sum: { $cond: ['$zero_results', 1, 0] } } } },
+        { $sort: { _id: 1 } },
+      ]),
+    ]);
+
+    res.json({
+      volume: volume.map((v: Record<string, unknown>) => ({ date: v._id, count: v.count })),
+      suggestion_rate: suggestionRate.map((s: Record<string, unknown>) => ({
+        date: s._id, rate: (s.total as number) > 0 ? Math.round(((s.accepted as number) / (s.total as number)) * 100) : 0,
+      })),
+      zero_result_rate: zeroRate.map((z: Record<string, unknown>) => ({
+        date: z._id, rate: (z.total as number) > 0 ? Math.round(((z.zero as number) / (z.total as number)) * 100) : 0,
+      })),
+      period_days: days,
+    });
+  } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+// Infrastructure
+router.get('/stats/search/infrastructure', async (req, res) => {
+  try {
+    const days = Math.min(90, Math.max(1, parseInt(req.query.days as string) || 7));
+    const since = new Date(Date.now() - days * 86400000);
+
+    const [latency, dlqCount, rollups] = await Promise.all([
+      SearchEvent.aggregate([
+        { $match: { timestamp: { $gte: since } } },
+        { $group: { _id: null, avg: { $avg: '$response_time_ms' }, p99: { $push: '$response_time_ms' } } },
+      ]),
+      SearchDeadLetter.countDocuments({}),
+      SearchDailyStats.find({ date: { $gte: new Date(Date.now() - days * 86400000).toISOString().substring(0, 10) } })
+        .select('date index_gap_pct dead_letter_count').sort({ date: 1 }).lean(),
+    ]);
+
+    const times = ((latency[0] as Record<string, unknown>)?.p99 as number[]) || [];
+    times.sort((a, b) => a - b);
+    const p99 = times.length > 0 ? times[Math.floor(times.length * 0.99)] : 0;
+
+    const gapTrend = rollups.map((r: Record<string, unknown>) => ({ date: r.date, gap_pct: r.index_gap_pct, dlq: r.dead_letter_count }));
+
+    res.json({
+      avg_latency_ms: Math.round(((latency[0] as Record<string, unknown>)?.avg as number) || 0),
+      p99_latency_ms: Math.round(p99),
+      dead_letter_queue: dlqCount,
+      index_gap_trend: gapTrend,
+      period_days: days,
+    });
+  } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+// Behavior
+router.get('/stats/search/behavior', async (req, res) => {
+  try {
+    const days = Math.min(90, Math.max(1, parseInt(req.query.days as string) || 7));
+    const since = new Date(Date.now() - days * 86400000);
+
+    const [searchSessions, postSessions, postViewFromSearch] = await Promise.all([
+      SearchEvent.distinct('session_id', { timestamp: { $gte: since } }),
+      require('../models/PageVisit').PageVisit.distinct('session_id', {
+        created_at: { $gte: since },
+        path: { $regex: /^\/$/ },
+      }),
+      SearchClick.aggregate([
+        { $match: { timestamp: { $gte: since }, result_type: 'post' } },
+        { $group: { _id: '$search_event_id', count: { $sum: 1 } } },
+      ]),
+    ]);
+
+    const searchSet = new Set(searchSessions.filter(Boolean));
+    const postSet = new Set(postSessions.filter(Boolean));
+
+    res.json({
+      search_sessions: searchSet.size,
+      search_and_post_ratio: postSet.size > 0 ? Math.round(([...searchSet].filter((s) => postSet.has(s)).length / postSet.size) * 100) : 0,
+      total_clicks_from_search: postViewFromSearch.reduce((a: number, c: Record<string, number>) => a + c.count, 0),
+      period_days: days,
+    });
+  } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
 export default router;
