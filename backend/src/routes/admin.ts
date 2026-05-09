@@ -1831,7 +1831,6 @@ router.get('/stats/search/overview', async (req, res) => {
     const today = new Date().toISOString().substring(0, 10);
     const todayStart = new Date(today + 'T00:00:00.000Z');
     const yesterday = new Date(Date.now() - 86400000).toISOString().substring(0, 10);
-    const yesterdayStart = new Date(yesterday + 'T00:00:00.000Z');
 
     const [todaySearches, todayZeroResults, todayUnique, todayRollup, yesterdayRollup] = await Promise.all([
       SearchEvent.countDocuments({ timestamp: { $gte: todayStart } }),
@@ -1994,7 +1993,7 @@ router.get('/stats/search/behavior', async (req, res) => {
 
     const [searchSessions, postSessions, postViewFromSearch] = await Promise.all([
       SearchEvent.distinct('session_id', { timestamp: { $gte: since } }),
-      require('../models/PageVisit').PageVisit.distinct('session_id', {
+      PageVisit.distinct('session_id', {
         created_at: { $gte: since },
         path: { $regex: /^\/$/ },
       }),
