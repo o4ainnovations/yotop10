@@ -130,6 +130,7 @@ are MANDATORY for every change:
 2. `pnpm typecheck` (`tsc --noEmit`) — 0 errors
 3. `pnpm build` — 0 errors
 4. `pnpm test` — all tests pass (when test infrastructure is available)
+5. **No ternary-as-statement** — NEVER write `condition ? expr1 : expr2;` as a statement. Always use `if/else` for side effects. The ternary operator is for EXPRESSIONS returning a value, not for standalone side effects.
 
 ### No Workarounds
 - Never suppress errors with `|| true`, `try {} catch {}`, `as any`,

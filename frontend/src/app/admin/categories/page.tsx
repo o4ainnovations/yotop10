@@ -145,7 +145,7 @@ export default function AdminCategoriesPage() {
 
   const toggleExpanded = (id: string) => {
     const next = new Set(expanded);
-    next.has(id) ? next.delete(id) : next.add(id);
+    if (next.has(id)) next.delete(id); else next.add(id);
     setExpanded(next);
   };
 
@@ -339,7 +339,7 @@ export default function AdminCategoriesPage() {
               <select value={reparentTarget} onChange={e => setReparentTarget(e.target.value)} style={inp}><option value="">New parent...</option>{parentOptions.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}</select>
               <button onClick={handleReparent} style={btn()}>Reparent {bulkIds.size > 0 ? `(${bulkIds.size})` : ''}</button>
             </div>
-            {filtered.map(c => <label key={c._id} style={{ display: 'block', fontSize: '12px', marginTop: '4px' }}><input type="checkbox" checked={bulkIds.has(c._id)} onChange={() => { const n = new Set(bulkIds); n.has(c._id) ? n.delete(c._id) : n.add(c._id); setBulkIds(n); }} /> {c.name} ({c.slug})</label>)}
+            {filtered.map(c => <label key={c._id} style={{ display: 'block', fontSize: '12px', marginTop: '4px' }}><input type="checkbox" checked={bulkIds.has(c._id)} onChange={() => { const n = new Set(bulkIds); if (n.has(c._id)) n.delete(c._id); else n.add(c._id); setBulkIds(n); }} /> {c.name} ({c.slug})</label>)}
           </div>
 
           <div style={{ padding: '14px', background: '#fafafa', border: '1px solid #eee', borderRadius: '6px' }}>
