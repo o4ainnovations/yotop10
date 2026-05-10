@@ -22,11 +22,11 @@ interface NotificationItem {
   created_at: string;
 }
 
-const TYPE_EMOJI: Record<string, string> = {
-  post_approved: '✅',
-  post_rejected: '❌',
-  revision_requested: '🔄',
-  admin_message: '📬',
+const TYPE_ICON: Record<string, string> = {
+  post_approved: 'Check',
+  post_rejected: 'X',
+  revision_requested: 'RefreshCw',
+  admin_message: 'Mail',
 };
 
 const PRIORITY_COLORS: Record<string, { bg: string; border: string }> = {
@@ -194,7 +194,7 @@ export default function NotificationBell() {
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
-                        <span style={{ marginRight: '6px' }}>{TYPE_EMOJI[n.type] || '📌'}</span>
+                        <span style={{ marginRight: '6px' }}><Icon name={(TYPE_ICON[n.type] || 'Pin') as any} size={14} /></span>
                         {isAdmin ? (
                           <>
                             <strong style={{ fontSize: '13px' }}>{n.title}</strong>
@@ -207,7 +207,7 @@ export default function NotificationBell() {
                               {n.body?.substring(0, 100)}{(n.body?.length || 0) > 100 ? '...' : ''}
                             </div>
                             <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
-                              From: {n.created_by} · {n.message_type === 'broadcast' ? '📢 Broadcast' : '👤 Private'}
+                              From: {n.created_by} · {n.message_type === 'broadcast' ? <><Icon name="Megaphone" size={11} /> Broadcast</> : <><Icon name="User" size={11} /> Private</>}
                             </div>
                           </>
                         ) : (

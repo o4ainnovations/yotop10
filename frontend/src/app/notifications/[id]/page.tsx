@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
+import { Icon } from '@/components/icons/Icon';
 
 interface NotifDetail {
   _id: string;
@@ -84,18 +85,18 @@ export default function NotificationDetailPage() {
         {isAdmin ? (
           <>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '12px' }}>
-              <span style={{ fontSize: '24px' }}>📬</span>
+              <span style={{ fontSize: '24px' }}><Icon name="Mail" size={24} /></span>
               <div>
                 <h1 style={{ fontSize: '18px', margin: 0, color: '#333' }}>{n.title}</h1>
                 <div style={{ fontSize: '12px', color: '#999', marginTop: '2px' }}>
-                  From: {n.created_by} · {n.message_type === 'broadcast' ? '📢 Broadcast to all users' : '👤 Private message'}
+                  From: {n.created_by} · {n.message_type === 'broadcast' ? <><Icon name="Megaphone" size={12} /> Broadcast to all users</> : <><Icon name="User" size={12} /> Private message</>}
                   {n.priority && n.priority !== 'info' && (
                     <span style={{ marginLeft: '6px', padding: '2px 6px', borderRadius: '3px', fontSize: '10px', fontWeight: 'bold', background: pc, color: '#fff' }}>
                       {n.priority.toUpperCase()}
                     </span>
                   )}
                   {n.dismissed && (
-                    <span style={{ marginLeft: '6px', color: '#2e7d32', fontSize: '11px' }}>✅ Dismissed</span>
+                    <span style={{ marginLeft: '6px', color: '#2e7d32', fontSize: '11px' }}><Icon name="Check" size={12} color="#2e7d32" /> Dismissed</span>
                   )}
                 </div>
               </div>
@@ -113,8 +114,8 @@ export default function NotificationDetailPage() {
           </>
         ) : (
           <>
-            <div style={{ fontSize: '24px', marginBottom: '8px' }}>
-              {n.type === 'post_approved' ? '✅' : n.type === 'post_rejected' ? '❌' : '🔄'}
+            <div style={{ marginBottom: '8px' }}>
+              {n.type === 'post_approved' ? <Icon name="Check" size={24} color="#2e7d32" /> : n.type === 'post_rejected' ? <Icon name="X" size={24} color="#c62828" /> : <Icon name="RefreshCw" size={24} color="#f57c00" />}
             </div>
             <h1 style={{ fontSize: '18px', margin: '0 0 4px', color: '#333' }}>
               {n.post_title}
