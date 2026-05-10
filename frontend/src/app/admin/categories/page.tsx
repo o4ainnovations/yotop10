@@ -150,10 +150,11 @@ export default function AdminCategoriesPage() {
   };
 
   const parents = categories.filter(c => !c.parent_id);
-  const children = categories.filter(c => c.parent_id);
-  const parentOptions = categories.filter(c => !c.parent_id && !c.is_archived);
+  const childrenFromParents = parents.flatMap(p => (p.children || []).map(c => ({ ...c, parent_id: p.id })));
+  const allCats = [...parents, ...childrenFromParents];
+  const parentOptions = parents.filter(c => !c.is_archived);
 
-  const filtered = search ? categories.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.slug.includes(search)) : categories;
+  const filtered = search ? allCats.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.slug.includes(search)) : allCats;
 
   const bt = (a: boolean): React.CSSProperties => ({ padding: '8px 14px', border: 'none', borderBottom: a ? '2px solid #1565c0' : '2px solid transparent', background: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: a ? 'bold' : 'normal', color: a ? '#1565c0' : '#666' });
   const btn = (d?: boolean) => ({ padding: '6px 14px', background: d ? '#ccc' : '#1565c0', color: '#fff', border: 'none', borderRadius: '4px', cursor: d ? 'not-allowed' : 'pointer', fontSize: '12px' });
@@ -191,7 +192,7 @@ export default function AdminCategoriesPage() {
           <div style={{ width: '320px', flexShrink: 0, maxHeight: '70vh', overflow: 'auto', border: '1px solid #eee', borderRadius: '6px', padding: '10px' }}>
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." style={{ width: '100%', padding: '6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '12px', marginBottom: '10px', boxSizing: 'border-box' }} />
             {parents.map(p => {
-              const kids = children.filter(c => c.parent_id === p.id);
+              const kids = p.children || [];
               const isOpen = expanded.has(p.id);
               const icon = p.icon || '📁';
               return <div key={p.id}>
@@ -323,9 +324,9 @@ export default function AdminCategoriesPage() {
           <div style={{ padding: '14px', background: '#fafafa', border: '1px solid #eee', borderRadius: '6px' }}>
             <h3 style={{ fontSize: '14px', margin: '0 0 8px' }}>Merge Category</h3>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <select value={mergeSource} onChange={e => setMergeSource(e.target.value)} style={inp}><option value="">Source...</option>{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+              <select value={mergeSource} onChange={e => setMergeSource(e.target.value)} style={inp}><option value="">Source...</option>{allCats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
               <span>→</span>
-              <select value={mergeTarget} onChange={e => setMergeTarget(e.target.value)} style={inp}><option value="">Target...</option>{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+              <select value={mergeTarget} onChange={e => setMergeTarget(e.target.value)} style={inp}><option value="">Target...</option>{allCats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
               <button onClick={handleMerge} style={btn()}>Merge</button>
             </div>
           </div>
