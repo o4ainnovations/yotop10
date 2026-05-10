@@ -100,7 +100,7 @@ export default function StatisticsDashboard() {
     <div style={{ maxWidth: '900px' }}>
       <h2>📊 Platform Statistics</h2>
 
-      <Panel scope="overview" titleIcon="TrendingUp" title="Overview">
+      <Panel scope="overview" title="📈 Overview">
         {overview && <>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '20px' }}>
             {card('Posts', op?.total)}{card('Comments', oc?.total)}{card('Users', ou?.total)}{card('Pending', overview.pending)}{card('Approved', op?.approved)}{card('Rejected', op?.rejected)}
