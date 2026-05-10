@@ -254,16 +254,16 @@ export default function AdminAlertsPage() {
                   <td style={{ padding: '8px' }}>
                     {(() => {
                       const active = activeAlerts.get(t.metric);
-                      if (!t.enabled) return <span title="Disabled">⚫</span>;
-                      if (active && active.severity === 'critical') return <span style={{ fontSize: '18px' }} title={`Active: ${active.value}`}>🔴</span>;
-                      if (active && active.severity === 'warning') return <span style={{ fontSize: '18px' }} title={`Active: ${active.value}`}>🟠</span>;
-                      return <span style={{ fontSize: '18px' }} title="Normal">🟢</span>;
+                      if (!t.enabled) return <span title="Disabled"><Icon name="Circle" size={14} color="#999" /></span>;
+                      if (active && active.severity === 'critical') return <span style={{ fontSize: '18px' }} title={`Active: ${active.value}`}><Icon name="Circle" size={18} color="#d32f2f" fill="#d32f2f" /></span>;
+                      if (active && active.severity === 'warning') return <span style={{ fontSize: '18px' }} title={`Active: ${active.value}`}><Icon name="Circle" size={18} color="#f57c00" fill="#f57c00" /></span>;
+                      return <span style={{ fontSize: '18px' }} title="Normal"><Icon name="Circle" size={18} color="#2e7d32" fill="#2e7d32" /></span>;
                     })()}
                   </td>
                   <td style={{ padding: '8px', color: '#666' }}>{t.cooldown_minutes}m</td>
                   <td style={{ padding: '8px' }}>
                     <button onClick={() => handleToggle(t._id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }} title={t.enabled ? 'Disable' : 'Enable'}>
-                      {t.enabled ? '🟢' : '⚫'}
+                      {t.enabled ? <Icon name="Circle" size={16} color="#2e7d32" fill="#2e7d32" /> : <Icon name="Circle" size={16} color="#999" />}
                     </button>
                   </td>
                   <td style={{ padding: '8px', color: '#999', fontSize: '11px' }}>
@@ -295,7 +295,7 @@ export default function AdminAlertsPage() {
           </div>
 
           {notifications.length === 0 ? (
-            <div style={{ padding: '32px', textAlign: 'center', color: '#999' }}>✅ No unread alert notifications</div>
+            <div style={{ padding: '32px', textAlign: 'center', color: '#999' }}><Icon name="Check" size={14} color="#2e7d32" /> No unread alert notifications</div>
           ) : (
             <div>
               {notifications.map((n) => (
@@ -350,9 +350,9 @@ export default function AdminAlertsPage() {
                   <td style={{ padding: '8px' }}>{new Date(h.triggered_at).toLocaleString()}</td>
                   <td style={{ padding: '8px' }}>
                     {h.resolved_at ? (
-                      <span style={{ color: '#2e7d32', fontSize: '12px' }}>✅ {new Date(h.resolved_at).toLocaleString()}</span>
+                      <span style={{ color: '#2e7d32', fontSize: '12px' }}><Icon name="Check" size={12} color="#2e7d32" /> {new Date(h.resolved_at).toLocaleString()}</span>
                     ) : (
-                      <span style={{ color: '#d32f2f', fontSize: '12px' }}>🔴 Unresolved</span>
+                      <span style={{ color: '#d32f2f', fontSize: '12px' }}><Icon name="Circle" size={12} color="#d32f2f" fill="#d32f2f" /> Unresolved</span>
                     )}
                   </td>
                 </tr>

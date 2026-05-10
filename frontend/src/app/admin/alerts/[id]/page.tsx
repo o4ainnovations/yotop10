@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
+import { Icon } from '@/components/icons/Icon';
 
 interface AlertDetail {
   notification: {
@@ -78,18 +79,18 @@ export default function AlertDetailPage() {
   if (!detail) return <div style={{ padding: '20px' }}>Alert not found</div>;
 
   const { notification: n, current_value, threshold_config: tc, still_breaching } = detail;
-  const STATUS = still_breaching ? (n.severity === 'critical' ? '🔴 Critical' : '🟠 Warning') : '🟢 Resolved';
+  const STATUS = still_breaching ? (n.severity === 'critical' ? <><Icon name="Circle" size={16} color="#d32f2f" fill="#d32f2f" /> Critical</> : <><Icon name="Circle" size={16} color="#f57c00" fill="#f57c00" /> Warning</>) : <><Icon name="Circle" size={16} color="#2e7d32" fill="#2e7d32" /> Resolved</>;
   const STATUS_COLOR = still_breaching ? (n.severity === 'critical' ? '#d32f2f' : '#f57c00') : '#2e7d32';
   const STATUS_BG = still_breaching ? (n.severity === 'critical' ? '#ffcdd2' : '#fff3e0') : '#e8f5e9';
 
   return (
     <div style={{ maxWidth: '700px', margin: '0 auto', padding: '20px' }}>
       <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontSize: '13px', marginBottom: '16px' }}>
-        ← Back
+          <Icon name="ArrowLeft" size={14} /> Back
       </button>
 
       <div style={{ background: STATUS_BG, border: `2px solid ${STATUS_COLOR}`, borderRadius: '8px', padding: '16px', marginBottom: '20px' }}>
-        <h1 style={{ fontSize: '20px', margin: '0 0 8px' }}>
+        <h1 style={{ fontSize: '20px', margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
           {STATUS} — {METRIC_LABELS[n.alert_type] || n.alert_type}
         </h1>
         <p style={{ fontSize: '14px', color: '#555', margin: '0 0 8px' }}>{n.message}</p>
@@ -112,7 +113,7 @@ export default function AlertDetailPage() {
         </div>
         {n.settled && (
           <div style={{ marginTop: '12px', fontSize: '12px', color: '#2e7d32' }}>
-            ✅ Settled on {new Date(n.settled_at!).toLocaleString()}
+            <Icon name="Check" size={12} color="#2e7d32" /> Settled on {new Date(n.settled_at!).toLocaleString()}
           </div>
         )}
       </div>
@@ -134,7 +135,7 @@ export default function AlertDetailPage() {
             <p style={{ margin: '4px 0' }}>Threshold: <strong>{tc.threshold}</strong></p>
             <p style={{ margin: '4px 0' }}>Severity: <span style={{ color: tc.severity === 'critical' ? '#d32f2f' : '#f57c00', fontWeight: 'bold' }}>{tc.severity}</span></p>
             <button onClick={() => router.push('/admin/alerts')} style={{ marginTop: '8px', padding: '4px 12px', background: '#1565c0', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
-              Manage Thresholds →
+              Manage Thresholds <Icon name="ArrowRight" size={12} />
             </button>
           </div>
         </div>
@@ -146,7 +147,7 @@ export default function AlertDetailPage() {
           disabled={settling}
           style={{ padding: '10px 24px', background: settling ? '#ccc' : '#2e7d32', color: 'white', border: 'none', borderRadius: '6px', cursor: settling ? 'not-allowed' : 'pointer', fontSize: '15px', fontWeight: 'bold', width: '100%' }}
         >
-          {settling ? 'Settling...' : '✅ Settle This Alert'}
+          {settling ? 'Settling...' : <><Icon name="Check" size={16} /> Settle This Alert</>}
         </button>
       )}
     </div>
