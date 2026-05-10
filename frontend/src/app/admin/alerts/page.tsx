@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
+import { Icon } from '@/components/icons/Icon';
 
 interface Threshold {
   _id: string;
@@ -173,7 +174,7 @@ export default function AdminAlertsPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: '20px', marginBottom: '16px' }}>🚨 Alert Management</h1>
+      <h1 style={{ fontSize: '20px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><Icon name="BellDot" size={22} /> Alert Management</h1>
 
       <div style={{ display: 'flex', gap: '0', marginBottom: '16px', borderBottom: '1px solid #ddd' }}>
         <button style={BTN(activePanel === 'thresholds')} onClick={() => setActivePanel('thresholds')}>Thresholds</button>

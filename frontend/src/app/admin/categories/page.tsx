@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
+import { Icon } from '@/components/icons/Icon';
 
 interface Cat {
   id: string; name: string; slug: string; description?: string; icon?: string;
@@ -160,7 +161,7 @@ export default function AdminCategoriesPage() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <h1 style={{ fontSize: '20px', margin: 0 }}>📁 Category Management</h1>
+        <h1 style={{ fontSize: '20px', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}><Icon name="Folder" size={22} /> Category Management</h1>
         <button onClick={() => setShowCreate(!showCreate)} style={btn()}>+ Create</button>
       </div>
 

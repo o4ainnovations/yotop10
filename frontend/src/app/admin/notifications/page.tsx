@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
+import { Icon } from '@/components/icons/Icon';
 
 interface SentMessage {
   _id: string; type: 'individual' | 'broadcast'; recipient_id: string | null;
@@ -135,7 +136,7 @@ export default function AdminNotificationsPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: '20px', marginBottom: '16px' }}>📬 Notifications</h1>
+      <h1 style={{ fontSize: '20px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><Icon name="Mail" size={22} /> Notifications</h1>
 
       <div style={{ display: 'flex', gap: '0', marginBottom: '16px', borderBottom: '1px solid #ddd' }}>
         <button style={BTN(tab === 'compose')} onClick={() => setTab('compose')}>Compose</button>
@@ -149,11 +150,11 @@ export default function AdminNotificationsPage() {
           <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
             <button onClick={() => { setMsgType('broadcast'); setRecipient(null); }}
               style={{ padding: '6px 16px', border: msgType === 'broadcast' ? '2px solid #1565c0' : '1px solid #ddd', background: msgType === 'broadcast' ? '#e3f2fd' : 'white', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>
-              📢 Broadcast to All
+              <Icon name="Megaphone" size={14} /> Broadcast to All
             </button>
             <button onClick={() => setMsgType('individual')}
               style={{ padding: '6px 16px', border: msgType === 'individual' ? '2px solid #1565c0' : '1px solid #ddd', background: msgType === 'individual' ? '#e3f2fd' : 'white', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>
-              👤 Individual User
+              <Icon name="User" size={14} /> Individual User
             </button>
           </div>
 
@@ -196,7 +197,7 @@ export default function AdminNotificationsPage() {
 
           <button onClick={handleSend} disabled={sending}
             style={{ padding: '10px 24px', background: sending ? '#ccc' : '#1565c0', color: 'white', border: 'none', borderRadius: '6px', cursor: sending ? 'not-allowed' : 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
-            {sending ? 'Sending...' : msgType === 'broadcast' ? '📢 Send to All Users' : '👤 Send Message'}
+            {sending ? 'Sending...' : msgType === 'broadcast' ? <><Icon name="Megaphone" size={14} /> Send to All Users</> : <><Icon name="User" size={14} /> Send Message</>}
           </button>
         </div>
       )}
@@ -216,7 +217,7 @@ export default function AdminNotificationsPage() {
                   <span style={{ padding: '1px 6px', borderRadius: '3px', fontSize: '11px', fontWeight: 'bold', background: PRIORITY_COLORS[m.priority]?.bg, color: PRIORITY_COLORS[m.priority]?.text }}>
                     {m.priority.toUpperCase()}
                   </span>
-                  <span style={{ marginLeft: '8px', fontSize: '11px', color: '#999' }}>{m.type === 'broadcast' ? '📢 Broadcast' : '👤 Individual'}</span>
+                  <span style={{ marginLeft: '8px', fontSize: '11px', color: '#999' }}>{m.type === 'broadcast' ? <><Icon name="Megaphone" size={11} /> Broadcast</> : <><Icon name="User" size={11} /> Individual</>}</span>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                   <span style={{ fontSize: '11px', color: '#999' }}>{new Date(m.created_at).toLocaleDateString()}</span>

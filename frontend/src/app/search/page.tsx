@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { Icon } from '@/components/icons/Icon';
 
 interface SearchResult {
   id: string; title: string; intro?: string; content?: string;
@@ -209,7 +210,7 @@ export default function SearchPage() {
           {loading && <div style={{ padding: '40px', textAlign: 'center', color: '#999' }}>Searching...</div>}
           {!loading && results && activeResults.length === 0 && (
             <div style={{ padding: '60px 20px', textAlign: 'center', color: '#999' }}>
-              <div style={{ fontSize: '40px', marginBottom: '12px' }}>🔍</div>
+              <div style={{ fontSize: '40px', marginBottom: '12px' }}><Icon name="Search" size={40} color="#999" /></div>
               <h2>No results found</h2><p>Try different keywords or remove filters.</p>
             </div>
           )}
@@ -221,15 +222,15 @@ export default function SearchPage() {
                   <div style={{ fontSize: '13px', color: '#555', marginBottom: '6px', lineHeight: '1.5' }} dangerouslySetInnerHTML={{ __html: r.highlight?.intro?.[0] || (r.intro || '').substring(0, 200) }} />
                   <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: '#999', flexWrap: 'wrap' }}>
                     <span>By {r.author_username}</span>
-                    {r.category_slug && <span>📁 {r.category_slug}</span>}
-                    {r.post_type && <span>🏷 {r.post_type}</span>}
-                    <span>💬 {r.comment_count || 0}</span><span>🔥 {r.fire_count || 0}</span>
+                    {r.category_slug && <span><Icon name="Folder" size={12} /> {r.category_slug}</span>}
+                    {r.post_type && <span><Icon name="Tag" size={12} /> {r.post_type}</span>}
+                    <span><Icon name="MessageCircle" size={12} /> {r.comment_count || 0}</span><span><Icon name="Flame" size={12} /> {r.fire_count || 0}</span>
                     <span>{new Date(r.created_at).toLocaleDateString()}</span>
                   </div>
                 </Link>
               ) : (
                 <Link href={`/${r.post_slug || ''}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <div style={{ fontSize: '12px', color: '#999', marginBottom: '2px' }}>💬 Comment on <strong>{r.post_title || 'a post'}</strong></div>
+                  <div style={{ fontSize: '12px', color: '#999', marginBottom: '2px' }}><Icon name="MessageCircle" size={12} /> Comment on <strong>{r.post_title || 'a post'}</strong></div>
                   <div style={{ fontSize: '14px', color: '#333', lineHeight: '1.5' }} dangerouslySetInnerHTML={{ __html: r.highlight?.content?.[0] || (r.content || '').substring(0, 200) }} />
                   <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>By {r.author_username} · {new Date(r.created_at).toLocaleDateString()}</div>
                 </Link>
