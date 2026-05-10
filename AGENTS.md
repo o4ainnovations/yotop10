@@ -101,6 +101,22 @@ replacing text inside import statements, string literals, or comments).
 **Violation consequence**: Any file touched by `sed` MUST be reverted and
 reconstructed using the `Edit` tool with proper contextual matches.
 
+### 3.0c 🚫 BANNED: Glow / Neon / Glowing Styles (NON-NEGOTIABLE)
+
+Agents MUST NEVER suggest, propose, or implement any CSS style involving
+glow effects, neon colors, or glowing aesthetics unless the user explicitly
+permits it in writing. This includes but is not limited to:
+
+- `box-shadow` with spread/blur creating glow halos
+- `text-shadow` with bright colors for neon text effects
+- `filter: drop-shadow()` for glow
+- `backdrop-filter` combined with bright backgrounds for glassmorphism glow
+- `animation` with pulsing/glowing keyframes
+- Any CSS that produces a luminous, radiant, or fluorescent visual effect
+
+**This rule exists because glow/neon is a design choice, not a default.
+It must never appear in any implementation without explicit approval.**
+
 ---
 
 ## 3.1 🏭 Enterprise-Grade Implementation Standards (NON-NEGOTIABLE)
