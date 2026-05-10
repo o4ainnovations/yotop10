@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
+import { Icon } from './icons/Icon';
 
 interface NotificationItem {
   _id: string;
@@ -112,9 +113,9 @@ export default function NotificationBell() {
           borderRadius: '6px',
         }}
         aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
-      >
-        🔔
-        {unreadCount > 0 && (
+        >
+          <Icon name="Bell" size={20} color={unreadCount > 0 ? '#1565c0' : '#888'} strokeWidth={2.5} />
+          {unreadCount > 0 && (
           <span
             style={{
               position: 'absolute',

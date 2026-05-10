@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
+import { Icon } from './icons/Icon';
 
 interface AlertNotification {
   _id: string;
@@ -102,9 +103,9 @@ export default function AdminAlertBell() {
         }}
         aria-label={`Alerts ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
         title="Admin Alerts"
-      >
-        🚨
-        {unreadCount > 0 && (
+        >
+          <Icon name="BellDot" size={20} color={unreadCount > 0 ? '#e65100' : '#888'} strokeWidth={2.5} />
+          {unreadCount > 0 && (
           <span
             style={{
               position: 'absolute',
@@ -153,7 +154,9 @@ export default function AdminAlertBell() {
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               padding: '10px 16px', borderBottom: '1px solid #EFEBE0',
             }}>
-              <strong style={{ color: '#3E2723', fontSize: '14px' }}>🚨 Alerts</strong>
+              <strong style={{ color: '#3E2723', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Icon name="BellDot" size={16} strokeWidth={2.5} /> Alerts
+              </strong>
               <div style={{ display: 'flex', gap: '8px' }}>
                 {unreadCount > 0 && (
                   <button
