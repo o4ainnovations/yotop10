@@ -196,7 +196,7 @@ export default function AdminCategoriesPage() {
                   <span style={{ fontSize: '10px' }}>{isOpen ? '▼' : '▶'}</span>
                   <span>{icon}</span> <span>{p.name}</span>
                   <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#999' }}>{p.post_count}</span>
-                  {p.is_featured && <span style={{ fontSize: '10px', color: '#f57c00' }}>⭐</span>}
+                  {p.is_featured && <span style={{ fontSize: '10px', color: '#f57c00' }}><Icon name="Star" size={10} /></span>}
                   {p.status === 'draft' && <span style={{ fontSize: '10px', background: '#fff3e0', padding: '1px 4px', borderRadius: '2px' }}>draft</span>}
                 </div>
                 {isOpen && kids.map(c => <div key={c.id} onClick={() => selectCat(c)}
@@ -225,13 +225,13 @@ export default function AdminCategoriesPage() {
                 </div>
                 {!selected.parent_id && (
                   <div style={{ marginTop: '8px', padding: '8px 12px', background: '#fff3e0', borderRadius: '4px', fontSize: '12px', color: '#e65100' }}>
-                    ⚠️ Parent categories are locked. Only child categories can be edited.
+                    <Icon name="TriangleAlert" size={12} color="#e65100" /> Parent categories are locked. Only child categories can be edited.
                   </div>
                 )}
                 <div style={{ marginTop: '14px', fontSize: '12px', color: '#666' }}>
                   Posts: <strong>{selected.post_count}</strong> · Health: <strong style={{ color: selected.grown ? '#2e7d32' : '#999' }}>{selected.health_score || '—'}</strong>
                   {selected.grown && ' ✅ Growing'}
-                  {selected.dead && ' ⚠️ Dead'}
+                  {selected.dead && <span style={{ marginLeft: '6px' }}><Icon name="TriangleAlert" size={12} color="#e65100" /> Dead</span>}
                 </div>
                 {selected.parent_id && (
                   <div style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -267,7 +267,7 @@ export default function AdminCategoriesPage() {
                 <td style={{ padding: '6px', color: '#999' }}>{categories.find(p => p.id === c.parent_id)?.name || '—'}</td>
                 <td style={{ padding: '6px' }}>{c.post_count}</td>
                 <td style={{ padding: '6px' }}><span style={{ fontSize: '10px', padding: '1px 5px', borderRadius: '3px', background: c.status === 'draft' ? '#fff3e0' : c.status === 'hidden' ? '#f5f5f5' : '#e8f5e9' }}>{c.status}</span></td>
-                <td style={{ padding: '6px' }}>{c.is_featured ? '⭐' : ''}</td>
+                <td style={{ padding: '6px' }}>{c.is_featured ? <Icon name="Star" size={12} color="#f57c00" /> : ''}</td>
                 <td style={{ padding: '6px', display: 'flex', gap: '4px' }}>
                   <button onClick={() => { selectCat(c); setTab('tree'); }} style={{ ...btn(), padding: '3px 8px', fontSize: '11px' }}>Edit</button>
                   <button onClick={() => handleArchive(c.id)} style={{ ...btn(), padding: '3px 8px', fontSize: '11px', background: '#c62828' }}>Archive</button>

@@ -2,16 +2,17 @@
 
 import { useRouter } from 'next/navigation';
 import { useAdminStore } from '@/stores/admin';
+import { Icon } from '@/components/icons/Icon';
 
 export default function AdminDashboard() {
   const router = useRouter();
   const admin = useAdminStore(s => s.admin);
 
   const actionCards = [
-    { title: '📋 Pending Posts', desc: 'Review and moderate submitted posts', href: '/admin/posts/pending', color: '#e3f2fd' },
-    { title: '📊 Statistics', desc: 'Deep platform analytics and trends', href: '/admin/statistics', color: '#e8f5e9' },
-    { title: '📝 Audit Logs', desc: 'All admin actions and login history', href: '/admin/audit', color: '#fff3e0' },
-    { title: '👤 Profile', desc: 'View your admin account', href: '/admin/profile', color: '#f3e5f5' },
+    { title: 'Pending Posts', icon: 'FileText', desc: 'Review and moderate submitted posts', href: '/admin/posts/pending', color: '#e3f2fd' },
+    { title: 'Statistics', icon: 'BarChart3', desc: 'Deep platform analytics and trends', href: '/admin/statistics', color: '#e8f5e9' },
+    { title: 'Audit Logs', icon: 'ClipboardList', desc: 'All admin actions and login history', href: '/admin/audit', color: '#fff3e0' },
+    { title: 'Profile', icon: 'User', desc: 'View your admin account', href: '/admin/profile', color: '#f3e5f5' },
   ];
 
   return (
@@ -22,7 +23,7 @@ export default function AdminDashboard() {
         {actionCards.map(card => (
           <button key={card.href} onClick={() => router.push(card.href)}
             style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer', textAlign: 'left', background: card.color, display: 'block' }}>
-            <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '4px' }}>{card.title}</div>
+            <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}><Icon name={card.icon as any} size={18} /> {card.title}</div>
             <div style={{ fontSize: '12px', color: '#666' }}>{card.desc}</div>
           </button>
         ))}

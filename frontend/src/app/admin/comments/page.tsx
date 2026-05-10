@@ -78,8 +78,8 @@ export default function AdminCommentsPage() {
   const isAutoFlag = (type: string | null) => type && type !== 'manual';
 
   const flagBadge = (type: string) => {
-    const map: Record<string, { label: string; icon: string; color: string }> = { spam_repetition: { label: 'Spam', icon: 'AlertTriangle', color: '#e65100' }, spam_link_first: { label: 'Spam', icon: 'Link', color: '#e65100' }, brigade_referrer: { label: 'Brigade', icon: 'BellDot', color: '#c62828' }, brigade_fresh: { label: 'Brigade', icon: 'BellDot', color: '#c62828' } };
-    const m = map[type] || { label: '', icon: 'AlertTriangle', color: '#999' };
+    const map: Record<string, { label: string; icon: string; color: string }> = { spam_repetition: { label: 'Spam', icon: 'TriangleAlert', color: '#e65100' }, spam_link_first: { label: 'Spam', icon: 'Link', color: '#e65100' }, brigade_referrer: { label: 'Brigade', icon: 'BellDot', color: '#c62828' }, brigade_fresh: { label: 'Brigade', icon: 'BellDot', color: '#c62828' } };
+    const m = map[type] || { label: '', icon: 'TriangleAlert', color: '#999' };
     return <span style={{ background: m.color, color: 'white', padding: '1px 5px', borderRadius: '3px', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer' }}><Icon name={m.icon as any} size={10} color="#fff" /> {m.label}</span>;
   };
 

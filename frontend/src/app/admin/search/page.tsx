@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
+import { Icon } from '@/components/icons/Icon';
 
 interface IndexInfo { docs: number; size: string; }
 interface GapInfo { diff: number; pct: number; }
@@ -77,7 +78,7 @@ export default function AdminSearchPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: '20px', marginBottom: '16px' }}>🔍 Search Management</h1>
+      <h1 style={{ fontSize: '20px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><Icon name="Search" size={22} /> Search Management</h1>
 
       <div style={{ display: 'flex', gap: '0', marginBottom: '20px', borderBottom: '1px solid #ddd' }}>
         <button onClick={() => setTab('status')} style={bt(tab === 'status')}>Cluster Status</button>
@@ -121,7 +122,7 @@ export default function AdminSearchPage() {
             {showMappings && mappings && <pre style={{ marginTop: '12px', fontSize: '11px', background: '#f0f0f0', padding: '12px', borderRadius: '4px', maxHeight: '300px', overflow: 'auto' }}>{JSON.stringify(mappings, null, 2)}</pre>}
           </S>
 
-          <S title="⚠️ Delete Index" warn>
+          <S title={<><Icon name="TriangleAlert" size={16} color="#e65100" /> Delete Index</>} warn>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               <select value={deleteIdx} onChange={e => setDeleteIdx(e.target.value)} style={{ padding: '6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px' }}>
                 <option value="">Select...</option><option value="posts">Posts</option><option value="comments">Comments</option><option value="categories">Categories</option><option value="users">Users</option>
@@ -182,7 +183,7 @@ export default function AdminSearchPage() {
 const bt = (active: boolean) => ({ padding: '8px 16px', border: 'none', borderBottom: active ? '2px solid #1565c0' : '2px solid transparent', background: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: active ? 'bold' as const : 'normal' as const, color: active ? '#1565c0' : '#666' });
 const btn = (disabled: boolean) => ({ padding: '8px 20px', background: disabled ? '#ccc' : '#1565c0', color: 'white', border: 'none', borderRadius: '4px', cursor: disabled ? 'not-allowed' : 'pointer', fontSize: '13px' });
 const tbl: React.CSSProperties = { width: '100%', borderCollapse: 'collapse', fontSize: '12px' };
-const S = ({ title, children, warn }: { title: string; children: React.ReactNode; warn?: boolean }) => <div style={{ marginBottom: '20px', padding: '16px', background: warn ? '#fff3e0' : '#fafafa', border: warn ? '1px solid #ffb74d' : '1px solid #eee', borderRadius: '6px' }}><h3 style={{ fontSize: '15px', margin: '0 0 12px', color: warn ? '#e65100' : '#333' }}>{title}</h3>{children}</div>;
+const S = ({ title, children, warn }: { title: React.ReactNode; children: React.ReactNode; warn?: boolean }) => <div style={{ marginBottom: '20px', padding: '16px', background: warn ? '#fff3e0' : '#fafafa', border: warn ? '1px solid #ffb74d' : '1px solid #eee', borderRadius: '6px' }}><h3 style={{ fontSize: '15px', margin: '0 0 12px', color: warn ? '#e65100' : '#333' }}>{title}</h3>{children}</div>;
 const L = ({ children }: { children: React.ReactNode }) => <div style={{ marginBottom: '4px', fontSize: '13px', lineHeight: '1.6' }}>{children}</div>;
 const B = ({ children }: { children: React.ReactNode }) => <strong>{children}</strong>;
 const MetricsCard = ({ label, count, color }: { label: string; count: number; color: string }) => <div style={{ padding: '14px', background: '#fafafa', border: '1px solid #eee', borderRadius: '6px', textAlign: 'center' }}><div style={{ fontSize: '28px', fontWeight: 'bold', color }}>{count}</div><div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>{label}</div></div>;

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { API } from '@/lib/api';
+import { Icon } from '@/components/icons/Icon';
 import { useAuthStore } from '@/stores/auth';
 import { useRateLimitStore } from '@/stores/rateLimit';
 import NotFound from '@/components/NotFound';
@@ -200,7 +201,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
             onClick={() => setActiveTab('stats')}
             style={{ fontWeight: activeTab === 'stats' ? 'bold' : 'normal', marginLeft: '10px' }}
           >
-            ⭐ Stats
+            <Icon name="Star" size={14} color="#f57c00" /> Stats
           </button>
         )}
       </div>
