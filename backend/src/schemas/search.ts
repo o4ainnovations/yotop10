@@ -18,7 +18,7 @@ export const searchQuerySchema = z.object({
 });
 
 export const autocompleteQuerySchema = z.object({
-  q: z.string().min(2, 'Query must be at least 2 characters').max(100, 'Query must be at most 100 characters'),
+  q: z.string().min(1).max(200, 'Query must be at most 200 characters'),
 });
 
 export const adminReindexSchema = z.object({

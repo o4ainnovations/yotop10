@@ -3,14 +3,33 @@ import { es } from '../../lib/elasticsearch';
 
 const INDEX_PREFIX = 'yotop10';
 
+const SETTINGS = {
+  analysis: {
+    analyzer: {
+      autocomplete: {
+        tokenizer: 'autocomplete',
+        filter: ['lowercase'],
+      },
+    },
+    tokenizer: {
+      autocomplete: {
+        type: 'edge_ngram' as const,
+        min_gram: 1,
+        max_gram: 20,
+        token_chars: ['letter' as const, 'digit' as const],
+      },
+    },
+  },
+};
+
 const MAPPINGS = {
   posts: {
-    title: { type: 'text' as const, analyzer: 'english' as const },
-    intro: { type: 'text' as const, analyzer: 'english' as const },
-    items: { type: 'nested' as const, properties: { title: { type: 'text' as const, analyzer: 'english' as const }, justification: { type: 'text' as const, analyzer: 'english' as const } } },
+    title: { type: 'text' as const, analyzer: 'autocomplete' as const, search_analyzer: 'simple' as const },
+    intro: { type: 'text' as const, analyzer: 'autocomplete' as const, search_analyzer: 'simple' as const },
+    items: { type: 'nested' as const, properties: { title: { type: 'text' as const, analyzer: 'autocomplete' as const, search_analyzer: 'simple' as const }, justification: { type: 'text' as const, analyzer: 'autocomplete' as const, search_analyzer: 'simple' as const } } },
     category_slug: { type: 'keyword' as const },
     author_username: { type: 'keyword' as const },
-    author_display_name: { type: 'text' as const },
+    author_display_name: { type: 'text' as const, analyzer: 'autocomplete' as const, search_analyzer: 'simple' as const },
     post_type: { type: 'keyword' as const },
     status: { type: 'keyword' as const },
     slug: { type: 'keyword' as const },
@@ -22,10 +41,10 @@ const MAPPINGS = {
     featured: { type: 'boolean' as const },
   },
   comments: {
-    content: { type: 'text' as const, analyzer: 'english' as const },
+    content: { type: 'text' as const, analyzer: 'autocomplete' as const, search_analyzer: 'simple' as const },
     author_username: { type: 'keyword' as const },
     post_id: { type: 'keyword' as const },
-    post_title: { type: 'text' as const },
+    post_title: { type: 'text' as const, analyzer: 'autocomplete' as const, search_analyzer: 'simple' as const },
     post_slug: { type: 'keyword' as const },
     spark_score: { type: 'float' as const },
     fire_count: { type: 'integer' as const },
@@ -36,14 +55,14 @@ const MAPPINGS = {
     created_at: { type: 'date' as const },
   },
   categories: {
-    name: { type: 'text' as const, analyzer: 'english' as const },
+    name: { type: 'text' as const, analyzer: 'autocomplete' as const, search_analyzer: 'simple' as const },
     slug: { type: 'keyword' as const },
-    description: { type: 'text' as const, analyzer: 'english' as const },
+    description: { type: 'text' as const, analyzer: 'autocomplete' as const, search_analyzer: 'simple' as const },
     post_count: { type: 'integer' as const },
   },
   users: {
     username: { type: 'keyword' as const },
-    display_name: { type: 'text' as const },
+    display_name: { type: 'text' as const, analyzer: 'autocomplete' as const, search_analyzer: 'simple' as const },
     trust_score: { type: 'float' as const },
     created_at: { type: 'date' as const },
   },
@@ -55,7 +74,7 @@ export async function ensureIndices(): Promise<void> {
     const exists = await es.indices.exists({ index: indexName });
     if (!exists) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ES client types don't accept mapped literal unions
-      await es.indices.create({ index: indexName, body: { mappings: { properties } } } as any);
+      await es.indices.create({ index: indexName, body: { settings: SETTINGS, mappings: { properties } } } as any);
       console.log(`[Search] Created index: ${indexName}`);
     }
   }

@@ -4,7 +4,7 @@ import { es } from '../lib/elasticsearch';
 import { INDEX_PREFIX, ensureIndices } from '../elasticsearch/lib/indexer';
 import { bulkReindexPosts, bulkReindexComments, bulkReindexCategories, bulkReindexUsers } from '../elasticsearch/lib/bulkWriter';
 import { adminAuthMiddleware } from '../lib/adminAuth';
-import { searchRateLimit, autocompleteRateLimit } from '../lib/searchRateLimit';
+import { searchRateLimit } from '../lib/searchRateLimit';
 import { searchQuerySchema, autocompleteQuerySchema, adminReindexSchema, adminPreviewQuerySchema, adminDeleteIndexSchema } from '../schemas/search';
 import { Post } from '../models/Post';
 import { Comment } from '../models/Comment';
@@ -156,12 +156,11 @@ router.get(
 
 router.get(
   '/autocomplete',
-  autocompleteRateLimit as any,
   validate(autocompleteQuerySchema),
   async (req: any, res: any) => {
     try {
       const { q } = (req as any).validated;
-      if (!q || q.length < 2) return res.json({ titles: [], categories: [] });
+      if (!q || q.length < 1) return res.json({ titles: [], categories: [] });
 
       const [titleResults, catResults] = await Promise.all([
         es.search({

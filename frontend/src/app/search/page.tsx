@@ -25,7 +25,7 @@ interface SearchResponse {
 }
 interface AutocompleteItem { title?: string; slug?: string; name?: string; highlight?: string; }
 
-const DEBOUNCE_MS = 300;
+const DEBOUNCE_MS = 100;
 
 export default function SearchPage() {
   const sp = useSearchParams();
@@ -58,7 +58,7 @@ export default function SearchPage() {
         setSuggestions({ titles: data.titles || [], categories: data.categories || [] });
         setShowSuggestions(true);
       } catch {}
-    }, 150);
+    }, 100);
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [q]);
 
