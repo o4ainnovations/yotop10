@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
+import { Icon, type LucideIconName } from '@/components/icons/Icon';
 
 interface PanelState { loading: boolean; data: unknown; error?: string; open: boolean }
 
@@ -61,7 +62,7 @@ export default function StatisticsDashboard() {
     return { ...prev, [scope]: { ...c, open: !c.open } };
   });
 
-  const Panel = ({ scope, title, children }: { scope: string; title: string; children: React.ReactNode }) => {
+  const Panel = ({ scope, title, titleIcon, children }: { scope: string; title: string; titleIcon?: LucideIconName; children: React.ReactNode }) => {
     const p = panels[scope];
     const overview = panels.overview.data as Record<string, unknown> | null;
     let hint = '';
@@ -75,7 +76,7 @@ export default function StatisticsDashboard() {
     return (
       <div style={{ border: '1px solid #ddd', borderRadius: '8px', marginBottom: '12px', overflow: 'hidden' }}>
         <button onClick={() => toggle(scope)} style={{ width: '100%', textAlign: 'left', padding: '12px 16px', background: '#f5f5f5', border: 'none', cursor: 'pointer', fontSize: '15px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between' }}>
-          <span>{title}{hint}</span><span>{p.open ? '▾' : '▸'}</span>
+          <span>{titleIcon && <><Icon name={titleIcon} size={16} /> </>}{title}{hint}</span><span>{p.open ? '▾' : '▸'}</span>
         </button>
         {p.open && <div style={{ padding: '16px' }}>{p.loading ? <p>Loading...</p> : p.error ? <p style={{ color: 'red' }}>{p.error}</p> : children}</div>}
       </div>
@@ -99,7 +100,7 @@ export default function StatisticsDashboard() {
     <div style={{ maxWidth: '900px' }}>
       <h2>📊 Platform Statistics</h2>
 
-      <Panel scope="overview" title="📈 Overview">
+      <Panel scope="overview" titleIcon="TrendingUp" title="Overview">
         {overview && <>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '20px' }}>
             {card('Posts', op?.total)}{card('Comments', oc?.total)}{card('Users', ou?.total)}{card('Pending', overview.pending)}{card('Approved', op?.approved)}{card('Rejected', op?.rejected)}
