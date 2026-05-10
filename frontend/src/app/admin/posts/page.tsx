@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
+import { Icon } from '@/components/icons/Icon';
 import { toast } from '@/lib/toast';
 
 interface Post { _id: string; title: string; slug: string; author_username: string; post_type: string; status: string; category_slug: string; comment_count: number; fire_count?: number; view_count: number; created_at: string; published_at?: string; deleted: boolean; featured: boolean; comments_locked: boolean }
@@ -101,7 +102,7 @@ export default function AllPostsPage() {
         <tbody>
           {posts.map(p => (<tr key={p._id} style={{ borderBottom: '1px solid #eee', opacity: p.deleted ? 0.5 : 1 }}>
             <td style={{ padding: '4px' }}><input type="checkbox" checked={selected.has(p._id)} onChange={() => toggleSelect(p._id)} /></td>
-            <td style={{ padding: '4px' }}><a href="#" onClick={e => { e.preventDefault(); window.open(`/${p.slug}`, '_blank'); }} style={{ textDecoration: 'none' }}>{p.title?.substring(0, 50)}{(p.title?.length || 0) > 50 ? '...' : ''}</a>{p.featured && ' ⭐'}{p.comments_locked && ' 🔒'}</td>
+            <td style={{ padding: '4px' }}><a href="#" onClick={e => { e.preventDefault(); window.open(`/${p.slug}`, '_blank'); }} style={{ textDecoration: 'none' }}>{p.title?.substring(0, 50)}{(p.title?.length || 0) > 50 ? '...' : ''}</a>{p.featured && <span style={{ marginLeft: '4px' }}><Icon name="Star" size={12} color="#f57c00" /></span>}{p.comments_locked && <span style={{ marginLeft: '4px' }}><Icon name="Lock" size={12} /></span>}</td>
             <td style={{ padding: '4px' }}>{p.author_username}</td>
             <td style={{ padding: '4px', fontSize: '11px', color: '#666' }}>{p.category_slug}</td>
             <td style={{ padding: '4px', fontSize: '11px' }}>{p.post_type}</td>

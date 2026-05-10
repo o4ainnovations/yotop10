@@ -5,6 +5,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
+import { Icon } from '@/components/icons/Icon';
 
 interface PendingPost { _id: string; title: string; author_username: string; post_type: string; created_at: string; revision_count: number; category_slug: string; intro?: string; collision?: { title: string; submitted_at: string; first: boolean } }
 interface CategoryOption { slug: string; name: string; children?: Array<{ slug: string; name: string }> }
@@ -134,8 +135,8 @@ export default function PendingPostsPage() {
 
     {selected.size > 0 && (<div style={{ background: '#e3f2fd', padding: '8px 12px', borderRadius: '4px', marginBottom: '12px', display: 'flex', gap: '10px', alignItems: 'center' }}>
       <strong>{selected.size} selected</strong>
-      <button onClick={() => bulkAction('approve')} disabled={actionLoading} style={{ padding: '4px 12px', cursor: 'pointer' }}>✅ Approve</button>
-      <button onClick={() => setShowRejectModal(true)} disabled={actionLoading} style={{ padding: '4px 12px', cursor: 'pointer' }}>❌ Reject</button>
+      <button onClick={() => bulkAction('approve')} disabled={actionLoading} style={{ padding: '4px 12px', cursor: 'pointer' }}><Icon name="Check" size={14} color="#2e7d32" /> Approve</button>
+      <button onClick={() => setShowRejectModal(true)} disabled={actionLoading} style={{ padding: '4px 12px', cursor: 'pointer' }}><Icon name="X" size={14} color="#c62828" /> Reject</button>
     </div>)}
 
     {loading ? <p>Loading...</p> : posts.length === 0 ? <p>No pending posts.</p> : (
@@ -149,17 +150,17 @@ export default function PendingPostsPage() {
             <span style={{ width: '30px' }}><input type="checkbox" checked={selected.has(p._id)} onChange={() => toggleSelect(p._id)} onClick={e => e.stopPropagation()} /></span>
             <span style={{ flex: 1, fontWeight: 'bold', fontSize: '13px' }} onClick={() => toggleExpand(p._id)}>
               {p.title}
-              {p.collision && <span style={{ background: '#ffcc02', color: '#333', padding: '1px 5px', borderRadius: '3px', fontSize: '10px', marginLeft: '6px', fontWeight: 'bold' }} title={`Similar pending: ${p.collision.title} (submitted ${new Date(p.collision.submitted_at).toLocaleDateString()})`}>⚡ COLLISION → submitted later</span>}
+              {p.collision && <span style={{ background: '#ffcc02', color: '#333', padding: '1px 5px', borderRadius: '3px', fontSize: '10px', marginLeft: '6px', fontWeight: 'bold' }} title={`Similar pending: ${p.collision.title} (submitted ${new Date(p.collision.submitted_at).toLocaleDateString()})`}><Icon name="Zap" size={10} /> COLLISION</span>}
               {p.revision_count > 0 && <span style={{ background: '#e3f2fd', color: '#1565c0', padding: '1px 4px', borderRadius: '3px', fontSize: '10px' }}>×{p.revision_count}</span>}
             </span>
             <span style={{ width: '90px', fontSize: '11px', color: '#666' }}>{p.post_type}</span>
             <span style={{ width: '90px', fontSize: '11px' }}>{p.author_username}</span>
             <span style={{ width: '50px', fontSize: '11px', color: ageColor(p.created_at) }}>{ageStr(p.created_at)}</span>
             <span style={{ width: '140px', display: 'flex', gap: '4px' }}>
-              <button onClick={e => { e.stopPropagation(); singleAction(p._id, 'approve'); }} disabled={actionLoading} style={{ fontSize: '11px', padding: '2px 6px', cursor: 'pointer' }}>✅</button>
-              <button onClick={e => { e.stopPropagation(); router.push(`/admin/posts/pending/${p._id}`); }} style={{ fontSize: '11px', padding: '2px 6px', cursor: 'pointer' }}>🔍</button>
-              <button onClick={e => { e.stopPropagation(); setShowRejectModal(true); setSelected(new Set([p._id])); }} disabled={actionLoading} style={{ fontSize: '11px', padding: '2px 6px', cursor: 'pointer' }}>❌</button>
-              <button onClick={e => { e.stopPropagation(); setShowRetryModal(true); setSelected(new Set([p._id])); }} disabled={actionLoading} style={{ fontSize: '11px', padding: '2px 6px', cursor: 'pointer' }}>🔄</button>
+              <button onClick={e => { e.stopPropagation(); singleAction(p._id, 'approve'); }} disabled={actionLoading} style={{ fontSize: '11px', padding: '2px 6px', cursor: 'pointer' }}><Icon name="Check" size={14} color="#2e7d32" /></button>
+              <button onClick={e => { e.stopPropagation(); router.push(`/admin/posts/pending/${p._id}`); }} style={{ fontSize: '11px', padding: '2px 6px', cursor: 'pointer' }}><Icon name="Search" size={14} /></button>
+              <button onClick={e => { e.stopPropagation(); setShowRejectModal(true); setSelected(new Set([p._id])); }} disabled={actionLoading} style={{ fontSize: '11px', padding: '2px 6px', cursor: 'pointer' }}><Icon name="X" size={14} color="#c62828" /></button>
+              <button onClick={e => { e.stopPropagation(); setShowRetryModal(true); setSelected(new Set([p._id])); }} disabled={actionLoading} style={{ fontSize: '11px', padding: '2px 6px', cursor: 'pointer' }}><Icon name="RefreshCw" size={14} /></button>
             </span>
           </div>
           {expanded.has(p._id) && (<div style={{ padding: '10px 10px 10px 40px', background: '#f9f9f9', borderBottom: '1px solid #eee', fontSize: '12px' }}>
@@ -168,9 +169,9 @@ export default function PendingPostsPage() {
               <p><strong>Intro:</strong> {previewCache[p._id].intro.substring(0, 200)}{(previewCache[p._id].intro?.length || 0) > 200 ? '...' : ''}</p>
               <div>{previewCache[p._id].items.map(i => <div key={i.rank} style={{ margin: '4px 0' }}><strong>#{i.rank}</strong> {i.title} — {i.justification.substring(0, 80)}</div>)}</div>
               <div style={{ marginTop: '8px', display: 'flex', gap: '6px' }}>
-                <button onClick={() => singleAction(p._id, 'approve')} disabled={actionLoading} style={{ fontSize: '12px', padding: '4px 10px', cursor: 'pointer' }}>✅ Approve</button>
-                <button onClick={() => { setSelected(new Set([p._id])); setShowRejectModal(true); }} disabled={actionLoading} style={{ fontSize: '12px', padding: '4px 10px', cursor: 'pointer' }}>❌ Reject</button>
-                <button onClick={() => { setSelected(new Set([p._id])); setShowRetryModal(true); }} disabled={actionLoading} style={{ fontSize: '12px', padding: '4px 10px', cursor: 'pointer' }}>🔄 Request Revision</button>
+                <button onClick={() => singleAction(p._id, 'approve')} disabled={actionLoading} style={{ fontSize: '12px', padding: '4px 10px', cursor: 'pointer' }}><Icon name="Check" size={14} color="#2e7d32" /> Approve</button>
+                <button onClick={() => { setSelected(new Set([p._id])); setShowRejectModal(true); }} disabled={actionLoading} style={{ fontSize: '12px', padding: '4px 10px', cursor: 'pointer' }}><Icon name="X" size={14} color="#c62828" /> Reject</button>
+                <button onClick={() => { setSelected(new Set([p._id])); setShowRetryModal(true); }} disabled={actionLoading} style={{ fontSize: '12px', padding: '4px 10px', cursor: 'pointer' }}><Icon name="RefreshCw" size={14} /> Request Revision</button>
               </div>
             </div> : <p>Loading preview...</p>}
           </div>)}
@@ -184,7 +185,7 @@ export default function PendingPostsPage() {
       <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)}>Next</button>
     </div>
 
-    <p style={{ marginTop: '12px', fontSize: '11px', color: '#999' }}>⌨️ Shortcuts: <strong>A</strong>=Approve first &nbsp; <strong>R</strong>=Reject first &nbsp; <strong>E</strong>=Request revision for first</p>
+    <p style={{ marginTop: '12px', fontSize: '11px', color: '#999' }}><Icon name="Keyboard" size={12} /> Shortcuts: <strong>A</strong>=Approve first &nbsp; <strong>R</strong>=Reject first &nbsp; <strong>E</strong>=Request revision for first</p>
 
     {showRejectModal && <div style={modalOverlay} onClick={() => setShowRejectModal(false)}>
       <div style={modalBox} onClick={e => e.stopPropagation()}>

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
+import { Icon } from '@/components/icons/Icon';
 
 interface Comment { _id: string; id: string; content: string; author_username: string; post_id: string; post_slug: string | null; post_title: string | null; spark_score: number; fire_count: number; reply_count: number; depth: number; is_item_anchored: boolean; depth_badge: string | null; created_at: string; deleted: boolean; hidden: boolean; highlighted: boolean; flag_type: string | null; flag_evidence: Record<string, unknown> | null; }
 
@@ -77,9 +78,9 @@ export default function AdminCommentsPage() {
   const isAutoFlag = (type: string | null) => type && type !== 'manual';
 
   const flagBadge = (type: string) => {
-    const map: Record<string, { label: string; color: string }> = { spam_repetition: { label: '⚠️ Spam', color: '#e65100' }, spam_link_first: { label: '🔗 Spam', color: '#e65100' }, brigade_referrer: { label: '🚨 Brigade', color: '#c62828' }, brigade_fresh: { label: '🚨 Brigade', color: '#c62828' } };
-    const m = map[type] || { label: '⚠️', color: '#999' };
-    return <span style={{ background: m.color, color: 'white', padding: '1px 5px', borderRadius: '3px', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer' }}>{m.label}</span>;
+    const map: Record<string, { label: string; icon: string; color: string }> = { spam_repetition: { label: 'Spam', icon: 'AlertTriangle', color: '#e65100' }, spam_link_first: { label: 'Spam', icon: 'Link', color: '#e65100' }, brigade_referrer: { label: 'Brigade', icon: 'BellDot', color: '#c62828' }, brigade_fresh: { label: 'Brigade', icon: 'BellDot', color: '#c62828' } };
+    const m = map[type] || { label: '', icon: 'AlertTriangle', color: '#999' };
+    return <span style={{ background: m.color, color: 'white', padding: '1px 5px', borderRadius: '3px', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer' }}><Icon name={m.icon as any} size={10} color="#fff" /> {m.label}</span>;
   };
 
   function getRecommended(comment: Comment): { minutes: number; trust_penalty: number } {
@@ -173,7 +174,7 @@ export default function AdminCommentsPage() {
               </a>
             </td>
             <td style={{ padding: '4px' }}>{c.author_username}</td>
-            <td style={{ padding: '4px', fontSize: '11px' }}>{c.is_item_anchored ? '🎯 Item' : '💬 Post'} {c.flag_type && isAutoFlag(c.flag_type) && <span onClick={e => { e.stopPropagation(); dismissFlag(c._id); }} style={{ cursor: 'pointer' }}>{flagBadge(c.flag_type)}</span>}{c.flag_type === 'manual' && <span>{flagBadge(c.flag_type)}</span>}</td>
+            <td style={{ padding: '4px', fontSize: '11px' }}>{c.is_item_anchored ? <><Icon name="Target" size={11} /> Item</> : <><Icon name="MessageCircle" size={11} /> Post</>} {c.flag_type && isAutoFlag(c.flag_type) && <span onClick={e => { e.stopPropagation(); dismissFlag(c._id); }} style={{ cursor: 'pointer' }}>{flagBadge(c.flag_type)}</span>}{c.flag_type === 'manual' && <span>{flagBadge(c.flag_type)}</span>}</td>
             <td style={{ padding: '4px' }}>{c.fire_count}</td>
             <td style={{ padding: '4px' }}>{c.reply_count}</td>
             <td style={{ padding: '4px', fontSize: '11px' }}>{Number(c.spark_score).toFixed(2)}</td>
