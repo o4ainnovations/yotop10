@@ -26,8 +26,6 @@ export default function AdminCategoriesPage() {
   const [editName, setEditName] = useState('');
   const [editSlug, setEditSlug] = useState('');
   const [editDesc, setEditDesc] = useState('');
-  const [editIcon, setEditIcon] = useState('');
-  const [editParent, setEditParent] = useState('');
   const [editStatus, setEditStatus] = useState('published');
   const [editSort, setEditSort] = useState(0);
   const [editFeatured, setEditFeatured] = useState(false);
@@ -38,7 +36,6 @@ export default function AdminCategoriesPage() {
   const [newName, setNewName] = useState('');
   const [newSlug, setNewSlug] = useState('');
   const [newParent, setNewParent] = useState('');
-  const [newIcon, setNewIcon] = useState('');
 
   // Analytics
   const [analytics, setAnalytics] = useState<{ distribution: Array<{ name: string; total_posts: number }> } | null>(null);
@@ -76,21 +73,19 @@ export default function AdminCategoriesPage() {
     setEditName(cat.name);
     setEditSlug(cat.slug);
     setEditDesc(cat.description || '');
-    setEditIcon(cat.icon || '');
-    setEditParent(cat.parent_id || '');
     setEditStatus(cat.status || 'published');
     setEditSort(cat.sort_order || 0);
     setEditFeatured(cat.is_featured || false);
   };
 
   const handleSave = async () => {
-    if (!selected) return;
+    if (!selected || !selected.parent_id) return;
     setSaving(true);
     try {
       await apiFetch(`/admin/categories/${selected.id}`, {
         method: 'PATCH', body: JSON.stringify({
           name: editName, slug: editSlug, description: editDesc,
-          icon: editIcon, is_featured: editFeatured, sort_order: editSort, status: editStatus,
+          is_featured: editFeatured, sort_order: editSort, status: editStatus,
         }),
       });
       toast.success('Category updated');
@@ -105,10 +100,10 @@ export default function AdminCategoriesPage() {
     try {
       await apiFetch('/admin/categories', {
         method: 'POST',
-        body: JSON.stringify({ name: newName.trim(), slug: newSlug.trim() || undefined, icon: newIcon, parent_id: newParent || undefined }),
+        body: JSON.stringify({ name: newName.trim(), slug: newSlug.trim() || undefined, parent_id: newParent || undefined }),
       });
       toast.success('Category created');
-      setShowCreate(false); setNewName(''); setNewSlug(''); setNewIcon(''); setNewParent('');
+      setShowCreate(false); setNewName(''); setNewSlug(''); setNewParent('');
       fetchCats();
     } catch { toast.error('Failed'); }
   };
@@ -173,7 +168,6 @@ export default function AdminCategoriesPage() {
         <div style={{ marginBottom: '16px', padding: '14px', background: '#f5f5f5', borderRadius: '6px', display: 'flex', gap: '10px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <div><label style={{ fontSize: '11px', display: 'block' }}>Name *</label><input value={newName} onChange={e => setNewName(e.target.value)} style={inp} /></div>
           <div><label style={{ fontSize: '11px', display: 'block' }}>Slug</label><input value={newSlug} onChange={e => setNewSlug(e.target.value)} style={inp} /></div>
-          <div><label style={{ fontSize: '11px', display: 'block' }}>Icon</label><input value={newIcon} onChange={e => setNewIcon(e.target.value)} style={{ ...inp, width: '60px' }} /></div>
           <div><label style={{ fontSize: '11px', display: 'block' }}>Parent</label><select value={newParent} onChange={e => setNewParent(e.target.value)} style={inp}><option value="">None (parent)</option>{parentOptions.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
           <button onClick={handleCreate} style={btn()}>Create</button>
         </div>
@@ -218,35 +212,35 @@ export default function AdminCategoriesPage() {
               <div style={{ border: '1px solid #eee', borderRadius: '6px', padding: '16px' }}>
                 <h2 style={{ fontSize: '16px', margin: '0 0 12px' }}>{selected.icon || '📁'} {selected.name}</h2>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '13px' }}>
-                  <div><label style={lbl}>Name</label><input value={editName} onChange={e => setEditName(e.target.value)} style={{ width: '100%', ...inp }} /></div>
-                  <div><label style={lbl}>Slug</label><input value={editSlug} onChange={e => setEditSlug(e.target.value)} style={{ width: '100%', ...inp }} /></div>
-                  <div><label style={lbl}>Icon</label><input value={editIcon} onChange={e => setEditIcon(e.target.value)} style={{ width: '100%', ...inp }} /></div>
-                  <div><label style={lbl}>Parent</label>
-                    <select value={editParent} onChange={e => setEditParent(e.target.value)} style={{ width: '100%', ...inp }}>
-                      <option value="">None (parent)</option>
-                      {parentOptions.filter(p => p.id !== selected.id).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    </select>
-                  </div>
+                  <div><label style={lbl}>Name</label><input value={editName} onChange={e => setEditName(e.target.value)} disabled={!selected.parent_id} style={{ width: '100%', ...inp, background: selected.parent_id ? '#fff' : '#f5f5f5' }} /></div>
+                  <div><label style={lbl}>Slug</label><input value={editSlug} onChange={e => setEditSlug(e.target.value)} disabled={!selected.parent_id} style={{ width: '100%', ...inp, background: selected.parent_id ? '#fff' : '#f5f5f5' }} /></div>
                   <div><label style={lbl}>Status</label>
-                    <select value={editStatus} onChange={e => setEditStatus(e.target.value)} style={{ width: '100%', ...inp }}>
+                    <select value={editStatus} onChange={e => setEditStatus(e.target.value)} disabled={!selected.parent_id} style={{ width: '100%', ...inp, background: selected.parent_id ? '#fff' : '#f5f5f5' }}>
                       <option value="published">Published</option><option value="draft">Draft</option><option value="hidden">Hidden</option>
                     </select>
                   </div>
-                  <div><label style={lbl}>Sort Order</label><input type="number" value={editSort} onChange={e => setEditSort(parseInt(e.target.value) || 0)} style={{ width: '80px', ...inp }} /></div>
-                  <div><label style={lbl}><input type="checkbox" checked={editFeatured} onChange={e => setEditFeatured(e.target.checked)} style={{ marginRight: '4px' }} />Featured</label></div>
+                  <div><label style={lbl}>Sort Order</label><input type="number" value={editSort} onChange={e => setEditSort(parseInt(e.target.value) || 0)} disabled={!selected.parent_id} style={{ width: '80px', ...inp, background: selected.parent_id ? '#fff' : '#f5f5f5' }} /></div>
+                  <div><label style={lbl}><input type="checkbox" checked={editFeatured} onChange={e => setEditFeatured(e.target.checked)} disabled={!selected.parent_id} />Featured</label></div>
                 </div>
+                {!selected.parent_id && (
+                  <div style={{ marginTop: '8px', padding: '8px 12px', background: '#fff3e0', borderRadius: '4px', fontSize: '12px', color: '#e65100' }}>
+                    ⚠️ Parent categories are locked. Only child categories can be edited.
+                  </div>
+                )}
                 <div style={{ marginTop: '14px', fontSize: '12px', color: '#666' }}>
                   Posts: <strong>{selected.post_count}</strong> · Health: <strong style={{ color: selected.grown ? '#2e7d32' : '#999' }}>{selected.health_score || '—'}</strong>
                   {selected.grown && ' ✅ Growing'}
                   {selected.dead && ' ⚠️ Dead'}
                 </div>
-                <div style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  <button onClick={handleSave} disabled={saving} style={btn(saving)}>{saving ? '...' : 'Save'}</button>
-                  <button onClick={() => handleDuplicate(selected.id)} style={{ ...btn(), background: '#f57c00' }}>Duplicate</button>
-                  {selected.status !== 'published' && <button onClick={() => handlePublish(selected.id)} style={{ ...btn(), background: '#2e7d32' }}>Publish</button>}
-                  {selected.status !== 'hidden' && <button onClick={() => handleHide(selected.id)} style={{ ...btn(), background: '#666' }}>Hide</button>}
-                  <button onClick={() => handleArchive(selected.id)} style={{ ...btn(), background: '#c62828' }}>Archive</button>
-                </div>
+                {selected.parent_id && (
+                  <div style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button onClick={handleSave} disabled={saving} style={btn(saving)}>{saving ? '...' : 'Save'}</button>
+                    <button onClick={() => handleDuplicate(selected.id)} style={{ ...btn(), background: '#f57c00' }}>Duplicate</button>
+                    {selected.status !== 'published' && <button onClick={() => handlePublish(selected.id)} style={{ ...btn(), background: '#2e7d32' }}>Publish</button>}
+                    {selected.status !== 'hidden' && <button onClick={() => handleHide(selected.id)} style={{ ...btn(), background: '#666' }}>Hide</button>}
+                    <button onClick={() => handleArchive(selected.id)} style={{ ...btn(), background: '#c62828' }}>Archive</button>
+                  </div>
+                )}
               </div>
             ) : (
               <div style={{ padding: '60px', textAlign: 'center', color: '#999', fontSize: '14px' }}>
