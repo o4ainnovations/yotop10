@@ -1574,6 +1574,7 @@ router.post('/alerts/thresholds', async (req, res) => {
     const exists = await AlertThreshold.findOne({ metric: body.metric });
     if (exists) return res.status(409).json({ code: 'DUPLICATE', error: `Threshold for ${body.metric} already exists. Use PATCH to update.` });
     const t = await AlertThreshold.create(body);
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'create_threshold', ip: getClientIp(req), metadata: { metric: body.metric, threshold: body.threshold, operator: body.operator, severity: body.severity }, user_agent: req.headers['user-agent'] || '' });
     res.status(201).json({ success: true, threshold: t });
   } catch (e: any) {
     if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
@@ -1586,6 +1587,7 @@ router.patch('/alerts/thresholds/:id', async (req, res) => {
     const body = updateThresholdSchema.parse(req.body);
     const t = await AlertThreshold.findByIdAndUpdate(req.params.id, { $set: body }, { new: true });
     if (!t) return res.status(404).json({ code: 'NOT_FOUND', error: 'Threshold not found' });
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'update_threshold', ip: getClientIp(req), metadata: { id: req.params.id, changes: body }, user_agent: req.headers['user-agent'] || '' });
     res.json({ success: true, threshold: t });
   } catch (e: any) {
     if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
@@ -1597,6 +1599,7 @@ router.delete('/alerts/thresholds/:id', async (req, res) => {
   try {
     const t = await AlertThreshold.findByIdAndDelete(req.params.id);
     if (!t) return res.status(404).json({ code: 'NOT_FOUND', error: 'Threshold not found' });
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'delete_threshold', ip: getClientIp(req), metadata: { id: req.params.id }, user_agent: req.headers['user-agent'] || '' });
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: 'Failed to delete threshold' }); }
 });
@@ -1607,6 +1610,7 @@ router.patch('/alerts/thresholds/:id/toggle', async (req, res) => {
     if (!t) return res.status(404).json({ code: 'NOT_FOUND', error: 'Threshold not found' });
     t.enabled = !t.enabled;
     await t.save();
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'toggle_threshold', ip: getClientIp(req), metadata: { id: req.params.id, metric: t.metric, enabled: t.enabled }, user_agent: req.headers['user-agent'] || '' });
     res.json({ success: true, enabled: t.enabled });
   } catch (e) { res.status(500).json({ error: 'Failed to toggle threshold' }); }
 });
