@@ -76,7 +76,7 @@ export default function StatisticsDashboard() {
     return (
       <div style={{ border: '1px solid #ddd', borderRadius: '8px', marginBottom: '12px', overflow: 'hidden' }}>
         <button onClick={() => toggle(scope)} style={{ width: '100%', textAlign: 'left', padding: '12px 16px', background: '#f5f5f5', border: 'none', cursor: 'pointer', fontSize: '15px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between' }}>
-          <span>{titleIcon && <><Icon name={titleIcon} size={16} /> </>}{title}{hint}</span><span>{p.open ? '▾' : '▸'}</span>
+          <span>{titleIcon && <><Icon name={titleIcon} size={16} /> </>}{typeof title === 'string' ? title.replace(/^[\u{1F300}-\u{1F9FF}\u{2600}-\u{27BF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2702}-\u{27B0}\u{1F900}-\u{1F9FF}\u{2000}-\u{3300}\u{FE00}-\u{FEFF}]+/, '').trim() : title}{hint}</span><span>{p.open ? '▾' : '▸'}</span>
         </button>
         {p.open && <div style={{ padding: '16px' }}>{p.loading ? <p>Loading...</p> : p.error ? <p style={{ color: 'red' }}>{p.error}</p> : children}</div>}
       </div>
@@ -100,7 +100,7 @@ export default function StatisticsDashboard() {
     <div style={{ maxWidth: '900px' }}>
       <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Icon name="BarChart3" size={22} /> Platform Statistics</h2>
 
-      <Panel scope="overview" title="📈 Overview">
+      <Panel scope="overview" titleIcon="TrendingUp" title="📈 Overview">
         {overview && <>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '20px' }}>
             {card('Posts', op?.total)}{card('Comments', oc?.total)}{card('Users', ou?.total)}{card('Pending', overview.pending)}{card('Approved', op?.approved)}{card('Rejected', op?.rejected)}
@@ -114,7 +114,7 @@ export default function StatisticsDashboard() {
         </>}
       </Panel>
 
-      <Panel scope="health" title="🫀 Platform Health">
+      <Panel scope="health" titleIcon="HeartPulse" title="🫀 Platform Health">
         {panels.health.data ? ((): React.ReactNode => { const d = panels.health.data as Record<string, unknown>; const s = d.services as Record<string, unknown>; const mem = d.memory as Record<string, number>; const crons = d.crons as Record<string, Record<string, string>>;
           const ups = Number(d.uptime_seconds) || 0;
           const uptimeHrs = Math.floor(ups / 3600); const uptimeMin = Math.floor((ups % 3600) / 60);
@@ -132,7 +132,7 @@ export default function StatisticsDashboard() {
         })() : null}
       </Panel>
 
-      <Panel scope="content" title="📂 Content Pipeline + Age Distribution">
+      <Panel scope="content" titleIcon="Folders" title="📂 Content Pipeline + Age Distribution">
         {panels.content.data ? ((): React.ReactNode => { const d = panels.content.data as Record<string, unknown>; const p = d.posts as Record<string, number>; const ag = d.approval_gap as Record<string, number>; const age = d.age_distribution as Record<string, number>; const tp = arr(d.throughput_7d) as Array<{ day: number; count: number }>;
           const gapContext = ag?.avg_hours ? (ag.avg_hours < 1 ? 'Same-day moderation (excellent).' : ag.avg_hours < 24 ? 'Within 24 hours (good).' : ag.avg_hours < 72 ? '2-3 days (acceptable).' : 'Over 3 days (backlog risk).') : '';
           return <>
@@ -148,7 +148,7 @@ export default function StatisticsDashboard() {
         })() : null}
       </Panel>
 
-      <Panel scope="community" title="👥 Community + Fan-Out">
+      <Panel scope="community" titleIcon="Users" title="👥 Community + Fan-Out">
         {panels.community.data ? ((): React.ReactNode => { const d = panels.community.data as Record<string, unknown>; const u = d.users as Record<string, number>; const tr = d.trust as Record<string, number>; const ti = d.user_tiers as Record<string, number>;
           return <>
             <L>Total users: <B>{n(u?.total)}</B>. New today: <B>{n(u?.new_today)}</B>. New this week: <B>{n(u?.new_this_week)}</B>.</L>
@@ -179,7 +179,7 @@ export default function StatisticsDashboard() {
         })() : null}
       </Panel>
 
-      <Panel scope="categories" title="📁 Category Heatmap">
+      <Panel scope="categories" titleIcon="Folder" title="📁 Category Heatmap">
         {panels.categories.data ? ((): React.ReactNode => { const d = panels.categories.data as Record<string, unknown>; const top = arr(d.top_by_posts) as Array<{ slug: string; post_count: number }>; const eng = arr(d.per_category_engagement) as Array<{ slug: string; post_count: number; avg_comments: number; avg_views: number }>;
           return <>
             <L>Utilization: <B>{n(d.utilization_pct)}%</B>. Empty children: <B>{n(d.empty_children)}</B>.</L>
@@ -191,7 +191,7 @@ export default function StatisticsDashboard() {
         })() : null}
       </Panel>
 
-      <Panel scope="trends" title="📉 Trends with Deltas">
+      <Panel scope="trends" titleIcon="TrendingDown" title="📉 Trends with Deltas">
         {panels.trends.data ? ((): React.ReactNode => { const d = panels.trends.data as Record<string, unknown>; const weeks = arr(d.weeks) as Array<Record<string, unknown>>;
           const arrow = (dir: string) => dir === 'up' ? '↑' : dir === 'down' ? '↓' : '→';
           const c = (col: string) => col === 'green' ? '#2e7d32' : col === 'red' ? '#c62828' : '#999';
@@ -222,7 +222,7 @@ export default function StatisticsDashboard() {
         })() : null}
       </Panel>
 
-      <Panel scope="traffic" title="🌐 Traffic Analytics">
+      <Panel scope="traffic" titleIcon="Globe" title="🌐 Traffic Analytics">
         {panels.traffic.data ? ((): React.ReactNode => { const d = panels.traffic.data as Record<string, unknown>; const refs = arr(d.top_referrers) as Array<{ domain: string; count: number }>; const peaks = arr(d.peak_hours) as Array<{ hour: number; count: number }>; const countries = arr(d.countries) as Array<{ code: string; count: number; population: number; visits_per_million: number }>; const engaged = arr(d.top_engaged) as Array<{ slug: string; title: string; ratio: number }>; const items = arr(d.top_engaged_items) as Array<{ title: string; rank: number; comment_count: number }>; const newUser = arr(d.new_users_by_referrer) as Array<{ source: string; count: number }>; const paths = arr(d.top_paths) as Array<{ path: string; count: number }>;
           const browserStr = d.browsers ? Object.entries(d.browsers as Record<string, number>).map(([k,v]) => `${k}: ${v}`).join(' · ') : 'N/A';
           const osStr = d.os ? Object.entries(d.os as Record<string, number>).map(([k,v]) => `${k}: ${v}`).join(' · ') : 'N/A';
@@ -246,7 +246,7 @@ export default function StatisticsDashboard() {
         })() : null}
       </Panel>
 
-      <Panel scope="submissions" title="✍️ Submission Patterns">
+      <Panel scope="submissions" titleIcon="PenLine" title="✍️ Submission Patterns">
         {panels.submissions.data ? ((): React.ReactNode => { const d = panels.submissions.data as Record<string, unknown>; const hr = arr(d.by_hour) as Array<{ hour: number; count: number }>; const tp = arr(d.by_type) as Array<{ type: string; count: number }>; const tm = d.type_migration as Record<string, unknown>;
           return <>
             <L>Avg items per post: <B>{n(d.avg_items_per_post)}</B>.</L>
@@ -272,7 +272,7 @@ export default function StatisticsDashboard() {
         })() : null}
       </Panel>
 
-      <Panel scope="lurkers" title="👻 Lurker Analysis">
+      <Panel scope="lurkers" titleIcon="EyeOff" title="👻 Lurker Analysis">
         {panels.lurkers.data ? ((): React.ReactNode => { const d = panels.lurkers.data as Record<string, unknown>;
           return <>
             <L>Total lurkers: <B>{n(d.total_lurkers)}</B>.</L>
@@ -292,7 +292,7 @@ export default function StatisticsDashboard() {
         })() : null}
       </Panel>
 
-      <Panel scope="reengagement" title="🔁 Re-Engagement Triggers">
+      <Panel scope="reengagement" titleIcon="Repeat" title="🔁 Re-Engagement Triggers">
         {panels.reengagement.data ? ((): React.ReactNode => { const d = panels.reengagement.data as Record<string, unknown>; const triggers = arr(d.triggers) as Array<{ path: string; count: number }>;
           return <>
             <L>Re-engaged users (30+ day gap): <B>{n(d.reengaged_users)}</B>.</L>
@@ -301,7 +301,7 @@ export default function StatisticsDashboard() {
         })() : null}
       </Panel>
 
-      <Panel scope="alerts" title="🚨 Alerts">
+      <Panel scope="alerts" titleIcon="BellDot" title="🚨 Alerts">
         {panels.alerts.data ? ((): React.ReactNode => { const d = panels.alerts.data as Record<string, unknown>; const th = arr(d.thresholds) as Array<{ metric: string; threshold: number; operator: string; severity: string; enabled: boolean }>; const active = arr(d.active) as Array<{ metric: string; severity: string; value: number; threshold: number }>; const hist = arr(d.history) as Array<{ metric: string; severity: string; triggered_at: string; resolved_at: string | null }>;
           return <>
             {active.length > 0 && <><L>🔴 <B>{active.length}</B> active alerts:</L>
@@ -314,7 +314,7 @@ export default function StatisticsDashboard() {
         })() : null}
       </Panel>
 
-      <Panel scope="notifications" title="🔔 Notification Analytics">
+      <Panel scope="notifications" titleIcon="Bell" title="🔔 Notification Analytics">
         {panels.notifications.data ? ((): React.ReactNode => { const d = panels.notifications.data as Record<string, unknown>; const bt = arr(d.by_type) as Array<{ type: string; sent: number; delivered: number; clicked: number }>;
           return <>
             <L>Total sent: <B>{n(d.total_sent)}</B>. Delivered: <B>{n(d.total_delivered)}</B> ({n(d.delivery_rate)}%). Clicked: <B>{n(d.total_clicked)}</B> ({n(d.click_rate)}%).</L>
@@ -341,7 +341,7 @@ export default function StatisticsDashboard() {
         })() : null}
       </Panel>
 
-      <Panel scope="search/queries" title="📊 Top Queries">
+      <Panel scope="search/queries" titleIcon="BarChart3" title="📊 Top Queries">
         {panels['search/queries'].data ? ((): React.ReactNode => {
           const d = panels['search/queries'].data as Record<string, unknown>;
           const top = arr(d.top_queries) as Array<{ query: string; count: number; zero_result_pct: number }>;
@@ -356,7 +356,7 @@ export default function StatisticsDashboard() {
         })() : null}
       </Panel>
 
-      <Panel scope="search/relevance" title="🎯 Relevance">
+      <Panel scope="search/relevance" titleIcon="Target" title="🎯 Relevance">
         {panels['search/relevance'].data ? ((): React.ReactNode => {
           const d = panels['search/relevance'].data as Record<string, unknown>;
           const ctr = arr(d.ctr_by_position) as number[];
@@ -370,7 +370,7 @@ export default function StatisticsDashboard() {
         })() : null}
       </Panel>
 
-      <Panel scope="search/trends" title="📈 Search Trends">
+      <Panel scope="search/trends" titleIcon="TrendingUp" title="📈 Search Trends">
         {panels['search/trends'].data ? ((): React.ReactNode => {
           const d = panels['search/trends'].data as Record<string, unknown>;
           const vol = arr(d.volume) as Array<{ date: string; count: number }>;
@@ -383,7 +383,7 @@ export default function StatisticsDashboard() {
         })() : null}
       </Panel>
 
-      <Panel scope="search/infrastructure" title="⚙️ Search Infrastructure">
+      <Panel scope="search/infrastructure" titleIcon="Settings" title="⚙️ Search Infrastructure">
         {panels['search/infrastructure'].data ? ((): React.ReactNode => {
           const d = panels['search/infrastructure'].data as Record<string, unknown>;
           const gap = arr(d.index_gap_trend) as Array<{ date: string; gap_pct: number; dlq: number }>;
@@ -396,7 +396,7 @@ export default function StatisticsDashboard() {
         })() : null}
       </Panel>
 
-      <Panel scope="search/behavior" title="👤 Search Behavior">
+      <Panel scope="search/behavior" titleIcon="User" title="👤 Search Behavior">
         {panels['search/behavior'].data ? ((): React.ReactNode => {
           const d = panels['search/behavior'].data as Record<string, unknown>;
           return <>
