@@ -653,8 +653,8 @@ Single unified notification system that handles all user feedback across the ent
   - By action type
   - By admin user
   - By date range
-- [ ] Retention: 90 days default
-- [ ] Export: CSV export for compliance
+- [x] Retention: 90 days default (TTL index on AuditLog.created_at)
+- [x] Export: CSV export for compliance (GET /api/admin/audit-logs/export + frontend button)
 
 #### M10.13 — Frontend Admin Pages
 - [x] `/admin` — Redirect to dashboard (or login if not authenticated)

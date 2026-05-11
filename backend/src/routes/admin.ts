@@ -604,6 +604,33 @@ router.get('/audit-logs', async (req, res) => {
   }
 });
 
+// GET /api/admin/audit-logs/export — CSV export for compliance
+router.get('/audit-logs/export', async (req, res) => {
+  try {
+    const query: Record<string, unknown> = {};
+    if (req.query.action) query.action = req.query.action;
+    if (req.query.admin_id) query.admin_id = req.query.admin_id;
+    if (req.query.date_from || req.query.date_to) {
+      query.created_at = {};
+      if (req.query.date_from) (query.created_at as Record<string, unknown>).$gte = new Date(req.query.date_from as string);
+      if (req.query.date_to) (query.created_at as Record<string, unknown>).$lte = new Date(req.query.date_to as string);
+    }
+
+    const logs = await AuditLog.find(query).sort({ created_at: -1 }).limit(5000).lean();
+    const header = 'ID,AdminID,Action,IP,UserAgent,Metadata,CreatedAt\n';
+    const rows = logs.map((l: Record<string, unknown>) => [
+      `"${l._id}"`, `"${l.admin_id || ''}"`, `"${l.action}"`, `"${l.ip || ''}"`,
+      `"${((l.user_agent as string) || '').replace(/"/g, '""')}"`,
+      `"${JSON.stringify(l.metadata || {}).replace(/"/g, '""')}"`,
+      l.created_at,
+    ].join(',')).join('\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="audit_logs_export_${new Date().toISOString().substring(0, 10)}.csv"`);
+    res.send(header + rows);
+  } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
 // ═══ M10.4 All Posts Management ══════════════════════════════════
 
 // 1. List all posts

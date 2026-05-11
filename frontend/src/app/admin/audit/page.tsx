@@ -46,14 +46,20 @@ export default function AdminAuditPage() {
     <div>
       <h2>Audit Logs</h2>
 
-      <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
+      <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
         <select value={filterAction} onChange={(e) => { setFilterAction(e.target.value); setPage(1); }}
           style={{ padding: '8px' }}>
           <option value="">All Actions</option>
           <option value="login_success">Login Success</option>
           <option value="login_failed">Login Failed</option>
           <option value="logout">Logout</option>
+          <option value="approve_post">Approve Post</option>
+          <option value="reject_post">Reject Post</option>
         </select>
+        <button onClick={() => window.open('/api/admin/audit-logs/export', '_blank')}
+          style={{ padding: '8px 16px', background: '#2e7d32', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>
+          Export CSV
+        </button>
       </div>
 
       {loading ? <p>Loading...</p> : (
