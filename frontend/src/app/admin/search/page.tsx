@@ -91,7 +91,7 @@ export default function AdminSearchPage() {
           <div style={{ marginBottom: '20px', padding: '14px 18px', background: '#fafafa', border: '1px solid #eee', borderRadius: '6px' }}>
             <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
               <span>Cluster: <strong style={{ color: clusterColor(status.cluster) }}>{status.cluster}</strong></span>
-              <button onClick={fetchStatus} style={{ padding: '4px 12px', border: '1px solid #ddd', borderRadius: '3px', background: '#fff', cursor: 'pointer', fontSize: '12px' }}>🔄 Refresh</button>
+              <button onClick={fetchStatus} style={{ padding: '4px 12px', border: '1px solid #ddd', borderRadius: '3px', background: '#fff', cursor: 'pointer', fontSize: '12px' }}><Icon name="RefreshCw" size={14} /> Refresh</button>
             </div>
           </div>
 
@@ -100,7 +100,7 @@ export default function AdminSearchPage() {
             <tbody>{Object.entries(status.indices).map(([name, idx]) => { const gap = status.gaps[name]; const gc = gap && gap.pct === 0 ? '#2e7d32' : '#c62828'; return <tr key={name} style={{ borderBottom: '1px solid #eee' }}><td style={{ padding: '8px', fontWeight: 'bold' }}>{name}</td><td style={{ padding: '8px' }}>{idx.docs}</td><td style={{ padding: '8px', color: '#666' }}>{idx.size}</td><td style={{ padding: '8px' }}>{status.db_counts[name] || 0}</td><td style={{ padding: '8px', color: gc, fontWeight: 'bold' }}>{gap ? `${gap.diff > 0 ? '+' : ''}${gap.diff} (${gap.pct}%)` : '—'}</td></tr>; })}</tbody>
           </table>
 
-          <S title="🔄 Reindex">
+          <S title={<><Icon name="RefreshCw" size={16} /> Reindex</>}>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               <select value={reindexScope} onChange={e => setReindexScope(e.target.value)} style={{ padding: '6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px' }}>
                 <option value="all">All</option><option value="posts">Posts</option><option value="comments">Comments</option><option value="categories">Categories</option><option value="users">Users</option>
@@ -117,7 +117,7 @@ export default function AdminSearchPage() {
             {previewResult && <div style={{ marginTop: '12px', fontSize: '13px' }}><L><B>{previewResult.results}</B> results.</L>{previewResult.top.map(r => <L key={r.slug}><B>{r.title}</B> — score: {r.score.toFixed(2)}</L>)}</div>}
           </S>
 
-          <S title="📋 Mappings">
+          <S title={<><Icon name="ClipboardList" size={16} /> Mappings</>}>
             <button onClick={handleShowMappings} style={btn(false)}>View Mappings</button>
             {showMappings && mappings && <pre style={{ marginTop: '12px', fontSize: '11px', background: '#f0f0f0', padding: '12px', borderRadius: '4px', maxHeight: '300px', overflow: 'auto' }}>{JSON.stringify(mappings, null, 2)}</pre>}
           </S>
@@ -144,7 +144,7 @@ export default function AdminSearchPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
             {/* Trending */}
-            <Section title="🔥 Trending Now" subtitle="EMA spike detection: current hour vs 24h baseline">
+            <Section title={<><Icon name="Flame" size={16} /> Trending Now</>} subtitle="EMA spike detection: current hour vs 24h baseline">
               {trending.length === 0 ? <Empty /> : (
                 <table style={tbl}>
                   <thead><tr><th>Query</th><th style={{ textAlign: 'right' }}>1h</th><th style={{ textAlign: 'right' }}>Score</th></tr></thead>
@@ -154,7 +154,7 @@ export default function AdminSearchPage() {
             </Section>
 
             {/* Popular */}
-            <Section title="📊 Popular" subtitle="Decay-weighted rank over 7 days (0.95^d)">
+            <Section title={<><Icon name="BarChart3" size={16} /> Popular</>} subtitle="Decay-weighted rank over 7 days (0.95^d)">
               {popular.length === 0 ? <Empty /> : (
                 <table style={tbl}>
                   <thead><tr><th>Query</th><th style={{ textAlign: 'right' }}>Total</th><th style={{ textAlign: 'right' }}>Score</th></tr></thead>
@@ -187,5 +187,5 @@ const S = ({ title, children, warn }: { title: React.ReactNode; children: React.
 const L = ({ children }: { children: React.ReactNode }) => <div style={{ marginBottom: '4px', fontSize: '13px', lineHeight: '1.6' }}>{children}</div>;
 const B = ({ children }: { children: React.ReactNode }) => <strong>{children}</strong>;
 const MetricsCard = ({ label, count, color }: { label: string; count: number; color: string }) => <div style={{ padding: '14px', background: '#fafafa', border: '1px solid #eee', borderRadius: '6px', textAlign: 'center' }}><div style={{ fontSize: '28px', fontWeight: 'bold', color }}>{count}</div><div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>{label}</div></div>;
-const Section = ({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) => <div style={{ background: '#fafafa', border: '1px solid #eee', borderRadius: '6px', padding: '14px' }}><h3 style={{ fontSize: '14px', margin: '0 0 2px' }}>{title}</h3><p style={{ fontSize: '11px', color: '#999', margin: '0 0 10px' }}>{subtitle}</p>{children}</div>;
+const Section = ({ title, subtitle, children }: { title: React.ReactNode; subtitle: string; children: React.ReactNode }) => <div style={{ background: '#fafafa', border: '1px solid #eee', borderRadius: '6px', padding: '14px' }}><h3 style={{ fontSize: '14px', margin: '0 0 2px' }}>{title}</h3><p style={{ fontSize: '11px', color: '#999', margin: '0 0 10px' }}>{subtitle}</p>{children}</div>;
 const Empty = () => <div style={{ padding: '24px', textAlign: 'center', color: '#999', fontSize: '13px' }}>No data yet — searches will appear here as users search</div>;
