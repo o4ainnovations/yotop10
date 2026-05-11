@@ -98,7 +98,7 @@ export default function StatisticsDashboard() {
 
   return (<>
     <div style={{ maxWidth: '900px' }}>
-      <h2>📊 Platform Statistics</h2>
+      <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Icon name="BarChart3" size={22} /> Platform Statistics</h2>
 
       <Panel scope="overview" title="📈 Overview">
         {overview && <>
@@ -162,7 +162,7 @@ export default function StatisticsDashboard() {
         })() : null}
       </Panel>
 
-      <Panel scope="moderation" title="⏳ Moderation + Velocity">
+      <Panel scope="moderation" titleIcon="Clock" title="Moderation + Velocity">
         {panels.moderation.data ? ((): React.ReactNode => { const d = panels.moderation.data as Record<string, unknown>; const pq = d.pending_queue as Record<string, number>; const qv = d.queue_velocity as Record<string, number>; const wv = d.weekend_vs_weekday as Record<string, number>; const rbd = arr(d.reviews_by_day_of_week) as Array<{ day: number; count: number }>;
           const dayNames: Record<string, string> = { '1': 'Sun', '2': 'Mon', '3': 'Tue', '4': 'Wed', '5': 'Thu', '6': 'Fri', '7': 'Sat' };
           const vContext = qv?.days_to_clear ? (qv.days_to_clear <= 1 ? 'Queue will clear within a day.' : qv.days_to_clear <= 3 ? 'Manageable — clears within 3 days.' : 'Backlog — may take over 3 days.') : '';
@@ -212,7 +212,7 @@ export default function StatisticsDashboard() {
         })() : null}
       </Panel>
 
-      <Panel scope="quality" title="✅ Quality + Correlations">
+      <Panel scope="quality" titleIcon="Check" title="Quality + Correlations">
         {panels.quality.data ? ((): React.ReactNode => { const d = panels.quality.data as Record<string, unknown>; const corr = arr(d.intro_length_correlation) as Array<{ bucket: string; count: number; avg_comments: number; avg_fire: number }>;
           return <>
             <L>Revision rate: <B>{n(d.revision_rate)}%</B> of submissions requested revision.</L>
@@ -260,7 +260,7 @@ export default function StatisticsDashboard() {
         })() : null}
       </Panel>
 
-      <Panel scope="lifecycle" title="🔄 User Lifecycle">
+      <Panel scope="lifecycle" titleIcon="RefreshCw" title="User Lifecycle">
         {panels.lifecycle.data ? ((): React.ReactNode => { const d = panels.lifecycle.data as Record<string, unknown>; const lc = arr(d.lifecycle) as Array<{ bucket: string; count: number }>; const drop = arr(d.drop_off_distribution) as Array<{ posts_made: number; users: number }>;
           return <>
             <L>Total posters: <B>{n(d.total_posters)}</B>. Avg lifetime posts: <B>{n(d.avg_lifetime_posts)}</B>.</L>
@@ -283,7 +283,7 @@ export default function StatisticsDashboard() {
         })() : null}
       </Panel>
 
-      <Panel scope="conversion" title="🔄 Lurker → Poster Conversion">
+      <Panel scope="conversion" titleIcon="RefreshCw" title="Lurker → Poster Conversion">
         {panels.conversion.data ? ((): React.ReactNode => { const d = panels.conversion.data as Record<string, unknown>; const paths = arr(d.converting_paths) as Array<{ path: string; count: number }>;
           return <>
             {paths.length === 0 ? <L>No conversion data yet — needs page visit traffic and user events.</L>
@@ -325,7 +325,7 @@ export default function StatisticsDashboard() {
 
       {/* ═══ Search Analytics ══════════════════════════════════════ */}
 
-      <Panel scope="search/overview" title="🔍 Search Overview">
+      <Panel scope="search/overview" titleIcon="Search" title="Search Overview">
         {panels['search/overview'].data ? ((): React.ReactNode => {
           const d = panels['search/overview'].data as Record<string, unknown>;
           return <>
