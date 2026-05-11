@@ -416,6 +416,8 @@ router.post('/posts/:id/retry', async (req, res) => {
     post.revision_count = (post.revision_count || 0) + 1;
     await post.save();
 
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'retry_post', ip: getClientIp(req), metadata: { post_id: (post._id as { toString(): string }).toString(), post_title: post.title, guidance: guidance.trim() }, user_agent: req.headers['user-agent'] || '' });
+
     // Explicit: no trust score update, no boost grant for retry
 
     await createNotification({
@@ -701,6 +703,8 @@ router.patch('/posts/:id', async (req, res) => {
     if (req.body.editorial_note !== undefined) post.editorial_note = req.body.editorial_note || null;
     await post.save();
 
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'edit_post', ip: getClientIp(req), metadata: { post_id: (post._id as { toString(): string }).toString(), post_title: post.title }, user_agent: req.headers['user-agent'] || '' });
+
     if (req.body.items && Array.isArray(req.body.items)) {
       const { ListItem } = await import('../models/ListItem');
       await ListItem.deleteMany({ post_id: post._id });
@@ -722,6 +726,7 @@ router.delete('/posts/:id', async (req, res) => {
     if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
     post.deleted = true; post.deleted_at = new Date(); post.auto_hard_delete_at = new Date(Date.now() + 30 * 86400000);
     await post.save();
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'delete_post', ip: getClientIp(req), metadata: { post_id: (post._id as { toString(): string }).toString(), post_title: post.title }, user_agent: req.headers['user-agent'] || '' });
     removePost((post._id as { toString(): string }).toString());
     res.json({ success: true });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to delete post' }); }
@@ -734,6 +739,7 @@ router.post('/posts/:id/restore', async (req, res) => {
     if (!post || !post.deleted) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found or not deleted' });
     post.deleted = false; post.deleted_at = null; post.auto_hard_delete_at = null;
     await post.save();
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'restore_post', ip: getClientIp(req), metadata: { post_id: (post._id as { toString(): string }).toString(), post_title: post.title }, user_agent: req.headers['user-agent'] || '' });
     indexPost(post as unknown as Record<string, unknown>);
     res.json({ success: true });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to restore post' }); }
@@ -746,6 +752,7 @@ router.delete('/posts/:id/permanent', async (req, res) => {
     if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
     const { ListItem } = await import('../models/ListItem');
     await ListItem.deleteMany({ post_id: post._id });
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'hard_delete_post', ip: getClientIp(req), metadata: { post_id: (post._id as { toString(): string }).toString(), post_title: post.title }, user_agent: req.headers['user-agent'] || '' });
     removePost((post._id as { toString(): string }).toString());
     res.json({ success: true });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to permanently delete post' }); }
@@ -758,6 +765,7 @@ router.post('/posts/:id/feature', async (req, res) => {
   post.featured = true; post.featured_at = new Date();
   if (req.body.editorial_note) post.editorial_note = req.body.editorial_note;
   await post.save();
+  logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'feature_post', ip: getClientIp(req), metadata: { post_id: (post._id as { toString(): string }).toString(), post_title: post.title }, user_agent: req.headers['user-agent'] || '' });
   indexPost(post as unknown as Record<string, unknown>);
   res.json({ success: true, post });
 });
@@ -768,6 +776,7 @@ router.post('/posts/:id/unfeature', async (req, res) => {
   if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
   post.featured = false; post.featured_at = null; post.editorial_note = null;
   await post.save();
+  logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'unfeature_post', ip: getClientIp(req), metadata: { post_id: (post._id as { toString(): string }).toString(), post_title: post.title }, user_agent: req.headers['user-agent'] || '' });
   indexPost(post as unknown as Record<string, unknown>);
   res.json({ success: true, post });
 });
@@ -778,6 +787,7 @@ router.post('/posts/:id/lock', async (req, res) => {
   if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
   post.comments_locked = true;
   await post.save();
+  logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'lock_post', ip: getClientIp(req), metadata: { post_id: (post._id as { toString(): string }).toString(), post_title: post.title }, user_agent: req.headers['user-agent'] || '' });
   indexPost(post as unknown as Record<string, unknown>);
   res.json({ success: true });
 });
@@ -788,6 +798,7 @@ router.post('/posts/:id/unlock', async (req, res) => {
   if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
   post.comments_locked = false;
   await post.save();
+  logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'unlock_post', ip: getClientIp(req), metadata: { post_id: (post._id as { toString(): string }).toString(), post_title: post.title }, user_agent: req.headers['user-agent'] || '' });
   indexPost(post as unknown as Record<string, unknown>);
   res.json({ success: true });
 });
@@ -798,6 +809,7 @@ router.post('/posts/:id/bump', async (req, res) => {
   if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
   post.bumped_at = new Date();
   await post.save();
+  logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'bump_post', ip: getClientIp(req), metadata: { post_id: (post._id as { toString(): string }).toString(), post_title: post.title }, user_agent: req.headers['user-agent'] || '' });
   indexPost(post as unknown as Record<string, unknown>);
   res.json({ success: true, post });
 });
@@ -1003,6 +1015,7 @@ router.patch('/comments/:id', async (req, res) => {
     if (!comment) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
     if (req.body.content) comment.content = req.body.content.substring(0, 2000);
     await comment.save();
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'edit_comment', ip: getClientIp(req), metadata: { comment_id: (comment._id as { toString(): string }).toString(), content: req.body.content?.substring(0, 100) }, user_agent: req.headers['user-agent'] || '' });
     indexComment(comment as unknown as Record<string, unknown>);
     res.json({ success: true, comment });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to edit comment' }); }
@@ -1015,6 +1028,7 @@ router.delete('/comments/:id', async (req, res) => {
     if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
     c.deleted = true; c.deleted_at = new Date(); c.flag_type = null; c.flag_evidence = null;
     await c.save();
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'delete_comment', ip: getClientIp(req), metadata: { comment_id: (c._id as { toString(): string }).toString() }, user_agent: req.headers['user-agent'] || '' });
     removeComment((c._id as { toString(): string }).toString());
     res.json({ success: true });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to delete comment' }); }
@@ -1034,6 +1048,7 @@ router.post('/comments/:id/restore', async (req, res) => {
 router.delete('/comments/:id/permanent', async (req, res) => {
   const c = await Comment.findByIdAndDelete(req.params.id);
   if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
+  logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'hard_delete_comment', ip: getClientIp(req), metadata: { comment_id: (c._id as { toString(): string }).toString() }, user_agent: req.headers['user-agent'] || '' });
   removeComment((c._id as { toString(): string }).toString());
   res.json({ success: true });
 });
