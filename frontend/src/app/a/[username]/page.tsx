@@ -218,7 +218,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
                 <h3><Link href={`/${post.slug}`}>{post.title}</Link></h3>
                 <p>
                   {post.category?.name || 'Uncategorized'} |
-                  💬 {post.comment_count} |
+                  <Icon name="MessageCircle" size={12} /> {post.comment_count} |
                   {new Date(post.created_at).toLocaleDateString()}
                   {profile.is_own_profile && (
                     <>
@@ -260,8 +260,8 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
               <div key={comment.id}>
                 <p>{comment.content}</p>
                 <p>
-                  🔥 {comment.fire_count} |
-                  💬 {comment.reply_count} |
+                  <Icon name="Flame" size={12} color="#e65100" /> {comment.fire_count} |
+                  <Icon name="MessageCircle" size={12} /> {comment.reply_count} |
                   {new Date(comment.created_at).toLocaleDateString()}
                 </p>
                 <hr />
@@ -278,15 +278,12 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
           </p>
           <p>Tier: {rateLimitStatus.current_tier}</p>
 
-          <h3>📊 Current Limits:</h3>
-          <p>✅ Posts: {rateLimitStatus.limits.posts.remaining} / {rateLimitStatus.limits.posts.total} remaining</p>
-          <p>✅ Comments: {rateLimitStatus.limits.comments.remaining} / {rateLimitStatus.limits.comments.total} remaining</p>
-          <p>✅ Counter Lists: {rateLimitStatus.limits.counter_lists.remaining}</p>
-
-          <p>🔄 Resets in: {rateLimitCountdown !== null ? `${Math.floor(rateLimitCountdown / 60)} minutes ${rateLimitCountdown % 60} seconds` : 'Calculating...'}</p>
-
-          {rateLimitStatus.trust_score < 1.0 && (
-            <p>💡 Next tier at 1.0 trust: 4 posts/hour</p>
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Icon name="BarChart3" size={16} /> Current Limits:</h3>
+          <p><Icon name="Check" size={14} color="#2e7d32" /> Posts: {rateLimitStatus.limits.posts.remaining} / {rateLimitStatus.limits.posts.total} remaining</p>
+          <p><Icon name="Check" size={14} color="#2e7d32" /> Comments: {rateLimitStatus.limits.comments.remaining} / {rateLimitStatus.limits.comments.total} remaining</p>
+          <p><Icon name="Check" size={14} color="#2e7d32" /> Counter Lists: {rateLimitStatus.limits.counter_lists.remaining}</p>
+          <p><Icon name="RefreshCw" size={14} /> Resets in: {rateLimitCountdown !== null ? `${Math.floor(rateLimitCountdown / 60)} minutes ${rateLimitCountdown % 60} seconds` : 'Calculating...'}</p>
+            <p><Icon name="Lightbulb" size={14} color="#f57c00" /> Next tier at 1.0 trust: 4 posts/hour</p>
           )}
         </div>
       )}
