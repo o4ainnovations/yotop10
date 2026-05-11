@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
+import { Icon } from '@/components/icons/Icon';
 import { toast } from '@/lib/toast';
 
 interface PendingPost {
@@ -136,13 +137,13 @@ export default function AdminPendingPostPreviewPage() {
 
         <div style={{ marginTop: '40px', display: 'flex', gap: '20px' }}>
           <button onClick={handleApprove} disabled={actionLoading} style={{ fontSize: '16px', padding: '10px 20px' }}>
-            ✅ Approve Post
+            <Icon name="Check" size={16} color="#2e7d32" /> Approve Post
           </button>
           <button onClick={() => setShowRetryModal(true)} disabled={actionLoading} style={{ fontSize: '16px', padding: '10px 20px', backgroundColor: '#ff9800', color: 'white', border: 'none', borderRadius: '4px', cursor: actionLoading ? 'not-allowed' : 'pointer' }}>
-            🔄 Request Revision
+            <Icon name="RefreshCw" size={16} color="#fff" /> Request Revision
           </button>
           <button onClick={() => setShowRejectModal(true)} disabled={actionLoading} style={{ fontSize: '16px', padding: '10px 20px' }}>
-            ❌ Reject Post
+            <Icon name="X" size={16} color="#c62828" /> Reject Post
           </button>
         </div>
 
