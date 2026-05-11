@@ -6,6 +6,7 @@ import NotFound from '@/components/NotFound';
 import Link from 'next/link';
 import Image from 'next/image';
 import { API } from '@/lib/api';
+import { Icon } from '@/components/icons/Icon';
 
 const RESERVED_ROUTES = ['admin', 'api', 'login', 'search', 'settings', 'profile', 'categories', 'c', 'auth'];
 
@@ -256,7 +257,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
             </span>
             {comment.list_item_id && itemRank && (
               <span style={{ backgroundColor: '#e0f0ff', padding: '2px 6px', borderRadius: '3px', fontSize: '12px', marginLeft: '8px' }}>
-                📌 On item #{itemRank}
+                <Icon name="Pin" size={12} /> On item #{itemRank}
               </span>
             )}
             {comment.parent_comment_id && (
@@ -281,7 +282,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
               }}
               disabled={reacting}
             >
-              🔥 {comment.fire_count}
+              <Icon name="Flame" size={14} color="#e65100" /> {comment.fire_count}
             </button>
             {depth < 10 && (
               <button 
