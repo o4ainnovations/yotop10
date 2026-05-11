@@ -174,7 +174,7 @@ export default function AdminAlertBell() {
 
             {notifications.length === 0 ? (
               <div style={{ padding: '24px 16px', textAlign: 'center', color: '#A1887F', fontSize: '13px' }}>
-                ✅ No active alerts
+                <Icon name="Check" size={14} color="#2e7d32" /> No active alerts
               </div>
             ) : (
               notifications.map((n) => (
