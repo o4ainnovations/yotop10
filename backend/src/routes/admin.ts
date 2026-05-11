@@ -1059,6 +1059,7 @@ router.post('/comments/:id/hide', async (req, res) => {
   if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
   c.hidden = true; c.hidden_reason = req.body.reason || null; c.flag_type = null; c.flag_evidence = null;
   await c.save();
+  logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'hide_comment', ip: getClientIp(req), metadata: { comment_id: (c._id as { toString(): string }).toString(), reason: req.body.reason || null }, user_agent: req.headers['user-agent'] || '' });
   removeComment((c._id as { toString(): string }).toString());
   res.json({ success: true });
 });
@@ -1067,6 +1068,7 @@ router.post('/comments/:id/unhide', async (req, res) => {
   if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
   c.hidden = false; c.hidden_reason = null;
   await c.save();
+  logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'unhide_comment', ip: getClientIp(req), metadata: { comment_id: (c._id as { toString(): string }).toString() }, user_agent: req.headers['user-agent'] || '' });
   indexComment(c as unknown as Record<string, unknown>);
   res.json({ success: true });
 });
@@ -1077,6 +1079,7 @@ router.post('/comments/:id/highlight', async (req, res) => {
   if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
   c.highlighted = true;
   await c.save();
+  logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'highlight_comment', ip: getClientIp(req), metadata: { comment_id: (c._id as { toString(): string }).toString() }, user_agent: req.headers['user-agent'] || '' });
   indexComment(c as unknown as Record<string, unknown>);
   res.json({ success: true });
 });
@@ -1085,6 +1088,7 @@ router.post('/comments/:id/unhighlight', async (req, res) => {
   if (!c) return res.status(404).json({ code: 'NOT_FOUND', error: 'Comment not found' });
   c.highlighted = false;
   await c.save();
+  logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'unhighlight_comment', ip: getClientIp(req), metadata: { comment_id: (c._id as { toString(): string }).toString() }, user_agent: req.headers['user-agent'] || '' });
   indexComment(c as unknown as Record<string, unknown>);
   res.json({ success: true });
 });
@@ -1146,6 +1150,8 @@ router.post('/comments/:id/apply-penalty', async (req, res) => {
       await User.findByIdAndUpdate(user._id, { trust_score: newTrust, restricted_until: newRestricted });
     }
 
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'apply_penalty', ip: getClientIp(req), metadata: { comment_id: (comment._id as { toString(): string }).toString(), minutes, trust_penalty: trustPenalty }, user_agent: req.headers['user-agent'] || '' });
+
     res.json({ success: true, penalty: { minutes, trust_penalty: trustPenalty } });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to apply penalty' }); }
 });
@@ -1157,6 +1163,7 @@ router.post('/comments/:id/dismiss-flag', async (req, res) => {
   comment.flag_type = null;
   comment.flag_evidence = null;
   await comment.save();
+  logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'dismiss_flag', ip: getClientIp(req), metadata: { comment_id: (comment._id as { toString(): string }).toString() }, user_agent: req.headers['user-agent'] || '' });
   indexComment(comment as unknown as Record<string, unknown>);
   res.json({ success: true });
 });
@@ -1168,6 +1175,7 @@ router.post('/comments/:id/flag', async (req, res) => {
   comment.flag_type = req.body.flag_type || 'manual';
   comment.flag_evidence = req.body.evidence || { flagged_by: 'admin' };
   await comment.save();
+  logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'flag_comment', ip: getClientIp(req), metadata: { comment_id: (comment._id as { toString(): string }).toString(), flag_type: req.body.flag_type || 'manual' }, user_agent: req.headers['user-agent'] || '' });
   indexComment(comment as unknown as Record<string, unknown>);
   res.json({ success: true });
 });
