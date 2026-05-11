@@ -154,7 +154,7 @@ export default function AdminCommentsPage() {
           <th style={{ padding: '6px' }}>Content</th>
           <th style={{ padding: '6px' }}>Author</th>
           <th style={{ padding: '6px' }}>Type</th>
-          <th style={{ padding: '6px' }}>🔥</th><th style={{ padding: '6px' }}>💬</th><th style={{ padding: '6px' }}>✨</th>
+          <th style={{ padding: '6px' }}><Icon name="Flame" size={12} color="#e65100" /></th><th style={{ padding: '6px' }}><Icon name="MessageCircle" size={12} /></th><th style={{ padding: '6px' }}><Icon name="Sparkles" size={12} /></th>
           <th style={{ padding: '6px' }}>Created</th>
           <th style={{ padding: '6px' }}>Actions</th>
         </tr></thead>

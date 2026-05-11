@@ -97,7 +97,7 @@ export default function AllPostsPage() {
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
         <thead><tr style={{ borderBottom: '2px solid #ccc', textAlign: 'left' }}>
           <th style={{ padding: '6px', width: '30px' }}><input type="checkbox" checked={selected.size === posts.length && posts.length > 0} onChange={selectAll} /></th>
-          <th style={{ padding: '6px' }}>Title</th><th style={{ padding: '6px' }}>Author</th><th style={{ padding: '6px' }}>Category</th><th style={{ padding: '6px' }}>Type</th><th style={{ padding: '6px' }}>Status</th><th style={{ padding: '6px' }}>🔥</th><th style={{ padding: '6px' }}>💬</th><th style={{ padding: '6px' }}>👁</th><th style={{ padding: '6px' }}>Published</th><th style={{ padding: '6px' }}>Actions</th>
+          <th style={{ padding: '6px' }}>Title</th><th style={{ padding: '6px' }}>Author</th><th style={{ padding: '6px' }}>Category</th><th style={{ padding: '6px' }}>Type</th><th style={{ padding: '6px' }}>Status</th><th style={{ padding: '6px' }}><Icon name="Flame" size={12} color="#e65100" /></th><th style={{ padding: '6px' }}><Icon name="MessageCircle" size={12} /></th><th style={{ padding: '6px' }}><Icon name="Eye" size={14} /></th><th style={{ padding: '6px' }}>Published</th><th style={{ padding: '6px' }}>Actions</th>
         </tr></thead>
         <tbody>
           {posts.map(p => (<tr key={p._id} style={{ borderBottom: '1px solid #eee', opacity: p.deleted ? 0.5 : 1 }}>
