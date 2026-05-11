@@ -253,7 +253,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
           <div>
             <strong>{comment.author_display_name}</strong>
             <span style={{ color: '#888', fontSize: '12px', marginLeft: '8px' }}>
-              ✨ {comment.spark_score.toFixed(2)}
+              <Icon name="Sparkles" size={12} color="#f57c00" /> {comment.spark_score.toFixed(2)}
             </span>
             {comment.list_item_id && itemRank && (
               <span style={{ backgroundColor: '#e0f0ff', padding: '2px 6px', borderRadius: '3px', fontSize: '12px', marginLeft: '8px' }}>
