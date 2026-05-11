@@ -201,7 +201,7 @@ export default function AdminCategoriesPage() {
                 </div>
                 {isOpen && kids.map(c => <div key={c.id} onClick={() => selectCat(c)}
                   style={{ padding: '4px 8px 4px 28px', cursor: 'pointer', borderRadius: '3px', background: selected?.id === c.id ? '#e3f2fd' : 'transparent', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span>{c.icon || '📋'}</span> <span>{c.name}</span>
+                  <span><Icon name="FileText" size={12} /></span> <span>{c.name}</span>
                   <span style={{ marginLeft: 'auto', fontSize: '10px', color: '#999' }}>{c.post_count}</span>
                 </div>)}
               </div>;
@@ -230,7 +230,7 @@ export default function AdminCategoriesPage() {
                 )}
                 <div style={{ marginTop: '14px', fontSize: '12px', color: '#666' }}>
                   Posts: <strong>{selected.post_count}</strong> · Health: <strong style={{ color: selected.grown ? '#2e7d32' : '#999' }}>{selected.health_score || '—'}</strong>
-                  {selected.grown && ' ✅ Growing'}
+                  {selected.grown && <span style={{ marginLeft: '6px' }}><Icon name="TrendingUp" size={12} color="#2e7d32" /> Growing</span>}
                   {selected.dead && <span style={{ marginLeft: '6px' }}><Icon name="TriangleAlert" size={12} color="#e65100" /> Dead</span>}
                 </div>
                 {selected.parent_id && (
@@ -283,7 +283,7 @@ export default function AdminCategoriesPage() {
         <div>
           {analytics && (
             <div style={{ marginBottom: '20px', padding: '16px', background: '#fafafa', borderRadius: '6px', border: '1px solid #eee' }}>
-              <h3 style={{ margin: '0 0 10px', fontSize: '15px' }}>📊 Content Distribution</h3>
+              <h3 style={{ margin: '0 0 10px', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '6px' }}><Icon name="BarChart3" size={16} /> Content Distribution</h3>
               {analytics.distribution.map(d => (
                 <div key={d.name} style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <span style={{ width: '120px', fontSize: '13px', fontWeight: 'bold' }}>{d.name}</span>
@@ -307,7 +307,7 @@ export default function AdminCategoriesPage() {
                 <strong style={{ color: '#f57c00' }}>Overloaded ({health.overloaded.length})</strong>
                 {health.overloaded.map(o => <div key={o.id} style={{ fontSize: '12px', color: '#666' }}>• {o.name} — {o.post_count} posts</div>)}
               </div>}
-              {health.dead.length === 0 && health.overloaded.length === 0 && <div style={{ color: '#2e7d32', fontSize: '13px' }}>✅ All categories healthy</div>}
+              {health.dead.length === 0 && health.overloaded.length === 0 && <div style={{ color: '#2e7d32', fontSize: '13px' }}><Icon name="Check" size={14} color="#2e7d32" /> All categories healthy</div>}
             </div>
           )}
         </div>
