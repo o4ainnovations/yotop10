@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { API, PostSubmission, PostSubmissionResponse, TitleCheckResponse } from '@/lib/api';
+import { Icon } from '@/components/icons/Icon';
 import { useAuthStore } from '@/stores/auth';
 import { toast } from '@/lib/toast';
 
@@ -416,7 +417,7 @@ export default function SubmitPage() {
     return (
       <div style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 20px' }}>
         <div style={{ backgroundColor: '#f0f9f0', border: '1px solid #4caf50', borderRadius: '8px', padding: '30px', textAlign: 'center' }}>
-          <h1 style={{ color: '#2e7d32' }}>✅ Post submitted!</h1>
+          <h1 style={{ color: '#2e7d32', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}><Icon name="Check" size={24} color="#2e7d32" /> Post submitted!</h1>
           <p style={{ fontSize: '18px', margin: '10px 0' }}>Your list is now pending review by our admin team.</p>
           
           <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '5px', margin: '20px 0', textAlign: 'left' }}>
@@ -535,11 +536,11 @@ export default function SubmitPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#666', marginTop: '5px' }}>
               <span id="title-help">
                 {title.length < 8 ? 'At least 8 characters for similarity check' : 'Title ready for check'}
-                {titleCheck?.checking && ' ⏳ Checking...'}
-                {titleCheck?.allowed && !titleCheck.blocked && ' ✅ Title available'}
-                {titleCheck?.warning && ' ⚠️ Similar titles found'}
-                {titleCheck?.blocked && ' ❌ This title is blocked'}
-                {titleCheck?.pendingConflicts && titleCheck.pendingConflicts.length > 0 && ' ⏳ Already pending review'}
+                {titleCheck?.checking && <><Icon name="Hourglass" size={14} /> Checking...</>}
+                {titleCheck?.allowed && !titleCheck.blocked && <><Icon name="Check" size={14} color="#2e7d32" /> Title available</>}
+                {titleCheck?.warning && <><Icon name="TriangleAlert" size={14} color="#e65100" /> Similar titles found</>}
+                {titleCheck?.blocked && <><Icon name="X" size={14} color="#c62828" /> This title is blocked</>}
+                {titleCheck?.pendingConflicts && titleCheck.pendingConflicts.length > 0 && <><Icon name="Hourglass" size={14} /> Already pending review</>}
               </span>
               <span style={{ color: title.length > 240 ? '#ff9800' : title.length > 285 ? '#d32f2f' : '#666' }}>
                 {title.length}/300
@@ -560,7 +561,7 @@ export default function SubmitPage() {
                 )}
                 {titleCheck?.pendingConflicts && titleCheck.pendingConflicts.length > 0 && (
                   <div style={{ marginTop: '10px', background: '#fff3e0', padding: '8px 12px', borderRadius: '4px', fontSize: '13px' }}>
-                    <strong>⏳ This title is already pending review:</strong>
+                    <strong><Icon name="Hourglass" size={14} /> This title is already pending review:</strong>
                     <ul style={{ margin: '5px 0', paddingLeft: '20px' }}>
                       {titleCheck.pendingConflicts.map((pc, idx) => (
                         <li key={idx}>
