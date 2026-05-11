@@ -65,7 +65,7 @@ export default function NotificationsPage() {
 
   return (
     <div style={{ maxWidth: '700px', margin: '0 auto', padding: '20px' }}>
-      <h1 style={{ fontSize: '20px', marginBottom: '20px' }}>🔔 All Notifications</h1>
+      <h1 style={{ fontSize: '20px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}><Icon name="Bell" size={20} /> All Notifications</h1>
 
       {notifs.length === 0 ? (
         <div style={{ padding: '40px', textAlign: 'center', color: '#999', fontSize: '14px' }}>
