@@ -494,7 +494,7 @@ export default function SubmitPage() {
               <option value="">Select a category...</option>
               {categories.map(cat => (
                 <option key={cat.id} value={cat.slug}>
-                  {cat.icon || '📁'} {cat.name}
+                  {cat.icon || <Icon name="Folder" size={14} />} {cat.name}
                 </option>
               ))}
             </select>

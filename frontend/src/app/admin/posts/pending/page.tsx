@@ -125,7 +125,7 @@ export default function PendingPostsPage() {
       <select value={filters.category_slug} onChange={e => { setFilters(f => ({ ...f, category_slug: e.target.value })); setPage(1); }} style={{ padding: '6px', maxWidth: '180px' }}>
         <option value="">All Categories</option>
         {categories.map(c => (<React.Fragment key={c.slug}>
-          <option value={c.slug}>📁 {c.name}</option>
+          <option value={c.slug}><Icon name="Folder" size={12} /> {c.name}</option>
           {c.children?.map(ch => <option key={ch.slug} value={ch.slug}>&nbsp;&nbsp;{ch.name}</option>)}
         </React.Fragment>))}
       </select>

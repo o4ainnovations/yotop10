@@ -189,7 +189,7 @@ export default function AdminCategoriesPage() {
             {parents.map(p => {
               const kids = p.children || [];
               const isOpen = expanded.has(p.id);
-              const icon = p.icon || '📁';
+              const icon = p.icon || <Icon name="Folder" size={14} />;
               return <div key={p.id}>
                 <div onClick={() => { toggleExpanded(p.id); selectCat(p); }}
                   style={{ padding: '6px 8px', cursor: 'pointer', borderRadius: '4px', background: selected?.id === p.id ? '#e3f2fd' : 'transparent', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -211,7 +211,7 @@ export default function AdminCategoriesPage() {
           <div style={{ flex: 1 }}>
             {selected ? (
               <div style={{ border: '1px solid #eee', borderRadius: '6px', padding: '16px' }}>
-                <h2 style={{ fontSize: '16px', margin: '0 0 12px' }}>{selected.icon || '📁'} {selected.name}</h2>
+                <h2 style={{ fontSize: '16px', margin: '0 0 12px' }}>{selected.icon || <Icon name="Folder" size={18} />} {selected.name}</h2>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '13px' }}>
                   <div><label style={lbl}>Name</label><input value={editName} onChange={e => setEditName(e.target.value)} disabled={!selected.parent_id} style={{ width: '100%', ...inp, background: selected.parent_id ? '#fff' : '#f5f5f5' }} /></div>
                   <div><label style={lbl}>Slug</label><input value={editSlug} onChange={e => setEditSlug(e.target.value)} disabled={!selected.parent_id} style={{ width: '100%', ...inp, background: selected.parent_id ? '#fff' : '#f5f5f5' }} /></div>
@@ -262,7 +262,7 @@ export default function AdminCategoriesPage() {
             </tr></thead>
             <tbody>
               {filtered.map(c => <tr key={c.id} style={{ borderBottom: '1px solid #eee' }}>
-                <td style={{ padding: '6px', fontWeight: 'bold' }}>{c.icon || '📁'} {c.name}</td>
+                <td style={{ padding: '6px', fontWeight: 'bold' }}>{c.icon || <Icon name="Folder" size={14} />} {c.name}</td>
                 <td style={{ padding: '6px', color: '#999' }}>{c.slug}</td>
                 <td style={{ padding: '6px', color: '#999' }}>{categories.find(p => p.id === c.parent_id)?.name || '—'}</td>
                 <td style={{ padding: '6px' }}>{c.post_count}</td>
