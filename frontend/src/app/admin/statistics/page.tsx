@@ -105,11 +105,11 @@ export default function StatisticsDashboard() {
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '20px' }}>
             {card('Posts', op?.total)}{card('Comments', oc?.total)}{card('Users', ou?.total)}{card('Pending', overview.pending)}{card('Approved', op?.approved)}{card('Rejected', op?.rejected)}
           </div>
-          <L>📝 <B>{n(op?.total)}</B> total posts. <B>{n(op?.submitted)}</B> submitted, <B>{n(op?.approved)}</B> approved, <B>{n(op?.rejected)}</B> rejected. <B>{n(overview.pending)}</B> pending review.</L>
-          <L>💬 <B>{n(oc?.total)}</B> total comments, <B>{n(oc?.today)}</B> today.</L>
+          <L><Icon name="FileText" size={14} /> <B>{n(op?.total)}</B> total posts. <B>{n(op?.submitted)}</B> submitted, <B>{n(op?.approved)}</B> approved, <B>{n(op?.rejected)}</B> rejected. <B>{n(overview.pending)}</B> pending review.</L>
+          <L><Icon name="MessageCircle" size={14} /> <B>{n(oc?.total)}</B> total comments, <B>{n(oc?.today)}</B> today.</L>
           <L>👥 <B>{n(ou?.total)}</B> anonymous users, <B>{n(ou?.today)}</B> new today. <B>{n(ot?.scholars)}</B> Scholars · <B>{n(ot?.neutrals)}</B> Neutrals · <B>{n(ot?.trolls)}</B> Trolls.</L>
-          {((overview.trolls_active as number) || 0) > 0 && <L>⚠️ <B>{n(overview.trolls_active)}</B> trolls active in last 24 hours.</L>}
-          {((overview as Record<string, unknown>).orphans_72h_no_guidance as number) > 0 && <L>🟠 <B>{n((overview as Record<string, unknown>).orphans_72h_no_guidance)}</B> posts stuck pending over 72h without admin guidance.</L>}
+          {((overview.trolls_active as number) || 0) > 0 && <L><Icon name="TriangleAlert" size={14} color="#e65100" /> <B>{n(overview.trolls_active)}</B> trolls active in last 24 hours.</L>}
+          {((overview as Record<string, unknown>).orphans_72h_no_guidance as number) > 0 && <L><Icon name="Circle" size={14} color="#f57c00" fill="#f57c00" /> <B>{n((overview as Record<string, unknown>).orphans_72h_no_guidance)}</B> posts stuck pending over 72h without admin guidance.</L>}
           <L>⏰ Peak submission hour: <B>{n((overview as Record<string, unknown>).peak_submission_hour)}:00</B> ({n((overview as Record<string, unknown>).peak_submission_hour_count)} submissions).</L>
         </>}
       </Panel>
@@ -118,14 +118,13 @@ export default function StatisticsDashboard() {
         {panels.health.data ? ((): React.ReactNode => { const d = panels.health.data as Record<string, unknown>; const s = d.services as Record<string, unknown>; const mem = d.memory as Record<string, number>; const crons = d.crons as Record<string, Record<string, string>>;
           const ups = Number(d.uptime_seconds) || 0;
           const uptimeHrs = Math.floor(ups / 3600); const uptimeMin = Math.floor((ups % 3600) / 60);
-          const leak = mem?.rss_mb > (mem?.heap_mb * 3) ? '⚠️ Possible memory leak (RSS 3x heap)' : '✅ Normal';
+          const leak = mem?.rss_mb > (mem?.heap_mb * 3) ? <><Icon name="TriangleAlert" size={14} color="#e65100" /> Possible memory leak (RSS 3x heap)</> : <><Icon name="Check" size={14} color="#2e7d32" /> Normal</>;
           return <>
             <L>⏱️ Uptime: <B>{uptimeHrs}h {uptimeMin}m</B>. Memory: <B>{n(mem?.heap_mb)}</B> MB heap / <B>{n(mem?.rss_mb)}</B> MB RSS — {leak}.</L>
             <L>🗄️ MongoDB: <B>{n(s?.mongodb)}</B> at <B>{n(s?.mongodb_latency_ms)}ms</B>. Redis: <B>{n(s?.redis)}</B> {s?.redis_memory_pct !== null && s?.redis_memory_pct !== undefined ? `at ${n(s?.redis_memory_pct)}% memory (${n(s?.redis_memory_mb)} MB)` : ''}. Elasticsearch: <B>{n(s?.elasticsearch)}</B>.</L>
-            <L>🔄 Cron Health:</L>
-            {crons && Object.entries(crons).map(([k,v]) => { const hb = v as Record<string, string>; const status = hb.last_success ? '✅' : hb.last_error ? '❌' : '⏳'; const last = hb.last_success ? ` (${new Date(hb.last_success).toLocaleTimeString()})` : ''; return <L key={k}>  {status} <B>{k}</B>{last}{hb.last_error ? ` — ${hb.last_error}` : ''}</L>; })}
-            {((d.affected_features_count as number) || 0) > 0 && <>
-              <L>🔴 <B>{n(d.affected_features_count)}</B> features degraded due to service outages:</L>
+            <L><Icon name="RefreshCw" size={14} /> Cron Health:</L>
+            {crons && Object.entries(crons).map(([k,v]) => { const hb = v as Record<string, string>; const status = hb.last_success ? <Icon name="Check" size={14} color="#2e7d32" /> : hb.last_error ? <Icon name="X" size={14} color="#c62828" /> : <Icon name="Hourglass" size={14} />; const last = hb.last_success ? ` (${new Date(hb.last_success).toLocaleTimeString()})` : ''; return <L key={k}>  {status} <B>{k}</B>{last}{hb.last_error ? ` — ${hb.last_error}` : ''}</L>; })}
+              <L><Icon name="Circle" size={14} color="#d32f2f" fill="#d32f2f" /> <B>{n(d.affected_features_count)}</B> features degraded due to service outages:</L>
               {(arr(d.affected_features) as Array<{ feature: string; degradation: string; depends_on: string[] }>).map(f => <L key={f.feature}>  — <B>{f.feature}</B>: {f.degradation} (needs {f.depends_on.join(', ')})</L>)}
             </>}
           </>;
@@ -136,7 +135,7 @@ export default function StatisticsDashboard() {
         {panels.content.data ? ((): React.ReactNode => { const d = panels.content.data as Record<string, unknown>; const p = d.posts as Record<string, number>; const ag = d.approval_gap as Record<string, number>; const age = d.age_distribution as Record<string, number>; const tp = arr(d.throughput_7d) as Array<{ day: number; count: number }>;
           const gapContext = ag?.avg_hours ? (ag.avg_hours < 1 ? 'Same-day moderation (excellent).' : ag.avg_hours < 24 ? 'Within 24 hours (good).' : ag.avg_hours < 72 ? '2-3 days (acceptable).' : 'Over 3 days (backlog risk).') : '';
           return <>
-            <T>📝 Posts</T>
+            <T><Icon name="FileText" size={14} /> Posts</T>
             <L>Total: <B>{n(p?.total)}</B>. Submitted: <B>{n(p?.submitted)}</B>. Approved: <B>{n(p?.approved)}</B>. Rejected: <B>{n(p?.rejected)}</B>. In revision: <B>{n(p?.in_revision)}</B>.</L>
             <L>Throughput (7d): {tp.map(t => <span key={t.day}>Day {t.day}: <B>{t.count}</B> · </span>)}</L>
             <L>Approval gap: avg <B>{n(ag?.avg_hours)}h</B>, max <B>{n(ag?.max_hours)}h</B>, min <B>{n(ag?.min_hours)}h</B>. {gapContext}</L>
@@ -166,7 +165,7 @@ export default function StatisticsDashboard() {
         {panels.moderation.data ? ((): React.ReactNode => { const d = panels.moderation.data as Record<string, unknown>; const pq = d.pending_queue as Record<string, number>; const qv = d.queue_velocity as Record<string, number>; const wv = d.weekend_vs_weekday as Record<string, number>; const rbd = arr(d.reviews_by_day_of_week) as Array<{ day: number; count: number }>;
           const dayNames: Record<string, string> = { '1': 'Sun', '2': 'Mon', '3': 'Tue', '4': 'Wed', '5': 'Thu', '6': 'Fri', '7': 'Sat' };
           const vContext = qv?.days_to_clear ? (qv.days_to_clear <= 1 ? 'Queue will clear within a day.' : qv.days_to_clear <= 3 ? 'Manageable — clears within 3 days.' : 'Backlog — may take over 3 days.') : '';
-          const flipContext = (d.decision_flips as number) > 0 ? `⚠️ ${n(d.decision_flips)} posts changed from approved to rejected. Review these.` : '✅ No approval reversals.';
+          const flipContext = (d.decision_flips as number) > 0 ? <><Icon name="TriangleAlert" size={14} color="#e65100" /> {n(d.decision_flips)} posts changed from approved to rejected. Review these.</> : <><Icon name="Check" size={14} color="#2e7d32" /> No approval reversals.</>;
           return <>
             <L>Pending: <B>{n(pq?.total)}</B> posts. Oldest: <B>{n(pq?.oldest_age_hours)}h</B> old.</L>
             <L>Today: <B>{n(d.reviews_today)}</B> reviews — <B>{n(d.approved_today)}</B> approved, <B>{n(d.rejected_today)}</B> rejected, <B>{n(d.retry_today)}</B> revision requests sent.</L>
@@ -231,7 +230,7 @@ export default function StatisticsDashboard() {
           return <>
             <L>Visits today: <B>{n(d.visits_today)}</B>. Unique visitors: <B>{n(d.unique_today)}</B>.</L>
             <L>🌐 Browsers: {browserStr}</L>
-            <L>💻 OS: {osStr}</L>
+            <L><Icon name="Monitor" size={14} /> OS: {osStr}</L>
             {paths.length > 0 && <><T>Top Pages</T>{paths.map(p => <L key={p.path}><B>{p.path}</B>: {p.count} visits</L>)}</>}
             {refs.length > 0 && <><T>Top Referrers</T>{refs.map(r => <L key={r.domain}><B>{r.domain}</B>: {r.count} visits</L>)}</>}
             {countries.length > 0 && <><T>Countries</T>
@@ -304,12 +303,12 @@ export default function StatisticsDashboard() {
       <Panel scope="alerts" titleIcon="BellDot" title="🚨 Alerts">
         {panels.alerts.data ? ((): React.ReactNode => { const d = panels.alerts.data as Record<string, unknown>; const th = arr(d.thresholds) as Array<{ metric: string; threshold: number; operator: string; severity: string; enabled: boolean }>; const active = arr(d.active) as Array<{ metric: string; severity: string; value: number; threshold: number }>; const hist = arr(d.history) as Array<{ metric: string; severity: string; triggered_at: string; resolved_at: string | null }>;
           return <>
-            {active.length > 0 && <><L>🔴 <B>{active.length}</B> active alerts:</L>
-              {active.map(a => <L key={a.metric}>⚠️ <B>{a.metric}</B>: {a.value} (threshold {a.threshold})</L>)}</>}
-            {active.length === 0 && <L>✅ No active alerts.</L>}
+            {active.length > 0 && <><L><Icon name="Circle" size={14} color="#d32f2f" fill="#d32f2f" /> <B>{active.length}</B> active alerts:</L>
+              {active.map(a => <L key={a.metric}><Icon name="TriangleAlert" size={14} color="#e65100" /> <B>{a.metric}</B>: {a.value} (threshold {a.threshold})</L>)}</>}
+            {active.length === 0 && <L><Icon name="Check" size={14} color="#2e7d32" /> No active alerts.</L>}
             <T>Thresholds</T>
-            {th.map(t => <L key={t.metric}><B>{t.metric}</B>: {t.operator} {t.threshold} [{t.severity}] {t.enabled ? '✅' : '⏸️'}</L>)}
-            {hist.length > 0 && <><T>Recent History</T>{hist.slice(0, 5).map(h => <L key={`${h.metric}-${h.triggered_at}`}><B>{h.metric}</B>: triggered {new Date(h.triggered_at).toLocaleString()} {h.resolved_at ? '✅ resolved' : '🔴 unresolved'}</L>)}</>}
+            {th.map(t => <L key={t.metric}><B>{t.metric}</B>: {t.operator} {t.threshold} [{t.severity}] {t.enabled ? <Icon name="Check" size={14} color="#2e7d32" /> : '⏸️'}</L>)}
+            {hist.length > 0 && <><T>Recent History</T>{hist.slice(0, 5).map(h => <L key={`${h.metric}-${h.triggered_at}`}><B>{h.metric}</B>: triggered {new Date(h.triggered_at).toLocaleString()} {h.resolved_at ? <><Icon name="Check" size={12} color="#2e7d32" /> resolved</> : <><Icon name="Circle" size={12} color="#d32f2f" fill="#d32f2f" /> unresolved</>}</L>)}</>}
           </>;
         })() : null}
       </Panel>
