@@ -96,7 +96,7 @@ export default function ClaimPage() {
           </p>
           {recoveredUser && (
             <p style={{ fontSize: '14px', color: '#555', marginBottom: '16px' }}>
-              Welcome back, {recoveredUser.custom_display_name || recoveredUser.username}!
+              Welcome back, {String(recoveredUser.custom_display_name || recoveredUser.username || 'user')}!
             </p>
           )}
           <button

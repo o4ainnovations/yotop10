@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { API, PostSubmission, PostSubmissionResponse, TitleCheckResponse } from '@/lib/api';
 import { Icon } from '@/components/icons/Icon';
 import { useAuthStore } from '@/stores/auth';
@@ -694,7 +695,7 @@ export default function SubmitPage() {
               />
               {heroImageUrl && (
                 <div style={{ marginTop: '8px' }}>
-                  <img src={heroImageUrl} alt="Hero preview" style={{ maxWidth: '400px', maxHeight: '200px', borderRadius: '4px', border: '1px solid #ddd' }} />
+                  <Image src={heroImageUrl} alt="Hero preview" width={400} height={200} unoptimized style={{ maxWidth: '400px', maxHeight: '200px', borderRadius: '4px', border: '1px solid #ddd', height: 'auto' }} />
                 </div>
               )}
             </div>
@@ -789,7 +790,7 @@ export default function SubmitPage() {
                   />
                   {item.image_url && (
                     <div style={{ marginTop: '4px' }}>
-                      <img src={item.image_url} alt="Item preview" style={{ maxWidth: '150px', maxHeight: '100px', borderRadius: '4px', border: '1px solid #ddd' }} />
+                      <Image src={item.image_url} alt="Item preview" width={150} height={100} unoptimized style={{ maxWidth: '150px', maxHeight: '100px', borderRadius: '4px', border: '1px solid #ddd', height: 'auto' }} />
                     </div>
                   )}
                 </div>

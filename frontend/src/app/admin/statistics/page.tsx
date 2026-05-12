@@ -76,7 +76,7 @@ export default function StatisticsDashboard() {
     return (
       <div style={{ border: '1px solid #ddd', borderRadius: '8px', marginBottom: '12px', overflow: 'hidden' }}>
         <button onClick={() => toggle(scope)} style={{ width: '100%', textAlign: 'left', padding: '12px 16px', background: '#f5f5f5', border: 'none', cursor: 'pointer', fontSize: '15px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between' }}>
-          <span>{titleIcon && <><Icon name={titleIcon} size={16} /> </>}{typeof title === 'string' ? title.replace(/^[\u{1F300}-\u{1F9FF}\u{2600}-\u{27BF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2702}-\u{27B0}\u{1F900}-\u{1F9FF}\u{2000}-\u{3300}\u{FE00}-\u{FEFF}]+/, '').trim() : title}{hint}</span><span>{p.open ? '▾' : '▸'}</span>
+          <span>{titleIcon && <><Icon name={titleIcon} size={16} /> </>}{typeof title === 'string' ? title.replace(/^[\u{1F300}-\u{1F9FF}\u{2600}-\u{27BF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2702}-\u{27B0}\u{1F900}-\u{1F9FF}\u{2000}-\u{3300}\u{FE00}-\u{FEFF}]+/u, '').trim() : title}{hint}</span><span>{p.open ? '▾' : '▸'}</span>
         </button>
         {p.open && <div style={{ padding: '16px' }}>{p.loading ? <p>Loading...</p> : p.error ? <p style={{ color: 'red' }}>{p.error}</p> : children}</div>}
       </div>
@@ -98,7 +98,7 @@ export default function StatisticsDashboard() {
 
   return (<>
     <div style={{ maxWidth: '900px' }}>
-      <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Icon name="BarChart3" size={22} /> Platform Statistics</h2>
+      <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Icon name="ChartBar" size={22} /> Platform Statistics</h2>
 
       <Panel scope="overview" titleIcon="TrendingUp" title="📈 Overview">
         {overview && <>
@@ -126,8 +126,7 @@ export default function StatisticsDashboard() {
             {crons && Object.entries(crons).map(([k,v]) => { const hb = v as Record<string, string>; const status = hb.last_success ? <Icon name="Check" size={14} color="#2e7d32" /> : hb.last_error ? <Icon name="X" size={14} color="#c62828" /> : <Icon name="Hourglass" size={14} />; const last = hb.last_success ? ` (${new Date(hb.last_success).toLocaleTimeString()})` : ''; return <L key={k}>  {status} <B>{k}</B>{last}{hb.last_error ? ` — ${hb.last_error}` : ''}</L>; })}
               <L><Icon name="Circle" size={14} color="#d32f2f" fill="#d32f2f" /> <B>{n(d.affected_features_count)}</B> features degraded due to service outages:</L>
               {(arr(d.affected_features) as Array<{ feature: string; degradation: string; depends_on: string[] }>).map(f => <L key={f.feature}>  — <B>{f.feature}</B>: {f.degradation} (needs {f.depends_on.join(', ')})</L>)}
-            </>}
-          </>;
+            </>;
         })() : null}
       </Panel>
 
@@ -340,7 +339,7 @@ export default function StatisticsDashboard() {
         })() : null}
       </Panel>
 
-      <Panel scope="search/queries" titleIcon="BarChart3" title="📊 Top Queries">
+      <Panel scope="search/queries" titleIcon="ChartBar" title="📊 Top Queries">
         {panels['search/queries'].data ? ((): React.ReactNode => {
           const d = panels['search/queries'].data as Record<string, unknown>;
           const top = arr(d.top_queries) as Array<{ query: string; count: number; zero_result_pct: number }>;

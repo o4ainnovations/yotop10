@@ -21,6 +21,7 @@
 - **[Audit] Messages audit logging** — `logAudit` added to send message, retract message, create template, delete template handlers
 - **[M15] Identity Portability** — Crypto wallet-style identity system: BIP39 12-word seed phrases, ed25519 challenge-response auth, multi-device linking (UserDevice model), 7 API endpoints, frontend SecureMyAuthority section + claim page + seed modal
 - **[Images] Post images** — Three post formats (list_only, hero_list, full_list), hero banner + per-item images, multer upload endpoint, sharp resize (item thumb 400x280 + hero 1200x675 WebP), express.static serving, frontend format selector + image upload UI + three-format post display
+- **[Homepage] Debate Wall** — Neo-brutalist feed: dark navy (#0b0d17) background, hot pink/teal/lime accents, 2-3col PostCard grid, category pill bar, sort (newest/most_viewed/most_commented), load-more pagination, PostCard component reused on category feeds, all icons Lucide (no emojis)
 
 ## Current
 - _(none — all committed)_

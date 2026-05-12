@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
-import { Icon } from './icons/Icon';
+import { Icon, type LucideIconName } from './icons/Icon';
 
 interface NotificationItem {
   _id: string;
@@ -194,7 +194,7 @@ export default function NotificationBell() {
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
-                        <span style={{ marginRight: '6px' }}><Icon name={(TYPE_ICON[n.type] || 'Pin') as any} size={14} /></span>
+                        <span style={{ marginRight: '6px' }}><Icon name={(TYPE_ICON[n.type] || 'Pin') as LucideIconName} size={14} /></span>
                         {isAdmin ? (
                           <>
                             <strong style={{ fontSize: '13px' }}>{n.title}</strong>

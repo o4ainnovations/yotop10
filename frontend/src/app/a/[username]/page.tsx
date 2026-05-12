@@ -279,13 +279,12 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
           </p>
           <p>Tier: {rateLimitStatus.current_tier}</p>
 
-          <h3 style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Icon name="BarChart3" size={16} /> Current Limits:</h3>
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Icon name="ChartBar" size={16} /> Current Limits:</h3>
           <p><Icon name="Check" size={14} color="#2e7d32" /> Posts: {rateLimitStatus.limits.posts.remaining} / {rateLimitStatus.limits.posts.total} remaining</p>
           <p><Icon name="Check" size={14} color="#2e7d32" /> Comments: {rateLimitStatus.limits.comments.remaining} / {rateLimitStatus.limits.comments.total} remaining</p>
           <p><Icon name="Check" size={14} color="#2e7d32" /> Counter Lists: {rateLimitStatus.limits.counter_lists.remaining}</p>
           <p><Icon name="RefreshCw" size={14} /> Resets in: {rateLimitCountdown !== null ? `${Math.floor(rateLimitCountdown / 60)} minutes ${rateLimitCountdown % 60} seconds` : 'Calculating...'}</p>
             <p><Icon name="Lightbulb" size={14} color="#f57c00" /> Next tier at 1.0 trust: 4 posts/hour</p>
-          )}
         </div>
       )}
 

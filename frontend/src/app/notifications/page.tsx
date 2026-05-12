@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
-import { Icon } from '@/components/icons/Icon';
+import { Icon, type LucideIconName } from '@/components/icons/Icon';
 
 interface NotifItem {
   _id: string;
@@ -91,7 +91,7 @@ export default function NotificationsPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '4px' }}>
-                    <span><Icon name={(TYPE_ICON[n.type] || 'Pin') as any} size={14} /></span>
+                    <span><Icon name={(TYPE_ICON[n.type] || 'Pin') as LucideIconName} size={14} /></span>
                     <strong style={{ fontSize: '14px', color: n.read && !isAdmin ? '#999' : '#333' }}>
                       {isAdmin ? n.title : n.post_title || n.type}
                     </strong>

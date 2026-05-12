@@ -154,7 +154,7 @@ export default function AdminSearchPage() {
             </Section>
 
             {/* Popular */}
-            <Section title={<><Icon name="BarChart3" size={16} /> Popular</>} subtitle="Decay-weighted rank over 7 days (0.95^d)">
+            <Section title={<><Icon name="ChartBar" size={16} /> Popular</>} subtitle="Decay-weighted rank over 7 days (0.95^d)">
               {popular.length === 0 ? <Empty /> : (
                 <table style={tbl}>
                   <thead><tr><th>Query</th><th style={{ textAlign: 'right' }}>Total</th><th style={{ textAlign: 'right' }}>Score</th></tr></thead>

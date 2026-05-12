@@ -162,6 +162,8 @@ router.get('/', async (req, res) => {
       sortOption = { created_at: 1 };
     } else if (sort === 'most_commented') {
       sortOption = { comment_count: -1 };
+    } else if (sort === 'most_viewed') {
+      sortOption = { view_count: -1 };
     }
 
     // Execute query with pagination
@@ -185,6 +187,7 @@ router.get('/', async (req, res) => {
       view_count: post.view_count,
       author_username: post.author_username,
       author_display_name: post.author_display_name,
+      format: (post as Record<string, unknown>).format || 'list_only',
       created_at: post.created_at,
       published_at: post.published_at,
       category_slug: post.category_slug,

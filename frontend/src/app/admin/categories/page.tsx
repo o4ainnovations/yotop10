@@ -283,7 +283,7 @@ export default function AdminCategoriesPage() {
         <div>
           {analytics && (
             <div style={{ marginBottom: '20px', padding: '16px', background: '#fafafa', borderRadius: '6px', border: '1px solid #eee' }}>
-              <h3 style={{ margin: '0 0 10px', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '6px' }}><Icon name="BarChart3" size={16} /> Content Distribution</h3>
+              <h3 style={{ margin: '0 0 10px', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '6px' }}><Icon name="ChartBar" size={16} /> Content Distribution</h3>
               {analytics.distribution.map(d => (
                 <div key={d.name} style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <span style={{ width: '120px', fontSize: '13px', fontWeight: 'bold' }}>{d.name}</span>
