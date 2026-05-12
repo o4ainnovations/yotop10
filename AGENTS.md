@@ -117,6 +117,32 @@ permits it in writing. This includes but is not limited to:
 **This rule exists because glow/neon is a design choice, not a default.
 It must never appear in any implementation without explicit approval.**
 
+### 3.0d 🚫 BANNED: Emoji Icons in Source Code (NON-NEGOTIABLE)
+
+Agents MUST NEVER use emoji characters (🔥 💬 👁️ 📊 etc.) as icons or
+decorative elements in source code. All icons MUST use the project's
+standard Lucide icon system via the `<Icon>` component.
+
+- `src/components/icons/Icon.tsx` is the sole source of truth for all icons
+- Use `<Icon name="Flame" size={14} />` — never `🔥`
+- Use `<Icon name="MessageCircle" size={14} />` — never `💬`
+- Use `<Icon name="BarChart3" size={14} />` — never `📊` or `👁️`
+- Use `<Icon name="Check" size={14} />` — never `✅`
+- Use `<Icon name="X" size={14} />` — never `❌`
+- Use `<Icon name="Star" size={14} />` — never `⭐`
+- Use `<Icon name="Link" size={14} />` — never `🔗`
+- Use `<Icon name="Pin" size={14} />` — never `📌`
+
+Emojis may ONLY appear in:
+1. AGENTS.md documentation rules (this file)
+2. User-facing prose/text strings (e.g., "Welcome! 🎉" in a toast message)
+3. Seed data content (actual post/comment text)
+
+**This rule exists because emojis break the visual consistency of the
+Lucide icon system and introduce platform-dependent rendering issues.**
+Any emoji found in component JSX or as a standalone icon must be
+replaced with the equivalent Lucide `<Icon>` component.
+
 ---
 
 ## 3.1 🏭 Enterprise-Grade Implementation Standards (NON-NEGOTIABLE)

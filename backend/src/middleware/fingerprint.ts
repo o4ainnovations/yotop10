@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { User } from '../models/User';
+import { UserDevice } from '../models/UserDevice';
 import crypto from 'crypto';
 import { redis } from '../lib/redis';
 import { findMatchingUser } from '../lib/fingerprintMatching';
@@ -54,6 +55,13 @@ export const fingerprintMiddleware = async (req: Request, res: Response, next: N
 
     try {
       let user = await User.findOne({ device_fingerprint: fingerprint });
+
+      if (!user) {
+        const deviceLink = await UserDevice.findOne({ device_fingerprint: fingerprint });
+        if (deviceLink) {
+          user = await User.findOne({ user_id: deviceLink.user_id });
+        }
+      }
 
       if (!user) {
         const userId = crypto.randomBytes(4).toString('hex');

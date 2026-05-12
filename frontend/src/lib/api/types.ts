@@ -38,6 +38,8 @@ export interface Post {
   author_username: string;
   author_display_name: string;
   category_slug: string;
+  format: 'list_only' | 'hero_list' | 'full_list';
+  hero_image_url?: string | null;
   created_at: string;
 }
 
@@ -80,9 +82,12 @@ export interface PostSubmission {
     rank: number;
     title: string;
     justification: string;
+    image_url?: string;
     source_url?: string;
   }>;
   author_display_name?: string;
+  format?: 'list_only' | 'hero_list' | 'full_list';
+  hero_image_url?: string;
 }
 
 export interface TitleCheckResponse {

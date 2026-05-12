@@ -111,6 +111,14 @@ const validatePostSubmission = [
     .trim()
     .isLength({ max: 50 })
     .withMessage('Display name must be less than 50 characters'),
+  body('format')
+    .optional()
+    .isIn(['list_only', 'hero_list', 'full_list'])
+    .withMessage('Invalid format'),
+  body('hero_image_url')
+    .optional()
+    .isURL()
+    .withMessage('Invalid hero image URL'),
 ];
 
 // GET /api/posts — Approved posts with filtering, sorting, pagination
@@ -332,6 +340,8 @@ router.get('/:idOrSlug', async (req, res) => {
         author_username: post.author_username,
         author_display_name: post.author_display_name,
         category_slug: post.category_slug,
+        format: (post as Record<string, unknown>).format || 'list_only',
+        hero_image_url: (post as Record<string, unknown>).hero_image_url || null,
         created_at: post.created_at,
         updated_at: post.updated_at,
         published_at: post.published_at,
@@ -474,6 +484,8 @@ router.post('/', ...validatePostSubmission as any[], async (req, res) => {
       fire_count: 0,
       comment_count: 0,
       view_count: 0,
+      format: req.body.format || 'list_only',
+      hero_image_url: req.body.hero_image_url || null,
       slug: `temp-${crypto.randomBytes(8).toString('hex')}`,
     });
 

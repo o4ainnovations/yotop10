@@ -7,6 +7,7 @@ import { API } from '@/lib/api';
 import { Icon } from '@/components/icons/Icon';
 import { useAuthStore } from '@/stores/auth';
 import { useRateLimitStore } from '@/stores/rateLimit';
+import { SecureMyAuthority } from '@/components/SecureMyAuthority';
 import NotFound from '@/components/NotFound';
 
 interface UserProfile {
@@ -287,6 +288,8 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
           )}
         </div>
       )}
+
+      {profile.is_own_profile && <SecureMyAuthority />}
     </div>
   );
 }

@@ -9,6 +9,9 @@ export interface IUser extends Document {
   trust_version: number;
   trust_locked: boolean;
   is_admin: boolean;
+  authority_id?: string;
+  public_key_hash?: string;
+  seed_generated_at?: Date;
   rate_limit_override?: {
     posts_per_hour?: number | null;
     comments_per_hour?: number | null;
@@ -55,6 +58,17 @@ const userSchema = new Schema<IUser>(
     is_admin: {
       type: Boolean,
       default: false,
+    },
+    authority_id: {
+      type: String,
+      sparse: true,
+      index: true,
+    },
+    public_key_hash: {
+      type: String,
+    },
+    seed_generated_at: {
+      type: Date,
     },
     trust_score: {
       type: Number,

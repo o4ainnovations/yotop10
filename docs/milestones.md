@@ -74,8 +74,8 @@ All limits use 2D soft gradient floor algorithm:
 
 ### M2 — Database Schema
 - [x] `users` collection
-- [x] `posts` collection (author_id, author_username, author_display_name, title, post_type, intro, status, category_id, fire_count, comment_count, view_count, created_at, updated_at)
-- [x] `list_items` collection (post_id, rank, title, justification, image_url, source_url, fire_count)
+- [x] `posts` collection (author_id, author_username, author_display_name, title, post_type, intro, status, category_id, comment_count, view_count, format, hero_image_url, created_at, updated_at)
+- [x] `list_items` collection (post_id, rank, title, justification, image_url, source_url)
 - [x] `comments` collection (post_id, list_item_id, parent_comment_id, depth, author_id, author_username, author_display_name, content, fire_count, reply_count, created_at, updated_at)
 - [x] `reactions` collection (user_device_fingerprint, target_type, target_id, reaction_type, created_at)
 - [x] `categories` collection (name, slug, description, icon, parent_id, post_count, is_featured, is_archived)
@@ -883,13 +883,13 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 - [x] Sort: relevance, newest, most comments, most liked (fires)
 - [ ] Frontend: `/search`
 
-### M13 — Arguments Page
+### M13 — Arguments Page (Post-MVP / Phase 2)
 - [ ] `GET /api/arguments` — Hot debates
 - [ ] Most active item-anchored comments
 - [ ] Filter by category, time range
 - [ ] Frontend: `/arguments`
 
-### M14 — Hall of Fame
+### M14 — Hall of Fame (Post-MVP / Phase 2)
 - [ ] `GET /api/hall-of-fame` — Featured lists
 - [ ] Admin curation controls
 - [ ] Frontend: `/hall-of-fame`
@@ -914,8 +914,9 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 - [x] Counter Lists are UNLIMITED for all users ✅
 - [x] User profiles at `/a/[username]` ✅
 - [x] Elasticsearch search with autocomplete (backend: 4 indices, search, autocomplete, admin management; frontend page pending)
-- [ ] Arguments page (hot debates)
+- [x] M15 Identity Portability (seed phrases, multi-device linking) ✅
 - [ ] Hall of Fame
+- [ ] Frontend `/search` page
 - [ ] Deployed and verified
 
 ---
@@ -989,13 +990,28 @@ POST   /api/reactions              # Toggle fire reaction
 GET    /api/reactions/state        # Get reaction states
 GET    /api/search                 # Full search
 GET    /api/search/autocomplete    # Autocomplete
-GET    /api/arguments              # Hot debates
-GET    /api/hall-of-fame           # Featured lists
 GET    /api/users/me               # Current user context
 GET    /api/users/me/rate-limits   # Current user rate limit status
 GET    /api/users/:username        # User profile
 GET    /api/users/:username/posts  # User posts
 PATCH  /api/users/me/display-name  # Update display name
+```
+
+### Identity (Auth: fingerprint)
+```
+GET    /api/identity/status              # Check seed identity status
+POST   /api/identity/generate-key        # Generate seed phrase identity
+POST   /api/identity/claim               # Request challenge for claim
+POST   /api/identity/claim/verify        # Verify signed challenge
+POST   /api/identity/link                # Link additional device
+GET    /api/identity/devices             # List linked devices
+DELETE /api/identity/devices/:fingerprint # Unlink a device
+```
+
+### Phase 2 (Post-MVP)
+```
+GET    /api/arguments              # Hot debates
+GET    /api/hall-of-fame           # Featured lists
 ```
 
 ### Admin (Auth Required)
@@ -1082,11 +1098,11 @@ GET    /api/admin/audit-logs/stats    # Quick audit stats (cached 30s)
 #### 1. Homepage — `/`
 **Description**: The main landing page displaying the public feed of approved posts.
 - **Features**:
-  - Header with logo, search bar, navigation links (Categories, Arguments, Hall of Fame), Submit button
+  - Header with logo, search bar, navigation links (Categories, Hall of Fame [post-MVP], Arguments [post-MVP]), Submit button
   - Category filter dropdown in sidebar or header
-  - Sort controls: Newest (default), Most Fired, Most Commented
+  - Sort controls: Newest (default), Most Viewed, Most Commented
   - Responsive grid of PostCards (1-3 columns based on screen)
-  - PostCard displays: title, author (any_XXXX), category badge, 🔥 fire count, comment count, relative date
+  - PostCard displays: title, author (any_XXXX), category badge, view count, comment count, relative date
   - Click card → navigate to post detail
   - Pagination or "Load More" button (20 posts per page)
   - Loading skeletons while fetching
@@ -1183,7 +1199,7 @@ GET    /api/admin/audit-logs/stats    # Quick audit stats (cached 30s)
   - Category header: name, description, icon
   - Subcategories list (if parent category has children)
   - Same feed layout as homepage (PostCards grid)
-  - Sort controls: Newest, Most Fired, Most Commented
+  - Sort controls: Newest, Most Viewed, Most Commented
   - Breadcrumb: Home > Categories > Category Name
   - Back to all categories link
   - 404 if category not found or archived
@@ -1203,9 +1219,9 @@ GET    /api/admin/audit-logs/stats    # Quick audit stats (cached 30s)
     - Author input (username)
     - Date range picker (From/To with presets: Today, This Week, This Month, This Year)
     - "Clear all filters" button
-  - Sort options: Relevance (default), Newest, Oldest, Most Fired
+  - Sort options: Relevance (default), Newest, Oldest, Most Viewed
   - Results display:
-    - Post results: title (highlighted), excerpt, category badge, author, fire count, comment count, date
+    - Post results: title (highlighted), excerpt, category badge, author, view count, comment count, date
     - Comment results: content (highlighted), post title attached to, author, date, reply count
   - Active filters shown as removable tags
   - URL params for shareability: `/search?q=movies&category=tech&sort=newest`
@@ -1216,8 +1232,8 @@ GET    /api/admin/audit-logs/stats    # Quick audit stats (cached 30s)
 
 ---
 
-#### 8. Arguments Page — `/arguments`
-**Description**: Hot debates page showing most active item-anchored comments (the "Talk" page).
+#### 8. Arguments Page — `/arguments` (Post-MVP / Phase 2)
+**Description**: Hot debates page showing most active item-anchored comments (the "Talk" page). Deferred to post-MVP.
 - **Features**:
   - Page title: "Arguments" or "Hot Debates"
   - Description: "Most active item-anchored discussions"
@@ -1247,8 +1263,8 @@ GET    /api/admin/audit-logs/stats    # Quick audit stats (cached 30s)
       - Editorial note (if any)
       - Author
       - Category badge
-      - 🔥 fire count
-      - "Featured" badge
+      - View count
+      - Comment count
   - Category sections below:
     - Posts organized by category
     - Community-vetted criteria badge:
@@ -1278,7 +1294,7 @@ GET    /api/admin/audit-logs/stats    # Quick audit stats (cached 30s)
         - Green: "Approved"
         - Red: "Rejected" (with rejection reason on hover)
         - Yellow: "Pending"
-      - Fire count, Comment count
+      - View count, Comment count
       - Created date
   - Comments tab:
     - List of comments made by user:
@@ -1665,8 +1681,8 @@ We treat the site as a permanent encyclopedia. Indexing is earned through qualit
     - Fires on comments
   - Tabs: All | Posts | Items | Comments
   - Top lists:
-    - Most fired posts
-    - Most fired items
+    - Most viewed posts
+    - Most popular items (by anchor comments)
     - Most fired comments
   - Suspicious activity section:
     - Bulk voting detected (same fingerprint)

@@ -30,6 +30,8 @@ interface Post {
   author_username: string;
   author_display_name: string;
   category_slug: string;
+  format: 'list_only' | 'hero_list' | 'full_list';
+  hero_image_url?: string | null;
   created_at: string;
 }
 
@@ -348,25 +350,71 @@ export default function PostDetailClient({ slug }: { slug: string }) {
         
         <section style={{ marginBottom: '30px' }}>
           <h2>Ranked List</h2>
-          {items.map(item => (
-            <div key={item.id} style={{ marginBottom: '20px', border: '1px solid #eee', padding: '15px', borderRadius: '5px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div style={{ flex: 1 }}>
-                <h3>#{item.rank} {item.title}</h3>
-                <p>{item.justification}</p>
-                {item.image_url && <Image src={item.image_url} alt={item.title} style={{ maxWidth: '300px' }} width={300} height={200} unoptimized />}
-                {item.source_url && <p style={{ fontSize: '14px', color: '#666' }}><a href={item.source_url} target="_blank" rel="noopener noreferrer">Source</a></p>}
-              </div>
-              <div style={{ position: 'relative', marginLeft: '10px' }}>
-                <button 
-                  onClick={() => toggleItemDropdown(item.id)}
-                  style={{ background: 'none', border: '1px solid #ccc', padding: '5px 8px', cursor: 'pointer', borderRadius: '3px', fontSize: '12px', lineHeight: 1, fontWeight: 'bold' }}
-                  title="Comment on this item"
-                >
-                  v
-                </button>
-              </div>
+
+          {post.hero_image_url && (post.format === 'hero_list' || post.format === 'full_list') && (
+            <div style={{ marginBottom: '20px', borderRadius: '8px', overflow: 'hidden' }}>
+              <Image
+                src={post.hero_image_url}
+                alt={post.title}
+                width={1200}
+                height={675}
+                style={{ width: '100%', height: 'auto', display: 'block' }}
+                unoptimized
+              />
             </div>
-          ))}
+          )}
+
+          {items.map(item => {
+            const hasImage = !!(item.image_url && (post.format === 'hero_list' || post.format === 'full_list'));
+            return (
+              <div key={item.id} style={{
+                marginBottom: '20px',
+                border: '1px solid #eee',
+                padding: '15px',
+                borderRadius: '5px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                ...(hasImage ? { gap: '16px' } : {}),
+              }}>
+                {hasImage && (
+                  <div style={{ flexShrink: 0, width: '200px', borderRadius: '4px', overflow: 'hidden' }}>
+                    <Image
+                      src={item.image_url!}
+                      alt={item.title}
+                      width={400}
+                      height={280}
+                      style={{ width: '100%', height: 'auto', display: 'block' }}
+                      unoptimized
+                    />
+                  </div>
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h3 style={{ margin: '0 0 8px 0' }}>#{item.rank} {item.title}</h3>
+                  <p style={{ margin: '0 0 8px 0', lineHeight: 1.6 }}>{item.justification}</p>
+                  {item.source_url && (
+                    <a
+                      href={item.source_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ fontSize: '13px', color: '#1565c0', textDecoration: 'none' }}
+                    >
+                      Source
+                    </a>
+                  )}
+                </div>
+                <div style={{ flexShrink: 0, marginLeft: '10px' }}>
+                  <button
+                    onClick={() => toggleItemDropdown(item.id)}
+                    style={{ background: 'none', border: '1px solid #ccc', padding: '5px 8px', cursor: 'pointer', borderRadius: '3px', fontSize: '12px', lineHeight: 1, fontWeight: 'bold' }}
+                    title="Comment on this item"
+                  >
+                    v
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </section>
         
         <section ref={commentsSectionRef}>

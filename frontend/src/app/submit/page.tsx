@@ -36,6 +36,7 @@ interface ListItem {
   title: string;
   justification: string;
   source_url: string;
+  image_url: string;
 }
 
 interface FormErrors {
@@ -51,7 +52,9 @@ interface DraftData {
   category_slug?: string;
   title?: string;
   intro?: string;
-  items?: Array<{ title: string; justification: string; source_url: string }>;
+  format?: 'list_only' | 'hero_list' | 'full_list';
+  hero_image_url?: string;
+  items?: Array<{ title: string; justification: string; source_url: string; image_url: string }>;
   author_display_name?: string;
   savedAt: number;
 }
@@ -72,15 +75,17 @@ export default function SubmitPage() {
   const [categorySlug, setCategorySlug] = useState('');
   const [title, setTitle] = useState('Top 10 ');
   const [intro, setIntro] = useState('');
+  const [postFormat, setPostFormat] = useState<'list_only' | 'hero_list' | 'full_list'>('list_only');
+  const [heroImageUrl, setHeroImageUrl] = useState('');
   const [items, setItems] = useState<ListItem[]>([
-    { id: generateId(), rank: 1, title: '', justification: '', source_url: '' },
-    { id: generateId(), rank: 2, title: '', justification: '', source_url: '' },
-    { id: generateId(), rank: 3, title: '', justification: '', source_url: '' },
+    { id: generateId(), rank: 1, title: '', justification: '', source_url: '', image_url: '' },
+    { id: generateId(), rank: 2, title: '', justification: '', source_url: '', image_url: '' },
+    { id: generateId(), rank: 3, title: '', justification: '', source_url: '', image_url: '' },
   ]);
   const [authorName, setAuthorName] = useState('');
 
-  const formDataRef = useRef({ categorySlug, title, intro, items, authorName });
-  formDataRef.current = { categorySlug, title, intro, items, authorName };
+  const formDataRef = useRef({ categorySlug, title, intro, postFormat, heroImageUrl, items, authorName });
+  formDataRef.current = { categorySlug, title, intro, postFormat, heroImageUrl, items, authorName };
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
@@ -126,6 +131,8 @@ export default function SubmitPage() {
           if (data.category_slug) setCategorySlug(data.category_slug);
           if (data.title) setTitle(data.title);
           if (data.intro) setIntro(data.intro);
+          if (data.format) setPostFormat(data.format);
+          if (data.hero_image_url) setHeroImageUrl(data.hero_image_url);
           if (data.items && data.items.length > 0) {
             const restored = data.items.map((item, idx) => ({
               id: generateId(),
@@ -133,9 +140,10 @@ export default function SubmitPage() {
               title: item.title || '',
               justification: item.justification || '',
               source_url: item.source_url || '',
+              image_url: item.image_url || '',
             }));
             while (restored.length < MIN_ITEMS) {
-              restored.push({ id: generateId(), rank: restored.length + 1, title: '', justification: '', source_url: '' });
+              restored.push({ id: generateId(), rank: restored.length + 1, title: '', justification: '', source_url: '', image_url: '' });
             }
             setItems(restored);
           }
@@ -153,13 +161,15 @@ export default function SubmitPage() {
   const saveDraft = useCallback(() => {
     clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(() => {
-      const { categorySlug: cat, title: t, intro: i, items: it, authorName: a } = formDataRef.current;
+      const { categorySlug: cat, title: t, intro: i, postFormat: fmt, heroImageUrl: hero, items: it, authorName: a } = formDataRef.current;
       if (!t && !i && !it.some(item => item.title || item.justification) && !a) return;
       const draft: DraftData = {
         category_slug: cat || undefined,
         title: t || undefined,
         intro: i || undefined,
-        items: it.map(({ title, justification, source_url }) => ({ title, justification, source_url })),
+        format: fmt,
+        hero_image_url: hero || undefined,
+        items: it.map(({ title, justification, source_url, image_url }) => ({ title, justification, source_url, image_url })),
         author_display_name: a || undefined,
         savedAt: Date.now(),
       };
@@ -169,18 +179,20 @@ export default function SubmitPage() {
 
   useEffect(() => {
     saveDraft();
-  }, [categorySlug, title, intro, items, authorName, saveDraft]);
+  }, [categorySlug, title, intro, postFormat, heroImageUrl, items, authorName, saveDraft]);
 
   // Flush draft synchronously on tab close / unload (bypasses debounce)
   useEffect(() => {
     const flushDraftSync = () => {
-      const { categorySlug: cat, title: t, intro: i, items: it, authorName: a } = formDataRef.current;
+      const { categorySlug: cat, title: t, intro: i, postFormat: fmt, heroImageUrl: hero, items: it, authorName: a } = formDataRef.current;
       if (!t && !i && !it.some(item => item.title || item.justification) && !a) return;
       const draft: DraftData = {
         category_slug: cat || undefined,
         title: t || undefined,
         intro: i || undefined,
-        items: it.map(({ title, justification, source_url }) => ({ title, justification, source_url })),
+        format: fmt,
+        hero_image_url: hero || undefined,
+        items: it.map(({ title, justification, source_url, image_url }) => ({ title, justification, source_url, image_url })),
         author_display_name: a || undefined,
         savedAt: Date.now(),
       };
@@ -334,7 +346,7 @@ export default function SubmitPage() {
     if (items.length >= MAX_ITEMS) return;
     setItems(prev => [
       ...prev,
-      { id: generateId(), rank: prev.length + 1, title: '', justification: '', source_url: '' }
+      { id: generateId(), rank: prev.length + 1, title: '', justification: '', source_url: '', image_url: '' }
     ]);
   };
 
@@ -373,9 +385,12 @@ export default function SubmitPage() {
         rank: idx + 1,
         title: item.title,
         justification: item.justification,
+        image_url: item.image_url || undefined,
         source_url: item.source_url || undefined,
       })),
       author_display_name: authorName || undefined,
+      format: postFormat,
+      hero_image_url: heroImageUrl || undefined,
     };
 
     try {
@@ -440,9 +455,11 @@ export default function SubmitPage() {
                 setSubmitted(null);
                 setTitle('');
                 setIntro('');
-                setItems([{ id: generateId(), rank: 1, title: '', justification: '', source_url: '' },
-                          { id: generateId(), rank: 2, title: '', justification: '', source_url: '' },
-                          { id: generateId(), rank: 3, title: '', justification: '', source_url: '' }]);
+                setPostFormat('list_only');
+                setHeroImageUrl('');
+                setItems([{ id: generateId(), rank: 1, title: '', justification: '', source_url: '', image_url: '' },
+                          { id: generateId(), rank: 2, title: '', justification: '', source_url: '', image_url: '' },
+                          { id: generateId(), rank: 3, title: '', justification: '', source_url: '', image_url: '' }]);
                 setAuthorName('');
                 localStorage.removeItem(DRAFT_KEY);
               }}
@@ -624,6 +641,66 @@ export default function SubmitPage() {
           </div>
         </section>
 
+        {/* Layout Format */}
+        <section style={{ marginBottom: '30px' }}>
+          <h2>Layout Format</h2>
+
+          <div style={{ marginBottom: '20px' }}>
+            <label htmlFor="format" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+              Post Layout
+            </label>
+            <select
+              id="format"
+              value={postFormat}
+              onChange={(e) => setPostFormat(e.target.value as 'list_only' | 'hero_list' | 'full_list')}
+              style={{ width: '100%', padding: '10px', fontSize: '16px', border: '1px solid #ccc', borderRadius: '5px' }}
+            >
+              <option value="list_only">List Only — text items, no images</option>
+              <option value="hero_list">Hero + List — hero banner top, items with images</option>
+              <option value="full_list">Full List — hero banner + all items have images</option>
+            </select>
+          </div>
+
+          {(postFormat === 'hero_list' || postFormat === 'full_list') && (
+            <div style={{ marginBottom: '20px' }}>
+              <label htmlFor="hero-image" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                Hero Banner Image
+              </label>
+              <input
+                id="hero-image"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setErrors(prev => ({ ...prev, titleSimilarity: undefined }));
+                  try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    const baseUrl = typeof window !== 'undefined' ? '' : (process.env.INTERNAL_API_URL || 'http://localhost:8000');
+                    const res = await fetch(`${baseUrl}/api/upload`, {
+                      method: 'POST',
+                      body: formData,
+                      credentials: 'include',
+                    });
+                    if (!res.ok) throw new Error('Upload failed');
+                    const data = await res.json() as { file: { hero_lg: string; item_thumb: string; original: string } };
+                    setHeroImageUrl(data.file.hero_lg);
+                  } catch {
+                    setErrors(prev => ({ ...prev, titleSimilarity: 'Image upload failed. Try a smaller file.' }));
+                  }
+                }}
+                style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+              />
+              {heroImageUrl && (
+                <div style={{ marginTop: '8px' }}>
+                  <img src={heroImageUrl} alt="Hero preview" style={{ maxWidth: '400px', maxHeight: '200px', borderRadius: '4px', border: '1px solid #ddd' }} />
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+
         {/* Step 2: List Items */}
         <section style={{ marginBottom: '30px' }}>
           <h2>List Items</h2>
@@ -679,6 +756,44 @@ export default function SubmitPage() {
                   style={{ width: '100%', padding: '8px', fontSize: '16px', border: '1px solid #ccc', borderRadius: '5px' }}
                 />
               </div>
+
+              {(postFormat === 'hero_list' || postFormat === 'full_list') && (
+                <div style={{ marginBottom: '10px' }}>
+                  <label htmlFor={`item-image-${item.id}`} style={{ display: 'block', marginBottom: '5px', color: '#666' }}>
+                    Item Image (optional)
+                  </label>
+                  <input
+                    id={`item-image-${item.id}`}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        const baseUrl = typeof window !== 'undefined' ? '' : (process.env.INTERNAL_API_URL || 'http://localhost:8000');
+                        const res = await fetch(`${baseUrl}/api/upload`, {
+                          method: 'POST',
+                          body: formData,
+                          credentials: 'include',
+                        });
+                        if (!res.ok) throw new Error('Upload failed');
+                        const data = await res.json() as { file: { item_thumb: string; original: string; hero_lg: string } };
+                        updateItem(item.id, 'image_url', data.file.item_thumb);
+                      } catch {
+                        /* upload failed — silently ignore */
+                      }
+                    }}
+                    style={{ width: '100%', padding: '4px', fontSize: '13px' }}
+                  />
+                  {item.image_url && (
+                    <div style={{ marginTop: '4px' }}>
+                      <img src={item.image_url} alt="Item preview" style={{ maxWidth: '150px', maxHeight: '100px', borderRadius: '4px', border: '1px solid #ddd' }} />
+                    </div>
+                  )}
+                </div>
+              )}
 
               {items.length > MIN_ITEMS && (
                 <button

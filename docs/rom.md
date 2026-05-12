@@ -1075,6 +1075,8 @@ This audit analyzed 39 source files:
 | M10.8 | Hall of Fame management | Not implemented |
 | M10.9 | Reactions management | Not implemented |
 | M10.11 | Rate limits & trust scores UI | Not implemented |
-| M13-M15 | Arguments, Identity Portability | Not implemented |
+| M13 | Arguments page | Not implemented (post-MVP) |
+| M14 | Hall of Fame | Not implemented (post-MVP) |
+| M15 | Identity Portability | Implemented |
 
 ---

@@ -11,6 +11,7 @@ import { validateEnv } from './lib/env';
 import { redis } from './lib/redis';
 import { es } from './lib/elasticsearch';
 import { routes } from './routes';
+import path from 'path';
 
 dotenv.config();
 
@@ -28,6 +29,8 @@ app.use(cors({
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
 
 import { fingerprintMiddleware } from './middleware/fingerprint';
 

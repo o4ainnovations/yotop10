@@ -1766,6 +1766,8 @@ router.post('/messages', async (req, res) => {
       expires_at: new Date(Date.now() + body.expires_in_days * 86400000),
     });
 
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'send_message', ip: getClientIp(req), metadata: { message_id: (message._id as { toString(): string }).toString(), type: body.type, title: body.title, recipient_id: body.type === 'individual' ? body.recipient_id : null }, user_agent: req.headers['user-agent'] || '' });
+
     res.status(201).json({ success: true, message });
   } catch (e: any) {
     if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
@@ -1798,6 +1800,7 @@ router.delete('/messages/:id', async (req, res) => {
   try {
     const m = await AdminMessage.findByIdAndUpdate(req.params.id, { expires_at: new Date() }, { new: true });
     if (!m) return res.status(404).json({ code: 'NOT_FOUND', error: 'Message not found' });
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'retract_message', ip: getClientIp(req), metadata: { message_id: req.params.id, type: m.type, title: m.title }, user_agent: req.headers['user-agent'] || '' });
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: 'Failed to retract message' }); }
 });
@@ -1824,6 +1827,7 @@ router.post('/messages/templates', async (req, res) => {
   try {
     const body = templateSchema.parse(req.body);
     const t = await MessageTemplate.create(body);
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'create_template', ip: getClientIp(req), metadata: { template_id: (t._id as { toString(): string }).toString(), name: t.name }, user_agent: req.headers['user-agent'] || '' });
     res.status(201).json({ success: true, template: t });
   } catch (e: any) {
     if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
@@ -1842,6 +1846,7 @@ router.delete('/messages/templates/:id', async (req, res) => {
   try {
     const t = await MessageTemplate.findByIdAndDelete(req.params.id);
     if (!t) return res.status(404).json({ code: 'NOT_FOUND', error: 'Template not found' });
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'delete_template', ip: getClientIp(req), metadata: { template_id: req.params.id, name: t.name }, user_agent: req.headers['user-agent'] || '' });
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: 'Failed to delete template' }); }
 });

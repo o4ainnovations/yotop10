@@ -3,6 +3,8 @@ import { Router } from 'express';
 import { Category } from '../models/Category';
 import { Post } from '../models/Post';
 import { adminAuthMiddleware } from '../lib/adminAuth';
+import { logAudit } from '../lib/auditWriter';
+import { getClientIp } from '../middleware/fingerprint';
 
 const router: Router = Router();
 
@@ -81,6 +83,7 @@ router.post('/:id/duplicate', adminAuthMiddleware, async (req: any, res: any) =>
       status: 'draft', template: cat.template,
     });
     logCatAudit(req.params.id, 'duplicated', { to: { id: copy._id, slug: newSlug } }, req.admin?.username || 'admin');
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'duplicate_category', ip: getClientIp(req), metadata: { category_id: req.params.id, new_category_id: (copy._id as { toString(): string }).toString(), new_slug: newSlug }, user_agent: req.headers['user-agent'] || '' });
     res.status(201).json({ category: { id: copy._id, name: copy.name, slug: copy.slug } });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
@@ -91,6 +94,7 @@ router.post('/:id/publish', adminAuthMiddleware, async (req: any, res: any) => {
     const cat = await Category.findByIdAndUpdate(req.params.id, { status: 'published', publish_at: new Date() }, { new: true });
     if (!cat) return res.status(404).json({ error: 'Category not found' });
     logCatAudit(req.params.id, 'published', { from: cat.status, to: 'published' }, req.admin?.username || 'admin');
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'publish_category', ip: getClientIp(req), metadata: { category_id: req.params.id }, user_agent: req.headers['user-agent'] || '' });
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
@@ -101,6 +105,7 @@ router.post('/:id/hide', adminAuthMiddleware, async (req: any, res: any) => {
     const cat = await Category.findByIdAndUpdate(req.params.id, { status: 'hidden' }, { new: true });
     if (!cat) return res.status(404).json({ error: 'Category not found' });
     logCatAudit(req.params.id, 'hidden', { from: cat.status, to: 'hidden' }, req.admin?.username || 'admin');
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'hide_category', ip: getClientIp(req), metadata: { category_id: req.params.id }, user_agent: req.headers['user-agent'] || '' });
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
@@ -204,6 +209,7 @@ router.post('/bulk/feature', adminAuthMiddleware, async (req: any, res: any) => 
     const update: Record<string, unknown> = { is_featured: true };
     if (featured_in) update.featured_in = featured_in;
     const r = await Category.updateMany({ _id: { $in: ids } }, { $set: update });
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'feature_categories', ip: getClientIp(req), metadata: { ids, count: r.modifiedCount, featured: true }, user_agent: req.headers['user-agent'] || '' });
     res.json({ success: true, updated: r.modifiedCount });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
@@ -214,6 +220,7 @@ router.post('/bulk/archive', adminAuthMiddleware, async (req: any, res: any) => 
     if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'Provide category IDs' });
     const affected = await Post.countDocuments({ category_slug: { $in: await Category.find({ _id: { $in: ids } }).distinct('slug') } });
     const r = await Category.updateMany({ _id: { $in: ids } }, { $set: { is_archived: true } });
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'archive_categories', ip: getClientIp(req), metadata: { ids, archived: r.modifiedCount, affected_posts: affected }, user_agent: req.headers['user-agent'] || '' });
     res.json({ success: true, archived: r.modifiedCount, affected_posts: affected });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
@@ -231,6 +238,7 @@ router.post('/bulk/merge', adminAuthMiddleware, async (req: any, res: any) => {
     await source.save();
 
     logCatAudit(source_id, 'merged_into', { to: { id: target_id, slug: target.slug } }, req.admin?.username || 'admin');
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'merge_categories', ip: getClientIp(req), metadata: { source_id, target_id, target_slug: target.slug }, user_agent: req.headers['user-agent'] || '' });
     res.json({ success: true, posts_moved: await Post.countDocuments({ category_slug: target.slug }) });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
@@ -240,6 +248,7 @@ router.post('/bulk/reparent', adminAuthMiddleware, async (req: any, res: any) =>
     const { ids, new_parent_id } = req.body;
     if (!Array.isArray(ids) || !new_parent_id) return res.status(400).json({ error: 'Provide ids and new_parent_id' });
     const r = await Category.updateMany({ _id: { $in: ids } }, { $set: { parent_id: new_parent_id } });
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'reparent_categories', ip: getClientIp(req), metadata: { ids, new_parent_id, reparented: r.modifiedCount }, user_agent: req.headers['user-agent'] || '' });
     res.json({ success: true, reparented: r.modifiedCount });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
@@ -255,6 +264,7 @@ router.post('/import', adminAuthMiddleware, async (req: any, res: any) => {
       await Category.create({ name: c.name, slug: c.slug, description: c.description, icon: c.icon, parent_id: c.parent_id, is_featured: c.is_featured || false });
       created++;
     }
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'import_categories', ip: getClientIp(req), metadata: { created, skipped, total_input: categories.length }, user_agent: req.headers['user-agent'] || '' });
     res.json({ success: true, created, skipped });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
@@ -378,6 +388,8 @@ router.post('/', adminAuthMiddleware, async (req: any, res: any) => {
       is_archived: false,
     });
 
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'create_category', ip: getClientIp(req), metadata: { category_id: (category._id as { toString(): string }).toString(), name: category.name, slug: category.slug }, user_agent: req.headers['user-agent'] || '' });
+
     res.status(201).json({ category: { id: category._id, name: category.name, slug: category.slug } });
   } catch (error) {
     console.error('Error creating category:', error);
@@ -400,6 +412,8 @@ router.patch('/:id', adminAuthMiddleware, async (req: any, res: any) => {
     if (!category) {
       return res.status(404).json({ error: 'Category not found' });
     }
+
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'update_category', ip: getClientIp(req), metadata: { category_id: id, changes: { name, description, icon, is_featured } }, user_agent: req.headers['user-agent'] || '' });
 
     res.json({ category: { id: category._id, name: category.name, slug: category.slug } });
   } catch (error) {
@@ -433,6 +447,8 @@ router.delete('/:id', adminAuthMiddleware, async (req: any, res: any) => {
 
     category.is_archived = true;
     await category.save();
+
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'archive_category', ip: getClientIp(req), metadata: { category_id: id, name: category.name, slug: category.slug }, user_agent: req.headers['user-agent'] || '' });
 
     res.json({ message: 'Category archived successfully' });
   } catch (error) {
@@ -499,6 +515,7 @@ router.post('/recalculate-post-counts', adminAuthMiddleware, async (req: any, re
     }
     
     console.log('Recalculated post counts:', results);
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'recalculate_post_counts', ip: getClientIp(req), metadata: { categories_updated: parentCategories.length + childCategories.length, results }, user_agent: req.headers['user-agent'] || '' });
     res.json({ message: 'Post counts recalculated', results });
   } catch (error) {
     console.error('Error recalculating post counts:', error);

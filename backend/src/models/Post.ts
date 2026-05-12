@@ -32,6 +32,8 @@ export interface IPost extends Document {
   editorial_note: string | null;
   comments_locked: boolean;
   bumped_at: Date | null;
+  format: 'list_only' | 'hero_list' | 'full_list';
+  hero_image_url: string | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -162,6 +164,12 @@ const postSchema = new Schema<IPost>(
     editorial_note: { type: String, default: null },
     comments_locked: { type: Boolean, default: false },
     bumped_at: { type: Date, default: null },
+    format: {
+      type: String,
+      enum: ['list_only', 'hero_list', 'full_list'],
+      default: 'list_only',
+    },
+    hero_image_url: { type: String, default: null },
     published_at: {
       type: Date,
     },

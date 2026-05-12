@@ -17,6 +17,10 @@
 - **[Feature] Notifications** — Toast system, bell badge, admin-to-author notifications
 - **[M12 Search Architecture]** Enterprise upgrade — bulk indexing, facets, highlights, retries with dead letter queue, rate limiting, category/user indexing, Zod validation, did-you-mean suggestions, comment filtering, index writers wired into all route handlers
 - **[UI] Admin sidebar, bell badge, statistics dashboard**
+- **[Audit] Categories audit logging** — `logAudit` (AuditLog model) added to all 12 mutation handlers: duplicate, publish, hide, bulk/feature, bulk/archive, bulk/merge, bulk/reparent, import, create, update, archive, recalculate-post-counts
+- **[Audit] Messages audit logging** — `logAudit` added to send message, retract message, create template, delete template handlers
+- **[M15] Identity Portability** — Crypto wallet-style identity system: BIP39 12-word seed phrases, ed25519 challenge-response auth, multi-device linking (UserDevice model), 7 API endpoints, frontend SecureMyAuthority section + claim page + seed modal
+- **[Images] Post images** — Three post formats (list_only, hero_list, full_list), hero banner + per-item images, multer upload endpoint, sharp resize (item thumb 400x280 + hero 1200x675 WebP), express.static serving, frontend format selector + image upload UI + three-format post display
 
 ## Current
 - _(none — all committed)_
@@ -28,4 +32,3 @@
 - M10.6: Users management
 - M10.11: Rate limits & trust scores admin UI
 - M10.8: Hall of Fame management
-- M10.9: Reactions management
