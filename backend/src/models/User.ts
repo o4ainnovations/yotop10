@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface IUser extends Document {
   user_id: string;
@@ -108,4 +109,4 @@ const userSchema = new Schema<IUser>(
   }
 );
 
-export const User = mongoose.model<IUser>('User', userSchema);
+export const User = registerModel<IUser>('User', userSchema);

@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export const ALERT_METRICS = [
   'pending_queue_depth',
@@ -50,7 +51,7 @@ const alertNotificationSchema = new Schema<IAlertNotification>(
 alertNotificationSchema.index({ read: 1, dismissed: 1, created_at: -1 });
 alertNotificationSchema.index({ created_at: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });
 
-export const AlertNotificationModel = mongoose.model<IAlertNotification>(
+export const AlertNotificationModel = registerModel<IAlertNotification>(
   'AlertNotification',
   alertNotificationSchema
 );

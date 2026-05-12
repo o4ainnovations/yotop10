@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface ICategoryAudit extends Document {
   category_id: mongoose.Types.ObjectId;
@@ -21,4 +22,4 @@ const categoryAuditSchema = new Schema<ICategoryAudit>(
 categoryAuditSchema.index({ category_id: 1, created_at: -1 });
 categoryAuditSchema.index({ created_at: 1 }, { expireAfterSeconds: 365 * 24 * 60 * 60 });
 
-export const CategoryAudit = mongoose.model<ICategoryAudit>('CategoryAudit', categoryAuditSchema);
+export const CategoryAudit = registerModel<ICategoryAudit>('CategoryAudit', categoryAuditSchema);

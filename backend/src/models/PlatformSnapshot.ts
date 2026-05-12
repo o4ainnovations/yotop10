@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface IPlatformSnapshot extends Document {
   date: string;
@@ -25,4 +26,4 @@ const platformSnapshotSchema = new Schema<IPlatformSnapshot>(
   { timestamps: false }
 );
 
-export const PlatformSnapshot = mongoose.model<IPlatformSnapshot>('PlatformSnapshot', platformSnapshotSchema);
+export const PlatformSnapshot = registerModel<IPlatformSnapshot>('PlatformSnapshot', platformSnapshotSchema);

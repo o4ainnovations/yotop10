@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface IAuthChallenge extends Document {
   challenge: string;
@@ -39,4 +40,4 @@ const authChallengeSchema = new Schema<IAuthChallenge>(
   }
 );
 
-export const AuthChallenge = mongoose.model<IAuthChallenge>('AuthChallenge', authChallengeSchema);
+export const AuthChallenge = registerModel<IAuthChallenge>('AuthChallenge', authChallengeSchema);

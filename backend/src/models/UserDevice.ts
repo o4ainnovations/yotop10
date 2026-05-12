@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface IUserDevice extends Document {
   device_fingerprint: string;
@@ -42,4 +43,4 @@ const userDeviceSchema = new Schema<IUserDevice>(
 
 userDeviceSchema.index({ user_id: 1, device_fingerprint: 1 });
 
-export const UserDevice = mongoose.model<IUserDevice>('UserDevice', userDeviceSchema);
+export const UserDevice = registerModel<IUserDevice>('UserDevice', userDeviceSchema);

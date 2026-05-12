@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface IAdminUser extends Document {
   username: string;
@@ -40,4 +41,4 @@ const adminUserSchema = new Schema<IAdminUser>(
   }
 );
 
-export const AdminUser = mongoose.model<IAdminUser>('AdminUser', adminUserSchema);
+export const AdminUser = registerModel<IAdminUser>('AdminUser', adminUserSchema);

@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface ICategory extends Document {
   name: string;
@@ -47,4 +48,4 @@ categorySchema.index({ status: 1 });
 categorySchema.index({ publish_at: 1 });
 categorySchema.index({ archive_at: 1 });
 
-export const Category = mongoose.model<ICategory>('Category', categorySchema);
+export const Category = registerModel<ICategory>('Category', categorySchema);

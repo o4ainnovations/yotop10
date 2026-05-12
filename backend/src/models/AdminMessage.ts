@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface IAdminMessage extends Document {
   type: 'individual' | 'broadcast';
@@ -30,4 +31,4 @@ adminMessageSchema.index({ type: 1, created_at: -1 });
 adminMessageSchema.index({ recipient_id: 1, created_at: -1 });
 adminMessageSchema.index({ expires_at: 1 }, { expireAfterSeconds: 0 });
 
-export const AdminMessage = mongoose.model<IAdminMessage>('AdminMessage', adminMessageSchema);
+export const AdminMessage = registerModel<IAdminMessage>('AdminMessage', adminMessageSchema);

@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface IListItem extends Document {
   post_id: mongoose.Types.ObjectId;
@@ -46,4 +47,4 @@ const listItemSchema = new Schema<IListItem>(
 // Indexes for efficient queries
 listItemSchema.index({ post_id: 1, rank: 1 });
 
-export const ListItem = mongoose.model<IListItem>('ListItem', listItemSchema);
+export const ListItem = registerModel<IListItem>('ListItem', listItemSchema);

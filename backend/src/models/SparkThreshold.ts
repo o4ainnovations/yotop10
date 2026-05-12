@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface ISparkThreshold extends Document {
   percentile_99: number; // S-Rank threshold
@@ -16,7 +17,7 @@ const sparkThresholdSchema = new Schema<ISparkThreshold>({
   calculated_at: { type: Date, default: Date.now },
 });
 
-export const SparkThreshold = mongoose.model<ISparkThreshold>('SparkThreshold', sparkThresholdSchema);
+export const SparkThreshold = registerModel<ISparkThreshold>('SparkThreshold', sparkThresholdSchema);
 
 // Floor multipliers based on rank
 export const FLOOR_MULTIPLIERS = {

@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 type FingerprintSignals = Record<string, string | number | boolean>;
 
@@ -49,4 +50,4 @@ fingerprintObservationSchema.index({ user_id: 1, observed_at: -1 });
 fingerprintObservationSchema.index({ fingerprint_hash: 1, observed_at: -1 });
 fingerprintObservationSchema.index({ observed_at: 1 }, { expireAfterSeconds: 90 * 24 * 3600 });
 
-export const FingerprintObservation = mongoose.model<IFingerprintObservation>('FingerprintObservation', fingerprintObservationSchema);
+export const FingerprintObservation = registerModel<IFingerprintObservation>('FingerprintObservation', fingerprintObservationSchema);

@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface INotification extends Document {
   user_id: string;
@@ -31,7 +32,7 @@ const notificationSchema = new Schema<INotification>(
 notificationSchema.index({ user_id: 1, read: 1, created_at: -1 });
 notificationSchema.index({ created_at: 1 }, { expireAfterSeconds: 14 * 24 * 60 * 60 });
 
-export const Notification = mongoose.model<INotification>('Notification', notificationSchema);
+export const Notification = registerModel<INotification>('Notification', notificationSchema);
 
 export async function createNotification(params: {
   user_id: string;

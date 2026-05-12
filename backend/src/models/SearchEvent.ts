@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface ISearchEvent extends Document {
   query: string;
@@ -51,4 +52,4 @@ searchEventSchema.index({ timestamp: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 6
 searchEventSchema.index({ normalized_query: 1, timestamp: -1 });
 searchEventSchema.index({ zero_results: 1, timestamp: -1 });
 
-export const SearchEvent = mongoose.model<ISearchEvent>('SearchEvent', searchEventSchema);
+export const SearchEvent = registerModel<ISearchEvent>('SearchEvent', searchEventSchema);

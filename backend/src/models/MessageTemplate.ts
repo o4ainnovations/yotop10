@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface IMessageTemplate extends Document {
   name: string;
@@ -18,4 +19,4 @@ const messageTemplateSchema = new Schema<IMessageTemplate>(
   { timestamps: { createdAt: 'created_at', updatedAt: false } }
 );
 
-export const MessageTemplate = mongoose.model<IMessageTemplate>('MessageTemplate', messageTemplateSchema);
+export const MessageTemplate = registerModel<IMessageTemplate>('MessageTemplate', messageTemplateSchema);

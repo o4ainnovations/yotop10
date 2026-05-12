@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface ISearchDailyStats extends Document {
   date: string;
@@ -54,4 +55,4 @@ const searchDailyStatsSchema = new Schema<ISearchDailyStats>(
   { timestamps: false }
 );
 
-export const SearchDailyStats = mongoose.model<ISearchDailyStats>('SearchDailyStats', searchDailyStatsSchema);
+export const SearchDailyStats = registerModel<ISearchDailyStats>('SearchDailyStats', searchDailyStatsSchema);

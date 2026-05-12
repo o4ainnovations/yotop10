@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface IUserEvent extends Document {
   user_id: string;
@@ -21,4 +22,4 @@ const userEventSchema = new Schema<IUserEvent>(
 userEventSchema.index({ user_id: 1, created_at: -1 });
 userEventSchema.index({ created_at: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
 
-export const UserEvent = mongoose.model<IUserEvent>('UserEvent', userEventSchema);
+export const UserEvent = registerModel<IUserEvent>('UserEvent', userEventSchema);

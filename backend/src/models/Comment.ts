@@ -1,3 +1,4 @@
+import { registerModel } from '../lib/modelRegistry';
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IComment extends Document {
@@ -118,4 +119,4 @@ commentSchema.pre('save', function(next) {
   next();
 });
 
-export const Comment = mongoose.model<IComment>('Comment', commentSchema);
+export const Comment = registerModel<IComment>('Comment', commentSchema);

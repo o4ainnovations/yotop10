@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface IAuditLog extends Document {
   admin_id: string | null;
@@ -45,4 +46,4 @@ auditLogSchema.index({ action: 1, created_at: -1 });
 auditLogSchema.index({ ip: 1, created_at: -1 });
 auditLogSchema.index({ created_at: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
 
-export const AuditLog = mongoose.model<IAuditLog>('AuditLog', auditLogSchema);
+export const AuditLog = registerModel<IAuditLog>('AuditLog', auditLogSchema);

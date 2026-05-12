@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface ITrustScoreLog extends Document {
   user_id: string;
@@ -63,4 +64,4 @@ const trustScoreLogSchema = new Schema<ITrustScoreLog>(
 trustScoreLogSchema.index({ user_id: 1, post_id: 1 }, { unique: true });
 trustScoreLogSchema.index({ created_at: 1 }, { expireAfterSeconds: 90 * 24 * 3600 });
 
-export const TrustScoreLog = mongoose.model<ITrustScoreLog>('TrustScoreLog', trustScoreLogSchema);
+export const TrustScoreLog = registerModel<ITrustScoreLog>('TrustScoreLog', trustScoreLogSchema);

@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface ISearchDeadLetter extends Document {
   index_name: string;
@@ -24,7 +25,7 @@ const searchDeadLetterSchema = new Schema<ISearchDeadLetter>(
 
 searchDeadLetterSchema.index({ index_name: 1, docId: 1 }, { unique: true });
 
-export const SearchDeadLetter = mongoose.model<ISearchDeadLetter>(
+export const SearchDeadLetter = registerModel<ISearchDeadLetter>(
   'SearchDeadLetter',
   searchDeadLetterSchema
 );

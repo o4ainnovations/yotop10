@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface IAlertHistory extends Document {
   metric: string;
@@ -26,4 +27,4 @@ const alertHistorySchema = new Schema<IAlertHistory>(
 alertHistorySchema.index({ triggered_at: -1 });
 alertHistorySchema.index({ created_at: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
 
-export const AlertHistory = mongoose.model<IAlertHistory>('AlertHistory', alertHistorySchema);
+export const AlertHistory = registerModel<IAlertHistory>('AlertHistory', alertHistorySchema);

@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface ISetupToken extends Document {
   token: string;
@@ -29,4 +30,4 @@ const setupTokenSchema = new Schema<ISetupToken>(
   }
 );
 
-export const SetupToken = mongoose.model<ISetupToken>('SetupToken', setupTokenSchema);
+export const SetupToken = registerModel<ISetupToken>('SetupToken', setupTokenSchema);

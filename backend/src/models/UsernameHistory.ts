@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface IUsernameHistory extends Document {
   user_id: string;
@@ -44,4 +45,4 @@ const usernameHistorySchema = new Schema<IUsernameHistory>(
 usernameHistorySchema.index({ username: 1, released_at: 1 });
 usernameHistorySchema.index({ custom_display_name: 1, released_at: 1 });
 
-export const UsernameHistory = mongoose.model<IUsernameHistory>('UsernameHistory', usernameHistorySchema);
+export const UsernameHistory = registerModel<IUsernameHistory>('UsernameHistory', usernameHistorySchema);

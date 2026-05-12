@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 // import { updateUserTrustScore } from '../lib/trustScore';
 
 export interface IPost extends Document {
@@ -230,4 +231,4 @@ postSchema.index({ normalized_title: 1 }, {
   partialFilterExpression: { status: 'pending_review' }
 });
 
-export const Post = mongoose.model<IPost>('Post', postSchema);
+export const Post = registerModel<IPost>('Post', postSchema);

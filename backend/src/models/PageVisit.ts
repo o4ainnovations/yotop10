@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface IPageVisit extends Document {
   fingerprint: string | null;
@@ -25,4 +26,4 @@ const pageVisitSchema = new Schema<IPageVisit>(
 pageVisitSchema.index({ fingerprint: 1, created_at: -1 });
 pageVisitSchema.index({ created_at: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });
 
-export const PageVisit = mongoose.model<IPageVisit>('PageVisit', pageVisitSchema);
+export const PageVisit = registerModel<IPageVisit>('PageVisit', pageVisitSchema);

@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface IReaction extends Document {
   user_device_fingerprint: string;
@@ -47,4 +48,4 @@ reactionSchema.index(
 // Index for querying reactions by target
 reactionSchema.index({ target_type: 1, target_id: 1 });
 
-export const Reaction = mongoose.model<IReaction>('Reaction', reactionSchema);
+export const Reaction = registerModel<IReaction>('Reaction', reactionSchema);

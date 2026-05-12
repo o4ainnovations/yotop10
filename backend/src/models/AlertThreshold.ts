@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface IAlertThreshold extends Document {
   metric: string;
@@ -25,4 +26,4 @@ const alertThresholdSchema = new Schema<IAlertThreshold>(
   { timestamps: true }
 );
 
-export const AlertThreshold = mongoose.model<IAlertThreshold>('AlertThreshold', alertThresholdSchema);
+export const AlertThreshold = registerModel<IAlertThreshold>('AlertThreshold', alertThresholdSchema);

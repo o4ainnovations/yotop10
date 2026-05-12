@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document } from 'mongoose';
+import { registerModel } from '../lib/modelRegistry';
 
 export interface ISearchClick extends Document {
   search_event_id: string;
@@ -34,4 +35,4 @@ const searchClickSchema = new Schema<ISearchClick>(
 searchClickSchema.index({ timestamp: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
 searchClickSchema.index({ search_event_id: 1, result_position: 1 });
 
-export const SearchClick = mongoose.model<ISearchClick>('SearchClick', searchClickSchema);
+export const SearchClick = registerModel<ISearchClick>('SearchClick', searchClickSchema);
