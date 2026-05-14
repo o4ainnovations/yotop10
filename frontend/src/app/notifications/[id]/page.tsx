@@ -42,7 +42,6 @@ export default function NotificationDetailPage() {
 
   useEffect(() => { fetchDetail(); }, [fetchDetail]);
 
-  // Mark as read on mount for system notifications
   useEffect(() => {
     if (n && !n.is_admin && !n.read) {
       apiFetch(`/users/me/notifications/${n._id}/read`, { method: 'PATCH' }).catch(() => {});
@@ -58,55 +57,60 @@ export default function NotificationDetailPage() {
     setActionLoading(false);
   };
 
-  if (loading) return <div style={{ padding: '20px' }}>Loading...</div>;
+  const PRIORITY_COLORS: Record<string, string> = { info: 'text-blue-400', important: 'text-orange-400', urgent: 'text-red-400' };
+  const PRIORITY_BG: Record<string, string> = { info: 'bg-blue-500/20', important: 'bg-orange-500/20', urgent: 'bg-red-500/20' };
+
+  if (loading) return <div className="p-5 text-white/40">Loading...</div>;
   if (!n) return (
-    <div style={{ maxWidth: '700px', margin: '0 auto', padding: '40px 20px', textAlign: 'center' }}>
-      <h2 style={{ color: '#999' }}>Notification not found</h2>
-      <p style={{ color: '#aaa', fontSize: '13px' }}>
+    <div className="max-w-[700px] mx-auto px-3 sm:px-5 py-10 text-center">
+      <h2 className="text-white/40 text-lg">Notification not found</h2>
+      <p className="text-white/30 text-[13px] mt-1">
         It may have been deleted, expired, or you don&rsquo;t have access to it.
       </p>
-      <button onClick={() => router.push('/notifications')} style={{ marginTop: '12px', padding: '8px 16px', background: '#1565c0', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+      <button onClick={() => router.push('/notifications')} className="mt-3 px-4 py-2 bg-blue-700 text-white border-none rounded-xl cursor-pointer text-sm font-bold min-h-[40px]">
         ← Back to notifications
       </button>
     </div>
   );
 
   const isAdmin = n.is_admin || n.type === 'admin_message';
-  const PRIORITY_COLORS: Record<string, string> = { info: '#1565c0', important: '#e65100', urgent: '#c62828' };
-  const pc = PRIORITY_COLORS[n.priority || 'info'];
+  const pc = n.priority || 'info';
+  const priorityTextColor = PRIORITY_COLORS[pc];
+  const priorityBg = PRIORITY_BG[pc];
 
   return (
-    <div style={{ maxWidth: '700px', margin: '0 auto', padding: '20px' }}>
-      <button onClick={() => router.push('/notifications')} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontSize: '13px', marginBottom: '20px' }}>
+    <div className="max-w-[700px] mx-auto px-3 sm:px-5 py-5">
+      <button onClick={() => router.push('/notifications')} className="bg-transparent border-none text-white/50 cursor-pointer text-[13px] mb-5 hover:text-white/80">
         ← Back to notifications
       </button>
 
-      <div style={{ border: '1px solid #eee', borderRadius: '8px', padding: '20px', background: isAdmin ? '#fafafa' : '#fff' }}>
+      <div className="border border-white/10 rounded-xl p-5 bg-white/5">
         {isAdmin ? (
           <>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '12px' }}>
-              <span style={{ fontSize: '24px' }}><Icon name="Mail" size={24} /></span>
+            <div className="flex gap-2 items-start mb-3">
+              <span className="text-2xl"><Icon name="Mail" size={24} /></span>
               <div>
-                <h1 style={{ fontSize: '18px', margin: 0, color: '#333' }}>{n.title}</h1>
-                <div style={{ fontSize: '12px', color: '#999', marginTop: '2px' }}>
-                  From: {n.created_by} · {n.message_type === 'broadcast' ? <><Icon name="Megaphone" size={12} /> Broadcast to all users</> : <><Icon name="User" size={12} /> Private message</>}
+                <h1 className="text-lg font-bold text-white m-0">{n.title}</h1>
+                <div className="text-xs text-white/40 mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 items-center">
+                  <span>From: {n.created_by}</span>
+                  <span>· {n.message_type === 'broadcast' ? <><Icon name="Megaphone" size={12} /> Broadcast to all users</> : <><Icon name="User" size={12} /> Private message</>}</span>
                   {n.priority && n.priority !== 'info' && (
-                    <span style={{ marginLeft: '6px', padding: '2px 6px', borderRadius: '3px', fontSize: '10px', fontWeight: 'bold', background: pc, color: '#fff' }}>
+                    <span className={`ml-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${priorityBg} ${priorityTextColor}`}>
                       {n.priority.toUpperCase()}
                     </span>
                   )}
                   {n.dismissed && (
-                    <span style={{ marginLeft: '6px', color: '#2e7d32', fontSize: '11px' }}><Icon name="Check" size={12} color="#2e7d32" /> Dismissed</span>
+                    <span className="text-green-400 text-[11px]"><Icon name="Check" size={12} color="#2e7d32" /> Dismissed</span>
                   )}
                 </div>
               </div>
             </div>
-            <p style={{ fontSize: '15px', color: '#444', lineHeight: '1.7', whiteSpace: 'pre-wrap' }}>{n.body}</p>
-            <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '12px', color: '#999' }}>{new Date(n.created_at).toLocaleString()}</span>
+            <p className="text-[15px] text-white/70 leading-relaxed whitespace-pre-wrap">{n.body}</p>
+            <div className="mt-5 pt-4 border-t border-white/10 flex justify-between items-center">
+              <span className="text-xs text-white/30">{new Date(n.created_at).toLocaleString()}</span>
               {!n.dismissed && (
                 <button onClick={handleDismiss} disabled={actionLoading}
-                  style={{ padding: '8px 16px', background: actionLoading ? '#ccc' : '#f5f5f5', border: '1px solid #ddd', borderRadius: '4px', cursor: actionLoading ? 'not-allowed' : 'pointer', fontSize: '13px' }}>
+                  className={`px-4 py-2 border border-white/10 rounded-xl cursor-pointer text-[13px] min-h-[40px] ${actionLoading ? 'bg-white/5 cursor-not-allowed text-white/30' : 'bg-white/5 text-white hover:bg-white/10'}`}>
                   {actionLoading ? '...' : 'Dismiss'}
                 </button>
               )}
@@ -114,20 +118,20 @@ export default function NotificationDetailPage() {
           </>
         ) : (
           <>
-            <div style={{ marginBottom: '8px' }}>
+            <div className="mb-2">
               {n.type === 'post_approved' ? <Icon name="Check" size={24} color="#2e7d32" /> : n.type === 'post_rejected' ? <Icon name="X" size={24} color="#c62828" /> : <Icon name="RefreshCw" size={24} color="#f57c00" />}
             </div>
-            <h1 style={{ fontSize: '18px', margin: '0 0 4px', color: '#333' }}>
+            <h1 className="text-lg font-bold text-white mb-1">
               {n.post_title}
             </h1>
-            <div style={{ fontSize: '13px', color: '#999', marginBottom: '16px' }}>
+            <div className="text-[13px] text-white/40 mb-4">
               {n.type === 'post_approved' ? 'Your post was approved' : n.type === 'post_rejected' ? 'Your post was rejected' : 'Revision requested'}
             </div>
-            <p style={{ fontSize: '15px', color: '#444', lineHeight: '1.7' }}>{n.message}</p>
-            <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '12px', color: '#999' }}>{new Date(n.created_at).toLocaleString()}</span>
+            <p className="text-[15px] text-white/70 leading-relaxed">{n.message}</p>
+            <div className="mt-5 pt-4 border-t border-white/10 flex justify-between items-center">
+              <span className="text-xs text-white/30">{new Date(n.created_at).toLocaleString()}</span>
               {n.post_id && (
-                <a href={`/${n.post_id}`} style={{ color: '#1565c0', fontSize: '13px', textDecoration: 'none' }}>
+                <a href={`/${n.post_id}`} className="text-orange-400 text-[13px] no-underline hover:text-orange-300">
                   View post →
                 </a>
               )}

@@ -7,6 +7,7 @@ import { API, SingleCategoryResponse, PostsResponse } from '@/lib/api';
 import { PostCard } from '@/components/PostCard';
 import { CategoryBar } from '@/components/CategoryBar';
 import NotFound from '@/components/NotFound';
+import { Icon } from '@/components/icons/Icon';
 import type { Post } from '@/lib/api/types';
 
 interface Category {
@@ -69,8 +70,8 @@ export default function CategoryFeedPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Loading...</p>
+      <div className="flex min-h-screen items-center justify-center bg-zinc-950">
+        <p className="text-sm text-zinc-500">Loading...</p>
       </div>
     );
   }
@@ -78,119 +79,81 @@ export default function CategoryFeedPage() {
   if (!category) return <NotFound message="Category does not exist." />;
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
-      {/* Header */}
-      <header style={{ padding: '24px 20px 0', display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-        <Link href="/" style={{ fontSize: '13px', color: 'var(--accent)', textDecoration: 'none', fontWeight: 'bold' }}>
+    <div className="min-h-screen bg-zinc-950">
+      <div className="flex items-center gap-2 px-3 pt-6 sm:px-6">
+        <Link href="/" className="text-[13px] font-bold text-orange-400 transition hover:text-orange-300">
           YOTOP10
         </Link>
-        <span style={{ color: 'var(--text-muted)' }}>/</span>
-        <Link href="/categories" style={{ fontSize: '13px', color: 'var(--text-secondary)', textDecoration: 'none' }}>
+        <span className="text-[13px] text-zinc-600">/</span>
+        <Link href="/categories" className="text-[13px] text-zinc-500 transition hover:text-zinc-300">
           Categories
         </Link>
-        <span style={{ color: 'var(--text-muted)' }}>/</span>
-        <span style={{ fontSize: '13px', color: 'var(--accent)', fontWeight: 'bold' }}>
+        <span className="text-[13px] text-zinc-600">/</span>
+        <span className="text-[13px] font-bold text-orange-400">
           {category.name}
         </span>
-      </header>
+      </div>
 
-      {/* Category Info */}
-      <div style={{ padding: '20px 20px 16px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--text-primary)', margin: '0 0 4px 0' }}>
+      <div className="px-3 pb-4 pt-5 sm:px-6">
+        <h1 className="mb-1 text-2xl font-bold text-white sm:text-3xl">
           {category.name}
         </h1>
         {category.description && (
-          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '0 0 8px 0' }}>
+          <p className="mb-2 text-sm text-zinc-400 sm:text-base">
             {category.description}
           </p>
         )}
-        <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>
+        <p className="text-xs text-zinc-600">
           {category.post_count} posts
         </p>
 
         {category.children.length > 0 && (
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
+          <div className="mt-3 flex flex-wrap gap-2">
             {category.children.map((child) => (
               <Link
                 key={child.id}
                 href={`/c/${child.slug}`}
-                style={{
-                  fontSize: '12px',
-                  color: 'var(--text-secondary)',
-                  border: '1px solid var(--border-primary)',
-                  borderRadius: 'var(--radius-sm)',
-                  padding: '4px 10px',
-                  textDecoration: 'none',
-                  textTransform: 'capitalize',
-                  background: 'var(--bg-secondary)',
-                }}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs capitalize text-zinc-400 transition hover:border-orange-500/30 hover:text-orange-400"
               >
-                {child.name} ({child.post_count})
+                {child.name}
+                <span className="text-[11px] text-zinc-600">({child.post_count})</span>
               </Link>
             ))}
           </div>
         )}
       </div>
 
-      {/* Category Bar */}
       <CategoryBar active={slug} />
 
-      {/* Feed */}
-      <main style={{ padding: '20px', maxWidth: '1100px', margin: '0 auto' }}>
+      <main className="mx-auto max-w-3xl px-3 pb-20 sm:px-4">
         {posts.length === 0 ? (
-          <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--text-muted)' }}>
-            <p style={{ fontSize: '14px' }}>No posts yet in this category.</p>
+          <div className="py-16 text-center sm:py-20">
+            <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 sm:h-16 sm:w-16">
+              <Icon name="FileText" size={24} className="text-zinc-600 sm:size-7" />
+            </div>
+            <p className="mb-6 text-sm text-zinc-500">No posts yet in this category.</p>
             <Link
               href="/submit"
-              style={{
-                display: 'inline-block',
-                marginTop: '16px',
-                padding: '12px 24px',
-                background: 'var(--accent-gradient)',
-                color: '#fff',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                textDecoration: 'none',
-                borderRadius: 'var(--radius-md)',
-              }}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:shadow-xl hover:shadow-orange-500/40"
             >
+              <Icon name="Plus" size={16} />
               Submit a List
             </Link>
           </div>
         ) : (
           <>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))',
-                gap: '12px',
-              }}
-            >
+            <div className="space-y-3 pt-2 sm:space-y-4 sm:pt-4">
               {posts.map((post) => (
-                <div key={post.id}>
-                  <PostCard post={post} />
-                </div>
+                <PostCard key={post.id} post={post} />
               ))}
             </div>
 
             {hasMore && (
-              <div style={{ textAlign: 'center', padding: '32px 0' }}>
+              <div className="pt-6 text-center sm:pt-8">
                 <button
                   onClick={loadMore}
                   disabled={loadingMore}
-                  style={{
-                    width: '100%',
-                    maxWidth: '400px',
-                    padding: '14px',
-                    backgroundColor: 'transparent',
-                    color: loadingMore ? 'var(--text-muted)' : 'var(--accent)',
-                    border: `2px solid ${loadingMore ? 'var(--border-primary)' : 'var(--accent)'}`,
-                    borderRadius: 'var(--radius-md)',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    letterSpacing: '0.5px',
-                    cursor: loadingMore ? 'not-allowed' : 'pointer',
-                  }}
+                  className="w-full max-w-sm rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-semibold text-zinc-400 backdrop-blur-sm transition hover:border-orange-500/30 hover:text-orange-400 disabled:opacity-30"
                 >
                   {loadingMore ? 'Loading...' : 'Load More'}
                 </button>
@@ -200,22 +163,13 @@ export default function CategoryFeedPage() {
         )}
       </main>
 
-      {/* Footer */}
-      <footer
-        style={{
-          borderTop: '1px solid var(--border-primary)',
-          padding: '24px 20px',
-          textAlign: 'center',
-          color: 'var(--text-muted)',
-          fontSize: '12px',
-        }}
-      >
-        <p style={{ margin: 0 }}>
-          <Link href="/" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Home</Link>
-          &nbsp;&middot;&nbsp;
-          <Link href="/categories" style={{ color: 'var(--accent)', textDecoration: 'none' }}>All Categories</Link>
-          &nbsp;&middot;&nbsp;
-          <Link href="/submit" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Submit</Link>
+      <footer className="border-t border-white/5 px-4 py-6 text-center sm:px-6 sm:py-8">
+        <p className="text-[11px] text-zinc-600 sm:text-xs">
+          <Link href="/" className="text-orange-400 transition hover:text-orange-300">Home</Link>
+          <span className="mx-2">&middot;</span>
+          <Link href="/categories" className="text-orange-400 transition hover:text-orange-300">All Categories</Link>
+          <span className="mx-2">&middot;</span>
+          <Link href="/submit" className="text-orange-400 transition hover:text-orange-300">Submit</Link>
         </p>
       </footer>
     </div>

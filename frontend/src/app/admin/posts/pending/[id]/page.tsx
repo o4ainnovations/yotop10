@@ -106,88 +106,73 @@ export default function AdminPendingPostPreviewPage() {
     }
   };
 
-  const modalOverlay: React.CSSProperties = { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' };
-  const modalBox: React.CSSProperties = { background: 'var(--bg-secondary)', padding: '24px', borderRadius: 'var(--radius-lg)', minWidth: '400px', maxWidth: '520px', boxShadow: 'var(--shadow-md)', border: '1px solid var(--border-primary)' };
+  const btnPrimaryClass = 'inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 sm:py-3 text-sm font-bold text-white rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]';
+  const btnSecondaryClass = 'inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 sm:py-3 text-sm font-bold text-white rounded-xl bg-white/5 border border-white/10 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]';
 
-  const btnSecondary: React.CSSProperties = {
-    padding: '10px 20px',
-    fontSize: '14px',
-    cursor: 'pointer',
-    background: 'var(--bg-tertiary)',
-    border: '1px solid var(--border-primary)',
-    borderRadius: 'var(--radius-sm)',
-    color: 'var(--text-primary)',
-    fontWeight: 'bold',
-  };
-
-  const btnPrimary: React.CSSProperties = {
-    ...btnSecondary,
-    background: 'var(--accent-gradient)',
-    color: '#fff',
-    border: 'none',
-  };
-
-  if (loading) return <div style={{ padding: '20px', color: 'var(--text-muted)' }}>Loading post...</div>;
-  if (!postId) return <div style={{ padding: '20px', color: 'var(--text-muted)' }}>Invalid post ID</div>;
-  if (!post) return <div style={{ padding: '20px', color: 'var(--text-muted)' }}>Post not found</div>;
+  if (loading) return <div className="p-5 text-white/40">Loading post...</div>;
+  if (!postId) return <div className="p-5 text-white/40">Invalid post ID</div>;
+  if (!post) return <div className="p-5 text-white/40">Post not found</div>;
 
   return (
-    <div>
-      <button onClick={() => router.push('/admin/posts/pending')} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '14px', padding: 0 }}>
+    <div className="space-y-3 sm:space-y-4">
+      <button onClick={() => router.push('/admin/posts/pending')} className="bg-transparent border-none text-orange-400 cursor-pointer text-sm p-0 hover:text-orange-300">
         Back to pending posts
       </button>
 
-      <div style={{ marginTop: '20px' }}>
-        <h1 style={{ color: 'var(--text-primary)', fontSize: '24px' }}>{post.title}</h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>
-          By {post.author_username} | {new Date(post.created_at).toLocaleString()} | {post.post_type}
-        </p>
-
-        <div style={{ marginTop: '20px', background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-md)', padding: '20px' }}>
-          <h3 style={{ color: 'var(--text-primary)', margin: '0 0 8px' }}>Introduction</h3>
-          <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>{post.intro}</p>
+      <div className="space-y-4 sm:space-y-6 mt-5">
+        <div>
+          <h1 className="text-white text-xl sm:text-2xl font-bold">{post.title}</h1>
+          <p className="text-white/50 text-[13px] mt-1">
+            By {post.author_username} | {new Date(post.created_at).toLocaleString()} | {post.post_type}
+          </p>
         </div>
 
-        <div style={{ marginTop: '24px' }}>
-          <h3 style={{ color: 'var(--text-primary)', margin: '0 0 12px' }}>List Items</h3>
+        <div className="bg-white/5 border border-white/10 rounded-xl p-4 sm:p-5">
+          <h3 className="text-white font-semibold mb-2">Introduction</h3>
+          <p className="text-white/60 leading-relaxed">{post.intro}</p>
+        </div>
+
+        <div className="space-y-3 sm:space-y-4">
+          <h3 className="text-white font-semibold">List Items</h3>
           {post.items.map(item => (
-            <div key={item.id} style={{ marginBottom: '16px', padding: '16px', background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-md)' }}>
-              <h4 style={{ color: 'var(--text-primary)', margin: '0 0 6px' }}>#{item.rank} {item.title}</h4>
-              <p style={{ color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>{item.justification}</p>
+            <div key={item.id} className="bg-white/5 border border-white/10 rounded-xl p-3 sm:p-4">
+              <h4 className="text-white font-semibold mb-1.5">#{item.rank} {item.title}</h4>
+              <p className="text-white/60 leading-relaxed">{item.justification}</p>
             </div>
           ))}
         </div>
 
-        <div style={{ marginTop: '32px', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-          <button onClick={handleApprove} disabled={actionLoading} style={btnPrimary}>
+        <div className="flex gap-3 flex-wrap mt-8">
+          <button onClick={handleApprove} disabled={actionLoading} className={btnPrimaryClass}>
             <Icon name="Check" size={16} color="#fff" /> Approve Post
           </button>
-          <button onClick={() => setShowRetryModal(true)} disabled={actionLoading} style={{ ...btnSecondary, background: actionLoading ? 'var(--border-primary)' : '#ff9800', color: '#fff', border: 'none' }}>
+          <button onClick={() => setShowRetryModal(true)} disabled={actionLoading} className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 sm:py-3 text-sm font-bold text-white rounded-xl bg-orange-600 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] hover:bg-orange-500">
             <Icon name="RefreshCw" size={16} color="#fff" /> Request Revision
           </button>
-          <button onClick={() => setShowRejectModal(true)} disabled={actionLoading} style={btnSecondary}>
-            <Icon name="X" size={16} color="#c62828" /> Reject Post
+          <button onClick={() => setShowRejectModal(true)} disabled={actionLoading} className={btnSecondaryClass}>
+            <Icon name="X" size={16} color="#ef4444" /> Reject Post
           </button>
         </div>
 
+        {/* Retry Modal */}
         {showRetryModal && (
-          <div style={modalOverlay} onClick={() => { setShowRetryModal(false); setRetryGuidance(''); }}>
-            <div style={modalBox} onClick={e => e.stopPropagation()}>
-              <h3 style={{ color: 'var(--text-primary)', margin: '0 0 4px' }}>Request Revision</h3>
-              <p style={{ color: 'var(--text-secondary)', marginBottom: '12px', fontSize: '13px' }}>Send guidance to the author. No trust score penalty.</p>
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4" onClick={() => { setShowRetryModal(false); setRetryGuidance(''); }}>
+            <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-xl" onClick={e => e.stopPropagation()}>
+              <h3 className="text-white font-semibold mb-1">Request Revision</h3>
+              <p className="text-white/50 text-[13px] mb-3">Send guidance to the author. No trust score penalty.</p>
               <textarea
                 value={retryGuidance}
                 onChange={(e) => setRetryGuidance(e.target.value)}
                 placeholder="Enter guidance for the author (e.g., 'Add more detail to item #3' or 'Fix spelling in the intro')"
                 rows={5}
                 maxLength={2000}
-                style={{ width: '100%', margin: '0 0 10px', padding: '10px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)', fontSize: '13px', boxSizing: 'border-box', resize: 'vertical' }}
+                className="w-full mb-2.5 px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-[13px] resize-y outline-none placeholder:text-white/30"
               />
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{retryGuidance.length}/2000</span>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button onClick={() => { setShowRetryModal(false); setRetryGuidance(''); }} style={{ padding: '8px 16px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text-primary)', fontSize: '13px' }}>Cancel</button>
-                  <button onClick={handleRetry} disabled={!retryGuidance.trim() || actionLoading} style={{ background: !retryGuidance.trim() || actionLoading ? 'var(--border-primary)' : '#ff9800', color: 'white', border: 'none', padding: '8px 20px', borderRadius: 'var(--radius-sm)', cursor: !retryGuidance.trim() || actionLoading ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
+              <div className="flex gap-2.5 justify-between items-center">
+                <span className="text-xs text-white/30">{retryGuidance.length}/2000</span>
+                <div className="flex gap-2.5">
+                  <button onClick={() => { setShowRetryModal(false); setRetryGuidance(''); }} className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-[13px] cursor-pointer">Cancel</button>
+                  <button onClick={handleRetry} disabled={!retryGuidance.trim() || actionLoading} className={`px-5 py-2 text-white rounded-xl text-[13px] font-bold ${!retryGuidance.trim() || actionLoading ? 'bg-white/10 cursor-not-allowed' : 'bg-orange-600 cursor-pointer hover:bg-orange-500'}`}>
                     Send Guidance
                   </button>
                 </div>
@@ -196,20 +181,21 @@ export default function AdminPendingPostPreviewPage() {
           </div>
         )}
 
+        {/* Reject Modal */}
         {showRejectModal && (
-          <div style={modalOverlay} onClick={() => setShowRejectModal(false)}>
-            <div style={modalBox} onClick={e => e.stopPropagation()}>
-              <h3 style={{ color: 'var(--text-primary)', margin: '0 0 4px' }}>Reject Post</h3>
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4" onClick={() => setShowRejectModal(false)}>
+            <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-xl" onClick={e => e.stopPropagation()}>
+              <h3 className="text-white font-semibold mb-1">Reject Post</h3>
               <textarea
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
                 placeholder="Enter rejection reason..."
                 rows={4}
-                style={{ width: '100%', margin: '12px 0', padding: '10px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)', fontSize: '13px', boxSizing: 'border-box', resize: 'vertical' }}
+                className="w-full my-3 px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-[13px] resize-y outline-none placeholder:text-white/30"
               />
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                <button onClick={() => setShowRejectModal(false)} style={{ padding: '8px 16px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text-primary)', fontSize: '13px' }}>Cancel</button>
-                <button onClick={handleReject} disabled={!rejectionReason.trim() || actionLoading} style={{ background: !rejectionReason.trim() || actionLoading ? 'var(--border-primary)' : '#c62828', color: 'white', border: 'none', padding: '8px 20px', borderRadius: 'var(--radius-sm)', cursor: !rejectionReason.trim() || actionLoading ? 'not-allowed' : 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
+              <div className="flex gap-2.5 justify-end">
+                <button onClick={() => setShowRejectModal(false)} className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-[13px] cursor-pointer">Cancel</button>
+                <button onClick={handleReject} disabled={!rejectionReason.trim() || actionLoading} className={`px-5 py-2 text-white rounded-xl text-[13px] font-bold ${!rejectionReason.trim() || actionLoading ? 'bg-white/10 cursor-not-allowed' : 'bg-red-700 cursor-pointer hover:bg-red-600'}`}>
                   Confirm Reject
                 </button>
               </div>

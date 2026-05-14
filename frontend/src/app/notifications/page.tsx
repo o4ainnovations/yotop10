@@ -24,10 +24,10 @@ const TYPE_ICON: Record<string, string> = {
   post_approved: 'Check', post_rejected: 'X', revision_requested: 'RefreshCw', admin_message: 'Mail',
 };
 
-const PRIORITY_COLORS: Record<string, { bg: string; border: string; text: string }> = {
-  info: { bg: '#e3f2fd', border: '#90caf9', text: '#1565c0' },
-  important: { bg: '#fff3e0', border: '#ffb74d', text: '#e65100' },
-  urgent: { bg: '#ffebee', border: '#ef9a9a', text: '#c62828' },
+const PRIORITY_CLASSES: Record<string, string> = {
+  info: 'bg-blue-500/10 border-blue-500/30 text-blue-400',
+  important: 'bg-orange-500/10 border-orange-500/30 text-orange-400',
+  urgent: 'bg-red-500/10 border-red-500/30 text-red-400',
 };
 
 export default function NotificationsPage() {
@@ -61,56 +61,49 @@ export default function NotificationsPage() {
     } catch {}
   };
 
-  if (loading) return <div style={{ padding: '20px' }}>Loading...</div>;
+  if (loading) return <div className="p-5 text-white/40">Loading...</div>;
 
   return (
-    <div style={{ maxWidth: '700px', margin: '0 auto', padding: '20px' }}>
-      <h1 style={{ fontSize: '20px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}><Icon name="Bell" size={20} /> All Notifications</h1>
+    <div className="max-w-[700px] mx-auto px-3 sm:px-5 py-5">
+      <h1 className="text-xl font-bold mb-5 flex items-center gap-2 text-white"><Icon name="Bell" size={20} /> All Notifications</h1>
 
       {notifs.length === 0 ? (
-        <div style={{ padding: '40px', textAlign: 'center', color: '#999', fontSize: '14px' }}>
+        <div className="p-10 text-center text-white/40 text-sm">
           No notifications yet
         </div>
       ) : (
         notifs.map((n) => {
           const isAdmin = n.is_admin || n.type === 'admin_message';
-          const pc = PRIORITY_COLORS[n.priority || 'info'];
+          const pc = PRIORITY_CLASSES[n.priority || 'info'];
           return (
             <div
               key={n._id}
               onClick={() => handleClick(n)}
-              style={{
-                padding: '14px 16px',
-                cursor: 'pointer',
-                borderBottom: '1px solid #eee',
-                borderLeft: isAdmin ? `4px solid ${pc.border}` : '4px solid transparent',
-                backgroundColor: n.read && !isAdmin ? 'transparent' : (isAdmin ? pc.bg : '#fafafa'),
-                transition: 'background 0.15s',
-              }}
+              className={`px-4 py-3.5 cursor-pointer border-b border-white/5 border-l-4 min-h-[44px] transition-colors ${isAdmin ? `${pc}` : n.read ? 'bg-transparent border-l-transparent' : 'bg-white/[0.02] border-l-transparent'}`}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '4px' }}>
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <div className="flex gap-2 items-center mb-1">
                     <span><Icon name={(TYPE_ICON[n.type] || 'Pin') as LucideIconName} size={14} /></span>
-                    <strong style={{ fontSize: '14px', color: n.read && !isAdmin ? '#999' : '#333' }}>
+                    <strong className={`text-sm ${n.read && !isAdmin ? 'text-white/30' : 'text-white'}`}>
                       {isAdmin ? n.title : n.post_title || n.type}
                     </strong>
                     {isAdmin && n.priority && n.priority !== 'info' && (
-                      <span style={{ padding: '2px 6px', borderRadius: '3px', fontSize: '10px', fontWeight: 'bold', background: pc.border, color: '#fff' }}>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${pc} border`}>
                         {n.priority.toUpperCase()}
                       </span>
                     )}
                     {!isAdmin && !n.read && (
-                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#2196f3', flexShrink: 0 }} />
+                      <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
                     )}
                   </div>
-                  <p style={{ margin: '0', fontSize: '13px', color: '#555', lineHeight: '1.5' }}>
+                  <p className="text-[13px] text-white/60 leading-relaxed mt-0">
                     {isAdmin ? n.body?.substring(0, 200) : n.message}
                   </p>
-                  <div style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
+                  <div className="text-[11px] text-white/30 mt-1">
                     {new Date(n.created_at).toLocaleString()}
                     {isAdmin && (
-                      <span style={{ marginLeft: '8px' }}>
+                      <span className="ml-2">
                         From: {n.created_by} · {n.message_type === 'broadcast' ? <><Icon name="Megaphone" size={11} /> Broadcast</> : <><Icon name="User" size={11} /> Private</>}
                       </span>
                     )}
@@ -119,7 +112,7 @@ export default function NotificationsPage() {
                 {isAdmin && (
                   <button
                     onClick={(e) => handleDismissAdmin(e, n._id)}
-                    style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: '16px', padding: '4px 8px', flexShrink: 0 }}
+                    className="bg-transparent border-none text-white/30 cursor-pointer text-base px-2 py-1 flex-shrink-0 hover:text-white/60"
                     title="Dismiss"
                   >
                     ×

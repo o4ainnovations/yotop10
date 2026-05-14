@@ -148,121 +148,102 @@ export default function AdminCategoriesPage() {
 
   const filtered = search ? allCats.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.slug.includes(search)) : allCats;
 
-  // Design tokens
-  const tabBtn = (active: boolean): React.CSSProperties => ({
-    padding: '8px 16px', border: 'none',
-    borderBottom: active ? '2px solid var(--accent)' : '2px solid transparent',
-    background: 'none', cursor: 'pointer', fontSize: '13px',
-    fontWeight: active ? 'bold' : 'normal',
-    color: active ? 'var(--accent)' : 'var(--text-muted)',
-  });
-  const primaryBtn = (disabled?: boolean): React.CSSProperties => ({
-    padding: '8px 16px',
-    background: disabled ? 'var(--border-primary)' : 'var(--accent-gradient)',
-    color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)',
-    cursor: disabled ? 'not-allowed' : 'pointer', fontSize: '12px', fontWeight: 'bold',
-  });
-  const inputStyle: React.CSSProperties = {
-    padding: '6px 10px', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)',
-    fontSize: '12px', background: 'var(--bg-tertiary)', color: 'var(--text-primary)', outline: 'none',
-  };
-  const cardStyle: React.CSSProperties = {
-    padding: '16px', background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)',
-    borderRadius: 'var(--radius-md)', marginBottom: '16px',
-  };
+  const primaryBtnClass = (disabled?: boolean) => `px-4 py-2 text-white border-none rounded-xl cursor-pointer text-xs font-bold min-h-[36px] ${disabled ? 'bg-white/10 cursor-not-allowed' : 'bg-gradient-to-r from-orange-500 to-pink-500 cursor-pointer'}`;
+  const inputClass = 'px-2.5 py-1.5 border border-white/10 rounded-lg text-xs bg-white/5 text-white outline-none';
+  const cardClass = 'bg-white/5 border border-white/10 rounded-xl p-4 mb-4';
 
-  if (loading) return <div style={{ padding: '20px', color: 'var(--text-muted)' }}>Loading...</div>;
+  if (loading) return <div className="p-5 text-white/40">Loading...</div>;
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <h1 style={{ fontSize: '20px', margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
-          <Icon name="Folder" size={22} color="var(--accent)" /> Category Management
+    <div className="space-y-3 sm:space-y-4">
+      <div className="flex justify-between items-center flex-wrap gap-3 mb-4">
+        <h1 className="text-xl font-bold flex items-center gap-2 text-white">
+          <Icon name="Folder" size={22} color="var(--color-orange-400)" /> Category Management
         </h1>
-        <button onClick={() => setShowCreate(!showCreate)} style={primaryBtn()}>+ Create</button>
+        <button onClick={() => setShowCreate(!showCreate)} className={primaryBtnClass()}>+ Create</button>
       </div>
 
       {showCreate && (
-        <div style={{ marginBottom: '16px', padding: '16px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', display: 'flex', gap: '10px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          <div><label style={lbl}>Name *</label><input value={newName} onChange={e => setNewName(e.target.value)} style={inputStyle} /></div>
-          <div><label style={lbl}>Slug</label><input value={newSlug} onChange={e => setNewSlug(e.target.value)} style={inputStyle} /></div>
-          <div><label style={lbl}>Parent</label><select value={newParent} onChange={e => setNewParent(e.target.value)} style={inputStyle}><option value="">None (parent)</option>{parentOptions.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
-          <button onClick={handleCreate} style={primaryBtn()}>Create</button>
+        <div className="mb-4 p-4 bg-white/[0.03] rounded-xl flex gap-2.5 items-end flex-wrap">
+          <div><label className="text-[11px] text-white/40 block mb-0.5">Name *</label><input value={newName} onChange={e => setNewName(e.target.value)} className={inputClass} /></div>
+          <div><label className="text-[11px] text-white/40 block mb-0.5">Slug</label><input value={newSlug} onChange={e => setNewSlug(e.target.value)} className={inputClass} /></div>
+          <div><label className="text-[11px] text-white/40 block mb-0.5">Parent</label><select value={newParent} onChange={e => setNewParent(e.target.value)} className={inputClass}><option value="" className="bg-zinc-900">None (parent)</option>{parentOptions.map(p => <option key={p.id} value={p.id} className="bg-zinc-900">{p.name}</option>)}</select></div>
+          <button onClick={handleCreate} className={primaryBtnClass()}>Create</button>
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: '0', marginBottom: '16px', borderBottom: '1px solid var(--border-primary)' }}>
-        <button onClick={() => setTab('tree')} style={tabBtn(tab === 'tree')}>Tree</button>
-        <button onClick={() => setTab('table')} style={tabBtn(tab === 'table')}>Table</button>
-        <button onClick={() => setTab('analytics')} style={tabBtn(tab === 'analytics')}>Analytics</button>
-        <button onClick={() => setTab('bulk')} style={tabBtn(tab === 'bulk')}>Bulk</button>
+      <div className="flex gap-0 mb-4 border-b border-white/10">
+        <button onClick={() => setTab('tree')} className={`px-4 py-2 border-none bg-transparent cursor-pointer text-[13px] ${tab === 'tree' ? 'font-bold text-orange-400 border-b-2 border-orange-400' : 'text-white/40 border-b-2 border-transparent'}`}>Tree</button>
+        <button onClick={() => setTab('table')} className={`px-4 py-2 border-none bg-transparent cursor-pointer text-[13px] ${tab === 'table' ? 'font-bold text-orange-400 border-b-2 border-orange-400' : 'text-white/40 border-b-2 border-transparent'}`}>Table</button>
+        <button onClick={() => setTab('analytics')} className={`px-4 py-2 border-none bg-transparent cursor-pointer text-[13px] ${tab === 'analytics' ? 'font-bold text-orange-400 border-b-2 border-orange-400' : 'text-white/40 border-b-2 border-transparent'}`}>Analytics</button>
+        <button onClick={() => setTab('bulk')} className={`px-4 py-2 border-none bg-transparent cursor-pointer text-[13px] ${tab === 'bulk' ? 'font-bold text-orange-400 border-b-2 border-orange-400' : 'text-white/40 border-b-2 border-transparent'}`}>Bulk</button>
       </div>
 
       {/* TREE */}
       {tab === 'tree' && (
-        <div style={{ display: 'flex', gap: '20px' }}>
-          <div style={{ width: '320px', flexShrink: 0, maxHeight: '70vh', overflow: 'auto', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-md)', padding: '12px', background: 'var(--bg-secondary)' }}>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', fontSize: '12px', marginBottom: '10px', boxSizing: 'border-box', background: 'var(--bg-tertiary)', color: 'var(--text-primary)', outline: 'none' }} />
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="w-full sm:w-[320px] flex-shrink-0 max-h-[70vh] overflow-auto border border-white/10 rounded-xl p-3 bg-white/[0.02]">
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." className="w-full px-2.5 py-2 border border-white/10 rounded-lg text-xs mb-2.5 bg-white/5 text-white outline-none" />
             {parents.map(p => {
               const kids = p.children || [];
               const isOpen = expanded.has(p.id);
               return <div key={p.id}>
                 <div onClick={() => { toggleExpanded(p.id); selectCat(p); }}
-                  style={{ padding: '8px 10px', cursor: 'pointer', borderRadius: 'var(--radius-sm)', background: selected?.id === p.id ? 'var(--accent-soft)' : 'transparent', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-primary)' }}>
-                  <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{isOpen ? '\u25BC' : '\u25B6'}</span>
-                  <span><Icon name="Folder" size={14} /></span> <span>{p.name}</span>
-                  <span style={{ marginLeft: 'auto', fontSize: '11px', color: 'var(--text-muted)' }}>{p.post_count}</span>
+                  className={`px-2.5 py-2 cursor-pointer rounded-lg font-bold text-[13px] flex items-center gap-1.5 text-white min-h-[44px] ${selected?.id === p.id ? 'bg-orange-500/10' : 'bg-transparent'}`}>
+                  <span className="text-[10px] text-white/40">{isOpen ? '\u25BC' : '\u25B6'}</span>
+                  <span><Icon name="Folder" size={14} /></span> <span className="flex-1">{p.name}</span>
+                  <span className="text-[11px] text-white/40">{p.post_count}</span>
                   {p.is_featured && <Icon name="Star" size={10} color="#f57c00" />}
-                  {p.status === 'draft' && <span style={{ fontSize: '10px', background: 'var(--accent-soft)', padding: '1px 4px', borderRadius: '2px', color: 'var(--accent)' }}>draft</span>}
+                  {p.status === 'draft' && <span className="text-[10px] bg-orange-500/15 px-1 py-px rounded text-orange-400">draft</span>}
                 </div>
                 {isOpen && kids.map(c => <div key={c.id} onClick={() => selectCat(c)}
-                  style={{ padding: '6px 8px 6px 28px', cursor: 'pointer', borderRadius: 'var(--radius-sm)', background: selected?.id === c.id ? 'var(--accent-soft)' : 'transparent', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-primary)' }}>
-                  <span><Icon name="FileText" size={12} /></span> <span>{c.name}</span>
-                  <span style={{ marginLeft: 'auto', fontSize: '10px', color: 'var(--text-muted)' }}>{c.post_count}</span>
+                  className={`pl-7 py-1.5 px-2 cursor-pointer rounded-lg text-xs flex items-center gap-1 text-white min-h-[36px] ${selected?.id === c.id ? 'bg-orange-500/10' : 'bg-transparent'}`}>
+                  <span><Icon name="FileText" size={12} /></span> <span className="flex-1">{c.name}</span>
+                  <span className="text-[10px] text-white/40">{c.post_count}</span>
                 </div>)}
               </div>;
             })}
           </div>
 
-          <div style={{ flex: 1 }}>
+          <div className="flex-1">
             {selected ? (
-              <div style={cardStyle}>
-                <h2 style={{ fontSize: '16px', margin: '0 0 12px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Icon name="Folder" size={18} color="var(--accent)" /> {selected.name}
+              <div className={cardClass}>
+                <h2 className="text-base font-bold mb-3 text-white flex items-center gap-1.5">
+                  <Icon name="Folder" size={18} color="var(--color-orange-400)" /> {selected.name}
                 </h2>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '13px' }}>
-                  <div><label style={lbl}>Name</label><input value={editName} onChange={e => setEditName(e.target.value)} disabled={!selected.parent_id} style={{ width: '100%', ...inputStyle, opacity: selected.parent_id ? 1 : 0.6 }} /></div>
-                  <div><label style={lbl}>Slug</label><input value={editSlug} onChange={e => setEditSlug(e.target.value)} disabled={!selected.parent_id} style={{ width: '100%', ...inputStyle, opacity: selected.parent_id ? 1 : 0.6 }} /></div>
-                  <div><label style={lbl}>Status</label>
-                    <select value={editStatus} onChange={e => setEditStatus(e.target.value)} disabled={!selected.parent_id} style={{ width: '100%', ...inputStyle, opacity: selected.parent_id ? 1 : 0.6 }}>
-                      <option value="published">Published</option><option value="draft">Draft</option><option value="hidden">Hidden</option>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-[13px]">
+                  <div><label className="text-[11px] text-white/40 block mb-0.5">Name</label><input value={editName} onChange={e => setEditName(e.target.value)} disabled={!selected.parent_id} className={`w-full ${inputClass} ${!selected.parent_id ? 'opacity-50' : ''}`} /></div>
+                  <div><label className="text-[11px] text-white/40 block mb-0.5">Slug</label><input value={editSlug} onChange={e => setEditSlug(e.target.value)} disabled={!selected.parent_id} className={`w-full ${inputClass} ${!selected.parent_id ? 'opacity-50' : ''}`} /></div>
+                  <div><label className="text-[11px] text-white/40 block mb-0.5">Status</label>
+                    <select value={editStatus} onChange={e => setEditStatus(e.target.value)} disabled={!selected.parent_id} className={`w-full ${inputClass} ${!selected.parent_id ? 'opacity-50' : ''}`}>
+                      <option value="published" className="bg-zinc-900">Published</option><option value="draft" className="bg-zinc-900">Draft</option><option value="hidden" className="bg-zinc-900">Hidden</option>
                     </select>
                   </div>
-                  <div><label style={lbl}>Sort Order</label><input type="number" value={editSort} onChange={e => setEditSort(parseInt(e.target.value) || 0)} disabled={!selected.parent_id} style={{ width: '80px', ...inputStyle, opacity: selected.parent_id ? 1 : 0.6 }} /></div>
-                  <div><label style={lbl}><input type="checkbox" checked={editFeatured} onChange={e => setEditFeatured(e.target.checked)} disabled={!selected.parent_id} />Featured</label></div>
+                  <div><label className="text-[11px] text-white/40 block mb-0.5">Sort Order</label><input type="number" value={editSort} onChange={e => setEditSort(parseInt(e.target.value) || 0)} disabled={!selected.parent_id} className={`w-[80px] ${inputClass} ${!selected.parent_id ? 'opacity-50' : ''}`} /></div>
+                  <div><label className="text-[11px] text-white/40 block mb-0.5"><input type="checkbox" checked={editFeatured} onChange={e => setEditFeatured(e.target.checked)} disabled={!selected.parent_id} /> Featured</label></div>
                 </div>
                 {!selected.parent_id && (
-                  <div style={{ marginTop: '10px', padding: '8px 12px', background: 'var(--accent-soft)', borderRadius: 'var(--radius-sm)', fontSize: '12px', color: 'var(--accent)' }}>
+                  <div className="mt-2.5 px-3 py-2 bg-orange-500/10 rounded-lg text-xs text-orange-400">
                     <Icon name="TriangleAlert" size={12} /> Parent categories are locked. Only child categories can be edited.
                   </div>
                 )}
-                <div style={{ marginTop: '14px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                  Posts: <strong style={{ color: 'var(--text-primary)' }}>{selected.post_count}</strong> · Health: <strong style={{ color: selected.grown ? '#2e7d32' : 'var(--text-muted)' }}>{selected.health_score || '\u2014'}</strong>
-                  {selected.grown && <span style={{ marginLeft: '6px' }}><Icon name="TrendingUp" size={12} color="#2e7d32" /> Growing</span>}
-                  {selected.dead && <span style={{ marginLeft: '6px' }}><Icon name="TriangleAlert" size={12} color="#e65100" /> Dead</span>}
+                <div className="mt-3.5 text-xs text-white/60">
+                  Posts: <strong className="text-white">{selected.post_count}</strong> · Health: <strong className={selected.grown ? 'text-green-400' : 'text-white/40'}>{selected.health_score || '\u2014'}</strong>
+                  {selected.grown && <span className="ml-1.5"><Icon name="TrendingUp" size={12} color="#2e7d32" /> Growing</span>}
+                  {selected.dead && <span className="ml-1.5"><Icon name="TriangleAlert" size={12} color="#e65100" /> Dead</span>}
                 </div>
                 {selected.parent_id && (
-                  <div style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <button onClick={handleSave} disabled={saving} style={primaryBtn(saving)}>{saving ? 'Saving...' : 'Save'}</button>
-                    <button onClick={() => handleDuplicate(selected.id)} style={{ ...primaryBtn(), background: '#f57c00' }}>Duplicate</button>
-                    {selected.status !== 'published' && <button onClick={() => handlePublish(selected.id)} style={{ ...primaryBtn(), background: '#2e7d32' }}>Publish</button>}
-                    {selected.status !== 'hidden' && <button onClick={() => handleHide(selected.id)} style={{ ...primaryBtn(), background: 'var(--text-muted)' }}>Hide</button>}
-                    <button onClick={() => handleArchive(selected.id)} style={{ ...primaryBtn(), background: '#c62828' }}>Archive</button>
+                  <div className="mt-4 flex gap-2 flex-wrap">
+                    <button onClick={handleSave} disabled={saving} className={primaryBtnClass(saving)}>{saving ? 'Saving...' : 'Save'}</button>
+                    <button onClick={() => handleDuplicate(selected.id)} className="px-4 py-2 bg-orange-500 text-white border-none rounded-xl cursor-pointer text-xs font-bold hover:bg-orange-400 min-h-[36px]">Duplicate</button>
+                    {selected.status !== 'published' && <button onClick={() => handlePublish(selected.id)} className="px-4 py-2 bg-green-600 text-white border-none rounded-xl cursor-pointer text-xs font-bold hover:bg-green-500 min-h-[36px]">Publish</button>}
+                    {selected.status !== 'hidden' && <button onClick={() => handleHide(selected.id)} className="px-4 py-2 bg-white/10 text-white border-none rounded-xl cursor-pointer text-xs font-bold hover:bg-white/20 min-h-[36px]">Hide</button>}
+                    <button onClick={() => handleArchive(selected.id)} className="px-4 py-2 bg-red-700 text-white border-none rounded-xl cursor-pointer text-xs font-bold hover:bg-red-600 min-h-[36px]">Archive</button>
                   </div>
                 )}
               </div>
             ) : (
-              <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
+              <div className="p-16 text-center text-white/40 text-sm">
                 Select a category from the tree to edit it
               </div>
             )}
@@ -273,26 +254,28 @@ export default function AdminCategoriesPage() {
       {/* TABLE */}
       {tab === 'table' && (
         <div>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search categories..." style={{ padding: '8px 10px', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', fontSize: '12px', marginBottom: '12px', width: '250px', background: 'var(--bg-tertiary)', color: 'var(--text-primary)', outline: 'none' }} />
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-            <thead><tr style={{ borderBottom: '2px solid var(--border-primary)', textAlign: 'left' }}>
-              <th style={{ padding: '8px', color: 'var(--text-muted)' }}>Name</th><th style={{ padding: '8px', color: 'var(--text-muted)' }}>Slug</th><th style={{ padding: '8px', color: 'var(--text-muted)' }}>Parent</th><th style={{ padding: '8px', color: 'var(--text-muted)' }}>Posts</th><th style={{ padding: '8px', color: 'var(--text-muted)' }}>Status</th><th style={{ padding: '8px', color: 'var(--text-muted)' }}>Featured</th><th style={{ padding: '8px', color: 'var(--text-muted)' }}>Actions</th>
-            </tr></thead>
-            <tbody>
-              {filtered.map(c => <tr key={c.id} style={{ borderBottom: '1px solid var(--border-primary)' }}>
-                <td style={{ padding: '8px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{c.name}</td>
-                <td style={{ padding: '8px', color: 'var(--text-muted)' }}>{c.slug}</td>
-                <td style={{ padding: '8px', color: 'var(--text-muted)' }}>{categories.find(p => p.id === c.parent_id)?.name || '\u2014'}</td>
-                <td style={{ padding: '8px', color: 'var(--text-secondary)' }}>{c.post_count}</td>
-                <td style={{ padding: '8px' }}><span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: 'var(--radius-sm)', background: c.status === 'draft' ? 'var(--accent-soft)' : c.status === 'hidden' ? 'var(--bg-tertiary)' : '#e8f5e9', color: c.status === 'draft' ? 'var(--accent)' : c.status === 'hidden' ? 'var(--text-muted)' : '#2e7d32' }}>{c.status}</span></td>
-                <td style={{ padding: '8px' }}>{c.is_featured ? <Icon name="Star" size={12} color="#f57c00" /> : ''}</td>
-                <td style={{ padding: '8px', display: 'flex', gap: '4px' }}>
-                  <button onClick={() => { selectCat(c); setTab('tree'); }} style={{ ...primaryBtn(), padding: '4px 10px', fontSize: '11px' }}>Edit</button>
-                  <button onClick={() => handleArchive(c.id)} style={{ ...primaryBtn(), padding: '4px 10px', fontSize: '11px', background: '#c62828' }}>Archive</button>
-                </td>
-              </tr>)}
-            </tbody>
-          </table>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search categories..." className="px-2.5 py-2 border border-white/10 rounded-lg text-xs mb-3 w-[250px] bg-white/5 text-white outline-none" />
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-xs">
+              <thead><tr className="border-b-2 border-white/10 text-left text-white/40">
+                <th className="p-2">Name</th><th className="p-2">Slug</th><th className="p-2">Parent</th><th className="p-2">Posts</th><th className="p-2">Status</th><th className="p-2">Featured</th><th className="p-2">Actions</th>
+              </tr></thead>
+              <tbody>
+                {filtered.map(c => <tr key={c.id} className="border-b border-white/5">
+                  <td className="p-2 font-bold text-white">{c.name}</td>
+                  <td className="p-2 text-white/40">{c.slug}</td>
+                  <td className="p-2 text-white/40">{categories.find(p => p.id === c.parent_id)?.name || '\u2014'}</td>
+                  <td className="p-2 text-white/60">{c.post_count}</td>
+                  <td className="p-2"><span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold uppercase tracking-wider ${c.status === 'draft' ? 'bg-orange-500/15 text-orange-400' : c.status === 'hidden' ? 'bg-white/10 text-white/40' : 'bg-green-500/15 text-green-400'}`}>{c.status}</span></td>
+                  <td className="p-2">{c.is_featured ? <Icon name="Star" size={12} color="#f57c00" /> : ''}</td>
+                  <td className="p-2 flex gap-1">
+                    <button onClick={() => { selectCat(c); setTab('tree'); }} className="px-2.5 py-1 text-[11px] bg-gradient-to-r from-orange-500 to-pink-500 text-white border-none rounded-xl cursor-pointer font-bold">Edit</button>
+                    <button onClick={() => handleArchive(c.id)} className="px-2.5 py-1 text-[11px] bg-red-700 text-white border-none rounded-xl cursor-pointer font-bold">Archive</button>
+                  </td>
+                </tr>)}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -300,16 +283,16 @@ export default function AdminCategoriesPage() {
       {tab === 'analytics' && (
         <div>
           {analytics && (
-            <div style={cardStyle}>
-              <h3 style={{ margin: '0 0 12px', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-primary)' }}>
-                <Icon name="ChartBar" size={16} color="var(--accent)" /> Content Distribution
+            <div className={cardClass}>
+              <h3 className="text-[15px] font-bold mb-3 flex items-center gap-1.5 text-white">
+                <Icon name="ChartBar" size={16} /> Content Distribution
               </h3>
               {analytics.distribution.map(d => (
-                <div key={d.name} style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ width: '120px', fontSize: '13px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{d.name}</span>
-                  <div style={{ flex: 1, background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)', height: '20px', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', background: 'var(--accent-gradient)', width: `${Math.min(100, (d.total_posts / Math.max(1, analytics.distribution[0]?.total_posts || 1)) * 100)}%`, borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: '6px' }}>
-                      <span style={{ fontSize: '10px', color: '#fff' }}>{d.total_posts}</span>
+                <div key={d.name} className="mb-2 flex items-center gap-2.5">
+                  <span className="w-[120px] text-[13px] font-bold text-white">{d.name}</span>
+                  <div className="flex-1 bg-white/5 rounded-lg h-5 overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-orange-500 to-pink-500 rounded-lg flex items-center justify-end pr-1.5" style={{ width: `${Math.min(100, (d.total_posts / Math.max(1, analytics.distribution[0]?.total_posts || 1)) * 100)}%` }}>
+                      <span className="text-[10px] text-white">{d.total_posts}</span>
                     </div>
                   </div>
                 </div>
@@ -317,19 +300,19 @@ export default function AdminCategoriesPage() {
             </div>
           )}
           {health && (
-            <div style={cardStyle}>
-              <h3 style={{ margin: '0 0 12px', fontSize: '15px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Icon name="HeartPulse" size={16} color="var(--accent)" /> Health
+            <div className={cardClass}>
+              <h3 className="text-[15px] font-bold mb-3 text-white flex items-center gap-1.5">
+                <Icon name="HeartPulse" size={16} color="var(--color-orange-400)" /> Health
               </h3>
-              {health.dead.length > 0 && <div style={{ marginBottom: '10px' }}>
-                <strong style={{ color: '#c62828' }}>Dead Categories ({health.dead.length})</strong>
-                {health.dead.map(d => <div key={d.id} style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{d.name} ({d.slug})</div>)}
+              {health.dead.length > 0 && <div className="mb-2.5">
+                <strong className="text-red-500">Dead Categories ({health.dead.length})</strong>
+                {health.dead.map(d => <div key={d.id} className="text-xs text-white/60">{d.name} ({d.slug})</div>)}
               </div>}
               {health.overloaded.length > 0 && <div>
-                <strong style={{ color: '#f57c00' }}>Overloaded ({health.overloaded.length})</strong>
-                {health.overloaded.map(o => <div key={o.id} style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{o.name} \u2014 {o.post_count} posts</div>)}
+                <strong className="text-orange-500">Overloaded ({health.overloaded.length})</strong>
+                {health.overloaded.map(o => <div key={o.id} className="text-xs text-white/60">{o.name} — {o.post_count} posts</div>)}
               </div>}
-              {health.dead.length === 0 && health.overloaded.length === 0 && <div style={{ color: '#2e7d32', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}><Icon name="Check" size={14} color="#2e7d32" /> All categories healthy</div>}
+              {health.dead.length === 0 && health.overloaded.length === 0 && <div className="text-green-400 text-[13px] flex items-center gap-1"><Icon name="Check" size={14} color="#2e7d32" /> All categories healthy</div>}
             </div>
           )}
         </div>
@@ -337,37 +320,33 @@ export default function AdminCategoriesPage() {
 
       {/* BULK */}
       {tab === 'bulk' && (
-        <div style={{ display: 'grid', gap: '16px', maxWidth: '600px' }}>
-          <div style={cardStyle}>
-            <h3 style={{ fontSize: '14px', margin: '0 0 8px', color: 'var(--text-primary)' }}>Merge Category</h3>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <select value={mergeSource} onChange={e => setMergeSource(e.target.value)} style={inputStyle}><option value="">Source...</option>{allCats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
-              <span style={{ color: 'var(--text-muted)' }}>{'\u2192'}</span>
-              <select value={mergeTarget} onChange={e => setMergeTarget(e.target.value)} style={inputStyle}><option value="">Target...</option>{allCats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
-              <button onClick={handleMerge} style={primaryBtn()}>Merge</button>
+        <div className="flex flex-col gap-4 max-w-[600px]">
+          <div className={cardClass}>
+            <h3 className="text-sm font-bold mb-2 text-white">Merge Category</h3>
+            <div className="flex gap-2 items-center flex-wrap">
+              <select value={mergeSource} onChange={e => setMergeSource(e.target.value)} className={inputClass}><option value="">Source...</option>{allCats.map(c => <option key={c.id} value={c.id} className="bg-zinc-900">{c.name}</option>)}</select>
+              <span className="text-white/40">{'\u2192'}</span>
+              <select value={mergeTarget} onChange={e => setMergeTarget(e.target.value)} className={inputClass}><option value="">Target...</option>{allCats.map(c => <option key={c.id} value={c.id} className="bg-zinc-900">{c.name}</option>)}</select>
+              <button onClick={handleMerge} className={primaryBtnClass()}>Merge</button>
             </div>
           </div>
 
-          <div style={cardStyle}>
-            <h3 style={{ fontSize: '14px', margin: '0 0 8px', color: 'var(--text-primary)' }}>Reparent Categories</h3>
-            <div style={{ marginBottom: '8px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-              Select categories in the table, then choose a new parent:
+          <div className={cardClass}>
+            <h3 className="text-sm font-bold mb-2 text-white">Reparent Categories</h3>
+            <div className="mb-2 text-xs text-white/60">Select categories in the table, then choose a new parent:</div>
+            <div className="flex gap-2 items-center">
+              <select value={reparentTarget} onChange={e => setReparentTarget(e.target.value)} className={inputClass}><option value="">New parent...</option>{parentOptions.map(p => <option key={p.id} value={p.id} className="bg-zinc-900">{p.name}</option>)}</select>
+              <button onClick={handleReparent} className={primaryBtnClass()}>Reparent {bulkIds.size > 0 ? `(${bulkIds.size})` : ''}</button>
             </div>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <select value={reparentTarget} onChange={e => setReparentTarget(e.target.value)} style={inputStyle}><option value="">New parent...</option>{parentOptions.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
-              <button onClick={handleReparent} style={primaryBtn()}>Reparent {bulkIds.size > 0 ? `(${bulkIds.size})` : ''}</button>
-            </div>
-            {filtered.map(c => <label key={c.id} style={{ display: 'block', fontSize: '12px', marginTop: '6px', color: 'var(--text-primary)', cursor: 'pointer' }}><input type="checkbox" checked={bulkIds.has(c.id)} onChange={() => { const n = new Set(bulkIds); if (n.has(c.id)) n.delete(c.id); else n.add(c.id); setBulkIds(n); }} /> {c.name} ({c.slug})</label>)}
+            {filtered.map(c => <label key={c.id} className="block text-xs mt-1.5 text-white cursor-pointer"><input type="checkbox" checked={bulkIds.has(c.id)} onChange={() => { const n = new Set(bulkIds); if (n.has(c.id)) n.delete(c.id); else n.add(c.id); setBulkIds(n); }} /> {c.name} ({c.slug})</label>)}
           </div>
 
-          <div style={cardStyle}>
-            <h3 style={{ fontSize: '14px', margin: '0 0 8px', color: 'var(--text-primary)' }}>Export</h3>
-            <button onClick={handleExport} style={primaryBtn()}>Download CSV</button>
+          <div className={cardClass}>
+            <h3 className="text-sm font-bold mb-2 text-white">Export</h3>
+            <button onClick={handleExport} className={primaryBtnClass()}>Download CSV</button>
           </div>
         </div>
       )}
     </div>
   );
 }
-
-const lbl: React.CSSProperties = { fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' };

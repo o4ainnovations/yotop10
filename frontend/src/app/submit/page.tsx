@@ -265,7 +265,7 @@ export default function SubmitPage() {
 
   const validateItems = (): string | undefined => {
     if (items.length < MIN_ITEMS) return `At least ${MIN_ITEMS} items are required`;
-    
+
     for (let i = 0; i < items.length; i++) {
       if (!items[i].title.trim()) return `Item #${i + 1}: Title is required (max 200 chars)`;
       if (items[i].title.length > 200) return `Item #${i + 1}: Title must be less than 200 characters`;
@@ -319,7 +319,7 @@ export default function SubmitPage() {
   const handleCategoryChange = (value: string) => {
     setCategorySlug(value);
     setErrors(prev => ({ ...prev, category: undefined }));
-    
+
     if (title.length >= 8 && value) {
       checkTitleSimilarity(title, value);
     }
@@ -328,7 +328,7 @@ export default function SubmitPage() {
   const handleTitleChange = (value: string) => {
     setTitle(value);
     setErrors(prev => ({ ...prev, title: undefined, titleSimilarity: undefined }));
-    
+
     const formatResult = validateListTitle(value);
     if (!formatResult.valid) {
       setTitleCheck(null);
@@ -358,7 +358,7 @@ export default function SubmitPage() {
   };
 
   const updateItem = (id: string, field: string, value: string) => {
-    setItems(prev => prev.map(item => 
+    setItems(prev => prev.map(item =>
       item.id === id ? { ...item, [field]: value } : item
     ));
     if (field === 'title' || field === 'justification') {
@@ -369,7 +369,7 @@ export default function SubmitPage() {
   // Form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -396,13 +396,13 @@ export default function SubmitPage() {
 
     try {
       const response = await API.addPost(submission) as PostSubmissionResponse & { post?: { title: string; id: string; status: string }; items?: Array<{ id: string }> };
-      
+
       // Clear draft
       localStorage.removeItem(DRAFT_KEY);
 
       const authUser = useAuthStore.getState().user;
       const username = authUser?.username || '';
-      
+
       setSubmitted({
         title: response.post?.title || title,
         id: response.post?.id || '',
@@ -413,7 +413,7 @@ export default function SubmitPage() {
       toast.success('Post submitted! It\'s now pending review.');
     } catch (err: unknown) {
       console.error('Submit failed:', err);
-      
+
       // Try to parse field errors from response
       const errorText = err instanceof Error ? err.message : '';
       if (errorText.includes('409') || errorText.includes('already exists')) {
@@ -428,32 +428,34 @@ export default function SubmitPage() {
     }
   };
 
-  // Success state
+  // ── Success state ──
   if (submitted) {
     return (
-      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 20px' }}>
-        <div className="premium-card" style={{ padding: '30px', textAlign: 'center', borderColor: '#4caf50' }}>
-          <h1 style={{ color: '#2e7d32', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', fontSize: '24px', marginBottom: '12px' }}>
-            <Icon name="Check" size={24} color="#2e7d32" /> Post submitted!
+      <div className="mx-auto max-w-3xl px-3 py-8 sm:px-6 sm:py-12">
+        <div className="rounded-2xl border border-green-500/30 bg-white/5 p-6 text-center backdrop-blur-sm sm:p-10">
+          <h1 className="mb-3 flex items-center justify-center gap-2 text-2xl font-bold text-green-400">
+            <Icon name="Check" size={24} color="#4ade80" /> Post submitted!
           </h1>
-          <p style={{ fontSize: '18px', margin: '10px 0', color: 'var(--text-primary)' }}>Your list is now pending review by our admin team.</p>
-          
-          <div style={{ background: 'var(--bg-tertiary)', padding: '20px', borderRadius: 'var(--radius-md)', margin: '20px 0', textAlign: 'left' }}>
-            <p style={{ color: 'var(--text-primary)' }}><strong style={{ color: 'var(--text-primary)' }}>Title:</strong> {submitted.title}</p>
-            <p style={{ color: 'var(--text-primary)' }}><strong style={{ color: 'var(--text-primary)' }}>Status:</strong> <span style={{ background: 'var(--accent-soft)', color: 'var(--accent)', padding: '2px 8px', borderRadius: 'var(--radius-sm)' }}>Pending Review</span></p>
-            <p style={{ color: 'var(--text-primary)' }}><strong style={{ color: 'var(--text-primary)' }}>Items:</strong> {submitted.itemCount} items submitted</p>
+          <p className="mb-4 text-base text-white sm:text-lg">Your list is now pending review by our admin team.</p>
+
+          <div className="my-6 rounded-xl bg-white/[0.02] p-5 text-left">
+            <p className="text-white"><strong className="text-white">Title:</strong> {submitted.title}</p>
+            <p className="text-white"><strong className="text-white">Status:</strong>{' '}
+              <span className="inline-block rounded-lg bg-orange-500/10 px-2 py-0.5 text-sm text-orange-400">Pending Review</span>
+            </p>
+            <p className="text-white"><strong className="text-white">Items:</strong> {submitted.itemCount} items submitted</p>
           </div>
-          
-          <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
             {submitted.username && (
-              <Link 
+              <Link
                 href={`/a/${submitted.username.replace(/^a_/, '')}`}
-                className="premium-btn premium-btn-primary"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:shadow-xl hover:shadow-orange-500/40 active:scale-[0.98]"
               >
                 View My Profile
               </Link>
             )}
-            <button 
+            <button
               onClick={() => {
                 setSubmitted(null);
                 setTitle('Top 10 ');
@@ -466,13 +468,13 @@ export default function SubmitPage() {
                 setAuthorName('');
                 localStorage.removeItem(DRAFT_KEY);
               }}
-              className="premium-btn premium-btn-primary"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:shadow-xl hover:shadow-orange-500/40 active:scale-[0.98]"
             >
               Submit Another Post
             </button>
-            <Link 
+            <Link
               href="/"
-              className="premium-btn premium-btn-secondary"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-zinc-300 backdrop-blur-sm transition hover:border-white/20 hover:bg-white/10"
             >
               Go to Feed
             </Link>
@@ -482,22 +484,31 @@ export default function SubmitPage() {
     );
   }
 
-  // ── Dynamic border helper for the title input ──
-  const titleInputBorderColor =
-    errors.title || errors.titleSimilarity ? 'var(--accent)' :
-    titleCheck?.blocked ? 'var(--accent)' :
-    titleCheck?.warning ? '#ff9800' :
-    titleCheck?.allowed ? '#4caf50' : undefined;
+  // ── Dynamic title input border classes ──
+  const titleInputBorder = (() => {
+    if (errors.title || errors.titleSimilarity) return 'border-red-400 border-2';
+    if (titleCheck?.blocked) return 'border-red-400 border-2';
+    if (titleCheck?.warning) return 'border-orange-400 border-2';
+    if (titleCheck?.allowed) return 'border-green-400 border-2';
+    return 'border-white/10 focus:border-orange-500/50';
+  })();
 
-  const titleInputBorderWidth = titleInputBorderColor ? '2px' : undefined;
+  const introBorder = errors.intro ? 'border-red-400 border-2' : 'border-white/10 focus:border-orange-500/50';
 
+  const authorBorder = errors.author_display_name ? 'border-red-400 border-2' : 'border-white/10 focus:border-orange-500/50';
+
+  const selectBaseClasses = 'w-full appearance-none rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white focus:border-orange-500/50 focus:outline-none';
+
+  const categorySelectBorder = errors.category ? 'border-red-400 border-2' : 'border-white/10 focus:border-orange-500/50';
+
+  // ── Main form ──
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
-      <header style={{ marginBottom: '30px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>Submit a Top 10 List</h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '15px' }}>Share your ranked list with the world. No account required.</p>
-        <nav style={{ marginTop: '10px' }}>
-          <Link href="/" style={{ color: 'var(--accent)', textDecoration: 'none', fontSize: '14px', transition: 'var(--transition)' }}>
+    <div className="mx-auto max-w-3xl px-3 py-6 sm:px-6 sm:py-10">
+      <header className="mb-8">
+        <h1 className="text-2xl font-bold text-white sm:text-3xl">Submit a Top 10 List</h1>
+        <p className="mt-1 text-sm text-zinc-400 sm:text-base">Share your ranked list with the world. No account required.</p>
+        <nav className="mt-3">
+          <Link href="/" className="text-sm text-orange-400 transition hover:text-orange-300">
             &larr; Back to Feed
           </Link>
         </nav>
@@ -505,49 +516,45 @@ export default function SubmitPage() {
 
       <form onSubmit={handleSubmit} noValidate>
         {/* Step 1: Basic Info */}
-        <section style={{ marginBottom: '32px' }}>
-          <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', borderBottom: '1px solid var(--border-primary)', paddingBottom: '10px', marginBottom: '20px' }}>Basic Information</h2>
+        <section className="mb-8">
+          <h2 className="mb-5 border-b border-white/5 pb-3 text-lg font-bold text-white">Basic Information</h2>
 
           {/* Category */}
-          <div style={{ marginBottom: '20px' }}>
-            <label htmlFor="category" style={{ display: 'block', marginBottom: '6px', fontWeight: 700, color: 'var(--text-primary)', fontSize: '14px' }}>
-              Category <span aria-label="required" style={{ color: 'var(--accent)' }}>*</span>
+          <div className="mb-5">
+            <label htmlFor="category" className="mb-1.5 block text-sm font-medium text-zinc-400">
+              Category <span className="text-orange-400" aria-label="required">*</span>
             </label>
-            <select
-              id="category"
-              value={categorySlug}
-              onChange={(e) => handleCategoryChange(e.target.value)}
-              aria-required="true"
-              aria-invalid={!!errors.category}
-              aria-describedby={errors.category ? 'category-error' : 'category-help'}
-              className="premium-input"
-              style={{
-                appearance: 'none',
-                backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%239494a8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 14px center',
-                paddingRight: '36px',
-                borderColor: errors.category ? 'var(--accent)' : undefined,
-                borderWidth: errors.category ? '2px' : undefined,
-              }}
-            >
-              <option value="">Select a category...</option>
-              {categories.map(cat => (
-                <option key={cat.id} value={cat.slug}>
-                  {cat.icon || ''} {cat.name}
-                </option>
-              ))}
-            </select>
-            <div id="category-help" style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '5px' }}>Choose exactly one category for your list</div>
+            <div className="relative">
+              <select
+                id="category"
+                value={categorySlug}
+                onChange={(e) => handleCategoryChange(e.target.value)}
+                aria-required="true"
+                aria-invalid={!!errors.category}
+                aria-describedby={errors.category ? 'category-error' : 'category-help'}
+                className={`${selectBaseClasses} pr-10 ${categorySelectBorder}`}
+              >
+                <option value="">Select a category...</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.slug}>
+                    {cat.icon || ''} {cat.name}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                <Icon name="ChevronDown" size={16} className="text-zinc-500" />
+              </div>
+            </div>
+            <div id="category-help" className="mt-1.5 text-xs text-zinc-500">Choose exactly one category for your list</div>
             {errors.category && (
-              <div id="category-error" role="alert" style={{ color: 'var(--accent)', fontSize: '13px', marginTop: '5px' }}>{errors.category}</div>
+              <div id="category-error" role="alert" className="mt-1.5 text-sm text-red-400">{errors.category}</div>
             )}
           </div>
 
           {/* Title */}
-          <div style={{ marginBottom: '20px' }}>
-            <label htmlFor="title" style={{ display: 'block', marginBottom: '6px', fontWeight: 700, color: 'var(--text-primary)', fontSize: '14px' }}>
-              Title <span aria-label="required" style={{ color: 'var(--accent)' }}>*</span>
+          <div className="mb-5">
+            <label htmlFor="title" className="mb-1.5 block text-sm font-medium text-zinc-400">
+              Title <span className="text-orange-400" aria-label="required">*</span>
             </label>
             <input
               id="title"
@@ -562,67 +569,63 @@ export default function SubmitPage() {
               aria-required="true"
               aria-invalid={!!errors.title || !!errors.titleSimilarity}
               aria-describedby={errors.title || errors.titleSimilarity ? 'title-error' : 'title-help'}
-              className="premium-input"
-              style={{
-                borderColor: titleInputBorderColor,
-                borderWidth: titleInputBorderWidth,
-              }}
+              className={`w-full rounded-xl bg-white/5 px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none ${titleInputBorder}`}
             />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-muted)', marginTop: '5px' }}>
-              <span id="title-help">
+            <div className="mt-1.5 flex justify-between text-xs text-zinc-500">
+              <span id="title-help" className="flex items-center gap-1.5">
                 {title.length < 8 ? 'At least 8 characters for similarity check' : 'Title ready for check'}
                 {titleCheck?.checking && <><Icon name="Hourglass" size={14} /> Checking...</>}
-                {titleCheck?.allowed && !titleCheck.blocked && <span style={{ color: '#2e7d32' }}><Icon name="Check" size={14} color="#2e7d32" /> Title available</span>}
-                {titleCheck?.warning && <span style={{ color: '#e65100' }}><Icon name="TriangleAlert" size={14} color="#e65100" /> Similar titles found</span>}
-                {titleCheck?.blocked && <span style={{ color: 'var(--accent)' }}><Icon name="X" size={14} color="var(--accent)" /> This title is blocked</span>}
-                {titleCheck?.pendingConflicts && titleCheck.pendingConflicts.length > 0 && <span style={{ color: '#e65100' }}><Icon name="Hourglass" size={14} /> Already pending review</span>}
+                {titleCheck?.allowed && !titleCheck.blocked && <span className="flex items-center gap-1 text-green-400"><Icon name="Check" size={14} color="#4ade80" /> Title available</span>}
+                {titleCheck?.warning && <span className="flex items-center gap-1 text-orange-400"><Icon name="TriangleAlert" size={14} color="#f97316" /> Similar titles found</span>}
+                {titleCheck?.blocked && <span className="flex items-center gap-1 text-red-400"><Icon name="X" size={14} color="#f87171" /> This title is blocked</span>}
+                {titleCheck?.pendingConflicts && titleCheck.pendingConflicts.length > 0 && <span className="flex items-center gap-1 text-orange-400"><Icon name="Hourglass" size={14} /> Already pending review</span>}
               </span>
-              <span style={{ color: title.length > 240 ? '#ff9800' : title.length > 285 ? 'var(--accent)' : 'var(--text-muted)' }}>
+              <span className={title.length > 240 ? 'text-orange-400' : title.length > 285 ? 'text-red-400' : 'text-zinc-500'}>
                 {title.length}/300
               </span>
             </div>
             {(errors.title || errors.titleSimilarity) && (
-              <div id="title-error" role="alert" style={{ color: 'var(--accent)', fontSize: '13px', marginTop: '6px' }}>
+              <div id="title-error" role="alert" className="mt-2 text-sm text-red-400">
                 {errors.title || errors.titleSimilarity}
                 {titleCheck?.matches && titleCheck.matches.length > 0 && (
-                  <div style={{ marginTop: '10px' }}>
-                    <p style={{ color: 'var(--text-secondary)', marginBottom: '4px' }}>Similar lists:</p>
-                    <ul style={{ margin: '5px 0', paddingLeft: '20px' }}>
+                  <div className="mt-3">
+                    <p className="mb-1 text-zinc-400">Similar lists:</p>
+                    <ul className="ml-5 list-disc">
                       {titleCheck.matches.map((match, idx) => (
-                        <li key={idx} style={{ color: 'var(--text-secondary)' }}>{match.title}</li>
+                        <li key={idx} className="text-zinc-400">{match.title}</li>
                       ))}
                     </ul>
                   </div>
                 )}
                 {titleCheck?.pendingConflicts && titleCheck.pendingConflicts.length > 0 && (
-                  <div style={{ marginTop: '10px', background: 'var(--accent-soft)', padding: '8px 12px', borderRadius: 'var(--radius-sm)', fontSize: '13px' }}>
-                    <strong style={{ color: 'var(--text-primary)' }}><Icon name="Hourglass" size={14} /> This title is already pending review:</strong>
-                    <ul style={{ margin: '5px 0', paddingLeft: '20px' }}>
+                  <div className="mt-3 rounded-lg bg-orange-500/10 p-3 text-sm">
+                    <strong className="flex items-center gap-1.5 text-white"><Icon name="Hourglass" size={14} /> This title is already pending review:</strong>
+                    <ul className="ml-5 mt-1 list-disc">
                       {titleCheck.pendingConflicts.map((pc, idx) => (
-                        <li key={idx} style={{ color: 'var(--text-secondary)' }}>
+                        <li key={idx} className="text-zinc-400">
                           {pc.title}
-                          <span style={{ color: 'var(--text-muted)', fontSize: '11px', marginLeft: '8px' }}>
+                          <span className="ml-2 text-xs text-zinc-500">
                             (submitted {new Date(pc.submitted_at).toLocaleDateString()})
                           </span>
                         </li>
                       ))}
                     </ul>
-                    <p style={{ margin: '4px 0 0', color: '#e65100', fontSize: '11px' }}>
+                    <p className="mt-1 text-xs text-orange-400">
                       You can still submit, but the first to be approved claims the title.
                     </p>
                   </div>
                 )}
                 {titleCheck?.suggestion && (
-                  <p style={{ marginTop: '5px', color: 'var(--text-secondary)' }}>Try: <strong style={{ color: 'var(--text-primary)' }}>{titleCheck.suggestion}</strong></p>
+                  <p className="mt-1.5 text-zinc-400">Try: <strong className="text-white">{titleCheck.suggestion}</strong></p>
                 )}
               </div>
             )}
           </div>
 
           {/* Intro */}
-          <div style={{ marginBottom: '20px' }}>
-            <label htmlFor="intro" style={{ display: 'block', marginBottom: '6px', fontWeight: 700, color: 'var(--text-primary)', fontSize: '14px' }}>
-              Introduction <span aria-label="required" style={{ color: 'var(--accent)' }}>*</span>
+          <div className="mb-5">
+            <label htmlFor="intro" className="mb-1.5 block text-sm font-medium text-zinc-400">
+              Introduction <span className="text-orange-400" aria-label="required">*</span>
             </label>
             <textarea
               id="intro"
@@ -638,56 +641,48 @@ export default function SubmitPage() {
               aria-required="true"
               aria-invalid={!!errors.intro}
               aria-describedby={errors.intro ? 'intro-error' : 'intro-help'}
-              className="premium-input"
-              style={{
-                resize: 'vertical',
-                minHeight: '100px',
-                borderColor: errors.intro ? 'var(--accent)' : undefined,
-                borderWidth: errors.intro ? '2px' : undefined,
-              }}
+              className={`w-full resize-y rounded-xl bg-white/5 px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none ${introBorder}`}
             />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-muted)', marginTop: '5px' }}>
+            <div className="mt-1.5 flex justify-between text-xs text-zinc-500">
               <span id="intro-help">Explain what your list is about</span>
-              <span style={{ color: intro.length > 1600 ? '#ff9800' : intro.length > 1900 ? 'var(--accent)' : 'var(--text-muted)' }}>
+              <span className={intro.length > 1600 ? 'text-orange-400' : intro.length > 1900 ? 'text-red-400' : 'text-zinc-500'}>
                 {intro.length}/2000
               </span>
             </div>
             {errors.intro && (
-              <div id="intro-error" role="alert" style={{ color: 'var(--accent)', fontSize: '13px', marginTop: '5px' }}>{errors.intro}</div>
+              <div id="intro-error" role="alert" className="mt-1.5 text-sm text-red-400">{errors.intro}</div>
             )}
           </div>
         </section>
 
         {/* Layout Format */}
-        <section style={{ marginBottom: '32px' }}>
-          <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', borderBottom: '1px solid var(--border-primary)', paddingBottom: '10px', marginBottom: '20px' }}>Layout Format</h2>
+        <section className="mb-8">
+          <h2 className="mb-5 border-b border-white/5 pb-3 text-lg font-bold text-white">Layout Format</h2>
 
-          <div style={{ marginBottom: '20px' }}>
-            <label htmlFor="format" style={{ display: 'block', marginBottom: '6px', fontWeight: 700, color: 'var(--text-primary)', fontSize: '14px' }}>
+          <div className="mb-5">
+            <label htmlFor="format" className="mb-1.5 block text-sm font-medium text-zinc-400">
               Post Layout
             </label>
-            <select
-              id="format"
-              value={postFormat}
-              onChange={(e) => setPostFormat(e.target.value as 'list_only' | 'hero_list' | 'full_list')}
-              className="premium-input"
-              style={{
-                appearance: 'none',
-                backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%239494a8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 14px center',
-                paddingRight: '36px',
-              }}
-            >
-              <option value="list_only">List Only — text items, no images</option>
-              <option value="hero_list">Hero + List — hero banner top, items with images</option>
-              <option value="full_list">Full List — hero banner + all items have images</option>
-            </select>
+            <div className="relative">
+              <select
+                id="format"
+                value={postFormat}
+                onChange={(e) => setPostFormat(e.target.value as 'list_only' | 'hero_list' | 'full_list')}
+                className={`${selectBaseClasses} pr-10`}
+              >
+                <option value="list_only">List Only — text items, no images</option>
+                <option value="hero_list">Hero + List — hero banner top, items with images</option>
+                <option value="full_list">Full List — hero banner + all items have images</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                <Icon name="ChevronDown" size={16} className="text-zinc-500" />
+              </div>
+            </div>
           </div>
 
           {(postFormat === 'hero_list' || postFormat === 'full_list') && (
-            <div style={{ marginBottom: '20px' }}>
-              <label htmlFor="hero-image" style={{ display: 'block', marginBottom: '6px', fontWeight: 700, color: 'var(--text-primary)', fontSize: '14px' }}>
+            <div className="mb-5">
+              <label htmlFor="hero-image" className="mb-1.5 block text-sm font-medium text-zinc-400">
                 Hero Banner Image
               </label>
               <input
@@ -714,11 +709,11 @@ export default function SubmitPage() {
                     setErrors(prev => ({ ...prev, titleSimilarity: 'Image upload failed. Try a smaller file.' }));
                   }
                 }}
-                style={{ width: '100%', padding: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}
+                className="w-full text-sm text-zinc-400 file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-white/10 file:px-4 file:py-2 file:text-sm file:font-medium file:text-zinc-300 file:transition hover:file:bg-white/20"
               />
               {heroImageUrl && (
-                <div style={{ marginTop: '8px' }}>
-                  <Image src={heroImageUrl} alt="Hero preview" width={400} height={200} unoptimized style={{ maxWidth: '400px', maxHeight: '200px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-primary)', height: 'auto' }} />
+                <div className="mt-2">
+                  <Image src={heroImageUrl} alt="Hero preview" width={400} height={200} unoptimized className="h-auto max-h-[200px] max-w-[400px] rounded-lg border border-white/5" />
                 </div>
               )}
             </div>
@@ -726,17 +721,17 @@ export default function SubmitPage() {
         </section>
 
         {/* Step 2: List Items */}
-        <section style={{ marginBottom: '32px' }}>
-          <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', borderBottom: '1px solid var(--border-primary)', paddingBottom: '10px', marginBottom: '20px' }}>List Items</h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '16px', fontSize: '14px' }}>Add at least 3 items (max 100). Each item needs a title and justification.</p>
+        <section className="mb-8">
+          <h2 className="mb-5 border-b border-white/5 pb-3 text-lg font-bold text-white">List Items</h2>
+          <p className="mb-4 text-sm text-zinc-400">Add at least 3 items (max 100). Each item needs a title and justification.</p>
 
           {items.map((item) => (
-            <fieldset key={item.id} className="premium-card" style={{ padding: '16px', marginBottom: '16px', borderRadius: 'var(--radius-md)' }}>
-              <legend style={{ fontWeight: 700, padding: '0 10px', color: 'var(--text-primary)', fontSize: '14px' }}>Item #{item.rank}</legend>
-              
-              <div style={{ marginBottom: '12px' }}>
-                <label htmlFor={`item-title-${item.id}`} style={{ display: 'block', marginBottom: '6px', fontWeight: 700, color: 'var(--text-primary)', fontSize: '14px' }}>
-                  Title <span aria-label="required" style={{ color: 'var(--accent)' }}>*</span>
+            <fieldset key={item.id} className="mb-4 rounded-xl border border-white/5 p-3 sm:p-4">
+              <legend className="px-2 text-sm font-bold text-white">Item #{item.rank}</legend>
+
+              <div className="mb-3">
+                <label htmlFor={`item-title-${item.id}`} className="mb-1.5 block text-sm font-medium text-zinc-400">
+                  Title <span className="text-orange-400" aria-label="required">*</span>
                 </label>
                 <input
                   id={`item-title-${item.id}`}
@@ -746,13 +741,13 @@ export default function SubmitPage() {
                   placeholder="e.g., Albert Einstein"
                   maxLength={200}
                   aria-required="true"
-                  className="premium-input"
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none"
                 />
               </div>
 
-              <div style={{ marginBottom: '12px' }}>
-                <label htmlFor={`item-justification-${item.id}`} style={{ display: 'block', marginBottom: '6px', fontWeight: 700, color: 'var(--text-primary)', fontSize: '14px' }}>
-                  Justification <span aria-label="required" style={{ color: 'var(--accent)' }}>*</span>
+              <div className="mb-3">
+                <label htmlFor={`item-justification-${item.id}`} className="mb-1.5 block text-sm font-medium text-zinc-400">
+                  Justification <span className="text-orange-400" aria-label="required">*</span>
                 </label>
                 <textarea
                   id={`item-justification-${item.id}`}
@@ -762,13 +757,12 @@ export default function SubmitPage() {
                   maxLength={2000}
                   rows={3}
                   aria-required="true"
-                  className="premium-input"
-                  style={{ resize: 'vertical', minHeight: '72px' }}
+                  className="w-full resize-y rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none"
                 />
               </div>
 
-              <div style={{ marginBottom: '12px' }}>
-                <label htmlFor={`item-source-${item.id}`} style={{ display: 'block', marginBottom: '6px', color: 'var(--text-secondary)', fontSize: '14px' }}>
+              <div className="mb-3">
+                <label htmlFor={`item-source-${item.id}`} className="mb-1.5 block text-sm text-zinc-400">
                   Source URL (optional)
                 </label>
                 <input
@@ -778,13 +772,13 @@ export default function SubmitPage() {
                   onChange={(e) => updateItem(item.id, 'source_url', e.target.value)}
                   placeholder="Paste article, video, or profile link"
                   aria-label="Source URL (optional)"
-                  className="premium-input"
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none"
                 />
               </div>
 
               {(postFormat === 'hero_list' || postFormat === 'full_list') && (
-                <div style={{ marginBottom: '12px' }}>
-                  <label htmlFor={`item-image-${item.id}`} style={{ display: 'block', marginBottom: '6px', color: 'var(--text-secondary)', fontSize: '14px' }}>
+                <div className="mb-3">
+                  <label htmlFor={`item-image-${item.id}`} className="mb-1.5 block text-sm text-zinc-400">
                     Item Image (optional)
                   </label>
                   <input
@@ -810,11 +804,11 @@ export default function SubmitPage() {
                         /* upload failed — silently ignore */
                       }
                     }}
-                    style={{ width: '100%', padding: '4px', fontSize: '13px', color: 'var(--text-secondary)' }}
+                    className="w-full text-sm text-zinc-400 file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-zinc-300 file:transition hover:file:bg-white/20"
                   />
                   {item.image_url && (
-                    <div style={{ marginTop: '4px' }}>
-                      <Image src={item.image_url} alt="Item preview" width={150} height={100} unoptimized style={{ maxWidth: '150px', maxHeight: '100px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-primary)', height: 'auto' }} />
+                    <div className="mt-1.5">
+                      <Image src={item.image_url} alt="Item preview" width={150} height={100} unoptimized className="h-auto max-h-[100px] max-w-[150px] rounded-lg border border-white/5" />
                     </div>
                   )}
                 </div>
@@ -825,9 +819,7 @@ export default function SubmitPage() {
                   type="button"
                   onClick={() => removeItem(item.id)}
                   aria-label={`Remove item #${item.rank}`}
-                  style={{ background: 'var(--accent)', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '13px', fontWeight: 600, transition: 'var(--transition)' }}
-                  onMouseOver={(e) => (e.currentTarget.style.opacity = '0.85')}
-                  onMouseOut={(e) => (e.currentTarget.style.opacity = '1')}
+                  className="rounded-lg bg-red-500/80 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-600/80"
                 >
                   Remove
                 </button>
@@ -836,35 +828,25 @@ export default function SubmitPage() {
           ))}
 
           {errors.items && (
-            <div role="alert" style={{ color: 'var(--accent)', fontSize: '13px', marginBottom: '10px' }}>{errors.items}</div>
+            <div role="alert" className="mb-3 text-sm text-red-400">{errors.items}</div>
           )}
 
           <button
             type="button"
             onClick={addItem}
             disabled={items.length >= MAX_ITEMS}
-            style={{ 
-              padding: '10px 20px', 
-              background: items.length >= MAX_ITEMS ? 'var(--border-primary)' : 'var(--bg-tertiary)', 
-              border: '1px solid var(--border-primary)', 
-              borderRadius: 'var(--radius-md)', 
-              cursor: items.length >= MAX_ITEMS ? 'not-allowed' : 'pointer',
-              fontSize: '15px',
-              fontWeight: 600,
-              color: items.length >= MAX_ITEMS ? 'var(--text-muted)' : 'var(--text-primary)',
-              transition: 'var(--transition)',
-            }}
+            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-zinc-300 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
           >
             + Add Item ({items.length}/{MAX_ITEMS})
           </button>
         </section>
 
         {/* Step 3: Author */}
-        <section style={{ marginBottom: '32px' }}>
-          <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', borderBottom: '1px solid var(--border-primary)', paddingBottom: '10px', marginBottom: '20px' }}>Author Information</h2>
-          
-          <div style={{ marginBottom: '20px' }}>
-            <label htmlFor="author" style={{ display: 'block', marginBottom: '6px', fontWeight: 700, color: 'var(--text-primary)', fontSize: '14px' }}>
+        <section className="mb-8">
+          <h2 className="mb-5 border-b border-white/5 pb-3 text-lg font-bold text-white">Author Information</h2>
+
+          <div className="mb-5">
+            <label htmlFor="author" className="mb-1.5 block text-sm font-medium text-zinc-400">
               Display Name (optional)
             </label>
             <input
@@ -877,29 +859,25 @@ export default function SubmitPage() {
               aria-label="Display name (optional)"
               aria-invalid={!!errors.author_display_name}
               aria-describedby={errors.author_display_name ? 'author-error' : 'author-help'}
-              className="premium-input"
-              style={{
-                borderColor: errors.author_display_name ? 'var(--accent)' : undefined,
-                borderWidth: errors.author_display_name ? '2px' : undefined,
-              }}
+              className={`w-full rounded-xl bg-white/5 px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none ${authorBorder}`}
             />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-muted)', marginTop: '5px' }}>
+            <div className="mt-1.5 flex justify-between text-xs text-zinc-500">
               <span id="author-help">Customize your display name (auto-generated if blank)</span>
               <span>{authorName.length}/50</span>
             </div>
             {errors.author_display_name && (
-              <div id="author-error" role="alert" style={{ color: 'var(--accent)', fontSize: '13px', marginTop: '5px' }}>{errors.author_display_name}</div>
+              <div id="author-error" role="alert" className="mt-1.5 text-sm text-red-400">{errors.author_display_name}</div>
             )}
           </div>
         </section>
 
         {/* Error Summary */}
         {Object.keys(errors).length > 0 && (
-          <div role="alert" aria-live="assertive" style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent)', borderRadius: 'var(--radius-md)', padding: '16px', marginBottom: '20px' }}>
-            <strong style={{ color: 'var(--accent)' }}>Please fix the following:</strong>
-            <ul style={{ margin: '10px 0 0 0', paddingLeft: '20px' }}>
+          <div role="alert" aria-live="assertive" className="mb-5 rounded-xl border border-red-500/30 bg-red-500/10 p-4">
+            <strong className="text-red-400">Please fix the following:</strong>
+            <ul className="ml-5 mt-2 list-disc">
               {Object.values(errors).map((error, idx) => (
-                <li key={idx} style={{ marginBottom: '5px', color: 'var(--text-primary)', fontSize: '14px' }}>{error}</li>
+                <li key={idx} className="mb-1 text-sm text-white">{error}</li>
               ))}
             </ul>
           </div>
@@ -909,20 +887,13 @@ export default function SubmitPage() {
         <button
           type="submit"
           disabled={submitting || !categorySlug || !title || !intro || items.some(i => !i.title || !i.justification)}
-          className="premium-btn premium-btn-primary"
-          style={{ 
-            width: '100%', 
-            padding: '16px',
-            fontSize: '17px',
-            opacity: submitting ? 0.6 : 1,
-            cursor: submitting ? 'not-allowed' : 'pointer',
-          }}
+          className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 py-4 text-base font-bold text-white shadow-lg shadow-orange-500/25 transition hover:shadow-xl hover:shadow-orange-500/40 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:text-lg"
         >
           {submitting ? 'Submitting...' : 'Submit for Review'}
         </button>
       </form>
 
-      <footer style={{ marginTop: '32px', borderTop: '1px solid var(--border-primary)', paddingTop: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+      <footer className="mt-10 border-t border-white/5 pt-6 text-center text-sm text-zinc-500">
         <p>YoTop10 — Open Platform for Top 10 Lists</p>
       </footer>
     </div>

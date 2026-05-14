@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { validateMnemonic, mnemonicToKeyPair, signChallenge } from '@/lib/identity';
 import { API } from '@/lib/api';
+import { Icon } from '@/components/icons/Icon';
 
 export default function ClaimPage() {
   const router = useRouter();
@@ -77,141 +78,136 @@ export default function ClaimPage() {
   };
 
   return (
-    <div style={{ maxWidth: '560px', margin: '40px auto', padding: '0 16px' }}>
-      <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>Claim Your Identity</h1>
-      <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '14px', lineHeight: 1.6 }}>
-        Enter your 12-word seed phrase to recover your identity on this device. Your full reputation and history will be restored.
-      </p>
-
-      {error && (
-        <div role="alert" style={{ background: 'var(--accent-soft)', color: 'var(--accent)', fontSize: '13px', marginBottom: '16px', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--accent)' }}>
-          {error}
-        </div>
-      )}
-
-      {step === 'done' ? (
-        <div className="premium-card" style={{ padding: '24px', textAlign: 'center', borderColor: '#4caf50' }}>
-          <p style={{ fontSize: '18px', fontWeight: 700, color: '#2e7d32', marginBottom: '16px' }}>
-            Identity Restored
+    <div className="min-h-screen bg-zinc-950 px-3 py-10 sm:px-6 sm:py-16">
+      <div className="mx-auto max-w-md">
+        <div className="mb-8">
+          <h1 className="mb-2 text-2xl font-bold text-white sm:text-3xl">Claim Your Identity</h1>
+          <p className="text-sm leading-relaxed text-zinc-400">
+            Enter your 12-word seed phrase to recover your identity on this device. Your full reputation and history will be restored.
           </p>
-          {recoveredUser && (
-            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-              Welcome back, {String(recoveredUser.custom_display_name || recoveredUser.username || 'user')}!
-            </p>
-          )}
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button
-              onClick={() => router.push(`/a/${recoveredUser?.username || ''}`)}
-              className="premium-btn premium-btn-primary"
-            >
-              Go to Profile
-            </button>
-            <button
-              onClick={() => router.push('/')}
-              className="premium-btn premium-btn-secondary"
-            >
-              Go Home
-            </button>
-          </div>
         </div>
-      ) : (
-        <div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '16px' }}>
-            {words.map((word, i) => (
-              <div key={i}>
-                <label
-                  style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px', fontWeight: 600 }}
-                >
-                  {i + 1}
-                </label>
-                <input
-                  type="text"
-                  value={word}
-                  onChange={(e) => handleWordChange(i, e.target.value)}
-                  onPaste={(e) => {
-                    e.preventDefault();
-                    const text = e.clipboardData.getData('text').trim().toLowerCase();
-                    const pasted = text.split(/\s+/);
-                    if (pasted.length === 12) {
-                      setWords(pasted);
-                    } else if (pasted.length === 1) {
-                      handleWordChange(i, pasted[0]);
-                    }
-                  }}
-                  placeholder="word"
-                  autoComplete="off"
-                  autoCapitalize="off"
-                  spellCheck={false}
-                  style={{
-                    width: '100%',
-                    padding: '10px 8px',
-                    background: 'var(--bg-tertiary)',
-                    border: `1.5px solid ${isValid ? '#4caf50' : 'var(--border-primary)'}`,
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '14px',
-                    fontFamily: 'Geist Mono, ui-monospace, SFMono-Regular, monospace',
-                    color: 'var(--text-primary)',
-                    boxSizing: 'border-box',
-                    outline: 'none',
-                    transition: 'var(--transition)',
-                  }}
-                  onFocus={(e) => {
-                    if (!isValid) e.currentTarget.style.borderColor = 'var(--accent)';
-                    e.currentTarget.style.boxShadow = '0 0 0 3px var(--accent-soft)';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = isValid ? '#4caf50' : 'var(--border-primary)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                />
-              </div>
-            ))}
+
+        {error && (
+          <div role="alert" className="mb-4 flex items-start gap-2 rounded-xl border border-orange-500/20 bg-orange-500/5 p-3 text-[13px] text-orange-400 sm:p-4">
+            <Icon name="TriangleAlert" size={16} className="mt-0.5 shrink-0" />
+            <span>{error}</span>
           </div>
+        )}
 
-          {!isValid && words.some((w) => w.trim()) && (
-            <p style={{ color: '#f57c00', fontSize: '12px', marginBottom: '16px' }}>
-              Enter all 12 words from your seed phrase. Words must be from the BIP39 wordlist.
+        {step === 'done' ? (
+          <div className="rounded-2xl border border-orange-500/30 bg-white/[0.02] p-6 text-center backdrop-blur-sm sm:p-8">
+            <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-500/10 sm:h-16 sm:w-16">
+              <Icon name="Check" size={28} className="text-orange-400 sm:size-8" />
+            </div>
+            <p className="mb-2 text-lg font-bold text-white">
+              Identity Restored
             </p>
-          )}
-
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
-            <button
-              onClick={handleClaim}
-              disabled={!isValid || step === 'signing'}
-              className="premium-btn premium-btn-primary"
-              style={{
-                opacity: step === 'signing' ? 0.6 : !isValid ? 0.5 : 1,
-                cursor: !isValid ? 'not-allowed' : 'pointer',
-              }}
-            >
-              {step === 'signing' ? 'Verifying...' : 'Claim Identity'}
-            </button>
-
-            <button
-              onClick={handlePaste}
-              className="premium-btn premium-btn-secondary"
-              style={{ fontSize: '13px', padding: '12px 16px' }}
-            >
-              Paste from Clipboard
-            </button>
+            {recoveredUser && (
+              <p className="mb-5 text-sm text-zinc-400">
+                Welcome back, {String(recoveredUser.custom_display_name || recoveredUser.username || 'user')}!
+              </p>
+            )}
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+              <button
+                onClick={() => router.push(`/a/${recoveredUser?.username || ''}`)}
+                className="rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:shadow-xl hover:shadow-orange-500/40 active:scale-[0.98]"
+              >
+                Go to Profile
+              </button>
+              <button
+                onClick={() => router.push('/')}
+                className="rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-zinc-300 backdrop-blur-sm transition hover:border-white/20 hover:bg-white/10"
+              >
+                Go Home
+              </button>
+            </div>
           </div>
+        ) : (
+          <div>
+            <div className="mb-4 grid grid-cols-4 gap-2">
+              {words.map((word, i) => (
+                <div key={i}>
+                  <label className="mb-1 block text-[11px] font-semibold text-zinc-600">
+                    {i + 1}
+                  </label>
+                  <input
+                    type="text"
+                    value={word}
+                    onChange={(e) => handleWordChange(i, e.target.value)}
+                    onPaste={(e) => {
+                      e.preventDefault();
+                      const text = e.clipboardData.getData('text').trim().toLowerCase();
+                      const pasted = text.split(/\s+/);
+                      if (pasted.length === 12) {
+                        setWords(pasted);
+                      } else if (pasted.length === 1) {
+                        handleWordChange(i, pasted[0]);
+                      }
+                    }}
+                    placeholder="word"
+                    autoComplete="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    className={`w-full rounded-xl border bg-white/5 px-2.5 py-2.5 text-sm font-mono text-white placeholder:text-zinc-600 outline-none transition sm:px-3 sm:py-3 ${
+                      isValid
+                        ? 'border-orange-500/50 ring-1 ring-orange-500/20'
+                        : 'border-white/10 focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/20'
+                    }`}
+                  />
+                </div>
+              ))}
+            </div>
 
-          <details style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-            <summary style={{ cursor: 'pointer', marginBottom: '8px', color: 'var(--text-secondary)', fontWeight: 500 }}>
-              Where do I find my seed phrase?
-            </summary>
-            <p style={{ margin: '0 0 8px 0', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-              When you generated your seed phrase in the &ldquo;Secure My Authority&rdquo; section
-              of your profile page, you were shown 12 words. You should have written them down
-              or saved them somewhere safe.
-            </p>
-            <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-              If you lost your seed phrase, your identity cannot be recovered. This is by design
-              &mdash; the same security model used by cryptocurrency wallets.
-            </p>
-          </details>
-        </div>
-      )}
+            {!isValid && words.some((w) => w.trim()) && (
+              <p className="mb-4 text-xs text-amber-500">
+                Enter all 12 words from your seed phrase. Words must be from the BIP39 wordlist.
+              </p>
+            )}
+
+            <div className="mb-6 flex flex-col gap-2 sm:flex-row">
+              <button
+                onClick={handleClaim}
+                disabled={!isValid || step === 'signing'}
+                className="flex-1 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:shadow-xl hover:shadow-orange-500/40 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {step === 'signing' ? (
+                  <span className="inline-flex items-center gap-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                    Verifying...
+                  </span>
+                ) : (
+                  'Claim Identity'
+                )}
+              </button>
+
+              <button
+                onClick={handlePaste}
+                className="rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-zinc-300 backdrop-blur-sm transition hover:border-white/20 hover:bg-white/10"
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  <Icon name="Clipboard" size={14} />
+                  Paste
+                </span>
+              </button>
+            </div>
+
+            <details className="text-[13px]">
+              <summary className="cursor-pointer font-medium text-zinc-400 transition hover:text-zinc-300">
+                Where do I find my seed phrase?
+              </summary>
+              <p className="mt-2 leading-relaxed text-zinc-500">
+                When you generated your seed phrase in the &ldquo;Secure My Authority&rdquo; section
+                of your profile page, you were shown 12 words. You should have written them down
+                or saved them somewhere safe.
+              </p>
+              <p className="mt-2 leading-relaxed text-zinc-500">
+                If you lost your seed phrase, your identity cannot be recovered. This is by design
+                &mdash; the same security model used by cryptocurrency wallets.
+              </p>
+            </details>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

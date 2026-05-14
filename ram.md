@@ -36,6 +36,28 @@
   10. `search/page.tsx` — Public search page with CSS variables
   11. `components/SecureMyAuthority.tsx` — Identity section with imported Icon
   12. `components/SeedDisplayModal.tsx` — Seed phrase modal with premium styling
+- **[UI] Tailwind mobile-first rewrite** — Rewrote 3 core frontend pages with Tailwind CSS exclusively (zero inline styles, zero custom CSS):
+  1. `submit/page.tsx` (901 lines) — Mobile-first form: full-width inputs, glass form cards, gradient submit button, styled selects, file uploads, dynamic border states for validation, all functionality preserved (draft save, title check, validation, image upload)
+  2. `[slug]/client.tsx` (547 lines) — Post article: full-width typography, hero image, item cards with flex layout, glass comments section, threaded replies with capped indent, reaction buttons, all functionality preserved
+  3. `a/[username]/page.tsx` (361 lines) — Profile: glass header card, trust level badges with conditional styles, tabs, post/comment cards, stats panel, edit display name form, all functionality preserved
+
+- **[UI] Tailwind mobile-first — ALL admin pages & components** — Rewrote 15 files with Tailwind CSS exclusively (zero inline styles, zero custom CSS):
+  1. `admin/page.tsx` — Dashboard landing with glass card grid, hover states
+  2. `admin/posts/pending/page.tsx` — Review queue with mobile cards + desktop table, modal dialogs
+  3. `admin/posts/pending/[id]/page.tsx` — Post review detail with gradient buttons, modals
+  4. `admin/posts/page.tsx` — All posts with mobile cards + desktop table, stat badges
+  5. `admin/comments/page.tsx` — Comment moderation, flag penalty modal, mobile cards + desktop table
+  6. `admin/categories/page.tsx` — Tree/table/analytics/bulk tabs, responsive tree sidebar
+  7. `admin/search/page.tsx` — Cluster status + analytics tabs, 3-column responsive grid
+  8. `admin/statistics/page.tsx` — 21 collapsible panels, stat cards, responsive layout
+  9. `admin/alerts/[id]/page.tsx` — Alert detail with severity-aware border styling
+  10. `notifications/page.tsx` — Notification list with priority-based left border colors
+  11. `notifications/[id]/page.tsx` — Notification detail with admin/regular message rendering
+  12. `components/SecureMyAuthority.tsx` — Identity section, device management, unlink buttons
+  13. `components/SeedDisplayModal.tsx` — Seed phrase modal with 3-col word grid, copy button
+  14. `components/NotificationBell.tsx` — Bell dropdown with priority styling, dismiss buttons
+  15. `components/ThemeToggle.tsx` — Sun/Moon Lucide icons replacing emojis
+  Design system: `bg-zinc-950` base, `bg-white/5` cards, `border-white/10` borders, `from-orange-500 to-pink-500` accents, `rounded-xl` throughout, mobile cards collapsing to desktop tables, full-screen modals on mobile, `min-h-[44px]` touch targets
 
 ## Current
 - _(none — all committed)_

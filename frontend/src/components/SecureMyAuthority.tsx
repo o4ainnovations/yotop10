@@ -99,96 +99,62 @@ export function SecureMyAuthority() {
     }
   };
 
-  const sectionStyle: React.CSSProperties = {
-    padding: '20px',
-    border: '1px solid var(--border-primary)',
-    borderRadius: 'var(--radius-lg)',
-    marginTop: '16px',
-    background: 'var(--bg-secondary)',
-    boxShadow: 'var(--shadow-sm)',
-  };
-
   if (loading) {
     return (
-      <div style={sectionStyle}>
-        <p style={{ margin: 0, color: 'var(--text-muted)' }}>Loading identity status...</p>
+      <div className="p-5 border border-white/10 rounded-2xl mt-4 bg-white/5">
+        <p className="text-white/40">Loading identity status...</p>
       </div>
     );
   }
 
   return (
-    <div style={sectionStyle}>
-      <h3 style={{ margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
-        <Icon name="Lock" size={18} color="var(--accent)" />
+    <div className="p-5 border border-white/10 rounded-2xl mt-4 bg-white/5">
+      <h3 className="mt-0 mb-3 flex items-center gap-2 text-white text-base font-bold">
+        <Icon name="Lock" size={18} color="var(--color-orange-400)" />
         Secure My Authority
       </h3>
 
       {error && (
-        <div style={{ color: '#c62828', fontSize: '13px', marginBottom: '12px', backgroundColor: 'rgba(198,40,40,0.08)', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(198,40,40,0.2)' }}>
+        <div className="text-red-500 text-[13px] mb-3 bg-red-500/8 px-3 py-2.5 rounded-lg border border-red-500/20">
           {error}
         </div>
       )}
 
       {!status?.has_seed ? (
         <div>
-          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: 1.6 }}>
+          <p className="text-sm text-white/60 mb-4 leading-relaxed">
             Your identity is currently tied to this browser. Generate a 12-word seed phrase to own your reputation permanently. You can use it to recover your account on any device.
           </p>
-          <p style={{ fontSize: '13px', color: '#c62828', fontWeight: 'bold', marginBottom: '16px' }}>
+          <p className="text-[13px] text-red-400 font-bold mb-4">
             This is your only key. We do not store it. If you lose it, your reputation is lost forever.
           </p>
           <button
             onClick={handleGenerate}
             disabled={generating}
-            style={{
-              padding: '10px 20px',
-              background: generating ? 'var(--border-primary)' : 'var(--accent-gradient)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 'var(--radius-md)',
-              cursor: generating ? 'not-allowed' : 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold',
-            }}
+            className={`px-5 py-2.5 text-white border-none rounded-xl cursor-pointer text-sm font-bold min-h-[44px] ${generating ? 'bg-white/10 cursor-not-allowed' : 'bg-gradient-to-r from-orange-500 to-pink-500 cursor-pointer'}`}
           >
             {generating ? 'Generating...' : 'Generate Seed Phrase'}
           </button>
         </div>
       ) : (
         <div>
-          <p style={{ fontSize: '14px', color: '#2e7d32', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <p className="text-sm text-green-400 mb-2 flex items-center gap-1">
             <Icon name="Check" size={16} color="#2e7d32" /> Your identity is secured with a seed phrase
           </p>
-          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>
+          <p className="text-xs text-white/40 mb-3">
             Generated {status.seed_generated_at ? new Date(status.seed_generated_at).toLocaleDateString() : 'unknown date'}
           </p>
 
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <div className="flex gap-2 flex-wrap">
             <button
               onClick={fetchDevices}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: 'var(--bg-tertiary)',
-                border: '1px solid var(--border-primary)',
-                borderRadius: 'var(--radius-sm)',
-                cursor: 'pointer',
-                fontSize: '13px',
-                color: 'var(--text-primary)',
-              }}
+              className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl cursor-pointer text-[13px] text-white min-h-[40px] hover:bg-white/10"
             >
               Manage Devices ({status.devices_linked})
             </button>
             <button
               onClick={() => window.location.href = '/claim'}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: 'var(--bg-tertiary)',
-                border: '1px solid var(--border-primary)',
-                borderRadius: 'var(--radius-sm)',
-                cursor: 'pointer',
-                fontSize: '13px',
-                color: 'var(--text-primary)',
-              }}
+              className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl cursor-pointer text-[13px] text-white min-h-[40px] hover:bg-white/10"
             >
               Claim on Another Device
             </button>
@@ -197,50 +163,35 @@ export function SecureMyAuthority() {
       )}
 
       {showDevices && (
-        <div style={{ marginTop: '16px', borderTop: '1px solid var(--border-primary)', paddingTop: '14px' }}>
-          <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: 'var(--text-primary)' }}>Linked Devices</h4>
+        <div className="mt-4 border-t border-white/10 pt-3.5">
+          <h4 className="mt-0 mb-2.5 text-sm text-white font-bold">Linked Devices</h4>
           {devices.length === 0 ? (
-            <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>No devices linked.</p>
+            <p className="text-[13px] text-white/40">No devices linked.</p>
           ) : (
             <div>
               {devices.map((d) => (
                 <div
                   key={d.device_fingerprint}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '10px 0',
-                    borderBottom: '1px solid var(--border-primary)',
-                    fontSize: '13px',
-                  }}
+                  className="flex justify-between items-center py-2.5 border-b border-white/5 text-[13px]"
                 >
                   <div>
-                    <span style={{ fontFamily: 'Geist Mono, monospace', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                    <span className="font-mono text-xs text-white/60">
                       {d.device_fingerprint.substring(0, 16)}...
                     </span>
                     {d.is_current && (
-                      <span style={{ marginLeft: '8px', color: '#2e7d32', fontSize: '12px', fontWeight: 'bold', background: 'rgba(46,125,50,0.1)', padding: '1px 6px', borderRadius: '3px' }}>
+                      <span className="ml-2 text-green-400 text-xs font-bold bg-green-500/10 px-1.5 py-0.5 rounded">
                         current
                       </span>
                     )}
                     <br />
-                    <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>
+                    <span className="text-white/40 text-[11px]">
                       Linked {new Date(d.linked_at).toLocaleDateString()}
                     </span>
                   </div>
                   {!d.is_current && (
                     <button
                       onClick={() => handleUnlink(d.device_fingerprint)}
-                      style={{
-                        padding: '4px 12px',
-                        backgroundColor: 'rgba(198,40,40,0.08)',
-                        color: '#c62828',
-                        border: '1px solid rgba(198,40,40,0.2)',
-                        borderRadius: 'var(--radius-sm)',
-                        cursor: 'pointer',
-                        fontSize: '12px',
-                      }}
+                      className="px-3 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg cursor-pointer text-xs min-h-[32px] hover:bg-red-500/20"
                     >
                       Unlink
                     </button>
@@ -251,15 +202,7 @@ export function SecureMyAuthority() {
           )}
           <button
             onClick={() => setShowDevices(false)}
-            style={{
-              marginTop: '10px',
-              padding: '6px 12px',
-              backgroundColor: 'transparent',
-              border: 'none',
-              color: 'var(--accent)',
-              cursor: 'pointer',
-              fontSize: '13px',
-            }}
+            className="mt-2.5 px-3 py-1.5 bg-transparent border-none text-orange-400 cursor-pointer text-[13px] hover:text-orange-300"
           >
             Close
           </button>
@@ -272,5 +215,3 @@ export function SecureMyAuthority() {
     </div>
   );
 }
-
-

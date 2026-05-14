@@ -45,6 +45,17 @@ interface UserProfile {
   trust_score?: number;
 }
 
+const trustLevelStyles: Record<string, string> = {
+  scholar: 'bg-green-500/10 text-green-400 border-green-500/30',
+  troll: 'bg-red-500/10 text-red-400 border-red-500/30',
+  neutral: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+};
+
+const postStatusStyles: Record<string, string> = {
+  approved: 'text-green-400',
+  rejected: 'text-red-400',
+};
+
 export default function UserProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -141,15 +152,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
 
   if (loading) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        backgroundColor: 'var(--bg-primary)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'var(--text-muted)',
-        fontSize: '16px',
-      }}>
+      <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-500">
         Loading...
       </div>
     );
@@ -157,69 +160,39 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
 
   if (!profile) return <NotFound message="User does not exist." />;
 
+  const tabButtonClasses = (tab: 'posts' | 'comments' | 'stats') =>
+    `px-4 sm:px-6 py-3 text-sm font-medium transition-colors border-b-2 ${
+      activeTab === tab
+        ? 'border-orange-400 text-white'
+        : 'border-transparent text-zinc-500 hover:text-zinc-300'
+    }`;
+
   return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundColor: 'var(--bg-primary)',
-      color: 'var(--text-primary)',
-      maxWidth: '900px',
-      margin: '0 auto',
-      padding: '32px 20px 60px',
-    }}>
+    <div className="mx-auto min-h-screen max-w-3xl bg-zinc-950 px-3 py-6 text-white sm:px-6 sm:py-10 sm:pb-16">
       {/* Profile Header Card */}
-      <div style={{
-        background: 'var(--bg-secondary)',
-        border: '1px solid var(--border-primary)',
-        borderRadius: 'var(--radius-lg)',
-        boxShadow: 'var(--shadow-sm)',
-        padding: '32px',
-        marginBottom: '24px',
-      }}>
-        <h1 style={{
-          fontSize: '28px',
-          fontWeight: 700,
-          color: 'var(--text-primary)',
-          margin: '0 0 8px 0',
-          letterSpacing: '-0.02em',
-        }}>
+      <div className="mb-6 rounded-2xl border border-white/5 bg-white/[0.02] p-5 sm:p-8">
+        <h1 className="mb-2 text-2xl font-bold -tracking-[0.02em] text-white sm:text-3xl">
           {profile.username}
         </h1>
 
-        <p style={{
-          color: 'var(--text-secondary)',
-          fontSize: '14px',
-          margin: '0 0 12px 0',
-        }}>
-          <span style={{
-            display: 'inline-block',
-            background: profile.trust_level === 'scholar' ? '#e8f5e9' :
-                        profile.trust_level === 'troll' ? '#ffebee' : '#fff8e1',
-            color: profile.trust_level === 'scholar' ? '#2e7d32' :
-                   profile.trust_level === 'troll' ? '#c62828' : '#f57f17',
-            padding: '2px 10px',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: '12px',
-            fontWeight: 600,
-            textTransform: 'capitalize',
-          }}>
+        <p className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span className={`inline-block rounded-lg border px-2.5 py-0.5 text-xs font-semibold capitalize ${trustLevelStyles[profile.trust_level] || trustLevelStyles.neutral}`}>
             {profile.trust_level}
           </span>
           {profile.is_own_profile && authUser && (
-            <span style={{ marginLeft: '12px', color: 'var(--text-secondary)' }}>
+            <span className="text-sm text-zinc-400">
               Trust Score: {authUser.trust_score.toFixed(2)} / 2.0
             </span>
           )}
         </p>
 
-        <div style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '6px 20px',
-          color: 'var(--text-secondary)',
-          fontSize: '14px',
-        }}>
-          <span><Icon name="MessageCircle" size={14} color="var(--text-muted)" /> {profile.stats.total_posts} posts</span>
-          <span><Icon name="MessageCircle" size={14} color="var(--text-muted)" /> {profile.stats.total_comments} comments</span>
+        <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-zinc-400">
+          <span className="inline-flex items-center gap-1.5">
+            <Icon name="MessageCircle" size={14} className="text-zinc-500" /> {profile.stats.total_posts} posts
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <Icon name="MessageCircle" size={14} className="text-zinc-500" /> {profile.stats.total_comments} comments
+          </span>
           <span>{profile.stats.approval_rate}% approval</span>
           <span>Member since {new Date(profile.stats.member_since).toLocaleDateString()}</span>
         </div>
@@ -227,152 +200,46 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
 
       {/* Own Profile Actions */}
       {profile.is_own_profile && (
-        <div style={{
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--border-primary)',
-          borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-sm)',
-          padding: '24px 32px',
-          marginBottom: '24px',
-        }}>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <div className="mb-6 rounded-2xl border border-white/5 bg-white/[0.02] p-5 sm:p-8">
+          <div className="flex flex-wrap gap-2.5">
             <button
               onClick={() => setEditingName(true)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 20px',
-                border: '1px solid var(--border-primary)',
-                borderRadius: 'var(--radius-md)',
-                background: 'transparent',
-                color: 'var(--text-primary)',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'all var(--transition)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'var(--accent)';
-                e.currentTarget.style.color = 'var(--accent)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border-primary)';
-                e.currentTarget.style.color = 'var(--text-primary)';
-              }}
+              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-transparent px-5 py-2.5 text-sm font-medium text-white transition hover:border-orange-500/30 hover:text-orange-400"
             >
               Edit Display Name
             </button>
             <button
               onClick={() => router.push('/username-history')}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 20px',
-                border: '1px solid var(--border-primary)',
-                borderRadius: 'var(--radius-md)',
-                background: 'transparent',
-                color: 'var(--text-primary)',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'all var(--transition)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'var(--accent)';
-                e.currentTarget.style.color = 'var(--accent)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border-primary)';
-                e.currentTarget.style.color = 'var(--text-primary)';
-              }}
+              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-transparent px-5 py-2.5 text-sm font-medium text-white transition hover:border-orange-500/30 hover:text-orange-400"
             >
               Username History
             </button>
           </div>
 
           {editingName && (
-            <div style={{
-              marginTop: '16px',
-              padding: '16px',
-              background: 'var(--bg-tertiary)',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-primary)',
-            }}>
+            <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.02] p-4">
               {nameError && (
-                <div role="alert" style={{
-                  color: '#d32f2f',
-                  fontSize: '14px',
-                  marginBottom: '10px',
-                  padding: '8px 12px',
-                  background: '#ffebee',
-                  borderRadius: 'var(--radius-sm)',
-                  border: '1px solid #f44336',
-                }}>
+                <div role="alert" className="mb-2.5 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
                   {nameError}
                 </div>
               )}
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div className="flex flex-wrap items-center gap-2">
                 <input
                   value={newDisplayName}
                   onChange={(e) => setNewDisplayName(e.target.value)}
                   placeholder="a_newname"
                   maxLength={32}
-                  style={{
-                    flex: '1 1 200px',
-                    padding: '11px 14px',
-                    background: 'var(--bg-primary)',
-                    border: '1.5px solid var(--border-primary)',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '15px',
-                    color: 'var(--text-primary)',
-                    outline: 'none',
-                    fontFamily: 'inherit',
-                    transition: 'border-color var(--transition)',
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--accent)';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--border-primary)';
-                  }}
+                  className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none"
                 />
                 <button
                   onClick={handleUpdateDisplayName}
-                  style={{
-                    padding: '10px 20px',
-                    background: 'var(--accent-gradient)',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: 'var(--radius-md)',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    transition: 'all var(--transition)',
-                  }}
+                  className="rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-orange-500/25 transition hover:shadow-xl hover:shadow-orange-500/40"
                 >
                   Save
                 </button>
                 <button
                   onClick={() => setEditingName(false)}
-                  style={{
-                    padding: '10px 20px',
-                    background: 'transparent',
-                    color: 'var(--text-secondary)',
-                    border: '1px solid var(--border-primary)',
-                    borderRadius: 'var(--radius-md)',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    transition: 'all var(--transition)',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--accent)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--border-primary)';
-                  }}
+                  className="rounded-xl border border-white/10 bg-transparent px-5 py-2.5 text-sm font-medium text-zinc-400 transition hover:border-orange-500/30 hover:text-orange-400"
                 >
                   Cancel
                 </button>
@@ -383,155 +250,72 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
       )}
 
       {/* Tabs */}
-      <div style={{
-        display: 'flex',
-        gap: '0',
-        borderBottom: '1px solid var(--border-primary)',
-        marginBottom: '24px',
-      }}>
-        <button
-          onClick={() => setActiveTab('posts')}
-          style={{
-            padding: '12px 24px',
-            background: 'none',
-            border: 'none',
-            borderBottom: activeTab === 'posts' ? '2px solid var(--accent)' : '2px solid transparent',
-            color: activeTab === 'posts' ? 'var(--text-primary)' : 'var(--text-muted)',
-            fontSize: '14px',
-            fontWeight: activeTab === 'posts' ? 600 : 400,
-            cursor: 'pointer',
-            transition: 'color var(--transition), border-color var(--transition)',
-          }}
-        >
+      <div className="mb-6 flex border-b border-white/5">
+        <button onClick={() => setActiveTab('posts')} className={tabButtonClasses('posts')}>
           Posts ({profile.posts.length})
         </button>
-        <button
-          onClick={() => setActiveTab('comments')}
-          style={{
-            padding: '12px 24px',
-            background: 'none',
-            border: 'none',
-            borderBottom: activeTab === 'comments' ? '2px solid var(--accent)' : '2px solid transparent',
-            color: activeTab === 'comments' ? 'var(--text-primary)' : 'var(--text-muted)',
-            fontSize: '14px',
-            fontWeight: activeTab === 'comments' ? 600 : 400,
-            cursor: 'pointer',
-            transition: 'color var(--transition), border-color var(--transition)',
-          }}
-        >
+        <button onClick={() => setActiveTab('comments')} className={tabButtonClasses('comments')}>
           Comments ({profile.comments.length})
         </button>
         {profile.is_own_profile && (
           <button
             onClick={() => setActiveTab('stats')}
-            style={{
-              padding: '12px 24px',
-              background: 'none',
-              border: 'none',
-              borderBottom: activeTab === 'stats' ? '2px solid var(--accent)' : '2px solid transparent',
-              color: activeTab === 'stats' ? 'var(--text-primary)' : 'var(--text-muted)',
-              fontSize: '14px',
-              fontWeight: activeTab === 'stats' ? 600 : 400,
-              cursor: 'pointer',
-              transition: 'color var(--transition), border-color var(--transition)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
+            className={`inline-flex items-center gap-1.5 px-4 sm:px-6 py-3 text-sm font-medium transition-colors border-b-2 ${
+              activeTab === 'stats'
+                ? 'border-orange-400 text-white'
+                : 'border-transparent text-zinc-500 hover:text-zinc-300'
+            }`}
           >
-            <Icon name="Star" size={14} color="#f57c00" /> Stats
+            <Icon name="Star" size={14} color="#f97316" /> Stats
           </button>
         )}
       </div>
 
       {/* Posts Tab */}
       {activeTab === 'posts' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="flex flex-col gap-4">
           {profile.posts.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)', fontSize: '15px', textAlign: 'center', padding: '40px 0' }}>
+            <p className="py-10 text-center text-sm text-zinc-500">
               No posts yet.
             </p>
           ) : (
             profile.posts.map((post) => (
-              <div key={post.id} style={{
-                background: 'var(--bg-secondary)',
-                border: '1px solid var(--border-primary)',
-                borderRadius: 'var(--radius-md)',
-                boxShadow: 'var(--shadow-sm)',
-                padding: '20px 24px',
-                transition: 'box-shadow var(--transition), border-color var(--transition)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                e.currentTarget.style.borderColor = 'var(--accent)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                e.currentTarget.style.borderColor = 'var(--border-primary)';
-              }}
+              <div
+                key={post.id}
+                className="rounded-xl border border-white/5 bg-white/[0.02] p-5 transition-all duration-300 hover:border-orange-500/30 hover:bg-white/[0.04] sm:p-6"
               >
-                <h3 style={{ margin: '0 0 10px 0', fontSize: '18px', fontWeight: 600, lineHeight: 1.4 }}>
+                <h3 className="mb-2.5 text-base font-semibold leading-snug sm:text-lg">
                   <Link
                     href={`/${post.slug}`}
-                    style={{
-                      color: 'var(--text-primary)',
-                      textDecoration: 'none',
-                      transition: 'color var(--transition)',
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--accent)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; }}
+                    className="text-white transition-colors hover:text-orange-400"
                   >
                     {post.title}
                   </Link>
                 </h3>
-                <div style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  alignItems: 'center',
-                  gap: '8px 14px',
-                  fontSize: '13px',
-                  color: 'var(--text-muted)',
-                }}>
+                <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-sm text-zinc-500">
                   <span>{post.category?.name || 'Uncategorized'}</span>
-                  <span>
-                    <Icon name="MessageCircle" size={12} color="var(--text-muted)" /> {post.comment_count}
+                  <span className="inline-flex items-center gap-1">
+                    <Icon name="MessageCircle" size={12} className="text-zinc-500" /> {post.comment_count}
                   </span>
                   <span>{new Date(post.created_at).toLocaleDateString()}</span>
                   {profile.is_own_profile && (
-                    <span style={{
-                      fontWeight: 600,
-                      fontSize: '12px',
-                      color: post.status === 'approved' ? '#2e7d32' :
-                             post.status === 'rejected' ? '#c62828' :
-                             post.revision_guidance ? '#e65100' : '#f57f17',
-                    }}>
+                    <span className={`text-xs font-semibold ${
+                      post.revision_guidance
+                        ? 'text-orange-400'
+                        : postStatusStyles[post.status]
+                        || 'text-amber-400'
+                    }`}>
                       {post.revision_guidance ? 'Revision Requested' : post.status.replace('_', ' ')}
                     </span>
                   )}
                 </div>
                 {profile.is_own_profile && post.rejection_reason && (
-                  <div style={{
-                    backgroundColor: '#ffebee',
-                    border: '1px solid #f44336',
-                    padding: '10px 14px',
-                    borderRadius: 'var(--radius-sm)',
-                    marginTop: '12px',
-                    fontSize: '13px',
-                    color: '#c62828',
-                  }}>
+                  <div className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
                     <strong>Reason:</strong> {post.rejection_reason}
                   </div>
                 )}
                 {profile.is_own_profile && post.revision_guidance && (
-                  <div style={{
-                    backgroundColor: '#fff3e0',
-                    border: '1px solid #ff9800',
-                    padding: '10px 14px',
-                    borderRadius: 'var(--radius-sm)',
-                    marginTop: '12px',
-                    fontSize: '13px',
-                    color: '#e65100',
-                  }}>
+                  <div className="mt-3 rounded-lg border border-orange-500/30 bg-orange-500/10 p-3 text-sm text-orange-400">
                     <strong>Admin feedback:</strong> {post.revision_guidance}
                   </div>
                 )}
@@ -543,36 +327,23 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
 
       {/* Comments Tab */}
       {activeTab === 'comments' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="flex flex-col gap-4">
           {profile.comments.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)', fontSize: '15px', textAlign: 'center', padding: '40px 0' }}>
+            <p className="py-10 text-center text-sm text-zinc-500">
               No comments yet.
             </p>
           ) : (
             profile.comments.map((comment) => (
-              <div key={comment.id} style={{
-                background: 'var(--bg-secondary)',
-                border: '1px solid var(--border-primary)',
-                borderRadius: 'var(--radius-md)',
-                boxShadow: 'var(--shadow-sm)',
-                padding: '20px 24px',
-              }}>
-                <p style={{ margin: '0 0 10px 0', fontSize: '15px', color: 'var(--text-primary)', lineHeight: 1.6 }}>
+              <div key={comment.id} className="rounded-xl border border-white/5 bg-white/[0.02] p-5 sm:p-6">
+                <p className="mb-2.5 text-sm leading-relaxed text-white sm:text-base">
                   {comment.content}
                 </p>
-                <div style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  alignItems: 'center',
-                  gap: '8px 14px',
-                  fontSize: '13px',
-                  color: 'var(--text-muted)',
-                }}>
-                  <span>
-                    <Icon name="Flame" size={12} color="#e65100" /> {comment.fire_count}
+                <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-sm text-zinc-500">
+                  <span className="inline-flex items-center gap-1">
+                    <Icon name="Flame" size={12} color="#ea580c" /> {comment.fire_count}
                   </span>
-                  <span>
-                    <Icon name="MessageCircle" size={12} color="var(--text-muted)" /> {comment.reply_count}
+                  <span className="inline-flex items-center gap-1">
+                    <Icon name="MessageCircle" size={12} className="text-zinc-500" /> {comment.reply_count}
                   </span>
                   <span>{new Date(comment.created_at).toLocaleDateString()}</span>
                 </div>
@@ -584,127 +355,51 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
 
       {/* Stats Tab */}
       {activeTab === 'stats' && profile.is_own_profile && rateLimitStatus && (
-        <div style={{
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--border-primary)',
-          borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-sm)',
-          padding: '28px 32px',
-        }}>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '14px',
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '14px 18px',
-              background: 'var(--bg-tertiary)',
-              borderRadius: 'var(--radius-md)',
-            }}>
-              <span style={{ fontSize: '15px', color: 'var(--text-secondary)' }}>Trust Score:</span>
-              <span style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)' }}>
+        <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-6 sm:p-8">
+          <div className="flex flex-col gap-3.5">
+            <div className="flex items-center gap-3 rounded-xl bg-white/[0.02] p-4">
+              <span className="text-sm text-zinc-400 sm:text-base">Trust Score:</span>
+              <span className="text-xl font-bold text-white">
                 {rateLimitStatus.trust_score.toFixed(2)} / 2.0
               </span>
             </div>
 
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '14px 18px',
-              background: 'var(--bg-tertiary)',
-              borderRadius: 'var(--radius-md)',
-            }}>
-              <span style={{ fontSize: '15px', color: 'var(--text-secondary)' }}>Tier:</span>
-              <span style={{
-                fontSize: '14px',
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                textTransform: 'capitalize',
-                padding: '2px 10px',
-                background: 'var(--bg-secondary)',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-primary)',
-              }}>
+            <div className="flex items-center gap-3 rounded-xl bg-white/[0.02] p-4">
+              <span className="text-sm text-zinc-400 sm:text-base">Tier:</span>
+              <span className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-0.5 text-sm font-semibold capitalize text-white">
                 {rateLimitStatus.current_tier}
               </span>
             </div>
 
-            <h3 style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: '15px',
-              fontWeight: 600,
-              color: 'var(--text-primary)',
-              margin: '20px 0 4px 0',
-            }}>
-              <Icon name="ChartBar" size={16} color="var(--text-muted)" />
+            <h3 className="mt-4 flex items-center gap-2 text-sm font-semibold text-white sm:text-base">
+              <Icon name="ChartBar" size={16} className="text-zinc-500" />
               Current Limits
             </h3>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <p style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                margin: 0,
-                fontSize: '14px',
-                color: 'var(--text-secondary)',
-              }}>
-                <Icon name="Check" size={14} color="#2e7d32" />
+            <div className="flex flex-col gap-2">
+              <p className="flex items-center gap-2 text-sm text-zinc-400">
+                <Icon name="Check" size={14} color="#4ade80" />
                 Posts: {rateLimitStatus.limits.posts.remaining} / {rateLimitStatus.limits.posts.total} remaining
               </p>
-              <p style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                margin: 0,
-                fontSize: '14px',
-                color: 'var(--text-secondary)',
-              }}>
-                <Icon name="Check" size={14} color="#2e7d32" />
+              <p className="flex items-center gap-2 text-sm text-zinc-400">
+                <Icon name="Check" size={14} color="#4ade80" />
                 Comments: {rateLimitStatus.limits.comments.remaining} / {rateLimitStatus.limits.comments.total} remaining
               </p>
-              <p style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                margin: 0,
-                fontSize: '14px',
-                color: 'var(--text-secondary)',
-              }}>
-                <Icon name="Check" size={14} color="#2e7d32" />
+              <p className="flex items-center gap-2 text-sm text-zinc-400">
+                <Icon name="Check" size={14} color="#4ade80" />
                 Counter Lists: {rateLimitStatus.limits.counter_lists.remaining}
               </p>
             </div>
 
-            <p style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              margin: '4px 0 0 0',
-              fontSize: '14px',
-              color: 'var(--text-muted)',
-            }}>
-              <Icon name="RefreshCw" size={14} color="var(--text-muted)" />
+            <p className="mt-1 flex items-center gap-2 text-sm text-zinc-500">
+              <Icon name="RefreshCw" size={14} className="text-zinc-500" />
               Resets in: {rateLimitCountdown !== null
                 ? `${Math.floor(rateLimitCountdown / 60)} minutes ${rateLimitCountdown % 60} seconds`
                 : 'Calculating...'}
             </p>
 
-            <p style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              margin: 0,
-              fontSize: '14px',
-              color: 'var(--text-muted)',
-            }}>
-              <Icon name="Lightbulb" size={14} color="#f57c00" />
+            <p className="flex items-center gap-2 text-sm text-zinc-500">
+              <Icon name="Lightbulb" size={14} color="#f97316" />
               Next tier at 1.0 trust: 4 posts/hour
             </p>
           </div>
@@ -713,7 +408,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
 
       {/* Secure My Authority */}
       {profile.is_own_profile && (
-        <div style={{ marginTop: '32px' }}>
+        <div className="mt-8">
           <SecureMyAuthority />
         </div>
       )}

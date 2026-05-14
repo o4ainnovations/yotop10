@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { API, CategoriesResponse } from '@/lib/api';
+import { Icon } from '@/components/icons/Icon';
 
 interface Category {
   id: string;
@@ -37,20 +38,19 @@ export default function CategoriesPage() {
 
   if (error) {
     return (
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '20px' }}>
-        <header style={{ marginBottom: '30px' }}>
-          <h1 style={{ fontSize: '28px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '12px' }}>YoTop10</h1>
-          <nav style={{ display: 'flex', gap: '16px' }}>
-            <Link href="/" style={{ color: 'var(--accent)', textDecoration: 'none', transition: 'var(--transition)' }}>Home</Link>
-            <Link href="/categories" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontWeight: 600 }}>Categories</Link>
-          </nav>
-        </header>
-        <main>
-          <div style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent)', borderRadius: 'var(--radius-md)', padding: '20px' }}>
-            <h2 style={{ color: 'var(--accent)', fontSize: '18px', fontWeight: 700, marginBottom: '8px' }}>Error Loading Categories</h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '4px' }}><strong>Message:</strong> {error}</p>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '4px' }}><strong>API URL:</strong> {typeof window !== 'undefined' ? 'client-side' : 'server-side'}</p>
-            <p style={{ color: 'var(--text-muted)' }}>Check browser console for more details.</p>
+      <div className="min-h-screen bg-zinc-950 px-3 py-6 sm:px-6 sm:py-10">
+        <nav className="mb-6 flex items-center gap-4">
+          <Link href="/" className="text-sm font-bold text-orange-400 transition hover:text-orange-300">Home</Link>
+          <span className="text-sm font-semibold text-white">Categories</span>
+        </nav>
+        <main className="mx-auto max-w-6xl">
+          <div className="rounded-2xl border border-orange-500/20 bg-orange-500/5 p-6 backdrop-blur-sm sm:p-8">
+            <div className="mb-3 flex items-center gap-2">
+              <Icon name="TriangleAlert" size={20} className="text-orange-400" />
+              <h2 className="text-lg font-bold text-orange-400">Error Loading Categories</h2>
+            </div>
+            <p className="mb-1 text-sm text-zinc-400"><strong className="text-zinc-300">Message:</strong> {error}</p>
+            <p className="text-sm text-zinc-500">Check browser console for more details.</p>
           </div>
         </main>
       </div>
@@ -59,92 +59,66 @@ export default function CategoriesPage() {
 
   if (loading) {
     return (
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '20px' }}>
-        <header style={{ marginBottom: '30px' }}>
-          <h1 style={{ fontSize: '28px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '12px' }}>YoTop10</h1>
-          <nav style={{ display: 'flex', gap: '16px' }}>
-            <Link href="/" style={{ color: 'var(--accent)', textDecoration: 'none', transition: 'var(--transition)' }}>Home</Link>
-            <Link href="/categories" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontWeight: 600 }}>Categories</Link>
-          </nav>
-        </header>
-        <main>
-          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
-            <p style={{ fontSize: '15px' }}>Loading categories...</p>
-          </div>
+      <div className="min-h-screen bg-zinc-950 px-3 py-6 sm:px-6 sm:py-10">
+        <nav className="mb-6 flex items-center gap-4">
+          <Link href="/" className="text-sm font-bold text-orange-400 transition hover:text-orange-300">Home</Link>
+          <span className="text-sm font-semibold text-white">Categories</span>
+        </nav>
+        <main className="mx-auto max-w-6xl py-12 text-center">
+          <p className="text-sm text-zinc-500">Loading categories...</p>
         </main>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '20px' }}>
-      <header style={{ marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '12px' }}>YoTop10</h1>
-        <nav style={{ display: 'flex', gap: '16px' }}>
-          <Link href="/" style={{ color: 'var(--accent)', textDecoration: 'none', transition: 'var(--transition)', fontWeight: 500 }}>Home</Link>
-          <Link href="/categories" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontWeight: 600 }}>Categories</Link>
-        </nav>
-      </header>
-      <main>
-        <h1 style={{ fontSize: '28px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '28px' }}>Categories</h1>
+    <div className="min-h-screen bg-zinc-950 px-3 py-6 sm:px-6 sm:py-10">
+      <nav className="mb-8 flex items-center gap-4">
+        <Link href="/" className="text-sm font-bold text-orange-400 transition hover:text-orange-300">Home</Link>
+        <span className="text-sm font-semibold text-white">Categories</span>
+      </nav>
+
+      <main className="mx-auto max-w-6xl">
+        <h1 className="mb-6 text-2xl font-bold text-white sm:text-3xl">Categories</h1>
+
         {categories.length === 0 ? (
-          <div style={{ padding: '40px 20px', textAlign: 'center' }}>
-            <p style={{ color: 'var(--text-muted)', fontSize: '15px' }}>No categories available.</p>
+          <div className="py-16 text-center">
+            <p className="text-sm text-zinc-500">No categories available.</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
             {categories.map(cat => (
               <Link
                 key={cat.id}
                 href={`/c/${cat.slug}`}
-                className="premium-card"
-                style={{ padding: '24px', textDecoration: 'none', display: 'block' }}
+                className="group block rounded-2xl border border-white/5 bg-white/[0.02] p-5 backdrop-blur-sm transition-all duration-300 hover:border-orange-500/30 hover:bg-white/[0.04] hover:shadow-lg hover:shadow-orange-500/5 sm:p-6"
               >
-                <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h2 className="mb-2 flex items-center gap-2 text-lg font-bold text-white">
                   {cat.icon && <span>{cat.icon}</span>}
                   {cat.name}
                 </h2>
                 {cat.description && (
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '12px', lineHeight: 1.5 }}>
+                  <p className="mb-3 line-clamp-2 text-sm leading-relaxed text-zinc-500">
                     {cat.description}
                   </p>
                 )}
-                <span style={{ color: 'var(--text-muted)', fontSize: '13px', fontWeight: 500 }}>
+                <span className="text-xs text-zinc-600">
                   {cat.post_count} {cat.post_count === 1 ? 'post' : 'posts'}
                 </span>
                 {cat.children.length > 0 && (
-                  <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border-primary)' }}>
-                    <h3 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <div className="mt-4 border-t border-white/5 pt-4">
+                    <h3 className="mb-2.5 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
                       Subcategories
                     </h3>
-                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <ul className="flex flex-col gap-1.5">
                       {cat.children.map(child => (
                         <li key={child.id}>
                           <Link
                             href={`/c/${child.slug}`}
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              padding: '8px 12px',
-                              background: 'var(--bg-tertiary)',
-                              borderRadius: 'var(--radius-sm)',
-                              textDecoration: 'none',
-                              color: 'var(--text-secondary)',
-                              fontSize: '13px',
-                              transition: 'var(--transition)',
-                            }}
-                            onMouseOver={(e) => {
-                              e.currentTarget.style.background = 'var(--accent-soft)';
-                              e.currentTarget.style.color = 'var(--accent)';
-                            }}
-                            onMouseOut={(e) => {
-                              e.currentTarget.style.background = 'var(--bg-tertiary)';
-                              e.currentTarget.style.color = 'var(--text-secondary)';
-                            }}
+                            className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2 text-[13px] text-zinc-400 transition hover:bg-orange-500/10 hover:text-orange-400"
                           >
                             <span>{child.name}</span>
-                            <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>{child.post_count}</span>
+                            <span className="text-xs text-zinc-600">{child.post_count}</span>
                           </Link>
                         </li>
                       ))}

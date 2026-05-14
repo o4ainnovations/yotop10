@@ -62,74 +62,130 @@ export default function AllPostsPage() {
     } catch {}
   };
 
-  const statusBadge = (s: string) => { const map: Record<string, { bg: string; c: string }> = { pending_review: { bg: '#fff3e0', c: '#e65100' }, approved: { bg: '#e8f5e9', c: '#2e7d32' }, rejected: { bg: '#ffebee', c: '#c62828' } }; const m = map[s] || { bg: '#eee', c: '#333' }; return <span style={{ background: m.bg, color: m.c, padding: '1px 6px', borderRadius: '3px', fontSize: '11px', fontWeight: 'bold' }}>{s}</span>; };
+  const statusBadge = (s: string) => {
+    const map: Record<string, string> = { pending_review: 'bg-orange-500/15 text-orange-400', approved: 'bg-green-500/15 text-green-400', rejected: 'bg-red-500/15 text-red-400' };
+    const cls = map[s] || 'bg-white/10 text-white/60';
+    return <span className={`${cls} rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider`}>{s}</span>;
+  };
 
   const statCards = ['total', 'pending', 'approved', 'rejected', 'deleted', 'featured', 'locked'];
+  const filterSelectClass = 'bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none min-h-[36px]';
 
-  return (<div>
-    <h2>All Posts ({pagination.total})</h2>
+  const btnSmClass = 'text-[11px] cursor-pointer px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-white';
 
-    <div style={{ display: 'flex', gap: '8px', margin: '12px 0', flexWrap: 'wrap' }}>
-      {statCards.map(k => <div key={k} style={{ background: '#f5f5f5', padding: '4px 10px', borderRadius: '4px', fontSize: '12px' }}><strong>{k}</strong>: {stats[k] ?? 0}</div>)}
+  return (
+    <div className="space-y-3 sm:space-y-4">
+      <h2 className="text-white text-lg font-bold">All Posts ({pagination.total})</h2>
+
+      <div className="flex gap-2 flex-wrap">
+        {statCards.map(k => <div key={k} className="bg-white/5 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white/60"><strong className="text-white">{k}</strong>: {stats[k] ?? 0}</div>)}
+      </div>
+
+      <div className="flex gap-2 flex-wrap">
+        <select value={filters.status} onChange={e => { setFilters(f => ({ ...f, status: e.target.value })); setPage(1); }} className={filterSelectClass}>
+          <option value="" className="bg-zinc-900">All Status</option><option value="pending_review" className="bg-zinc-900">Pending</option><option value="approved" className="bg-zinc-900">Approved</option><option value="rejected" className="bg-zinc-900">Rejected</option><option value="deleted" className="bg-zinc-900">Deleted</option>
+        </select>
+        <select value={filters.post_type} onChange={e => { setFilters(f => ({ ...f, post_type: e.target.value })); setPage(1); }} className={filterSelectClass}>
+          <option value="" className="bg-zinc-900">All Types</option><option value="top_list" className="bg-zinc-900">Top List</option><option value="best_of" className="bg-zinc-900">Best Of</option><option value="worst_of" className="bg-zinc-900">Worst Of</option><option value="hidden_gems" className="bg-zinc-900">Hidden Gems</option><option value="counter_list" className="bg-zinc-900">Counter List</option>
+        </select>
+        <select value={filters.sort} onChange={e => { setFilters(f => ({ ...f, sort: e.target.value })); setPage(1); }} className={filterSelectClass}>
+          <option value="newest" className="bg-zinc-900">Newest</option><option value="oldest" className="bg-zinc-900">Oldest</option><option value="most_comments" className="bg-zinc-900">Most Comments</option><option value="most_views" className="bg-zinc-900">Most Views</option>
+        </select>
+        <input placeholder="Search title/intro" value={filters.search} onChange={e => { setFilters(f => ({ ...f, search: e.target.value })); setPage(1); }} className={`${filterSelectClass} w-[180px]`} />
+      </div>
+
+      {selected.size > 0 && (
+        <div className="bg-white/[0.03] border border-white/10 rounded-lg px-3 py-2 flex gap-2 items-center text-[13px]">
+          <strong className="text-white">{selected.size} selected</strong>
+          <button onClick={() => bulkAction('delete')} disabled={actionLoading} className={btnSmClass}>Delete</button>
+          <button onClick={() => bulkAction('feature')} disabled={actionLoading} className={btnSmClass}>Feature</button>
+          <button onClick={() => bulkAction('unfeature')} disabled={actionLoading} className={btnSmClass}>Unfeature</button>
+        </div>
+      )}
+
+      {loading ? <p className="text-white/40">Loading...</p> : (
+        <>
+          {/* Mobile card view */}
+          <div className="sm:hidden flex flex-col gap-2">
+            {posts.map(p => (
+              <div key={p._id} className={`bg-white/5 border border-white/10 rounded-xl p-3 ${p.deleted ? 'opacity-40' : ''}`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <input type="checkbox" checked={selected.has(p._id)} onChange={() => toggleSelect(p._id)} />
+                  <a href="#" onClick={e => { e.preventDefault(); window.open(`/${p.slug}`, '_blank'); }} className="text-white text-sm font-semibold no-underline truncate">
+                    {p.title?.substring(0, 50)}{(p.title?.length || 0) > 50 ? '...' : ''}
+                  </a>
+                  {p.featured && <Icon name="Star" size={12} color="#f57c00" />}
+                  {p.comments_locked && <Icon name="Lock" size={12} />}
+                </div>
+                <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-white/50">
+                  <span>{p.author_username}</span>
+                  <span>{p.category_slug}</span>
+                  <span>{p.post_type}</span>
+                  <span>{statusBadge(p.status)}</span>
+                  <span><Icon name="Flame" size={12} color="#e65100" /> {p.fire_count || 0}</span>
+                  <span><Icon name="MessageCircle" size={12} /> {p.comment_count}</span>
+                  <span><Icon name="Eye" size={14} /> {p.view_count}</span>
+                  <span>{p.published_at ? new Date(p.published_at).toLocaleDateString() : '—'}</span>
+                </div>
+                <div className="flex gap-1 flex-wrap mt-2">
+                  {p.deleted ? <button onClick={() => quickAction(p._id, 'restore')} className={btnSmClass}>Restore</button> : <>
+                    <button onClick={() => router.push(`/admin/posts/pending/${p._id}`)} className={btnSmClass}>View</button>
+                    <button onClick={() => quickAction(p._id, 'delete')} className={`${btnSmClass} text-red-400`}>Del</button>
+                    <button onClick={() => quickAction(p._id, 'bump')} className={btnSmClass}>Bump</button>
+                    <button onClick={() => router.push(`/admin/posts/${p._id}/edit`)} className={btnSmClass}>Edit</button>
+                  </>}
+                  {p.featured ? <button onClick={() => quickAction(p._id, 'unfeature')} className={btnSmClass}>Unfeat</button> : <button onClick={() => quickAction(p._id, 'feature')} className={btnSmClass}>Feat</button>}
+                  {p.comments_locked ? <button onClick={() => quickAction(p._id, 'unlock')} className={btnSmClass}>Unlock</button> : <button onClick={() => quickAction(p._id, 'lock')} className={btnSmClass}>Lock</button>}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full border-collapse text-xs">
+              <thead><tr className="border-b-2 border-white/10 text-left text-white/40">
+                <th className="p-1.5 w-[30px]"><input type="checkbox" checked={selected.size === posts.length && posts.length > 0} onChange={selectAll} /></th>
+                <th className="p-1.5">Title</th><th className="p-1.5">Author</th><th className="p-1.5">Category</th><th className="p-1.5">Type</th><th className="p-1.5">Status</th><th className="p-1.5"><Icon name="Flame" size={12} color="#e65100" /></th><th className="p-1.5"><Icon name="MessageCircle" size={12} /></th><th className="p-1.5"><Icon name="Eye" size={14} /></th><th className="p-1.5">Published</th><th className="p-1.5">Actions</th>
+              </tr></thead>
+              <tbody>
+                {posts.map(p => (<tr key={p._id} className={`border-b border-white/5 ${p.deleted ? 'opacity-40' : ''}`}>
+                  <td className="p-1"><input type="checkbox" checked={selected.has(p._id)} onChange={() => toggleSelect(p._id)} /></td>
+                  <td className="p-1">
+                    <a href="#" onClick={e => { e.preventDefault(); window.open(`/${p.slug}`, '_blank'); }} className="text-white no-underline hover:text-orange-400">{p.title?.substring(0, 50)}{(p.title?.length || 0) > 50 ? '...' : ''}</a>
+                    {p.featured && <span className="ml-1"><Icon name="Star" size={12} color="#f57c00" /></span>}
+                    {p.comments_locked && <span className="ml-1"><Icon name="Lock" size={12} /></span>}
+                  </td>
+                  <td className="p-1 text-white/60">{p.author_username}</td>
+                  <td className="p-1 text-[11px] text-white/40">{p.category_slug}</td>
+                  <td className="p-1 text-[11px] text-white/50">{p.post_type}</td>
+                  <td className="p-1">{statusBadge(p.status)}</td>
+                  <td className="p-1 text-white/60">{p.fire_count || 0}</td>
+                  <td className="p-1 text-white/60">{p.comment_count}</td>
+                  <td className="p-1 text-white/60">{p.view_count}</td>
+                  <td className="p-1 text-[11px] text-white/40">{p.published_at ? new Date(p.published_at).toLocaleDateString() : '—'}</td>
+                  <td className="p-1">
+                    {p.deleted ? <button onClick={() => quickAction(p._id, 'restore')} className={btnSmClass}>Restore</button> : <>
+                      <button onClick={() => router.push(`/admin/posts/pending/${p._id}`)} className={btnSmClass}>View</button>
+                      <button onClick={() => quickAction(p._id, 'delete')} className={`${btnSmClass} text-red-400`}>Del</button>
+                      <button onClick={() => quickAction(p._id, 'bump')} className={btnSmClass}>Bump</button>
+                      <button onClick={() => router.push(`/admin/posts/${p._id}/edit`)} className={btnSmClass}>Edit</button>
+                    </>}
+                    {p.featured ? <button onClick={() => quickAction(p._id, 'unfeature')} className={btnSmClass}>Unfeat</button> : <button onClick={() => quickAction(p._id, 'feature')} className={btnSmClass}>Feat</button>}
+                    {p.comments_locked ? <button onClick={() => quickAction(p._id, 'unlock')} className={btnSmClass}>Unlock</button> : <button onClick={() => quickAction(p._id, 'lock')} className={btnSmClass}>Lock</button>}
+                  </td>
+                </tr>))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      <div className="flex gap-2 items-center">
+        <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className={`px-3 py-1.5 rounded-lg border border-white/10 text-white text-sm min-h-[36px] ${page <= 1 ? 'opacity-40 cursor-not-allowed bg-white/5' : 'cursor-pointer bg-white/5 hover:bg-white/10'}`}>Prev</button>
+        <span className="text-white/60 text-[13px]">Page {page} of {pagination.pages}</span>
+        <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)} className={`px-3 py-1.5 rounded-lg border border-white/10 text-white text-sm min-h-[36px] ${page >= pagination.pages ? 'opacity-40 cursor-not-allowed bg-white/5' : 'cursor-pointer bg-white/5 hover:bg-white/10'}`}>Next</button>
+      </div>
     </div>
-
-    <div style={{ display: 'flex', gap: '8px', margin: '12px 0', flexWrap: 'wrap' }}>
-      <select value={filters.status} onChange={e => { setFilters(f => ({ ...f, status: e.target.value })); setPage(1); }} style={{ padding: '6px' }}>
-        <option value="">All Status</option><option value="pending_review">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="deleted">Deleted</option>
-      </select>
-      <select value={filters.post_type} onChange={e => { setFilters(f => ({ ...f, post_type: e.target.value })); setPage(1); }} style={{ padding: '6px' }}>
-        <option value="">All Types</option><option value="top_list">Top List</option><option value="best_of">Best Of</option><option value="worst_of">Worst Of</option><option value="hidden_gems">Hidden Gems</option><option value="counter_list">Counter List</option>
-      </select>
-      <select value={filters.sort} onChange={e => { setFilters(f => ({ ...f, sort: e.target.value })); setPage(1); }} style={{ padding: '6px' }}>
-        <option value="newest">Newest</option><option value="oldest">Oldest</option><option value="most_comments">Most Comments</option><option value="most_views">Most Views</option>
-      </select>
-      <input placeholder="Search title/intro" value={filters.search} onChange={e => { setFilters(f => ({ ...f, search: e.target.value })); setPage(1); }} style={{ padding: '6px', width: '180px' }} />
-    </div>
-
-    {selected.size > 0 && (<div style={{ background: '#e3f2fd', padding: '6px 12px', borderRadius: '4px', marginBottom: '8px', display: 'flex', gap: '8px', alignItems: 'center', fontSize: '13px' }}>
-      <strong>{selected.size} selected</strong>
-      <button onClick={() => bulkAction('delete')} disabled={actionLoading}>Delete</button>
-      <button onClick={() => bulkAction('feature')} disabled={actionLoading}>Feature</button>
-      <button onClick={() => bulkAction('unfeature')} disabled={actionLoading}>Unfeature</button>
-    </div>)}
-
-    {loading ? <p>Loading...</p> : (
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-        <thead><tr style={{ borderBottom: '2px solid #ccc', textAlign: 'left' }}>
-          <th style={{ padding: '6px', width: '30px' }}><input type="checkbox" checked={selected.size === posts.length && posts.length > 0} onChange={selectAll} /></th>
-          <th style={{ padding: '6px' }}>Title</th><th style={{ padding: '6px' }}>Author</th><th style={{ padding: '6px' }}>Category</th><th style={{ padding: '6px' }}>Type</th><th style={{ padding: '6px' }}>Status</th><th style={{ padding: '6px' }}><Icon name="Flame" size={12} color="#e65100" /></th><th style={{ padding: '6px' }}><Icon name="MessageCircle" size={12} /></th><th style={{ padding: '6px' }}><Icon name="Eye" size={14} /></th><th style={{ padding: '6px' }}>Published</th><th style={{ padding: '6px' }}>Actions</th>
-        </tr></thead>
-        <tbody>
-          {posts.map(p => (<tr key={p._id} style={{ borderBottom: '1px solid #eee', opacity: p.deleted ? 0.5 : 1 }}>
-            <td style={{ padding: '4px' }}><input type="checkbox" checked={selected.has(p._id)} onChange={() => toggleSelect(p._id)} /></td>
-            <td style={{ padding: '4px' }}><a href="#" onClick={e => { e.preventDefault(); window.open(`/${p.slug}`, '_blank'); }} style={{ textDecoration: 'none' }}>{p.title?.substring(0, 50)}{(p.title?.length || 0) > 50 ? '...' : ''}</a>{p.featured && <span style={{ marginLeft: '4px' }}><Icon name="Star" size={12} color="#f57c00" /></span>}{p.comments_locked && <span style={{ marginLeft: '4px' }}><Icon name="Lock" size={12} /></span>}</td>
-            <td style={{ padding: '4px' }}>{p.author_username}</td>
-            <td style={{ padding: '4px', fontSize: '11px', color: '#666' }}>{p.category_slug}</td>
-            <td style={{ padding: '4px', fontSize: '11px' }}>{p.post_type}</td>
-            <td style={{ padding: '4px' }}>{statusBadge(p.status)}</td>
-            <td style={{ padding: '4px' }}>{p.fire_count || 0}</td>
-            <td style={{ padding: '4px' }}>{p.comment_count}</td>
-            <td style={{ padding: '4px' }}>{p.view_count}</td>
-            <td style={{ padding: '4px', fontSize: '11px' }}>{p.published_at ? new Date(p.published_at).toLocaleDateString() : '—'}</td>
-            <td style={{ padding: '4px' }}>
-              {p.deleted ? <button onClick={() => quickAction(p._id, 'restore')} style={{ fontSize: '11px', cursor: 'pointer' }}>Restore</button> : <>
-                <button onClick={() => router.push(`/admin/posts/pending/${p._id}`)} style={{ fontSize: '11px', cursor: 'pointer' }}>View</button>
-                <button onClick={() => quickAction(p._id, 'delete')} style={{ fontSize: '11px', cursor: 'pointer', color: '#c62828' }}>Del</button>
-                <button onClick={() => quickAction(p._id, 'bump')} style={{ fontSize: '11px', cursor: 'pointer' }}>Bump</button>
-                <button onClick={() => router.push(`/admin/posts/${p._id}/edit`)} style={{ fontSize: '11px', cursor: 'pointer' }}>Edit</button>
-              </>}
-              {p.featured ? <button onClick={() => quickAction(p._id, 'unfeature')} style={{ fontSize: '11px', cursor: 'pointer' }}>Unfeat</button> : <button onClick={() => quickAction(p._id, 'feature')} style={{ fontSize: '11px', cursor: 'pointer' }}>Feat</button>}
-              {p.comments_locked ? <button onClick={() => quickAction(p._id, 'unlock')} style={{ fontSize: '11px', cursor: 'pointer' }}>Unlock</button> : <button onClick={() => quickAction(p._id, 'lock')} style={{ fontSize: '11px', cursor: 'pointer' }}>Lock</button>}
-            </td>
-          </tr>))}
-        </tbody>
-      </table>
-    )}
-
-    <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
-      <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Prev</button>
-      <span>Page {page} of {pagination.pages}</span>
-      <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)}>Next</button>
-    </div>
-  </div>);
+  );
 }

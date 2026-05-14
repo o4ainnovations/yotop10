@@ -238,129 +238,54 @@ export default function PostDetailClient({ slug }: { slug: string }) {
     const isReplying = replyTo === comment.id;
     const replyForm = replyForms[comment.id] || { content: '', submitting: false };
     const itemRank = comment.list_item_id ? getItemRank(comment.list_item_id) : null;
+    const cappedDepth = Math.min(depth, 3);
+    const indentClass = cappedDepth === 0 ? '' : cappedDepth === 1 ? 'ml-4' : cappedDepth === 2 ? 'ml-8' : 'ml-12';
 
-    const cappedIndent = Math.min(depth, 3) * 16;
-    const showThreadIndicator = depth > 3;
+    const reacted = userReactions.has(comment.id);
 
     return (
-      <div key={comment.id} style={{
-        marginLeft: cappedIndent + 'px',
-        borderLeft: '2px solid var(--border-primary)',
-        paddingLeft: '12px',
-        marginTop: '12px',
-      }}>
-        {showThreadIndicator && (
-          <span style={{
-            position: 'absolute',
-            marginLeft: '-22px',
-            marginTop: '2px',
-          }}>
-            <Icon name="CornerDownRight" size={12} color="var(--text-muted)" />
-          </span>
-        )}
-        <div style={{
-          background: 'var(--bg-tertiary)',
-          padding: '14px 16px',
-          borderRadius: 'var(--radius-sm)',
-          fontSize: depth > 0 ? '14px' : '15px',
-          border: '1px solid var(--border-primary)',
-        }}>
-          <div style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            gap: '6px 10px',
-            marginBottom: '8px',
-          }}>
-            <strong style={{
-              color: 'var(--text-primary)',
-              fontFamily: '"Geist Mono", monospace',
-              fontSize: depth > 0 ? '13px' : '14px',
-            }}>
+      <div key={comment.id} className={`mt-3 border-l-2 border-white/10 pl-3 ${indentClass}`}>
+        <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3.5 sm:p-4">
+          <div className="mb-2 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+            <strong className="text-[13px] font-mono text-white sm:text-sm">
               {comment.author_display_name}
             </strong>
-            <span style={{ color: 'var(--text-muted)', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <Icon name="Sparkles" size={12} color="#f57c00" /> {comment.spark_score.toFixed(2)}
+            <span className="inline-flex items-center gap-1 text-[11px] text-zinc-500">
+              <Icon name="Sparkles" size={12} color="#f97316" /> {comment.spark_score.toFixed(2)}
             </span>
             {comment.list_item_id && itemRank && (
-              <span style={{
-                background: 'var(--accent-soft)',
-                color: 'var(--accent)',
-                padding: '2px 8px',
-                borderRadius: 'var(--radius-sm)',
-                fontSize: '11px',
-                fontWeight: 500,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}>
+              <span className="inline-flex items-center gap-1 rounded-lg bg-orange-500/10 px-2 py-0.5 text-[11px] font-medium text-orange-400">
                 <Icon name="Pin" size={11} /> On item #{itemRank}
               </span>
             )}
             {comment.parent_comment_id && (
-              <span style={{
-                color: 'var(--text-muted)',
-                fontSize: '11px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}>
+              <span className="inline-flex items-center gap-1 text-[11px] text-zinc-500">
                 <Icon name="Reply" size={11} /> Reply
               </span>
             )}
-            <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>
+            <span className="text-[11px] text-zinc-500">
               {new Date(comment.created_at).toLocaleDateString()}
             </span>
           </div>
-          <p style={{
-            margin: '0 0 10px 0',
-            color: 'var(--text-primary)',
-            lineHeight: 1.6,
-            fontSize: depth > 0 ? '14px' : '15px',
-          }}>
+          <p className="mb-2.5 text-sm leading-relaxed text-white sm:text-base">
             {comment.content}
           </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="flex items-center gap-2">
             <button
               onClick={() => handleReaction('comment', comment.id)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-                background: userReactions.has(comment.id) ? 'var(--accent-soft)' : 'transparent',
-                border: userReactions.has(comment.id) ? '1px solid var(--accent)' : '1px solid transparent',
-                cursor: 'pointer',
-                borderRadius: 'var(--radius-sm)',
-                padding: '4px 10px',
-                fontSize: '12px',
-                fontWeight: userReactions.has(comment.id) ? 600 : 400,
-                color: userReactions.has(comment.id) ? 'var(--accent)' : 'var(--text-muted)',
-                transition: 'all var(--transition)',
-              }}
               disabled={reacting}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                reacted
+                  ? 'border border-orange-500/50 bg-orange-500/10 text-orange-400'
+                  : 'border border-transparent text-zinc-500 hover:text-zinc-300'
+              }`}
             >
-              <Icon name="Flame" size={14} color="#e65100" /> {comment.fire_count}
+              <Icon name="Flame" size={14} color="#ea580c" /> {comment.fire_count}
             </button>
             {depth < 10 && (
               <button
                 onClick={() => setReplyTo(isReplying ? null : comment.id)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--accent)',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  fontWeight: 500,
-                  padding: '4px 8px',
-                  borderRadius: 'var(--radius-sm)',
-                  transition: 'background var(--transition)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--accent-soft)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'none';
-                }}
+                className="rounded-lg px-2 py-1 text-xs font-medium text-orange-400 transition hover:bg-orange-500/10"
               >
                 {isReplying ? 'Cancel' : 'Reply'}
               </button>
@@ -368,58 +293,18 @@ export default function PostDetailClient({ slug }: { slug: string }) {
           </div>
 
           {isReplying && (
-            <div style={{
-              marginTop: '12px',
-              padding: '14px',
-              background: 'var(--bg-secondary)',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-primary)',
-            }}>
+            <div className="mt-3 rounded-lg border border-white/10 bg-white/5 p-3.5">
               <textarea
                 value={replyForm.content}
                 onChange={(e) => handleReplyContentChange(comment.id, e.target.value)}
                 placeholder={`Reply to ${comment.author_display_name}...`}
-                style={{
-                  width: '100%',
-                  minHeight: '60px',
-                  padding: '11px 14px',
-                  background: 'var(--bg-tertiary)',
-                  border: '1.5px solid var(--border-primary)',
-                  borderRadius: 'var(--radius-sm)',
-                  fontSize: '14px',
-                  color: 'var(--text-primary)',
-                  outline: 'none',
-                  fontFamily: 'inherit',
-                  marginBottom: '10px',
-                  resize: 'vertical',
-                  transition: 'border-color var(--transition)',
-                }}
+                className="mb-2.5 w-full resize-y rounded-xl border border-white/10 bg-white/[0.02] px-3.5 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none"
                 maxLength={2000}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--accent)';
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--border-primary)';
-                }}
               />
               <button
                 onClick={() => handleSubmitReply(comment.id)}
                 disabled={replyForm.submitting || !replyForm.content.trim()}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '10px 22px',
-                  border: 'none',
-                  borderRadius: 'var(--radius-md)',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  cursor: replyForm.submitting ? 'not-allowed' : 'pointer',
-                  background: replyForm.submitting ? 'var(--border-primary)' : 'var(--accent-gradient)',
-                  color: replyForm.submitting ? 'var(--text-muted)' : '#fff',
-                  transition: 'all var(--transition)',
-                  opacity: replyForm.submitting ? 0.7 : 1,
-                }}
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-orange-500/25 transition hover:shadow-xl hover:shadow-orange-500/40 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {replyForm.submitting ? 'Posting...' : 'Submit Reply'}
               </button>
@@ -433,15 +318,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
 
   if (loading) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        backgroundColor: 'var(--bg-primary)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'var(--text-muted)',
-        fontSize: '16px',
-      }}>
+      <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-500">
         Loading...
       </div>
     );
@@ -452,62 +329,28 @@ export default function PostDetailClient({ slug }: { slug: string }) {
   const rootComments = comments.filter(c => c.depth === 0);
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundColor: 'var(--bg-primary)',
-      color: 'var(--text-primary)',
-      fontFamily: 'var(--font-geist-sans), sans-serif',
-    }}>
+    <div className="min-h-screen bg-zinc-950 text-white">
       {/* Navigation Header */}
-      <header style={{
-        padding: '20px 24px',
-        borderBottom: '1px solid var(--border-primary)',
-        background: 'var(--bg-secondary)',
-      }}>
-        <div style={{
-          maxWidth: '940px',
-          margin: '0 auto',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}>
+      <header className="border-b border-white/5 bg-white/[0.02]">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-3 py-3.5 sm:px-6 sm:py-4">
           <Link
             href="/"
-            style={{
-              fontSize: '22px',
-              fontWeight: 800,
-              letterSpacing: '3px',
-              textDecoration: 'none',
-              background: 'var(--accent-gradient)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}
+            className="text-lg font-extrabold tracking-widest sm:text-xl"
           >
-            YOTOP10
+            <span className="bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+              YOTOP10
+            </span>
           </Link>
-          <nav style={{ display: 'flex', gap: '20px', fontSize: '14px' }}>
+          <nav className="flex gap-4 text-sm sm:gap-5">
             <Link
               href="/"
-              style={{
-                color: 'var(--text-secondary)',
-                textDecoration: 'none',
-                transition: 'color var(--transition)',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--accent)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-secondary)'; }}
+              className="text-zinc-400 transition-colors hover:text-orange-400"
             >
               Home
             </Link>
             <Link
               href="/categories"
-              style={{
-                color: 'var(--text-secondary)',
-                textDecoration: 'none',
-                transition: 'color var(--transition)',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--accent)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-secondary)'; }}
+              className="text-zinc-400 transition-colors hover:text-orange-400"
             >
               Categories
             </Link>
@@ -515,45 +358,17 @@ export default function PostDetailClient({ slug }: { slug: string }) {
         </div>
       </header>
 
-      <main style={{ maxWidth: '940px', margin: '0 auto', padding: '32px 20px 60px' }}>
+      <main className="mx-auto max-w-4xl px-3 py-6 sm:px-6 sm:py-10 sm:pb-16">
         {/* Article Header */}
-        <article style={{
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--border-primary)',
-          borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-sm)',
-          padding: '40px',
-          marginBottom: '32px',
-        }}>
+        <article className="mb-8 rounded-2xl border border-white/5 bg-white/[0.02] p-5 backdrop-blur-sm sm:p-10">
           {/* Post metadata */}
-          <div style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            gap: '8px 16px',
-            marginBottom: '16px',
-            fontSize: '13px',
-            color: 'var(--text-muted)',
-          }}>
-            <span style={{
-              textTransform: 'capitalize',
-              padding: '2px 8px',
-              background: 'var(--bg-tertiary)',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-primary)',
-              fontSize: '12px',
-              fontWeight: 500,
-            }}>
+          <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-zinc-500 sm:text-sm">
+            <span className="rounded-lg border border-white/10 bg-white/[0.02] px-2 py-0.5 text-[11px] font-medium capitalize">
               {post.post_type}
             </span>
             <Link
               href={`/c/${post.category_slug}`}
-              style={{
-                color: 'var(--accent)',
-                textDecoration: 'none',
-                fontWeight: 500,
-                transition: 'opacity var(--transition)',
-              }}
+              className="font-medium text-orange-400 transition hover:text-orange-300"
             >
               {post.category_slug}
             </Link>
@@ -561,59 +376,27 @@ export default function PostDetailClient({ slug }: { slug: string }) {
             <span>{post.view_count} views</span>
           </div>
 
-          <h1 style={{
-            fontSize: '30px',
-            fontWeight: 700,
-            color: 'var(--text-primary)',
-            margin: '0 0 16px 0',
-            lineHeight: 1.3,
-            letterSpacing: '-0.02em',
-          }}>
+          <h1 className="mb-4 text-2xl font-bold leading-tight -tracking-[0.02em] text-white sm:text-3xl">
             {post.title}
           </h1>
 
-          <p style={{
-            color: 'var(--text-secondary)',
-            fontSize: '16px',
-            lineHeight: 1.7,
-            margin: '0 0 16px 0',
-          }}>
+          <p className="mb-4 text-sm leading-relaxed text-zinc-400 sm:text-base">
             {post.intro}
           </p>
 
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '12px',
-          }}>
-            <span style={{
-              color: 'var(--text-secondary)',
-              fontSize: '14px',
-              fontWeight: 500,
-            }}>
-              By <Link
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="text-sm text-zinc-400">
+              By{' '}
+              <Link
                 href={`/a/${post.author_username.replace(/^a_/, '')}`}
-                style={{
-                  color: 'var(--accent)',
-                  textDecoration: 'none',
-                  fontWeight: 600,
-                }}
+                className="font-semibold text-orange-400 transition hover:text-orange-300"
               >
                 {post.author_display_name}
               </Link>
             </span>
             <Link
               href={`/${slug}/history`}
-              style={{
-                color: 'var(--text-secondary)',
-                fontSize: '13px',
-                textDecoration: 'none',
-                transition: 'color var(--transition)',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--accent)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-secondary)'; }}
+              className="inline-flex items-center gap-1 text-sm text-zinc-400 transition-colors hover:text-orange-400"
             >
               View History <Icon name="ArrowRight" size={12} />
             </Link>
@@ -621,30 +404,19 @@ export default function PostDetailClient({ slug }: { slug: string }) {
         </article>
 
         {/* Ranked List */}
-        <section style={{ marginBottom: '40px' }}>
-          <h2 style={{
-            fontSize: '20px',
-            fontWeight: 600,
-            color: 'var(--text-primary)',
-            margin: '0 0 20px 0',
-            letterSpacing: '-0.01em',
-          }}>
+        <section className="mb-10">
+          <h2 className="mb-5 text-lg font-semibold -tracking-[0.01em] text-white sm:text-xl">
             Ranked List
           </h2>
 
           {post.hero_image_url && (post.format === 'hero_list' || post.format === 'full_list') && (
-            <div style={{
-              marginBottom: '24px',
-              borderRadius: 'var(--radius-md)',
-              overflow: 'hidden',
-              border: '1px solid var(--border-primary)',
-            }}>
+            <div className="mb-6 overflow-hidden rounded-xl border border-white/5">
               <Image
                 src={post.hero_image_url}
                 alt={post.title}
                 width={1200}
                 height={675}
-                style={{ width: '100%', height: 'auto', display: 'block' }}
+                className="block w-full h-auto"
                 unoptimized
               />
             </div>
@@ -653,61 +425,27 @@ export default function PostDetailClient({ slug }: { slug: string }) {
           {items.map(item => {
             const hasImage = !!(item.image_url && (post.format === 'hero_list' || post.format === 'full_list'));
             return (
-              <div key={item.id} style={{
-                marginBottom: '16px',
-                background: 'var(--bg-secondary)',
-                border: '1px solid var(--border-primary)',
-                borderRadius: 'var(--radius-md)',
-                boxShadow: 'var(--shadow-sm)',
-                padding: '20px 24px',
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '16px',
-                transition: 'box-shadow var(--transition), border-color var(--transition)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                e.currentTarget.style.borderColor = 'var(--accent)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                e.currentTarget.style.borderColor = 'var(--border-primary)';
-              }}
+              <div
+                key={item.id}
+                className="mb-4 flex gap-4 rounded-xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur-sm transition-all duration-300 hover:border-orange-500/30 hover:bg-white/[0.04] hover:shadow-lg hover:shadow-orange-500/5 sm:p-5"
               >
                 {hasImage && (
-                  <div style={{
-                    flexShrink: 0,
-                    width: '200px',
-                    borderRadius: 'var(--radius-sm)',
-                    overflow: 'hidden',
-                    border: '1px solid var(--border-primary)',
-                  }}>
+                  <div className="w-24 flex-shrink-0 overflow-hidden rounded-lg border border-white/5 sm:w-48">
                     <Image
                       src={item.image_url!}
                       alt={item.title}
                       width={400}
                       height={280}
-                      style={{ width: '100%', height: 'auto', display: 'block' }}
+                      className="block w-full h-auto"
                       unoptimized
                     />
                   </div>
                 )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h3 style={{
-                    margin: '0 0 8px 0',
-                    fontSize: '18px',
-                    fontWeight: 700,
-                    color: 'var(--text-primary)',
-                    lineHeight: 1.4,
-                  }}>
+                <div className="min-w-0 flex-1">
+                  <h3 className="mb-2 text-base font-bold leading-snug text-white sm:text-lg">
                     #{item.rank} {item.title}
                   </h3>
-                  <p style={{
-                    margin: '0 0 10px 0',
-                    lineHeight: 1.7,
-                    color: 'var(--text-secondary)',
-                    fontSize: '15px',
-                  }}>
+                  <p className="mb-2.5 text-sm leading-relaxed text-zinc-400">
                     {item.justification}
                   </p>
                   {item.source_url && (
@@ -715,45 +453,17 @@ export default function PostDetailClient({ slug }: { slug: string }) {
                       href={item.source_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{
-                        fontSize: '13px',
-                        color: 'var(--accent)',
-                        textDecoration: 'none',
-                        fontWeight: 500,
-                        transition: 'opacity var(--transition)',
-                      }}
+                      className="inline-flex items-center gap-1 text-sm font-medium text-orange-400 transition hover:text-orange-300"
                     >
                       Source <Icon name="ExternalLink" size={11} />
                     </a>
                   )}
                 </div>
-                <div style={{ flexShrink: 0 }}>
+                <div className="flex-shrink-0">
                   <button
                     onClick={() => toggleItemDropdown(item.id)}
-                    style={{
-                      background: 'var(--bg-tertiary)',
-                      border: '1px solid var(--border-primary)',
-                      borderRadius: 'var(--radius-sm)',
-                      padding: '6px 10px',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      lineHeight: 1,
-                      color: 'var(--text-secondary)',
-                      fontWeight: 600,
-                      transition: 'all var(--transition)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                    }}
+                    className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-semibold text-zinc-400 transition hover:border-orange-500/30 hover:text-orange-400"
                     title="Comment on this item"
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = 'var(--accent)';
-                      e.currentTarget.style.color = 'var(--accent)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = 'var(--border-primary)';
-                      e.currentTarget.style.color = 'var(--text-secondary)';
-                    }}
                   >
                     <Icon name="ChevronDown" size={14} /> Comment
                   </button>
@@ -764,42 +474,19 @@ export default function PostDetailClient({ slug }: { slug: string }) {
         </section>
 
         {/* Comments Section */}
-        <section ref={commentsSectionRef} style={{
-          borderTop: '2px solid var(--border-primary)',
-          paddingTop: '32px',
-        }}>
-          <h2 style={{
-            fontSize: '20px',
-            fontWeight: 600,
-            color: 'var(--text-primary)',
-            margin: '0 0 24px 0',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            letterSpacing: '-0.01em',
-          }}>
+        <section ref={commentsSectionRef} className="border-t-2 border-white/5 pt-8">
+          <h2 className="mb-6 flex items-center gap-2.5 text-lg font-semibold -tracking-[0.01em] text-white sm:text-xl">
             Comments ({post.comment_count})
             {refreshingComments && (
-              <span style={{
-                fontSize: '14px',
-                color: 'var(--text-muted)',
-                display: 'inline-flex',
-                alignItems: 'center',
-              }}>
+              <span className="inline-flex items-center text-sm text-zinc-500">
                 <Icon name="RefreshCw" size={14} />
               </span>
             )}
           </h2>
 
           {/* Comment Filter */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '13px',
-              fontWeight: 500,
-              color: 'var(--text-muted)',
-              marginBottom: '6px',
-            }}>
+          <div className="mb-5">
+            <label className="mb-1.5 block text-sm font-medium text-zinc-500">
               Filter:{' '}
             </label>
             <select
@@ -807,26 +494,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
               onChange={(e) => {
                 setSelectedItemId(e.target.value || null);
               }}
-              style={{
-                width: '100%',
-                maxWidth: '400px',
-                padding: '11px 14px',
-                background: 'var(--bg-tertiary)',
-                border: '1.5px solid var(--border-primary)',
-                borderRadius: 'var(--radius-sm)',
-                fontSize: '14px',
-                color: 'var(--text-primary)',
-                outline: 'none',
-                fontFamily: 'inherit',
-                cursor: 'pointer',
-                transition: 'border-color var(--transition)',
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'var(--accent)';
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border-primary)';
-              }}
+              className="w-full max-w-md appearance-none rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-orange-500/50 focus:outline-none"
             >
               <option value="">All Comments</option>
               {items.map(item => (
@@ -836,23 +504,9 @@ export default function PostDetailClient({ slug }: { slug: string }) {
           </div>
 
           {/* Comment Form */}
-          <form onSubmit={handleSubmitComment} style={{
-            marginBottom: '28px',
-            padding: '20px 24px',
-            background: 'var(--bg-secondary)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-primary)',
-          }}>
+          <form onSubmit={handleSubmitComment} className="mb-7 rounded-xl border border-white/5 bg-white/[0.02] p-4 sm:p-6">
             {commentError && (
-              <div role="alert" style={{
-                color: '#d32f2f',
-                fontSize: '14px',
-                marginBottom: '12px',
-                padding: '8px 12px',
-                background: '#ffebee',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid #f44336',
-              }}>
+              <div role="alert" className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
                 {commentError}
               </div>
             )}
@@ -861,60 +515,20 @@ export default function PostDetailClient({ slug }: { slug: string }) {
               value={commentContent}
               onChange={(e) => setCommentContent(e.target.value)}
               placeholder="Write a comment..."
-              style={{
-                width: '100%',
-                minHeight: '90px',
-                padding: '14px',
-                background: 'var(--bg-tertiary)',
-                border: '1.5px solid var(--border-primary)',
-                borderRadius: 'var(--radius-sm)',
-                fontSize: '15px',
-                color: 'var(--text-primary)',
-                outline: 'none',
-                fontFamily: 'inherit',
-                marginBottom: '14px',
-                resize: 'vertical',
-                transition: 'border-color var(--transition)',
-              }}
+              className="mb-3.5 w-full resize-y rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none sm:text-base"
               maxLength={2000}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'var(--accent)';
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border-primary)';
-              }}
             />
             <button
               type="submit"
               disabled={submitting || !commentContent.trim()}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '12px 28px',
-                border: 'none',
-                borderRadius: 'var(--radius-md)',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: submitting ? 'not-allowed' : 'pointer',
-                background: submitting ? 'var(--border-primary)' : 'var(--accent-gradient)',
-                color: submitting ? 'var(--text-muted)' : '#fff',
-                transition: 'all var(--transition)',
-                opacity: submitting ? 0.7 : 1,
-                boxShadow: submitting ? 'none' : '0 2px 8px rgba(255,59,48,0.3)',
-              }}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-500/25 transition hover:shadow-xl hover:shadow-orange-500/40 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? 'Posting...' : 'Post Comment'}
             </button>
           </form>
 
           {comments.length === 0 ? (
-            <p style={{
-              color: 'var(--text-muted)',
-              fontSize: '15px',
-              textAlign: 'center',
-              padding: '40px 0',
-            }}>
+            <p className="py-10 text-center text-sm text-zinc-500">
               No comments yet. Be the first to comment!
             </p>
           ) : (
@@ -924,17 +538,8 @@ export default function PostDetailClient({ slug }: { slug: string }) {
       </main>
 
       {/* Footer */}
-      <footer style={{
-        borderTop: '1px solid var(--border-primary)',
-        padding: '24px 20px',
-        textAlign: 'center',
-        background: 'var(--bg-secondary)',
-      }}>
-        <p style={{
-          margin: 0,
-          color: 'var(--text-muted)',
-          fontSize: '13px',
-        }}>
+      <footer className="border-t border-white/5 bg-white/[0.02] px-3 py-6 text-center sm:px-6">
+        <p className="text-sm text-zinc-500">
           YoTop10 — Open Platform for Top 10 Lists
         </p>
       </footer>

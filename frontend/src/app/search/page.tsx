@@ -42,10 +42,12 @@ export default function SearchPage() {
   const [postType, setPostType] = useState(sp.get('post_type') || '');
   const [author, setAuthor] = useState(sp.get('author') || '');
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [suggestions, setSuggestions] = useState<{ titles: AutocompleteItem[]; categories: AutocompleteItem[] }>({ titles: [], categories: [] });
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const filtersRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -89,7 +91,19 @@ export default function SearchPage() {
   }, [q, page, sort, categorySlug, postType, author, search]);
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node) && inputRef.current && !inputRef.current.contains(e.target as Node)) setShowSuggestions(false); };
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node) && inputRef.current && !inputRef.current.contains(e.target as Node)) setShowSuggestions(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (filtersRef.current && !filtersRef.current.contains(e.target as Node) && !(e.target as Element).closest('[data-filters-toggle]')) {
+        setFiltersOpen(false);
+      }
+    };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
@@ -104,149 +118,347 @@ export default function SearchPage() {
   const allResults = [...(results?.posts || []).map(p => ({ ...p, _type: 'post' as const })), ...(results?.comments || []).map(c => ({ ...c, _type: 'comment' as const }))].sort((a, b) => b._score - a._score);
   const activeResults = activeTab === 'all' ? allResults : activeTab === 'posts' ? (results?.posts || []) : (results?.comments || []);
 
-  const filterSelect: React.CSSProperties = { width: '100%', padding: '7px 10px', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', fontSize: '13px', background: 'var(--bg-tertiary)', color: 'var(--text-primary)', outline: 'none' };
-  const filterInput: React.CSSProperties = { width: '100%', padding: '7px 10px', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', fontSize: '13px', background: 'var(--bg-tertiary)', color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box' };
+  const selectClasses = "w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-[13px] text-white outline-none transition focus:border-orange-500/50";
 
   return (
-    <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '20px' }}>
-      {/* Search bar with autocomplete */}
-      <div style={{ position: 'relative', marginBottom: '20px' }}>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <div style={{ flex: 1, position: 'relative' }}>
-            <input ref={inputRef} type="text" value={q} onChange={e => setQ(e.target.value)} onKeyDown={handleKeyDown}
-              onFocus={() => q.length >= 2 && suggestions.titles.length > 0 && setShowSuggestions(true)}
-              placeholder="Search posts and comments in real-time..."
-              style={{ width: '100%', padding: '14px 18px', fontSize: '17px', border: '2px solid var(--border-primary)', borderRadius: 'var(--radius-md)', outline: 'none', boxSizing: 'border-box', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
-              autoFocus autoComplete="off"
-            />
-            {loading && <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: '13px' }}>...</span>}
-          </div>
-          <button onClick={() => { setShowSuggestions(false); search(page); }} disabled={loading}
-            style={{ padding: '14px 28px', fontSize: '16px', background: 'var(--accent-gradient)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-            Search
-          </button>
-        </div>
-
-        {showSuggestions && (suggestions.titles.length > 0 || suggestions.categories.length > 0) && (
-          <div ref={dropdownRef} style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-md)', marginTop: '4px', maxHeight: '360px', overflow: 'auto' }}>
-            {suggestions.titles.length > 0 && (
-              <div>
-                <div style={{ padding: '8px 14px', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Posts</div>
-                {suggestions.titles.map(t => (
-                  <div key={t.slug} onClick={() => selectSuggestion(t.title || '')} style={{ padding: '10px 14px', cursor: 'pointer', fontSize: '14px', borderBottom: '1px solid var(--border-primary)', color: 'var(--text-primary)' }}
-                    dangerouslySetInnerHTML={{ __html: t.highlight || t.title || '' }} />
-                ))}
+    <div className="min-h-screen bg-zinc-950 px-3 py-6 sm:px-6 sm:py-10">
+      <div className="mx-auto max-w-5xl">
+        <div className="relative mb-4 sm:mb-6">
+          <div className="flex gap-2 sm:gap-3">
+            <div className="relative flex-1">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 sm:pl-4">
+                <Icon name="Search" size={18} className="text-zinc-600" />
               </div>
-            )}
-            {suggestions.categories.length > 0 && (
-              <div>
-                <div style={{ padding: '8px 14px', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', borderTop: '1px solid var(--border-primary)' }}>Categories</div>
-                {suggestions.categories.map(c => (
-                  <div key={c.slug} onClick={() => selectSuggestion(c.name || '')} style={{ padding: '10px 14px', cursor: 'pointer', fontSize: '14px', borderBottom: '1px solid var(--border-primary)', color: 'var(--text-primary)' }}
-                    dangerouslySetInnerHTML={{ __html: c.highlight || c.name || '' }} />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Suggestions */}
-      {results?.suggestions && (
-        <div style={{ marginBottom: '16px', padding: '10px 16px', background: 'var(--accent-soft)', borderRadius: 'var(--radius-sm)', fontSize: '14px', color: 'var(--text-secondary)' }}>
-          Did you mean: <button onClick={() => { setQ(results.suggestions!.suggestion); setPage(1); }} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 'bold', textDecoration: 'underline', fontSize: '14px' }}>
-            {results.suggestions.suggestion}
-          </button>?
-        </div>
-      )}
-
-      <div style={{ display: 'flex', gap: '24px' }}>
-        {/* Filters */}
-        <div style={{ width: '220px', flexShrink: 0 }}>
-          <h3 style={{ fontSize: '14px', marginBottom: '12px', color: 'var(--text-primary)' }}>Filters</h3>
-          <div style={{ marginBottom: '14px' }}>
-            <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Category</label>
-            <select value={categorySlug} onChange={e => { setCategorySlug(e.target.value); setPage(1); }} style={filterSelect}>
-              <option value="">All</option>
-              {(results?.facets.categories || []).map(f => <option key={f.key} value={f.key}>{f.key} ({f.count})</option>)}
-            </select>
-          </div>
-          <div style={{ marginBottom: '14px' }}>
-            <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Post Type</label>
-            <select value={postType} onChange={e => { setPostType(e.target.value); setPage(1); }} style={filterSelect}>
-              <option value="">All</option>
-              {(results?.facets.post_types || []).map(f => <option key={f.key} value={f.key}>{f.key} ({f.count})</option>)}
-            </select>
-          </div>
-          <div style={{ marginBottom: '14px' }}>
-            <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Author</label>
-            <input value={author} onChange={e => { setAuthor(e.target.value); setPage(1); }} placeholder="username..." style={filterInput} />
-          </div>
-          <div style={{ marginBottom: '14px' }}>
-            <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Sort</label>
-            <select value={sort} onChange={e => { setSort(e.target.value); setPage(1); }} style={filterSelect}>
-              <option value="_score">Relevance</option><option value="newest">Newest</option><option value="most_comments">Most Comments</option><option value="most_fire">Most Fire</option>
-            </select>
-          </div>
-          <button onClick={() => { setCategorySlug(''); setPostType(''); setAuthor(''); setSort('_score'); setPage(1); }} style={{ width: '100%', padding: '8px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '12px', color: 'var(--text-secondary)' }}>Clear All</button>
-        </div>
-
-        {/* Results */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {results && (
-            <div style={{ marginBottom: '14px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-              Found <strong style={{ color: 'var(--text-primary)' }}>{results.total.posts + results.total.comments}</strong> results ({results.total.posts} posts, {results.total.comments} comments)
-            </div>
-          )}
-          {results && (
-            <div style={{ display: 'flex', gap: '0', marginBottom: '14px', borderBottom: '1px solid var(--border-primary)' }}>
-              <button onClick={() => setActiveTab('all')} style={{ padding: '8px 16px', border: 'none', borderBottom: activeTab === 'all' ? '2px solid var(--accent)' : '2px solid transparent', background: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: activeTab === 'all' ? 'bold' : 'normal', color: activeTab === 'all' ? 'var(--accent)' : 'var(--text-muted)' }}>All</button>
-              <button onClick={() => setActiveTab('posts')} style={{ padding: '8px 16px', border: 'none', borderBottom: activeTab === 'posts' ? '2px solid var(--accent)' : '2px solid transparent', background: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: activeTab === 'posts' ? 'bold' : 'normal', color: activeTab === 'posts' ? 'var(--accent)' : 'var(--text-muted)' }}>Posts ({results.total.posts})</button>
-              <button onClick={() => setActiveTab('comments')} style={{ padding: '8px 16px', border: 'none', borderBottom: activeTab === 'comments' ? '2px solid var(--accent)' : '2px solid transparent', background: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: activeTab === 'comments' ? 'bold' : 'normal', color: activeTab === 'comments' ? 'var(--accent)' : 'var(--text-muted)' }}>Comments ({results.total.comments})</button>
-            </div>
-          )}
-          {error && <p style={{ color: '#c62828' }}>{error}</p>}
-          {loading && <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Searching...</div>}
-          {!loading && results && activeResults.length === 0 && (
-            <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
-              <div style={{ fontSize: '40px', marginBottom: '12px' }}><Icon name="Search" size={40} color="var(--text-muted)" /></div>
-              <h2 style={{ color: 'var(--text-primary)' }}>No results found</h2><p>Try different keywords or remove filters.</p>
-            </div>
-          )}
-          {!loading && activeResults.map(r => (
-            <div key={`${r._type}-${r.id}`} style={{ padding: '14px 0', borderBottom: '1px solid var(--border-primary)' }}>
-              {r._type === 'post' ? (
-                <Link href={`/${r.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <h3 style={{ margin: '0 0 4px', fontSize: '16px', color: 'var(--accent)' }} dangerouslySetInnerHTML={{ __html: r.highlight?.title?.[0] || r.title }} />
-                  <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px', lineHeight: '1.5' }} dangerouslySetInnerHTML={{ __html: r.highlight?.intro?.[0] || (r.intro || '').substring(0, 200) }} />
-                  <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
-                    <span>By {r.author_username}</span>
-                    {r.category_slug && <span><Icon name="Folder" size={12} /> {r.category_slug}</span>}
-                    {r.post_type && <span><Icon name="Tag" size={12} /> {r.post_type}</span>}
-                    <span><Icon name="MessageCircle" size={12} /> {r.comment_count || 0}</span><span><Icon name="Flame" size={12} /> {r.fire_count || 0}</span>
-                    <span>{new Date(r.created_at).toLocaleDateString()}</span>
-                  </div>
-                </Link>
-              ) : (
-                <Link href={`/${r.post_slug || ''}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '2px' }}><Icon name="MessageCircle" size={12} /> Comment on <strong style={{ color: 'var(--text-secondary)' }}>{r.post_title || 'a post'}</strong></div>
-                  <div style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.5' }} dangerouslySetInnerHTML={{ __html: r.highlight?.content?.[0] || (r.content || '').substring(0, 200) }} />
-                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>By {r.author_username} · {new Date(r.created_at).toLocaleDateString()}</div>
-                </Link>
+              <input
+                ref={inputRef}
+                type="text"
+                value={q}
+                onChange={e => setQ(e.target.value)}
+                onKeyDown={handleKeyDown}
+                onFocus={() => q.length >= 2 && suggestions.titles.length > 0 && setShowSuggestions(true)}
+                placeholder="Search posts and comments in real-time..."
+                className="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-9 pr-4 text-sm text-white placeholder:text-zinc-600 outline-none backdrop-blur-sm transition focus:border-orange-500/50 sm:py-3.5 sm:pl-11 sm:text-base"
+                autoFocus
+                autoComplete="off"
+              />
+              {loading && (
+                <span className="absolute inset-y-0 right-0 flex items-center pr-3 sm:pr-4">
+                  <span className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-700 border-t-orange-400" />
+                </span>
               )}
             </div>
-          ))}
-          {results && results.pagination.pages > 1 && (
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '24px' }}>
-              <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ padding: '6px 12px', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', background: page <= 1 ? 'var(--bg-tertiary)' : 'var(--bg-secondary)', cursor: page <= 1 ? 'not-allowed' : 'pointer', fontSize: '13px', color: page <= 1 ? 'var(--text-muted)' : 'var(--text-primary)' }}>Prev</button>
-              {Array.from({ length: Math.min(results.pagination.pages, 7) }, (_, i) => {
-                const start = Math.max(1, Math.min(page - 3, results.pagination.pages - 6));
-                const pn = start + i; if (pn > results.pagination.pages) return null;
-                return <button key={pn} onClick={() => setPage(pn)} style={{ padding: '6px 12px', border: pn === page ? '2px solid var(--accent)' : '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', background: pn === page ? 'var(--accent-soft)' : 'var(--bg-secondary)', cursor: 'pointer', fontSize: '13px', fontWeight: pn === page ? 'bold' : 'normal', color: pn === page ? 'var(--accent)' : 'var(--text-primary)' }}>{pn}</button>;
-              })}
-              <button disabled={page >= results.pagination.pages} onClick={() => setPage(p => p + 1)} style={{ padding: '6px 12px', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', background: page >= results.pagination.pages ? 'var(--bg-tertiary)' : 'var(--bg-secondary)', cursor: page >= results.pagination.pages ? 'not-allowed' : 'pointer', fontSize: '13px', color: page >= results.pagination.pages ? 'var(--text-muted)' : 'var(--text-primary)' }}>Next</button>
+            <button
+              onClick={() => { setShowSuggestions(false); search(page); }}
+              disabled={loading}
+              className="rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:shadow-xl hover:shadow-orange-500/40 disabled:opacity-50 sm:px-6"
+            >
+              Search
+            </button>
+          </div>
+
+          {showSuggestions && (suggestions.titles.length > 0 || suggestions.categories.length > 0) && (
+            <div
+              ref={dropdownRef}
+              className="absolute left-0 right-0 top-full z-50 mt-2 max-h-96 overflow-auto rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl"
+            >
+              {suggestions.titles.length > 0 && (
+                <div>
+                  <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-600 sm:px-4">
+                    Posts
+                  </div>
+                  {suggestions.titles.map(t => (
+                    <div
+                      key={t.slug}
+                      onClick={() => selectSuggestion(t.title || '')}
+                      className="cursor-pointer border-t border-white/5 px-3 py-2.5 text-sm text-zinc-300 transition hover:bg-white/5 sm:px-4"
+                      dangerouslySetInnerHTML={{ __html: t.highlight || t.title || '' }}
+                    />
+                  ))}
+                </div>
+              )}
+              {suggestions.categories.length > 0 && (
+                <div>
+                  <div className="border-t border-white/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-600 sm:px-4">
+                    Categories
+                  </div>
+                  {suggestions.categories.map(c => (
+                    <div
+                      key={c.slug}
+                      onClick={() => selectSuggestion(c.name || '')}
+                      className="cursor-pointer border-t border-white/5 px-3 py-2.5 text-sm text-zinc-300 transition hover:bg-white/5 sm:px-4"
+                      dangerouslySetInnerHTML={{ __html: c.highlight || c.name || '' }}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
+        </div>
+
+        {results?.suggestions && (
+          <div className="mb-4 rounded-xl border border-orange-500/20 bg-orange-500/5 px-4 py-2.5 text-sm text-zinc-400 sm:mb-6">
+            Did you mean:{' '}
+            <button
+              onClick={() => { setQ(results.suggestions!.suggestion); setPage(1); }}
+              className="font-bold text-orange-400 underline transition hover:text-orange-300"
+            >
+              {results.suggestions.suggestion}
+            </button>
+            ?
+          </div>
+        )}
+
+        <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
+          {/* Mobile filters toggle */}
+          <div className="lg:hidden">
+            <button
+              data-filters-toggle
+              onClick={() => setFiltersOpen(!filtersOpen)}
+              className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-zinc-300 backdrop-blur-sm transition hover:border-white/20"
+            >
+              <span className="inline-flex items-center gap-2">
+                <Icon name="SlidersHorizontal" size={14} />
+                Filters
+              </span>
+              <Icon name={filtersOpen ? 'ChevronUp' : 'ChevronDown'} size={14} className="text-zinc-500" />
+            </button>
+
+            {filtersOpen && (
+              <div ref={filtersRef} className="mt-2 rounded-2xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur-sm">
+                <div className="space-y-3">
+                  <div>
+                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-zinc-600">Category</label>
+                    <select value={categorySlug} onChange={e => { setCategorySlug(e.target.value); setPage(1); }} className={selectClasses}>
+                      <option value="">All</option>
+                      {(results?.facets.categories || []).map(f => <option key={f.key} value={f.key}>{f.key} ({f.count})</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-zinc-600">Post Type</label>
+                    <select value={postType} onChange={e => { setPostType(e.target.value); setPage(1); }} className={selectClasses}>
+                      <option value="">All</option>
+                      {(results?.facets.post_types || []).map(f => <option key={f.key} value={f.key}>{f.key} ({f.count})</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-zinc-600">Author</label>
+                    <input value={author} onChange={e => { setAuthor(e.target.value); setPage(1); }} placeholder="username..." className={selectClasses} />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-zinc-600">Sort</label>
+                    <select value={sort} onChange={e => { setSort(e.target.value); setPage(1); }} className={selectClasses}>
+                      <option value="_score">Relevance</option>
+                      <option value="newest">Newest</option>
+                      <option value="most_comments">Most Comments</option>
+                      <option value="most_fire">Most Fire</option>
+                    </select>
+                  </div>
+                  <button
+                    onClick={() => { setCategorySlug(''); setPostType(''); setAuthor(''); setSort('_score'); setPage(1); }}
+                    className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 text-xs font-medium text-zinc-500 transition hover:text-zinc-300"
+                  >
+                    Clear All
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Desktop filters sidebar */}
+          <div className="hidden w-52 shrink-0 lg:block">
+            <h3 className="mb-3 text-sm font-semibold text-white">Filters</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-zinc-600">Category</label>
+                <select value={categorySlug} onChange={e => { setCategorySlug(e.target.value); setPage(1); }} className={selectClasses}>
+                  <option value="">All</option>
+                  {(results?.facets.categories || []).map(f => <option key={f.key} value={f.key}>{f.key} ({f.count})</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-zinc-600">Post Type</label>
+                <select value={postType} onChange={e => { setPostType(e.target.value); setPage(1); }} className={selectClasses}>
+                  <option value="">All</option>
+                  {(results?.facets.post_types || []).map(f => <option key={f.key} value={f.key}>{f.key} ({f.count})</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-zinc-600">Author</label>
+                <input value={author} onChange={e => { setAuthor(e.target.value); setPage(1); }} placeholder="username..." className={selectClasses} />
+              </div>
+              <div>
+                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-zinc-600">Sort</label>
+                <select value={sort} onChange={e => { setSort(e.target.value); setPage(1); }} className={selectClasses}>
+                  <option value="_score">Relevance</option>
+                  <option value="newest">Newest</option>
+                  <option value="most_comments">Most Comments</option>
+                  <option value="most_fire">Most Fire</option>
+                </select>
+              </div>
+              <button
+                onClick={() => { setCategorySlug(''); setPostType(''); setAuthor(''); setSort('_score'); setPage(1); }}
+                className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 text-xs font-medium text-zinc-500 transition hover:text-zinc-300"
+              >
+                Clear All
+              </button>
+            </div>
+          </div>
+
+          {/* Results */}
+          <div className="min-w-0 flex-1">
+            {results && (
+              <div className="mb-3 text-[13px] text-zinc-500">
+                Found{' '}
+                <strong className="text-white">{results.total.posts + results.total.comments}</strong>{' '}
+                results ({results.total.posts} posts, {results.total.comments} comments)
+              </div>
+            )}
+
+            {results && (
+              <div className="mb-4 flex border-b border-white/5">
+                <button
+                  onClick={() => setActiveTab('all')}
+                  className={`px-3 py-2 text-[13px] font-semibold transition sm:px-4 ${
+                    activeTab === 'all'
+                      ? 'border-b-2 border-orange-500 text-orange-400'
+                      : 'border-b-2 border-transparent text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setActiveTab('posts')}
+                  className={`px-3 py-2 text-[13px] font-semibold transition sm:px-4 ${
+                    activeTab === 'posts'
+                      ? 'border-b-2 border-orange-500 text-orange-400'
+                      : 'border-b-2 border-transparent text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                  Posts ({results.total.posts})
+                </button>
+                <button
+                  onClick={() => setActiveTab('comments')}
+                  className={`px-3 py-2 text-[13px] font-semibold transition sm:px-4 ${
+                    activeTab === 'comments'
+                      ? 'border-b-2 border-orange-500 text-orange-400'
+                      : 'border-b-2 border-transparent text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                  Comments ({results.total.comments})
+                </button>
+              </div>
+            )}
+
+            {error && <p className="py-8 text-center text-sm text-red-400">{error}</p>}
+
+            {loading && (
+              <div className="py-16 text-center">
+                <p className="text-sm text-zinc-500">Searching...</p>
+              </div>
+            )}
+
+            {!loading && results && activeResults.length === 0 && (
+              <div className="py-16 text-center">
+                <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 sm:h-16 sm:w-16">
+                  <Icon name="Search" size={28} className="text-zinc-600 sm:size-8" />
+                </div>
+                <h2 className="mb-1 text-base font-semibold text-zinc-300">No results found</h2>
+                <p className="text-sm text-zinc-500">Try different keywords or remove filters.</p>
+              </div>
+            )}
+
+            {!loading && activeResults.map(r => (
+              <div key={`${r._type}-${r.id}`} className="border-b border-white/5 py-3.5 sm:py-4">
+                {r._type === 'post' ? (
+                  <Link href={`/${r.slug}`} className="block group">
+                    <h3
+                      className="mb-1 text-base font-semibold text-orange-400 transition group-hover:text-orange-300"
+                      dangerouslySetInnerHTML={{ __html: r.highlight?.title?.[0] || r.title }}
+                    />
+                    <div
+                      className="mb-2 text-[13px] leading-relaxed text-zinc-400 line-clamp-2"
+                      dangerouslySetInnerHTML={{ __html: r.highlight?.intro?.[0] || (r.intro || '').substring(0, 200) }}
+                    />
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-600">
+                      <span>By {r.author_username}</span>
+                      {r.category_slug && (
+                        <span className="inline-flex items-center gap-1">
+                          <Icon name="Folder" size={12} />
+                          {r.category_slug}
+                        </span>
+                      )}
+                      {r.post_type && (
+                        <span className="inline-flex items-center gap-1">
+                          <Icon name="Tag" size={12} />
+                          {r.post_type}
+                        </span>
+                      )}
+                      <span className="inline-flex items-center gap-1">
+                        <Icon name="MessageCircle" size={12} />
+                        {r.comment_count || 0}
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <Icon name="Flame" size={12} />
+                        {r.fire_count || 0}
+                      </span>
+                      <span>{new Date(r.created_at).toLocaleDateString()}</span>
+                    </div>
+                  </Link>
+                ) : (
+                  <Link href={`/${r.post_slug || ''}`} className="block group">
+                    <div className="mb-0.5 text-xs text-zinc-600">
+                      <Icon name="MessageCircle" size={12} className="inline mr-1" />
+                      Comment on <strong className="text-zinc-500">{r.post_title || 'a post'}</strong>
+                    </div>
+                    <div
+                      className="mb-1.5 text-sm leading-relaxed text-zinc-400 line-clamp-2"
+                      dangerouslySetInnerHTML={{ __html: r.highlight?.content?.[0] || (r.content || '').substring(0, 200) }}
+                    />
+                    <div className="text-xs text-zinc-600">
+                      By {r.author_username} &middot; {new Date(r.created_at).toLocaleDateString()}
+                    </div>
+                  </Link>
+                )}
+              </div>
+            ))}
+
+            {results && results.pagination.pages > 1 && (
+              <div className="flex flex-wrap items-center justify-center gap-1.5 pt-8 sm:gap-2">
+                <button
+                  disabled={page <= 1}
+                  onClick={() => setPage(p => p - 1)}
+                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[13px] text-zinc-400 transition hover:border-white/20 disabled:opacity-30"
+                >
+                  Prev
+                </button>
+                {Array.from({ length: Math.min(results.pagination.pages, 7) }, (_, i) => {
+                  const start = Math.max(1, Math.min(page - 3, results.pagination.pages - 6));
+                  const pn = start + i;
+                  if (pn > results.pagination.pages) return null;
+                  return (
+                    <button
+                      key={pn}
+                      onClick={() => setPage(pn)}
+                      className={`rounded-lg px-3 py-2 text-[13px] font-medium transition ${
+                        pn === page
+                          ? 'border border-orange-500/30 bg-orange-500/10 text-orange-400'
+                          : 'border border-white/5 bg-white/[0.02] text-zinc-500 hover:text-zinc-300'
+                      }`}
+                    >
+                      {pn}
+                    </button>
+                  );
+                })}
+                <button
+                  disabled={page >= results.pagination.pages}
+                  onClick={() => setPage(p => p + 1)}
+                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[13px] text-zinc-400 transition hover:border-white/20 disabled:opacity-30"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

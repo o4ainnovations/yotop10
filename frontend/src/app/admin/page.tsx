@@ -16,36 +16,23 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div>
-      <h2 style={{ color: 'var(--text-primary)' }}>Welcome, {admin?.username || 'Admin'}</h2>
-      <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>Use the sidebar to navigate. Quick actions below.</p>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-white text-xl font-bold">Welcome, {admin?.username || 'Admin'}</h2>
+        <p className="text-white/50 text-sm mt-1">Use the sidebar to navigate. Quick actions below.</p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
         {actionCards.map(card => (
-          <button key={card.href} onClick={() => router.push(card.href)}
-            style={{
-              padding: '20px',
-              border: '1px solid var(--border-primary)',
-              borderRadius: 'var(--radius-md)',
-              cursor: 'pointer',
-              textAlign: 'left',
-              background: 'var(--bg-secondary)',
-              transition: 'border-color var(--transition), box-shadow var(--transition)',
-              boxShadow: 'var(--shadow-sm)',
-              display: 'block',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.borderColor = 'var(--accent)';
-              e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.borderColor = 'var(--border-primary)';
-              e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-            }}
+          <button
+            key={card.href}
+            onClick={() => router.push(card.href)}
+            className="bg-white/5 border border-white/10 rounded-xl p-4 sm:p-5 text-left transition-all duration-200 hover:border-orange-500/50 hover:bg-white/[0.07] cursor-pointer w-full"
           >
-            <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
-              <Icon name={card.icon as LucideIconName} size={18} color="var(--accent)" /> {card.title}
+            <div className="flex items-center gap-2.5 mb-1.5">
+              <Icon name={card.icon as LucideIconName} size={18} color="var(--color-orange-400)" />
+              <span className="text-white font-semibold text-sm sm:text-base">{card.title}</span>
             </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{card.desc}</div>
+            <p className="text-white/40 text-xs leading-relaxed">{card.desc}</p>
           </button>
         ))}
       </div>

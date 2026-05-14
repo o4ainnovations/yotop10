@@ -75,72 +75,67 @@ export default function AlertDetailPage() {
     setSettling(false);
   };
 
-  if (loading) return <div style={{ padding: '20px', color: 'var(--text-muted)' }}>Loading...</div>;
-  if (!detail) return <div style={{ padding: '20px', color: 'var(--text-muted)' }}>Alert not found</div>;
+  if (loading) return <div className="p-5 text-white/40">Loading...</div>;
+  if (!detail) return <div className="p-5 text-white/40">Alert not found</div>;
 
   const { notification: n, current_value, threshold_config: tc, still_breaching } = detail;
-  const STATUS = still_breaching ? (n.severity === 'critical' ? <><Icon name="Circle" size={16} color="#d32f2f" fill="#d32f2f" /> Critical</> : <><Icon name="Circle" size={16} color="#f57c00" fill="#f57c00" /> Warning</>) : <><Icon name="Circle" size={16} color="#2e7d32" fill="#2e7d32" /> Resolved</>;
-  const STATUS_COLOR = still_breaching ? (n.severity === 'critical' ? '#d32f2f' : '#f57c00') : '#2e7d32';
-  const STATUS_BG = still_breaching ? (n.severity === 'critical' ? 'rgba(211,47,47,0.1)' : 'rgba(245,124,0,0.1)') : 'rgba(46,125,50,0.1)';
-  const STATUS_BORDER = still_breaching ? (n.severity === 'critical' ? '#d32f2f' : '#f57c00') : '#2e7d32';
 
-  const cardStyle: React.CSSProperties = {
-    background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)',
-    borderRadius: 'var(--radius-md)', padding: '18px', marginBottom: '20px',
-  };
+  const severityColor = still_breaching ? (n.severity === 'critical' ? 'border-red-500 bg-red-500/10' : 'border-orange-500 bg-orange-500/10') : 'border-green-500 bg-green-500/10';
+  const severityTextColor = still_breaching ? (n.severity === 'critical' ? 'text-red-500' : 'text-orange-500') : 'text-green-500';
+  const STATUS_ICON = still_breaching ? (n.severity === 'critical' ? <><Icon name="Circle" size={16} color="#d32f2f" fill="#d32f2f" /> Critical</> : <><Icon name="Circle" size={16} color="#f57c00" fill="#f57c00" /> Warning</>) : <><Icon name="Circle" size={16} color="#2e7d32" fill="#2e7d32" /> Resolved</>;
+
+  const cardClass = 'bg-white/5 border border-white/10 rounded-xl p-4 sm:p-5 mb-5';
 
   return (
-    <div style={{ maxWidth: '700px', margin: '0 auto', padding: '20px' }}>
-      <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '14px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <Icon name="ArrowLeft" size={14} /> Back
+    <div className="max-w-[700px] mx-auto px-3 sm:px-5 py-5">
+      <button onClick={() => router.back()} className="bg-transparent border-none text-orange-400 cursor-pointer text-sm mb-4 flex items-center gap-1 hover:text-orange-300">
+        <Icon name="ArrowLeft" size={14} /> Back
       </button>
 
-      <div style={{ background: STATUS_BG, border: `2px solid ${STATUS_BORDER}`, borderRadius: 'var(--radius-lg)', padding: '20px', marginBottom: '20px' }}>
-        <h1 style={{ fontSize: '20px', margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
-          {STATUS} — {METRIC_LABELS[n.alert_type] || n.alert_type}
+      <div className={`border-2 rounded-2xl p-5 mb-5 ${severityColor}`}>
+        <h1 className="text-xl font-bold mb-2 flex items-center gap-2 text-white">
+          {STATUS_ICON} — {METRIC_LABELS[n.alert_type] || n.alert_type}
         </h1>
-        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '0 0 8px' }}>{n.message}</p>
-        <div style={{ display: 'flex', gap: '20px', fontSize: '13px', marginTop: '12px', flexWrap: 'wrap' }}>
+        <p className="text-sm text-white/60 mb-2">{n.message}</p>
+        <div className="flex gap-5 flex-wrap text-[13px] mt-3">
           <div>
-            <span style={{ color: 'var(--text-muted)' }}>Triggered at:</span>{' '}
-            <strong style={{ color: 'var(--text-primary)' }}>{new Date(n.created_at).toLocaleString()}</strong>
+            <span className="text-white/40">Triggered at:</span>{' '}
+            <strong className="text-white">{new Date(n.created_at).toLocaleString()}</strong>
           </div>
           <div>
-            <span style={{ color: 'var(--text-muted)' }}>Value:</span>{' '}
-            <strong style={{ color: STATUS_COLOR }}>{n.value}</strong>
+            <span className="text-white/40">Value:</span>{' '}
+            <strong className={severityTextColor}>{n.value}</strong>
             {' '}vs threshold {n.threshold}
           </div>
           {current_value !== null && (
             <div>
-              <span style={{ color: 'var(--text-muted)' }}>Current:</span>{' '}
-              <strong style={{ color: still_breaching ? STATUS_COLOR : '#2e7d32' }}>{current_value}</strong>
+              <span className="text-white/40">Current:</span>{' '}
+              <strong className={still_breaching ? severityTextColor : 'text-green-500'}>{current_value}</strong>
             </div>
           )}
         </div>
         {n.settled && (
-          <div style={{ marginTop: '12px', fontSize: '13px', color: '#2e7d32', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <div className="mt-3 text-[13px] text-green-400 flex items-center gap-1">
             <Icon name="Check" size={14} color="#2e7d32" /> Settled on {new Date(n.settled_at!).toLocaleString()}
           </div>
         )}
       </div>
 
-      {/* Resolution Guide */}
-      <div style={cardStyle}>
-        <h2 style={{ fontSize: '16px', margin: '0 0 8px', color: 'var(--text-primary)' }}>How to Fix</h2>
-        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6', margin: 0 }}>
+      <div className={cardClass}>
+        <h2 className="text-base font-bold mb-2 text-white">How to Fix</h2>
+        <p className="text-[13px] text-white/60 leading-relaxed">
           {RESOLUTION_GUIDE[n.alert_type] || 'Review the metric and take appropriate action.'}
         </p>
       </div>
 
-      {/* Threshold Config */}
       {tc && (
-        <div style={cardStyle}>
-          <h2 style={{ fontSize: '16px', margin: '0 0 10px', color: 'var(--text-primary)' }}>Threshold Configuration</h2>
-          <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-            <p style={{ margin: '4px 0' }}>Operator: <strong style={{ color: 'var(--text-primary)' }}>{tc.operator}</strong></p>
-            <p style={{ margin: '4px 0' }}>Threshold: <strong style={{ color: 'var(--text-primary)' }}>{tc.threshold}</strong></p>
-            <p style={{ margin: '4px 0' }}>Severity: <span style={{ color: tc.severity === 'critical' ? '#d32f2f' : '#f57c00', fontWeight: 'bold' }}>{tc.severity}</span></p>
-            <button onClick={() => router.push('/admin/alerts')} style={{ marginTop: '10px', padding: '6px 16px', background: 'var(--accent-gradient)', color: 'white', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
+        <div className={cardClass}>
+          <h2 className="text-base font-bold mb-2.5 text-white">Threshold Configuration</h2>
+          <div className="text-[13px] text-white/60">
+            <p className="my-1">Operator: <strong className="text-white">{tc.operator}</strong></p>
+            <p className="my-1">Threshold: <strong className="text-white">{tc.threshold}</strong></p>
+            <p className="my-1">Severity: <span className={`font-bold ${tc.severity === 'critical' ? 'text-red-500' : 'text-orange-500'}`}>{tc.severity}</span></p>
+            <button onClick={() => router.push('/admin/alerts')} className="mt-2.5 px-4 py-1.5 bg-gradient-to-r from-orange-500 to-pink-500 text-white border-none rounded-xl cursor-pointer text-[13px] font-bold min-h-[36px]">
               Manage Thresholds <Icon name="ArrowRight" size={12} />
             </button>
           </div>
@@ -151,7 +146,7 @@ export default function AlertDetailPage() {
         <button
           onClick={handleSettle}
           disabled={settling}
-          style={{ padding: '12px 24px', background: settling ? 'var(--border-primary)' : '#2e7d32', color: 'white', border: 'none', borderRadius: 'var(--radius-md)', cursor: settling ? 'not-allowed' : 'pointer', fontSize: '15px', fontWeight: 'bold', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+          className={`w-full py-3 text-white border-none rounded-xl cursor-pointer text-[15px] font-bold flex items-center justify-center gap-2 min-h-[48px] ${settling ? 'bg-white/10 cursor-not-allowed' : 'bg-green-700 cursor-pointer hover:bg-green-600'}`}
         >
           {settling ? 'Settling...' : <><Icon name="Check" size={16} color="#fff" /> Settle This Alert</>}
         </button>

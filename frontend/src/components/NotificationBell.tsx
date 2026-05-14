@@ -29,10 +29,10 @@ const TYPE_ICON: Record<string, string> = {
   admin_message: 'Mail',
 };
 
-const PRIORITY_COLORS: Record<string, { bg: string; border: string }> = {
-  info: { bg: '#e3f2fd', border: '#90caf9' },
-  important: { bg: '#fff3e0', border: '#ffb74d' },
-  urgent: { bg: '#ffebee', border: '#ef9a9a' },
+const PRIORITY_CLASSES: Record<string, string> = {
+  info: 'bg-blue-500/10 border-blue-500/30',
+  important: 'bg-orange-500/10 border-orange-500/30',
+  urgent: 'bg-red-500/10 border-red-500/30',
 };
 
 export default function NotificationBell() {
@@ -66,7 +66,6 @@ export default function NotificationBell() {
 
   const handleClick = async (n: NotificationItem) => {
     setOpen(false);
-    // Mark read / dismiss immediately — detail page uses single lookup which bypasses filters
     if (n.is_admin || n.type === 'admin_message') {
       try { await apiFetch(`/users/me/messages/${n._id}/dismiss`, { method: 'PATCH' }); } catch {}
     } else {
@@ -100,39 +99,15 @@ export default function NotificationBell() {
   };
 
   return (
-    <div style={{ position: 'relative', display: 'inline-block' }}>
+    <div className="relative inline-block">
       <button
         onClick={handleBellClick}
-        style={{
-          background: unreadCount > 0 ? '#e3f2fd' : 'transparent',
-          border: '1px solid #ddd',
-          fontSize: '18px',
-          cursor: 'pointer',
-          position: 'relative',
-          padding: '6px 12px',
-          borderRadius: '6px',
-        }}
+        className={`relative text-lg cursor-pointer px-3 py-1.5 rounded-lg border min-h-[40px] ${unreadCount > 0 ? 'bg-blue-500/10 border-blue-500/30' : 'bg-transparent border-white/10'}`}
         aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
-        >
-          <Icon name="Bell" size={20} color={unreadCount > 0 ? '#1565c0' : '#888'} strokeWidth={2.5} />
-          {unreadCount > 0 && (
-          <span
-            style={{
-              position: 'absolute',
-              top: '-2px',
-              right: '-2px',
-              backgroundColor: '#f44336',
-              color: 'white',
-              borderRadius: '50%',
-              width: '18px',
-              height: '18px',
-              fontSize: '11px',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
+      >
+        <Icon name="Bell" size={20} color={unreadCount > 0 ? '#90caf9' : '#888'} strokeWidth={2.5} />
+        {unreadCount > 0 && (
+          <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white rounded-full w-[18px] h-[18px] text-[11px] font-bold flex items-center justify-center">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -141,31 +116,16 @@ export default function NotificationBell() {
       {open && (
         <>
           <div
-            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 }}
+            className="fixed inset-0 z-[99]"
             onClick={() => setOpen(false)}
           />
-          <div
-            style={{
-              position: 'fixed',
-              top: '52px',
-              right: '20px',
-              width: '400px',
-              maxHeight: '450px',
-              overflowY: 'auto',
-              backgroundColor: 'white',
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-              zIndex: 100,
-              padding: '8px 0',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 16px', borderBottom: '1px solid #eee' }}>
-              <strong>Notifications</strong>
+          <div className="fixed top-[52px] right-5 w-[400px] max-w-[calc(100vw-2rem)] max-h-[450px] overflow-y-auto bg-zinc-900 border border-white/10 rounded-xl shadow-lg z-[100] py-2">
+            <div className="flex justify-between px-4 py-2 border-b border-white/5">
+              <strong className="text-white text-sm">Notifications</strong>
               {notifications.length > 0 && (
                 <button
                   onClick={handleMarkAllRead}
-                  style={{ background: 'none', border: 'none', color: '#2196f3', cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}
+                  className="bg-transparent border-none text-orange-400 cursor-pointer text-[13px] font-medium"
                 >
                   Mark all as read
                 </button>
@@ -173,40 +133,34 @@ export default function NotificationBell() {
             </div>
 
             {notifications.length === 0 ? (
-              <div style={{ padding: '16px', textAlign: 'center', color: '#999' }}>No notifications yet</div>
+              <div className="p-4 text-center text-white/40 text-sm">No notifications yet</div>
             ) : (
               notifications.map((n) => {
                 const isAdmin = n.is_admin || n.type === 'admin_message';
-                const pc = PRIORITY_COLORS[n.priority || 'info'];
+                const pc = PRIORITY_CLASSES[n.priority || 'info'];
                 return (
                   <div
                     key={n._id}
                     onClick={() => handleClick(n)}
-                    style={{
-                      padding: '10px 16px',
-                      color: n.read && !isAdmin ? '#666' : '#000',
-                      backgroundColor: isAdmin ? pc.bg : (n.read ? 'transparent' : '#f5f5f5'),
-                      borderBottom: '1px solid #f0f0f0',
-                      borderLeft: isAdmin ? `3px solid ${pc.border}` : '3px solid transparent',
-                      fontSize: '13px',
-                      lineHeight: '1.4',
-                    }}
+                    className={`px-4 py-2.5 cursor-pointer border-b border-white/5 border-l-[3px] text-[13px] leading-relaxed ${
+                      isAdmin ? pc : n.read ? 'bg-transparent border-l-transparent text-white/40' : 'bg-white/[0.02] border-l-transparent text-white'
+                    }`}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div className="flex justify-between items-start">
                       <div>
-                        <span style={{ marginRight: '6px' }}><Icon name={(TYPE_ICON[n.type] || 'Pin') as LucideIconName} size={14} /></span>
+                        <span className="mr-1.5"><Icon name={(TYPE_ICON[n.type] || 'Pin') as LucideIconName} size={14} /></span>
                         {isAdmin ? (
                           <>
-                            <strong style={{ fontSize: '13px' }}>{n.title}</strong>
+                            <strong className="text-[13px] text-white">{n.title}</strong>
                             {n.priority && n.priority !== 'info' && (
-                              <span style={{ marginLeft: '6px', padding: '1px 5px', borderRadius: '3px', fontSize: '10px', fontWeight: 'bold', background: pc.border, color: '#fff' }}>
+                              <span className="ml-1.5 rounded-full px-1.5 py-px text-[10px] font-bold uppercase tracking-wider text-white bg-orange-500 border border-orange-500/30">
                                 {n.priority.toUpperCase()}
                               </span>
                             )}
-                            <div style={{ color: '#555', marginTop: '3px', fontSize: '12px' }}>
+                            <div className="text-white/50 mt-1 text-xs">
                               {n.body?.substring(0, 100)}{(n.body?.length || 0) > 100 ? '...' : ''}
                             </div>
-                            <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
+                            <div className="text-[11px] text-white/30 mt-0.5">
                               From: {n.created_by} · {n.message_type === 'broadcast' ? <><Icon name="Megaphone" size={11} /> Broadcast</> : <><Icon name="User" size={11} /> Private</>}
                             </div>
                           </>
@@ -217,7 +171,7 @@ export default function NotificationBell() {
                       {isAdmin && (
                         <button
                           onClick={(e) => handleDismissAdmin(e, n._id)}
-                          style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: '16px', padding: '0 4px', flexShrink: 0 }}
+                          className="bg-transparent border-none text-white/30 cursor-pointer text-base px-1 py-0 flex-shrink-0 hover:text-white/60"
                           title="Dismiss"
                         >
                           ×
@@ -229,8 +183,8 @@ export default function NotificationBell() {
               })
             )}
 
-            <div style={{ padding: '8px 16px', borderTop: '1px solid #eee', textAlign: 'center' }}>
-              <Link href="/notifications" style={{ fontSize: '13px', color: '#1565c0', textDecoration: 'none' }} onClick={() => setOpen(false)}>
+            <div className="px-4 py-2 border-t border-white/5 text-center">
+              <Link href="/notifications" className="text-[13px] text-orange-400 no-underline hover:text-orange-300" onClick={() => setOpen(false)}>
                 See all notifications →
               </Link>
             </div>

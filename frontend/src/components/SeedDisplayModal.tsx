@@ -25,113 +25,50 @@ export function SeedDisplayModal({ words, onClose }: SeedDisplayModalProps) {
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        padding: '16px',
-        backdropFilter: 'blur(4px)',
-      }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[1000] p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget && confirmed) onClose();
       }}
     >
-      <div
-        style={{
-          backgroundColor: 'var(--bg-secondary)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '28px',
-          maxWidth: '480px',
-          width: '100%',
-          boxShadow: 'var(--shadow-md)',
-          border: '1px solid var(--border-primary)',
-        }}
-      >
-        <h2 style={{ margin: '0 0 8px 0', fontSize: '20px', color: 'var(--text-primary)' }}>
+      <div className="bg-zinc-900 border border-white/10 rounded-2xl p-7 max-w-[480px] w-full shadow-xl">
+        <h2 className="mt-0 mb-2 text-xl text-white font-bold">
           Your Seed Phrase
         </h2>
 
-        <div
-          style={{
-            backgroundColor: 'rgba(255,152,0,0.08)',
-            border: '2px solid #ff9800',
-            borderRadius: 'var(--radius-md)',
-            padding: '14px',
-            marginBottom: '16px',
-            fontSize: '13px',
-            color: '#e65100',
-            lineHeight: 1.5,
-          }}
-        >
+        <div className="bg-orange-500/10 border-2 border-orange-500 rounded-xl p-3.5 mb-4 text-[13px] text-orange-500 leading-relaxed">
           <strong>Write this down and store it securely.</strong> Anyone with this phrase can take over your identity. We do not store it and cannot recover it.
         </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '8px',
-            marginBottom: '16px',
-          }}
-        >
+        <div className="grid grid-cols-3 gap-2 mb-4">
           {words.map((word, i) => (
             <div
               key={i}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '8px 10px',
-                backgroundColor: 'var(--bg-tertiary)',
-                borderRadius: 'var(--radius-sm)',
-                fontSize: '14px',
-                fontFamily: 'Geist Mono, monospace',
-                color: 'var(--text-primary)',
-                border: '1px solid var(--border-primary)',
-              }}
+              className="flex items-center gap-1.5 px-2.5 py-2 bg-white/[0.03] rounded-lg text-sm font-mono text-white border border-white/10"
             >
-              <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>{i + 1}</span>
+              <span className="text-white/40 text-[11px]">{i + 1}</span>
               <span>{word}</span>
             </div>
           ))}
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+        <div className="flex gap-2 mb-4">
           <button
             onClick={handleCopy}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: copied ? 'rgba(46,125,50,0.1)' : 'var(--bg-tertiary)',
-              border: `1px solid ${copied ? '#4caf50' : 'var(--border-primary)'}`,
-              borderRadius: 'var(--radius-sm)',
-              cursor: 'pointer',
-              fontSize: '13px',
-              color: copied ? '#2e7d32' : 'var(--text-primary)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
+            className={`px-4 py-2 rounded-xl cursor-pointer text-[13px] flex items-center gap-1.5 min-h-[40px] ${copied ? 'bg-green-500/10 border border-green-500 text-green-400' : 'bg-white/5 border border-white/10 text-white'}`}
           >
             {copied ? <><Icon name="Check" size={14} color="#2e7d32" /> Copied!</> : <><Icon name="Clipboard" size={14} /> Copy to Clipboard</>}
           </button>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+        <div className="flex items-center gap-2 mb-4">
           <input
             type="checkbox"
             id="seed-confirm"
             checked={confirmed}
             onChange={(e) => setConfirmed(e.target.checked)}
-            style={{ width: '18px', height: '18px', accentColor: 'var(--accent)' }}
+            className="w-4.5 h-4.5 accent-orange-500"
           />
-          <label htmlFor="seed-confirm" style={{ fontSize: '13px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+          <label htmlFor="seed-confirm" className="text-[13px] cursor-pointer text-white/60">
             I have saved my seed phrase securely
           </label>
         </div>
@@ -139,17 +76,7 @@ export function SeedDisplayModal({ words, onClose }: SeedDisplayModalProps) {
         <button
           onClick={onClose}
           disabled={!confirmed}
-          style={{
-            width: '100%',
-            padding: '12px',
-            backgroundColor: confirmed ? 'var(--accent-gradient)' : 'var(--border-primary)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 'var(--radius-md)',
-            cursor: confirmed ? 'pointer' : 'not-allowed',
-            fontSize: '15px',
-            fontWeight: 'bold',
-          }}
+          className={`w-full py-3 text-white border-none rounded-xl cursor-pointer text-[15px] font-bold min-h-[44px] ${confirmed ? 'bg-gradient-to-r from-orange-500 to-pink-500 cursor-pointer' : 'bg-white/10 cursor-not-allowed'}`}
         >
           I Understand, Close
         </button>
