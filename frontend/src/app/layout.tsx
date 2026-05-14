@@ -5,84 +5,37 @@ import AuthInitializer from "@/components/AuthInitializer";
 import ToastContainer from "@/components/Toast";
 import HeaderBells from "@/components/HeaderBells";
 import AnalyticsBeacon from "@/components/AnalyticsBeacon";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "YoTop10 — Fact Mine. Debate Ground.",
-  description: "The open catalog of ranked lists. Anyone can browse, submit, and debate without creating an account.",
+  description: "The open catalog of ranked lists.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col">
-        <header
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '10px 20px',
-            background: 'var(--bg-secondary)',
-            borderBottom: '1px solid var(--border-primary)',
-            position: 'sticky',
-            top: 0,
-            zIndex: 50,
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <Link
-              href="/"
-              style={{
-                fontWeight: 800,
-                fontSize: '16px',
-                letterSpacing: '-0.01em',
-                textDecoration: 'none',
-                background: 'linear-gradient(135deg, #ff3b30 0%, #ff2d78 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
-              YoTop10
-            </Link>
-            <nav style={{ display: 'flex', gap: '4px', fontSize: '13px' }}>
-              {[
-                { href: '/', label: 'Feed' },
-                { href: '/categories', label: 'Categories' },
-                { href: '/search', label: 'Search' },
-                { href: '/submit', label: 'Submit' },
-              ].map(l => (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: 'var(--radius-sm)',
-                    color: 'var(--text-secondary)',
-                    textDecoration: 'none',
-                    fontWeight: 500,
-                    transition: 'all var(--transition)',
-                  }}
-                >
-                  {l.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <html lang="en" className="h-full antialiased dark">
+      <body className="h-full bg-zinc-950 text-zinc-100">
+        <nav className="sticky top-0 z-50 border-b border-white/5 bg-zinc-950/70 backdrop-blur-2xl">
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
+            <div className="flex items-center gap-8">
+              <Link href="/" className="text-lg font-bold tracking-tight">
+                <span className="bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+                  YoTop10
+                </span>
+              </Link>
+              <div className="flex gap-1 text-sm font-medium text-zinc-400">
+                <Link href="/" className="rounded-lg px-3 py-1.5 transition hover:bg-white/5 hover:text-white">Feed</Link>
+                <Link href="/categories" className="rounded-lg px-3 py-1.5 transition hover:bg-white/5 hover:text-white">Categories</Link>
+                <Link href="/search" className="rounded-lg px-3 py-1.5 transition hover:bg-white/5 hover:text-white">Search</Link>
+                <Link href="/submit" className="rounded-lg px-3 py-1.5 transition hover:bg-white/5 hover:text-white">Submit</Link>
+              </div>
+            </div>
             <HeaderBells />
-            <ThemeToggle />
           </div>
-        </header>
+        </nav>
         <AuthInitializer />
-        <main style={{ flex: 1 }}>{children}</main>
+        <main className="flex-1">{children}</main>
         <Eruda />
         <ToastContainer />
         <AnalyticsBeacon />

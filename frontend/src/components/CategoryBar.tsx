@@ -2,73 +2,34 @@
 
 import Link from 'next/link';
 
-interface CategoryBarProps {
-  active?: string;
-}
-
-const PARENT_CATEGORIES = [
-  { slug: 'movies', label: 'Movies' },
-  { slug: 'music', label: 'Music' },
-  { slug: 'food', label: 'Food' },
-  { slug: 'gaming', label: 'Gaming' },
-  { slug: 'books', label: 'Books' },
-  { slug: 'technology', label: 'Tech' },
-  { slug: 'sports', label: 'Sports' },
-  { slug: 'television', label: 'TV' },
-  { slug: 'business', label: 'Business' },
-  { slug: 'lifestyle', label: 'Lifestyle' },
+const CATS = [
+  'movies','music','food','gaming','books','technology','sports','television','business','lifestyle'
 ];
 
-export function CategoryBar({ active }: CategoryBarProps) {
+export function CategoryBar({ active }: { active?: string }) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        gap: '0',
-        overflowX: 'auto',
-        borderBottom: '2px solid var(--border-primary)',
-        marginBottom: '0',
-      }}
-    >
+    <div className="flex gap-0 overflow-x-auto border-b border-white/5">
       <Link
         href="/"
-        style={{
-          padding: '10px 18px',
-          fontSize: '13px',
-          fontWeight: 700,
-          textDecoration: 'none',
-          color: !active ? 'var(--accent)' : 'var(--text-muted)',
-          borderBottom: !active ? '2px solid var(--accent)' : '2px solid transparent',
-          marginBottom: '-2px',
-          backgroundColor: !active ? 'var(--accent-soft)' : 'transparent',
-          textTransform: 'uppercase',
-          letterSpacing: '0.6px',
-          whiteSpace: 'nowrap',
-          transition: 'color var(--transition), border-color var(--transition), background var(--transition)',
-        }}
+        className={`px-4 py-2.5 text-[13px] font-semibold uppercase tracking-wider transition ${
+          !active
+            ? 'border-b-2 border-orange-500 text-white'
+            : 'border-b-2 border-transparent text-zinc-500 hover:text-zinc-300'
+        }`}
       >
         All
       </Link>
-      {PARENT_CATEGORIES.map((cat) => (
+      {CATS.map((cat) => (
         <Link
-          key={cat.slug}
-          href={`/c/${cat.slug}`}
-          style={{
-            padding: '10px 18px',
-            fontSize: '13px',
-            fontWeight: 700,
-            textDecoration: 'none',
-            color: active === cat.slug ? 'var(--accent)' : 'var(--text-muted)',
-            borderBottom: active === cat.slug ? '2px solid var(--accent)' : '2px solid transparent',
-            marginBottom: '-2px',
-            backgroundColor: active === cat.slug ? 'var(--accent-soft)' : 'transparent',
-            textTransform: 'uppercase',
-            letterSpacing: '0.6px',
-            whiteSpace: 'nowrap',
-            transition: 'color var(--transition), border-color var(--transition), background var(--transition)',
-          }}
+          key={cat}
+          href={`/c/${cat}`}
+          className={`px-4 py-2.5 text-[13px] font-semibold uppercase tracking-wider transition ${
+            active === cat
+              ? 'border-b-2 border-orange-500 text-white'
+              : 'border-b-2 border-transparent text-zinc-500 hover:text-zinc-300'
+          }`}
         >
-          {cat.label}
+          {cat}
         </Link>
       ))}
     </div>

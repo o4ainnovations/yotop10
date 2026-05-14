@@ -4,154 +4,65 @@ import Link from 'next/link';
 import { Icon } from './icons/Icon';
 import type { Post } from '@/lib/api/types';
 
-const POST_TYPE_LABELS: Record<string, string> = {
-  top_list: 'Ranked List',
-  this_vs_that: 'This vs That',
-  who_is_better: 'Who Is Better',
-  fact_drop: 'Fact Drop',
-  best_of: 'Best Of',
-  worst_of: 'Worst Of',
-  hidden_gems: 'Hidden Gems',
-  counter_list: 'Counter List',
+const TYPE_LABEL: Record<string, string> = {
+  top_list: 'Ranked', this_vs_that: 'VS', who_is_better: 'Versus',
+  fact_drop: 'Fact', best_of: 'Best Of', worst_of: 'Worst',
+  hidden_gems: 'Hidden Gem', counter_list: 'Rebuttal',
 };
 
-function timeAgo(dateStr: string): string {
-  const now = Date.now();
-  const then = new Date(dateStr).getTime();
-  const diff = now - then;
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  const weeks = Math.floor(days / 7);
-  if (weeks < 4) return `${weeks}w ago`;
-  return new Date(then).toLocaleDateString();
+function ago(d: string): string {
+  const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
+  if (m < 1) return 'now';
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  const days = Math.floor(h / 24);
+  if (days < 7) return `${days}d`;
+  return new Date(d).toLocaleDateString();
 }
 
 export function PostCard({ post }: { post: Post }) {
   const isCounter = post.post_type === 'counter_list';
-  const label = POST_TYPE_LABELS[post.post_type] || post.post_type;
 
   return (
-    <Link
-      href={`/${post.slug}`}
-      style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
-    >
-      <article
-        style={{
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--border-primary)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '20px',
-          boxShadow: 'var(--shadow-sm)',
-          transition: 'border-color var(--transition), box-shadow var(--transition)',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = 'var(--accent)';
-          e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = 'var(--border-primary)';
-          e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-            {isCounter && (
-              <span style={{ color: 'var(--accent)', fontFamily: 'Geist Mono, monospace', fontSize: '14px', fontWeight: 'bold' }}>
-                {'\u21B3'}
-              </span>
-            )}
-            <span
-              style={{
-                fontSize: '11px',
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.6px',
-                color: 'var(--accent)',
-                border: '1.5px solid var(--accent)',
-                borderRadius: 'var(--radius-sm)',
-                padding: '2px 8px',
-              }}
-            >
-              {label}
-            </span>
-            <span
-              style={{
-                fontSize: '11px',
-                fontWeight: 500,
-                color: 'var(--text-muted)',
-                border: '1px solid var(--border-primary)',
-                borderRadius: 'var(--radius-sm)',
-                padding: '2px 8px',
-                textTransform: 'capitalize',
-              }}
-            >
-              {post.category_slug}
-            </span>
-          </div>
+    <Link href={`/${post.slug}`} className="group block">
+      <article className="rounded-2xl border border-white/5 bg-white/[0.02] p-6 backdrop-blur-sm transition-all duration-300 hover:border-orange-500/30 hover:bg-white/[0.04] hover:shadow-lg hover:shadow-orange-500/5">
+        <div className="mb-3 flex items-center gap-2">
+          {isCounter && (
+            <span className="text-sm font-bold text-orange-500">&larr;</span>
+          )}
+          <span className="rounded-full border border-orange-500/30 bg-orange-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-orange-400">
+            {TYPE_LABEL[post.post_type] || post.post_type}
+          </span>
+          <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[11px] capitalize text-zinc-500">
+            {post.category_slug}
+          </span>
         </div>
 
-        <h3
-          style={{
-            margin: '0 0 8px 0',
-            fontSize: '16px',
-            fontWeight: 700,
-            color: 'var(--text-primary)',
-            lineHeight: 1.3,
-          }}
-        >
+        <h3 className="mb-2 text-lg font-bold leading-snug text-white group-hover:text-white">
           {post.title}
         </h3>
 
-        <p
-          style={{
-            margin: '0 0 12px 0',
-            fontSize: '13px',
-            color: 'var(--text-secondary)',
-            lineHeight: 1.5,
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-          }}
-        >
-          {post.intro}
-        </p>
+        {post.intro && (
+          <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-zinc-500">
+            {post.intro}
+          </p>
+        )}
 
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            fontSize: '12px',
-            color: 'var(--text-muted)',
-          }}
-        >
-          <span>
-            <span style={{ fontFamily: 'Geist Mono, monospace', color: 'var(--text-secondary)' }}>
-              {post.author_display_name}
+        <div className="flex items-center justify-between text-xs text-zinc-600">
+          <span className="font-mono text-zinc-500">{post.author_display_name}</span>
+          <span className="text-zinc-700">&middot;</span>
+          <span>{ago(post.created_at)}</span>
+          <span className="flex-1" />
+          <span className="flex items-center gap-1.5">
+            <Icon name="ChartBar" size={13} />
+            <span className={post.view_count > 1000 ? 'text-orange-400' : ''}>
+              {post.view_count > 1000 ? `${(post.view_count / 1000).toFixed(1)}k` : post.view_count}
             </span>
-            <span style={{ margin: '0 8px', color: 'var(--border-primary)' }}>&middot;</span>
-            {timeAgo(post.created_at)}
           </span>
-
-          <span style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <Icon name="ChartBar" size={13} color="var(--text-muted)" />
-              <span>
-                {post.view_count > 1000
-                  ? `${(post.view_count / 1000).toFixed(1)}k`
-                  : post.view_count}
-              </span>
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <Icon name="MessageCircle" size={13} color="var(--text-muted)" />
-              <span>{post.comment_count}</span>
-            </span>
+          <span className="flex items-center gap-1.5 ml-3">
+            <Icon name="MessageCircle" size={13} />
+            <span>{post.comment_count}</span>
           </span>
         </div>
       </article>
