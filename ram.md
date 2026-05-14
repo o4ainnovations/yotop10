@@ -59,6 +59,16 @@
   15. `components/ThemeToggle.tsx` — Sun/Moon Lucide icons replacing emojis
   Design system: `bg-zinc-950` base, `bg-white/5` cards, `border-white/10` borders, `from-orange-500 to-pink-500` accents, `rounded-xl` throughout, mobile cards collapsing to desktop tables, full-screen modals on mobile, `min-h-[44px]` touch targets
 
+- **[UI] Tailwind feed + layout rewrite** — Rewrote 3 app files + created 4 new components with Tailwind CSS exclusively (zero inline styles, zero custom CSS):
+  1. `app/FeedClient.tsx` — Sort pills (newest/viewed/comments), DataCard list, IntersectionObserver infinite scroll (400px rootMargin, no spinner), empty state with CTA
+  2. `app/page.tsx` — SSR fetch posts + trending queries, CommandSearch + FeedClient rendering, no hero/marketing copy
+  3. `app/layout.tsx` — Ghost header (backdrop-blur-xl, reduced padding), "Yo" + "Top10" gradient logo, removed old nav links + mobile bottom nav bar, search icon + ThemeToggle + NavUserAvatar + HeaderBells, FloatingDock at bottom (hidden on /admin)
+  4. `components/DataCard.tsx` — Replaces PostCard: post type pill, category slug, title, intro, author/relativeTime/chart bar metrics, font-mono tabular-nums
+  5. `components/CommandSearch.tsx` — Search input with Lucide Search icon, trending query chips
+  6. `components/FloatingDock.tsx` — Fixed bottom dock: Feed/Categories/Search/Submit with active state
+  7. `components/NavUserAvatar.tsx` — First-letter circle linked to profile
+  Deleted: `PostCard.tsx`, `CategoryBar.tsx`
+
 ## Current
 - **[Fix] Hydration errors — deterministic date/time rendering** — Replaced all `toLocaleDateString()`, `toLocaleTimeString()`, `toLocaleString()`, and custom `ageStr()` with `formatDate()`, `formatTime()`, `relativeTime()` from `@/lib/dates` across 9 files. Added `suppressHydrationWarning` to every date/time rendering element.
 

@@ -31,7 +31,7 @@ interface Post {
   author_username: string;
   author_display_name: string;
   category_slug: string;
-  format: 'list_only' | 'hero_list' | 'full_list';
+  format?: 'list_only' | 'hero_list' | 'full_list';
   hero_image_url?: string | null;
   created_at: string;
 }

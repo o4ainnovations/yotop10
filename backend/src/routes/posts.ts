@@ -176,7 +176,22 @@ router.get('/', async (req, res) => {
       Post.countDocuments(query),
     ]);
 
-// Format posts
+// Format posts — attach top 3 items in a single batch lookup
+    const postIds = posts.map((p) => p._id);
+    const allItems = await ListItem.find({ post_id: { $in: postIds } })
+      .sort({ rank: 1 })
+      .select('post_id rank title')
+      .lean();
+
+    const itemsByPost: Record<string, Array<{ rank: number; title: string }>> = {};
+    for (const item of allItems) {
+      const pid = (item as Record<string, unknown>).post_id?.toString() || '';
+      if (!itemsByPost[pid]) itemsByPost[pid] = [];
+      if (itemsByPost[pid].length < 3) {
+        itemsByPost[pid].push({ rank: item.rank, title: item.title });
+      }
+    }
+
     const formattedPosts = posts.map((post) => ({
       id: post._id,
       slug: post.slug,
@@ -188,6 +203,8 @@ router.get('/', async (req, res) => {
       author_username: post.author_username,
       author_display_name: post.author_display_name,
       format: (post as Record<string, unknown>).format || 'list_only',
+      hero_image_url: (post as Record<string, unknown>).hero_image_url || null,
+      topItems: itemsByPost[post._id.toString()] || [],
       created_at: post.created_at,
       published_at: post.published_at,
       category_slug: post.category_slug,

@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { API, SingleCategoryResponse, PostsResponse } from '@/lib/api';
-import { PostCard } from '@/components/PostCard';
-import { CategoryBar } from '@/components/CategoryBar';
+import { DataCard } from '@/components/DataCard';
 import NotFound from '@/components/NotFound';
 import { Icon } from '@/components/icons/Icon';
 import type { Post } from '@/lib/api/types';
@@ -123,8 +122,6 @@ export default function CategoryFeedPage() {
         )}
       </div>
 
-      <CategoryBar active={slug} />
-
       <main className="mx-auto max-w-3xl px-3 pb-20 sm:px-4">
         {posts.length === 0 ? (
           <div className="py-16 text-center sm:py-20">
@@ -144,7 +141,7 @@ export default function CategoryFeedPage() {
           <>
             <div className="space-y-3 pt-2 sm:space-y-4 sm:pt-4">
               {posts.map((post) => (
-                <PostCard key={post.id} post={post} />
+                <DataCard key={post.id} post={post} />
               ))}
             </div>
 
