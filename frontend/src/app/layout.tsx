@@ -6,8 +6,8 @@ import ToastContainer from "@/components/Toast";
 import HeaderBells from "@/components/HeaderBells";
 import AnalyticsBeacon from "@/components/AnalyticsBeacon";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { FloatingDock } from "@/components/FloatingDock";
 import { NavUserAvatar } from "@/components/NavUserAvatar";
+import { DynamicIsland } from "@/components/DynamicIsland";
 import { Icon } from "@/components/icons/Icon";
 import Link from "next/link";
 
@@ -22,9 +22,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="h-full bg-zinc-950 text-zinc-100">
         <nav className="sticky top-0 z-50 border-b border-white/5 bg-zinc-950/60 backdrop-blur-xl">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-3 py-2.5 sm:px-6">
-            <Link href="/" className="flex items-baseline gap-0 text-lg">
-              <span className="font-light text-zinc-400">Yo</span>
-              <span className="font-extrabold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+            <Link href="/" className="flex items-baseline gap-0">
+              <span className="font-accent gradient-text text-2xl">YO</span>
+              <span className="font-display text-2xl text-white dark:text-black tracking-tight">
                 Top10
               </span>
             </Link>
@@ -43,10 +43,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </nav>
         <AuthInitializer />
         <main className="flex-1">{children}</main>
-        <FloatingDock />
         <Eruda />
         <ToastContainer />
         <AnalyticsBeacon />
+        <DynamicIsland />
       </body>
     </html>
   );
