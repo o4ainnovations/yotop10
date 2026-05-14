@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Icon } from '@/components/icons/Icon';
 
 interface SeedDisplayModalProps {
   words: string[];
@@ -30,12 +31,13 @@ export function SeedDisplayModal({ words, onClose }: SeedDisplayModalProps) {
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 1000,
         padding: '16px',
+        backdropFilter: 'blur(4px)',
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget && confirmed) onClose();
@@ -43,24 +45,25 @@ export function SeedDisplayModal({ words, onClose }: SeedDisplayModalProps) {
     >
       <div
         style={{
-          backgroundColor: '#fff',
-          borderRadius: '12px',
+          backgroundColor: 'var(--bg-secondary)',
+          borderRadius: 'var(--radius-lg)',
           padding: '28px',
           maxWidth: '480px',
           width: '100%',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
+          boxShadow: 'var(--shadow-md)',
+          border: '1px solid var(--border-primary)',
         }}
       >
-        <h2 style={{ margin: '0 0 8px 0', fontSize: '20px' }}>
+        <h2 style={{ margin: '0 0 8px 0', fontSize: '20px', color: 'var(--text-primary)' }}>
           Your Seed Phrase
         </h2>
 
         <div
           style={{
-            backgroundColor: '#fff3e0',
+            backgroundColor: 'rgba(255,152,0,0.08)',
             border: '2px solid #ff9800',
-            borderRadius: '8px',
-            padding: '12px',
+            borderRadius: 'var(--radius-md)',
+            padding: '14px',
             marginBottom: '16px',
             fontSize: '13px',
             color: '#e65100',
@@ -85,14 +88,16 @@ export function SeedDisplayModal({ words, onClose }: SeedDisplayModalProps) {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                padding: '6px 8px',
-                backgroundColor: '#f5f5f5',
-                borderRadius: '4px',
+                padding: '8px 10px',
+                backgroundColor: 'var(--bg-tertiary)',
+                borderRadius: 'var(--radius-sm)',
                 fontSize: '14px',
-                fontFamily: 'monospace',
+                fontFamily: 'Geist Mono, monospace',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-primary)',
               }}
             >
-              <span style={{ color: '#888', fontSize: '11px' }}>{i + 1}</span>
+              <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>{i + 1}</span>
               <span>{word}</span>
             </div>
           ))}
@@ -103,15 +108,18 @@ export function SeedDisplayModal({ words, onClose }: SeedDisplayModalProps) {
             onClick={handleCopy}
             style={{
               padding: '8px 16px',
-              backgroundColor: copied ? '#e8f5e9' : '#f5f5f5',
-              border: `1px solid ${copied ? '#4caf50' : '#ccc'}`,
-              borderRadius: '4px',
+              backgroundColor: copied ? 'rgba(46,125,50,0.1)' : 'var(--bg-tertiary)',
+              border: `1px solid ${copied ? '#4caf50' : 'var(--border-primary)'}`,
+              borderRadius: 'var(--radius-sm)',
               cursor: 'pointer',
               fontSize: '13px',
-              color: copied ? '#2e7d32' : '#333',
+              color: copied ? '#2e7d32' : 'var(--text-primary)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
             }}
           >
-            {copied ? 'Copied!' : 'Copy to Clipboard'}
+            {copied ? <><Icon name="Check" size={14} color="#2e7d32" /> Copied!</> : <><Icon name="Clipboard" size={14} /> Copy to Clipboard</>}
           </button>
         </div>
 
@@ -121,9 +129,9 @@ export function SeedDisplayModal({ words, onClose }: SeedDisplayModalProps) {
             id="seed-confirm"
             checked={confirmed}
             onChange={(e) => setConfirmed(e.target.checked)}
-            style={{ width: '18px', height: '18px' }}
+            style={{ width: '18px', height: '18px', accentColor: 'var(--accent)' }}
           />
-          <label htmlFor="seed-confirm" style={{ fontSize: '13px', cursor: 'pointer' }}>
+          <label htmlFor="seed-confirm" style={{ fontSize: '13px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
             I have saved my seed phrase securely
           </label>
         </div>
@@ -134,10 +142,10 @@ export function SeedDisplayModal({ words, onClose }: SeedDisplayModalProps) {
           style={{
             width: '100%',
             padding: '12px',
-            backgroundColor: confirmed ? '#1565c0' : '#bdbdbd',
+            backgroundColor: confirmed ? 'var(--accent-gradient)' : 'var(--border-primary)',
             color: '#fff',
             border: 'none',
-            borderRadius: '6px',
+            borderRadius: 'var(--radius-md)',
             cursor: confirmed ? 'pointer' : 'not-allowed',
             fontSize: '15px',
             fontWeight: 'bold',

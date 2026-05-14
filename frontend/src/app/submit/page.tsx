@@ -432,21 +432,23 @@ export default function SubmitPage() {
   if (submitted) {
     return (
       <div style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 20px' }}>
-        <div style={{ backgroundColor: '#f0f9f0', border: '1px solid #4caf50', borderRadius: '8px', padding: '30px', textAlign: 'center' }}>
-          <h1 style={{ color: '#2e7d32', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}><Icon name="Check" size={24} color="#2e7d32" /> Post submitted!</h1>
-          <p style={{ fontSize: '18px', margin: '10px 0' }}>Your list is now pending review by our admin team.</p>
+        <div className="premium-card" style={{ padding: '30px', textAlign: 'center', borderColor: '#4caf50' }}>
+          <h1 style={{ color: '#2e7d32', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', fontSize: '24px', marginBottom: '12px' }}>
+            <Icon name="Check" size={24} color="#2e7d32" /> Post submitted!
+          </h1>
+          <p style={{ fontSize: '18px', margin: '10px 0', color: 'var(--text-primary)' }}>Your list is now pending review by our admin team.</p>
           
-          <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '5px', margin: '20px 0', textAlign: 'left' }}>
-            <p><strong>Title:</strong> {submitted.title}</p>
-            <p><strong>Status:</strong> <span style={{ backgroundColor: '#fff3e0', padding: '2px 8px', borderRadius: '3px' }}>Pending Review</span></p>
-            <p><strong>Items:</strong> {submitted.itemCount} items submitted</p>
+          <div style={{ background: 'var(--bg-tertiary)', padding: '20px', borderRadius: 'var(--radius-md)', margin: '20px 0', textAlign: 'left' }}>
+            <p style={{ color: 'var(--text-primary)' }}><strong style={{ color: 'var(--text-primary)' }}>Title:</strong> {submitted.title}</p>
+            <p style={{ color: 'var(--text-primary)' }}><strong style={{ color: 'var(--text-primary)' }}>Status:</strong> <span style={{ background: 'var(--accent-soft)', color: 'var(--accent)', padding: '2px 8px', borderRadius: 'var(--radius-sm)' }}>Pending Review</span></p>
+            <p style={{ color: 'var(--text-primary)' }}><strong style={{ color: 'var(--text-primary)' }}>Items:</strong> {submitted.itemCount} items submitted</p>
           </div>
           
-          <div style={{ marginTop: '20px' }}>
+          <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
             {submitted.username && (
               <Link 
                 href={`/a/${submitted.username.replace(/^a_/, '')}`}
-                style={{ marginRight: '10px', padding: '10px 20px', backgroundColor: '#0066cc', color: 'white', textDecoration: 'none', borderRadius: '5px' }}
+                className="premium-btn premium-btn-primary"
               >
                 View My Profile
               </Link>
@@ -454,7 +456,7 @@ export default function SubmitPage() {
             <button 
               onClick={() => {
                 setSubmitted(null);
-                setTitle('');
+                setTitle('Top 10 ');
                 setIntro('');
                 setPostFormat('list_only');
                 setHeroImageUrl('');
@@ -464,13 +466,13 @@ export default function SubmitPage() {
                 setAuthorName('');
                 localStorage.removeItem(DRAFT_KEY);
               }}
-              style={{ marginRight: '10px', padding: '10px 20px', backgroundColor: '#0066cc', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
+              className="premium-btn premium-btn-primary"
             >
               Submit Another Post
             </button>
             <Link 
               href="/"
-              style={{ padding: '10px 20px', backgroundColor: '#666', color: 'white', textDecoration: 'none', borderRadius: '5px' }}
+              className="premium-btn premium-btn-secondary"
             >
               Go to Feed
             </Link>
@@ -480,25 +482,36 @@ export default function SubmitPage() {
     );
   }
 
+  // ── Dynamic border helper for the title input ──
+  const titleInputBorderColor =
+    errors.title || errors.titleSimilarity ? 'var(--accent)' :
+    titleCheck?.blocked ? 'var(--accent)' :
+    titleCheck?.warning ? '#ff9800' :
+    titleCheck?.allowed ? '#4caf50' : undefined;
+
+  const titleInputBorderWidth = titleInputBorderColor ? '2px' : undefined;
+
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
       <header style={{ marginBottom: '30px' }}>
-        <h1>Submit a Top 10 List</h1>
-        <p style={{ color: '#666' }}>Share your ranked list with the world. No account required.</p>
+        <h1 style={{ fontSize: '28px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>Submit a Top 10 List</h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '15px' }}>Share your ranked list with the world. No account required.</p>
         <nav style={{ marginTop: '10px' }}>
-          <Link href="/">← Back to Feed</Link>
+          <Link href="/" style={{ color: 'var(--accent)', textDecoration: 'none', fontSize: '14px', transition: 'var(--transition)' }}>
+            &larr; Back to Feed
+          </Link>
         </nav>
       </header>
 
       <form onSubmit={handleSubmit} noValidate>
         {/* Step 1: Basic Info */}
-        <section style={{ marginBottom: '30px' }}>
-          <h2>Basic Information</h2>
+        <section style={{ marginBottom: '32px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', borderBottom: '1px solid var(--border-primary)', paddingBottom: '10px', marginBottom: '20px' }}>Basic Information</h2>
 
           {/* Category */}
           <div style={{ marginBottom: '20px' }}>
-            <label htmlFor="category" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-              Category <span aria-label="required" style={{ color: '#d32f2f' }}>*</span>
+            <label htmlFor="category" style={{ display: 'block', marginBottom: '6px', fontWeight: 700, color: 'var(--text-primary)', fontSize: '14px' }}>
+              Category <span aria-label="required" style={{ color: 'var(--accent)' }}>*</span>
             </label>
             <select
               id="category"
@@ -507,25 +520,34 @@ export default function SubmitPage() {
               aria-required="true"
               aria-invalid={!!errors.category}
               aria-describedby={errors.category ? 'category-error' : 'category-help'}
-              style={{ width: '100%', padding: '10px', fontSize: '16px', border: errors.category ? '2px solid #d32f2f' : '1px solid #ccc', borderRadius: '5px' }}
+              className="premium-input"
+              style={{
+                appearance: 'none',
+                backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%239494a8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 14px center',
+                paddingRight: '36px',
+                borderColor: errors.category ? 'var(--accent)' : undefined,
+                borderWidth: errors.category ? '2px' : undefined,
+              }}
             >
               <option value="">Select a category...</option>
               {categories.map(cat => (
                 <option key={cat.id} value={cat.slug}>
-                  {cat.icon || <Icon name="Folder" size={14} />} {cat.name}
+                  {cat.icon || ''} {cat.name}
                 </option>
               ))}
             </select>
-            <div id="category-help" style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>Choose exactly one category for your list</div>
+            <div id="category-help" style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '5px' }}>Choose exactly one category for your list</div>
             {errors.category && (
-              <div id="category-error" role="alert" style={{ color: '#d32f2f', fontSize: '14px', marginTop: '5px' }}>{errors.category}</div>
+              <div id="category-error" role="alert" style={{ color: 'var(--accent)', fontSize: '13px', marginTop: '5px' }}>{errors.category}</div>
             )}
           </div>
 
           {/* Title */}
           <div style={{ marginBottom: '20px' }}>
-            <label htmlFor="title" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-              Title <span aria-label="required" style={{ color: '#d32f2f' }}>*</span>
+            <label htmlFor="title" style={{ display: 'block', marginBottom: '6px', fontWeight: 700, color: 'var(--text-primary)', fontSize: '14px' }}>
+              Title <span aria-label="required" style={{ color: 'var(--accent)' }}>*</span>
             </label>
             <input
               id="title"
@@ -540,51 +562,46 @@ export default function SubmitPage() {
               aria-required="true"
               aria-invalid={!!errors.title || !!errors.titleSimilarity}
               aria-describedby={errors.title || errors.titleSimilarity ? 'title-error' : 'title-help'}
-              style={{ 
-                width: '100%', 
-                padding: '10px', 
-                fontSize: '16px', 
-                border: errors.title || errors.titleSimilarity ? '2px solid #d32f2f' : 
-                        titleCheck?.blocked ? '2px solid #d32f2f' :
-                        titleCheck?.warning ? '2px solid #ff9800' :
-                        titleCheck?.allowed ? '2px solid #4caf50' : '1px solid #ccc',
-                borderRadius: '5px'
+              className="premium-input"
+              style={{
+                borderColor: titleInputBorderColor,
+                borderWidth: titleInputBorderWidth,
               }}
             />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#666', marginTop: '5px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-muted)', marginTop: '5px' }}>
               <span id="title-help">
                 {title.length < 8 ? 'At least 8 characters for similarity check' : 'Title ready for check'}
                 {titleCheck?.checking && <><Icon name="Hourglass" size={14} /> Checking...</>}
-                {titleCheck?.allowed && !titleCheck.blocked && <><Icon name="Check" size={14} color="#2e7d32" /> Title available</>}
-                {titleCheck?.warning && <><Icon name="TriangleAlert" size={14} color="#e65100" /> Similar titles found</>}
-                {titleCheck?.blocked && <><Icon name="X" size={14} color="#c62828" /> This title is blocked</>}
-                {titleCheck?.pendingConflicts && titleCheck.pendingConflicts.length > 0 && <><Icon name="Hourglass" size={14} /> Already pending review</>}
+                {titleCheck?.allowed && !titleCheck.blocked && <span style={{ color: '#2e7d32' }}><Icon name="Check" size={14} color="#2e7d32" /> Title available</span>}
+                {titleCheck?.warning && <span style={{ color: '#e65100' }}><Icon name="TriangleAlert" size={14} color="#e65100" /> Similar titles found</span>}
+                {titleCheck?.blocked && <span style={{ color: 'var(--accent)' }}><Icon name="X" size={14} color="var(--accent)" /> This title is blocked</span>}
+                {titleCheck?.pendingConflicts && titleCheck.pendingConflicts.length > 0 && <span style={{ color: '#e65100' }}><Icon name="Hourglass" size={14} /> Already pending review</span>}
               </span>
-              <span style={{ color: title.length > 240 ? '#ff9800' : title.length > 285 ? '#d32f2f' : '#666' }}>
+              <span style={{ color: title.length > 240 ? '#ff9800' : title.length > 285 ? 'var(--accent)' : 'var(--text-muted)' }}>
                 {title.length}/300
               </span>
             </div>
             {(errors.title || errors.titleSimilarity) && (
-              <div id="title-error" role="alert" style={{ color: '#d32f2f', fontSize: '14px', marginTop: '5px' }}>
+              <div id="title-error" role="alert" style={{ color: 'var(--accent)', fontSize: '13px', marginTop: '6px' }}>
                 {errors.title || errors.titleSimilarity}
                 {titleCheck?.matches && titleCheck.matches.length > 0 && (
                   <div style={{ marginTop: '10px' }}>
-                    <p>Similar lists:</p>
+                    <p style={{ color: 'var(--text-secondary)', marginBottom: '4px' }}>Similar lists:</p>
                     <ul style={{ margin: '5px 0', paddingLeft: '20px' }}>
                       {titleCheck.matches.map((match, idx) => (
-                        <li key={idx}>{match.title}</li>
+                        <li key={idx} style={{ color: 'var(--text-secondary)' }}>{match.title}</li>
                       ))}
                     </ul>
                   </div>
                 )}
                 {titleCheck?.pendingConflicts && titleCheck.pendingConflicts.length > 0 && (
-                  <div style={{ marginTop: '10px', background: '#fff3e0', padding: '8px 12px', borderRadius: '4px', fontSize: '13px' }}>
-                    <strong><Icon name="Hourglass" size={14} /> This title is already pending review:</strong>
+                  <div style={{ marginTop: '10px', background: 'var(--accent-soft)', padding: '8px 12px', borderRadius: 'var(--radius-sm)', fontSize: '13px' }}>
+                    <strong style={{ color: 'var(--text-primary)' }}><Icon name="Hourglass" size={14} /> This title is already pending review:</strong>
                     <ul style={{ margin: '5px 0', paddingLeft: '20px' }}>
                       {titleCheck.pendingConflicts.map((pc, idx) => (
-                        <li key={idx}>
+                        <li key={idx} style={{ color: 'var(--text-secondary)' }}>
                           {pc.title}
-                          <span style={{ color: '#888', fontSize: '11px', marginLeft: '8px' }}>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '11px', marginLeft: '8px' }}>
                             (submitted {new Date(pc.submitted_at).toLocaleDateString()})
                           </span>
                         </li>
@@ -596,7 +613,7 @@ export default function SubmitPage() {
                   </div>
                 )}
                 {titleCheck?.suggestion && (
-                  <p style={{ marginTop: '5px' }}>Try: <strong>{titleCheck.suggestion}</strong></p>
+                  <p style={{ marginTop: '5px', color: 'var(--text-secondary)' }}>Try: <strong style={{ color: 'var(--text-primary)' }}>{titleCheck.suggestion}</strong></p>
                 )}
               </div>
             )}
@@ -604,8 +621,8 @@ export default function SubmitPage() {
 
           {/* Intro */}
           <div style={{ marginBottom: '20px' }}>
-            <label htmlFor="intro" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-              Introduction <span aria-label="required" style={{ color: '#d32f2f' }}>*</span>
+            <label htmlFor="intro" style={{ display: 'block', marginBottom: '6px', fontWeight: 700, color: 'var(--text-primary)', fontSize: '14px' }}>
+              Introduction <span aria-label="required" style={{ color: 'var(--accent)' }}>*</span>
             </label>
             <textarea
               id="intro"
@@ -621,40 +638,46 @@ export default function SubmitPage() {
               aria-required="true"
               aria-invalid={!!errors.intro}
               aria-describedby={errors.intro ? 'intro-error' : 'intro-help'}
-              style={{ 
-                width: '100%', 
-                padding: '10px', 
-                fontSize: '16px', 
-                border: errors.intro ? '2px solid #d32f2f' : '1px solid #ccc', 
-                borderRadius: '5px',
-                resize: 'vertical'
+              className="premium-input"
+              style={{
+                resize: 'vertical',
+                minHeight: '100px',
+                borderColor: errors.intro ? 'var(--accent)' : undefined,
+                borderWidth: errors.intro ? '2px' : undefined,
               }}
             />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#666', marginTop: '5px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-muted)', marginTop: '5px' }}>
               <span id="intro-help">Explain what your list is about</span>
-              <span style={{ color: intro.length > 1600 ? '#ff9800' : intro.length > 1900 ? '#d32f2f' : '#666' }}>
+              <span style={{ color: intro.length > 1600 ? '#ff9800' : intro.length > 1900 ? 'var(--accent)' : 'var(--text-muted)' }}>
                 {intro.length}/2000
               </span>
             </div>
             {errors.intro && (
-              <div id="intro-error" role="alert" style={{ color: '#d32f2f', fontSize: '14px', marginTop: '5px' }}>{errors.intro}</div>
+              <div id="intro-error" role="alert" style={{ color: 'var(--accent)', fontSize: '13px', marginTop: '5px' }}>{errors.intro}</div>
             )}
           </div>
         </section>
 
         {/* Layout Format */}
-        <section style={{ marginBottom: '30px' }}>
-          <h2>Layout Format</h2>
+        <section style={{ marginBottom: '32px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', borderBottom: '1px solid var(--border-primary)', paddingBottom: '10px', marginBottom: '20px' }}>Layout Format</h2>
 
           <div style={{ marginBottom: '20px' }}>
-            <label htmlFor="format" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            <label htmlFor="format" style={{ display: 'block', marginBottom: '6px', fontWeight: 700, color: 'var(--text-primary)', fontSize: '14px' }}>
               Post Layout
             </label>
             <select
               id="format"
               value={postFormat}
               onChange={(e) => setPostFormat(e.target.value as 'list_only' | 'hero_list' | 'full_list')}
-              style={{ width: '100%', padding: '10px', fontSize: '16px', border: '1px solid #ccc', borderRadius: '5px' }}
+              className="premium-input"
+              style={{
+                appearance: 'none',
+                backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%239494a8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 14px center',
+                paddingRight: '36px',
+              }}
             >
               <option value="list_only">List Only — text items, no images</option>
               <option value="hero_list">Hero + List — hero banner top, items with images</option>
@@ -664,7 +687,7 @@ export default function SubmitPage() {
 
           {(postFormat === 'hero_list' || postFormat === 'full_list') && (
             <div style={{ marginBottom: '20px' }}>
-              <label htmlFor="hero-image" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+              <label htmlFor="hero-image" style={{ display: 'block', marginBottom: '6px', fontWeight: 700, color: 'var(--text-primary)', fontSize: '14px' }}>
                 Hero Banner Image
               </label>
               <input
@@ -691,11 +714,11 @@ export default function SubmitPage() {
                     setErrors(prev => ({ ...prev, titleSimilarity: 'Image upload failed. Try a smaller file.' }));
                   }
                 }}
-                style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                style={{ width: '100%', padding: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}
               />
               {heroImageUrl && (
                 <div style={{ marginTop: '8px' }}>
-                  <Image src={heroImageUrl} alt="Hero preview" width={400} height={200} unoptimized style={{ maxWidth: '400px', maxHeight: '200px', borderRadius: '4px', border: '1px solid #ddd', height: 'auto' }} />
+                  <Image src={heroImageUrl} alt="Hero preview" width={400} height={200} unoptimized style={{ maxWidth: '400px', maxHeight: '200px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-primary)', height: 'auto' }} />
                 </div>
               )}
             </div>
@@ -703,17 +726,17 @@ export default function SubmitPage() {
         </section>
 
         {/* Step 2: List Items */}
-        <section style={{ marginBottom: '30px' }}>
-          <h2>List Items</h2>
-          <p style={{ color: '#666', marginBottom: '15px' }}>Add at least 3 items (max 100). Each item needs a title and justification.</p>
+        <section style={{ marginBottom: '32px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', borderBottom: '1px solid var(--border-primary)', paddingBottom: '10px', marginBottom: '20px' }}>List Items</h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '16px', fontSize: '14px' }}>Add at least 3 items (max 100). Each item needs a title and justification.</p>
 
           {items.map((item) => (
-            <fieldset key={item.id} style={{ border: '1px solid #ddd', borderRadius: '5px', padding: '15px', marginBottom: '15px' }}>
-              <legend style={{ fontWeight: 'bold', padding: '0 10px' }}>Item #{item.rank}</legend>
+            <fieldset key={item.id} className="premium-card" style={{ padding: '16px', marginBottom: '16px', borderRadius: 'var(--radius-md)' }}>
+              <legend style={{ fontWeight: 700, padding: '0 10px', color: 'var(--text-primary)', fontSize: '14px' }}>Item #{item.rank}</legend>
               
-              <div style={{ marginBottom: '10px' }}>
-                <label htmlFor={`item-title-${item.id}`} style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                  Title <span aria-label="required" style={{ color: '#d32f2f' }}>*</span>
+              <div style={{ marginBottom: '12px' }}>
+                <label htmlFor={`item-title-${item.id}`} style={{ display: 'block', marginBottom: '6px', fontWeight: 700, color: 'var(--text-primary)', fontSize: '14px' }}>
+                  Title <span aria-label="required" style={{ color: 'var(--accent)' }}>*</span>
                 </label>
                 <input
                   id={`item-title-${item.id}`}
@@ -723,13 +746,13 @@ export default function SubmitPage() {
                   placeholder="e.g., Albert Einstein"
                   maxLength={200}
                   aria-required="true"
-                  style={{ width: '100%', padding: '8px', fontSize: '16px', border: '1px solid #ccc', borderRadius: '5px' }}
+                  className="premium-input"
                 />
               </div>
 
-              <div style={{ marginBottom: '10px' }}>
-                <label htmlFor={`item-justification-${item.id}`} style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                  Justification <span aria-label="required" style={{ color: '#d32f2f' }}>*</span>
+              <div style={{ marginBottom: '12px' }}>
+                <label htmlFor={`item-justification-${item.id}`} style={{ display: 'block', marginBottom: '6px', fontWeight: 700, color: 'var(--text-primary)', fontSize: '14px' }}>
+                  Justification <span aria-label="required" style={{ color: 'var(--accent)' }}>*</span>
                 </label>
                 <textarea
                   id={`item-justification-${item.id}`}
@@ -739,12 +762,13 @@ export default function SubmitPage() {
                   maxLength={2000}
                   rows={3}
                   aria-required="true"
-                  style={{ width: '100%', padding: '8px', fontSize: '16px', border: '1px solid #ccc', borderRadius: '5px', resize: 'vertical' }}
+                  className="premium-input"
+                  style={{ resize: 'vertical', minHeight: '72px' }}
                 />
               </div>
 
-              <div style={{ marginBottom: '10px' }}>
-                <label htmlFor={`item-source-${item.id}`} style={{ display: 'block', marginBottom: '5px', color: '#666' }}>
+              <div style={{ marginBottom: '12px' }}>
+                <label htmlFor={`item-source-${item.id}`} style={{ display: 'block', marginBottom: '6px', color: 'var(--text-secondary)', fontSize: '14px' }}>
                   Source URL (optional)
                 </label>
                 <input
@@ -754,13 +778,13 @@ export default function SubmitPage() {
                   onChange={(e) => updateItem(item.id, 'source_url', e.target.value)}
                   placeholder="Paste article, video, or profile link"
                   aria-label="Source URL (optional)"
-                  style={{ width: '100%', padding: '8px', fontSize: '16px', border: '1px solid #ccc', borderRadius: '5px' }}
+                  className="premium-input"
                 />
               </div>
 
               {(postFormat === 'hero_list' || postFormat === 'full_list') && (
-                <div style={{ marginBottom: '10px' }}>
-                  <label htmlFor={`item-image-${item.id}`} style={{ display: 'block', marginBottom: '5px', color: '#666' }}>
+                <div style={{ marginBottom: '12px' }}>
+                  <label htmlFor={`item-image-${item.id}`} style={{ display: 'block', marginBottom: '6px', color: 'var(--text-secondary)', fontSize: '14px' }}>
                     Item Image (optional)
                   </label>
                   <input
@@ -786,11 +810,11 @@ export default function SubmitPage() {
                         /* upload failed — silently ignore */
                       }
                     }}
-                    style={{ width: '100%', padding: '4px', fontSize: '13px' }}
+                    style={{ width: '100%', padding: '4px', fontSize: '13px', color: 'var(--text-secondary)' }}
                   />
                   {item.image_url && (
                     <div style={{ marginTop: '4px' }}>
-                      <Image src={item.image_url} alt="Item preview" width={150} height={100} unoptimized style={{ maxWidth: '150px', maxHeight: '100px', borderRadius: '4px', border: '1px solid #ddd', height: 'auto' }} />
+                      <Image src={item.image_url} alt="Item preview" width={150} height={100} unoptimized style={{ maxWidth: '150px', maxHeight: '100px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-primary)', height: 'auto' }} />
                     </div>
                   )}
                 </div>
@@ -801,16 +825,18 @@ export default function SubmitPage() {
                   type="button"
                   onClick={() => removeItem(item.id)}
                   aria-label={`Remove item #${item.rank}`}
-                  style={{ backgroundColor: '#d32f2f', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '3px', cursor: 'pointer' }}
+                  style={{ background: 'var(--accent)', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '13px', fontWeight: 600, transition: 'var(--transition)' }}
+                  onMouseOver={(e) => (e.currentTarget.style.opacity = '0.85')}
+                  onMouseOut={(e) => (e.currentTarget.style.opacity = '1')}
                 >
-                  Remove ✕
+                  Remove
                 </button>
               )}
             </fieldset>
           ))}
 
           {errors.items && (
-            <div role="alert" style={{ color: '#d32f2f', fontSize: '14px', marginBottom: '10px' }}>{errors.items}</div>
+            <div role="alert" style={{ color: 'var(--accent)', fontSize: '13px', marginBottom: '10px' }}>{errors.items}</div>
           )}
 
           <button
@@ -819,11 +845,14 @@ export default function SubmitPage() {
             disabled={items.length >= MAX_ITEMS}
             style={{ 
               padding: '10px 20px', 
-              backgroundColor: items.length >= MAX_ITEMS ? '#ccc' : '#f0f0f0', 
-              border: '1px solid #ccc', 
-              borderRadius: '5px', 
+              background: items.length >= MAX_ITEMS ? 'var(--border-primary)' : 'var(--bg-tertiary)', 
+              border: '1px solid var(--border-primary)', 
+              borderRadius: 'var(--radius-md)', 
               cursor: items.length >= MAX_ITEMS ? 'not-allowed' : 'pointer',
-              fontSize: '16px'
+              fontSize: '15px',
+              fontWeight: 600,
+              color: items.length >= MAX_ITEMS ? 'var(--text-muted)' : 'var(--text-primary)',
+              transition: 'var(--transition)',
             }}
           >
             + Add Item ({items.length}/{MAX_ITEMS})
@@ -831,11 +860,11 @@ export default function SubmitPage() {
         </section>
 
         {/* Step 3: Author */}
-        <section style={{ marginBottom: '30px' }}>
-          <h2>Author Information</h2>
+        <section style={{ marginBottom: '32px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', borderBottom: '1px solid var(--border-primary)', paddingBottom: '10px', marginBottom: '20px' }}>Author Information</h2>
           
           <div style={{ marginBottom: '20px' }}>
-            <label htmlFor="author" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            <label htmlFor="author" style={{ display: 'block', marginBottom: '6px', fontWeight: 700, color: 'var(--text-primary)', fontSize: '14px' }}>
               Display Name (optional)
             </label>
             <input
@@ -848,31 +877,29 @@ export default function SubmitPage() {
               aria-label="Display name (optional)"
               aria-invalid={!!errors.author_display_name}
               aria-describedby={errors.author_display_name ? 'author-error' : 'author-help'}
-              style={{ 
-                width: '100%', 
-                padding: '10px', 
-                fontSize: '16px', 
-                border: errors.author_display_name ? '2px solid #d32f2f' : '1px solid #ccc', 
-                borderRadius: '5px'
+              className="premium-input"
+              style={{
+                borderColor: errors.author_display_name ? 'var(--accent)' : undefined,
+                borderWidth: errors.author_display_name ? '2px' : undefined,
               }}
             />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#666', marginTop: '5px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-muted)', marginTop: '5px' }}>
               <span id="author-help">Customize your display name (auto-generated if blank)</span>
               <span>{authorName.length}/50</span>
             </div>
             {errors.author_display_name && (
-              <div id="author-error" role="alert" style={{ color: '#d32f2f', fontSize: '14px', marginTop: '5px' }}>{errors.author_display_name}</div>
+              <div id="author-error" role="alert" style={{ color: 'var(--accent)', fontSize: '13px', marginTop: '5px' }}>{errors.author_display_name}</div>
             )}
           </div>
         </section>
 
         {/* Error Summary */}
         {Object.keys(errors).length > 0 && (
-          <div role="alert" aria-live="assertive" style={{ backgroundColor: '#ffebee', border: '1px solid #d32f2f', borderRadius: '5px', padding: '15px', marginBottom: '20px' }}>
-            <strong>Please fix the following:</strong>
+          <div role="alert" aria-live="assertive" style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent)', borderRadius: 'var(--radius-md)', padding: '16px', marginBottom: '20px' }}>
+            <strong style={{ color: 'var(--accent)' }}>Please fix the following:</strong>
             <ul style={{ margin: '10px 0 0 0', paddingLeft: '20px' }}>
               {Object.values(errors).map((error, idx) => (
-                <li key={idx} style={{ marginBottom: '5px' }}>{error}</li>
+                <li key={idx} style={{ marginBottom: '5px', color: 'var(--text-primary)', fontSize: '14px' }}>{error}</li>
               ))}
             </ul>
           </div>
@@ -882,24 +909,21 @@ export default function SubmitPage() {
         <button
           type="submit"
           disabled={submitting || !categorySlug || !title || !intro || items.some(i => !i.title || !i.justification)}
+          className="premium-btn premium-btn-primary"
           style={{ 
             width: '100%', 
-            padding: '15px', 
-            fontSize: '18px',
-            fontWeight: 'bold',
-            backgroundColor: submitting ? '#ccc' : '#0066cc', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '5px', 
-            cursor: submitting ? 'not-allowed' : 'pointer'
+            padding: '16px',
+            fontSize: '17px',
+            opacity: submitting ? 0.6 : 1,
+            cursor: submitting ? 'not-allowed' : 'pointer',
           }}
         >
           {submitting ? 'Submitting...' : 'Submit for Review'}
         </button>
       </form>
 
-      <footer style={{ marginTop: '30px', borderTop: '1px solid #ccc', paddingTop: '20px', textAlign: 'center', color: '#666' }}>
-        <p>YoTop10 - Open Platform for Top 10 Lists</p>
+      <footer style={{ marginTop: '32px', borderTop: '1px solid var(--border-primary)', paddingTop: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+        <p>YoTop10 — Open Platform for Top 10 Lists</p>
       </footer>
     </div>
   );

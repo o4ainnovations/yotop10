@@ -21,7 +21,21 @@
 - **[Audit] Messages audit logging** — `logAudit` added to send message, retract message, create template, delete template handlers
 - **[M15] Identity Portability** — Crypto wallet-style identity system: BIP39 12-word seed phrases, ed25519 challenge-response auth, multi-device linking (UserDevice model), 7 API endpoints, frontend SecureMyAuthority section + claim page + seed modal
 - **[Images] Post images** — Three post formats (list_only, hero_list, full_list), hero banner + per-item images, multer upload endpoint, sharp resize (item thumb 400x280 + hero 1200x675 WebP), express.static serving, frontend format selector + image upload UI + three-format post display
-- **[Homepage] Debate Wall** — Neo-brutalist feed: dark navy (#0b0d17) background, hot pink/teal/lime accents, 2-3col PostCard grid, category pill bar, sort (newest/most_viewed/most_commented), load-more pagination, PostCard component reused on category feeds, all icons Lucide (no emojis)
+- **[UI] Premium design system** — Dark/light mode with CSS custom properties (`var(--bg-primary)` through `var(--accent-gradient)`), orange-red → pink gradient accent, glassmorphism nav header, premium-card/btn/input component styles, theme toggle component, Geist + Geist Mono typography, smooth transitions, all 23+ pages rewritten with premium aesthetic
+- **[UI] Premium design system — Profile & Post Detail pages** — Rewrote `a/[username]/page.tsx` (722 lines) and `[slug]/client.tsx` (943 lines) with CSS variable-based dark/light design system: `var(--bg-*)`, `var(--text-*)`, `var(--accent*)`, premium cards, tabs, hover states, Lucide icons replacing all hardcoded hex colors
+- **[UI] Premium design system — Admin pages & components** — Rewrote 12 files with CSS variable-based dark/light design system:
+  1. `admin/page.tsx` — Dashboard landing cards with hover states
+  2. `admin/posts/pending/page.tsx` — Review queue with premium table/filter styling
+  3. `admin/posts/pending/[id]/page.tsx` — Post review detail with gradient buttons
+  4. `admin/categories/page.tsx` — Category management (tree/table/analytics/bulk tabs)
+  5. `admin/comments/page.tsx` — Comment moderation with styled tables
+  6. `admin/search/page.tsx` — Search cluster status + analytics tabs
+  7. `admin/statistics/page.tsx` — Statistics dashboard (21 panels, all inline styles replaced)
+  8. `admin/alerts/[id]/page.tsx` — Alert detail with status-aware theming
+  9. `c/[[...slug]]/page.tsx` — Category feed from neo-brutalist to premium design
+  10. `search/page.tsx` — Public search page with CSS variables
+  11. `components/SecureMyAuthority.tsx` — Identity section with imported Icon
+  12. `components/SeedDisplayModal.tsx` — Seed phrase modal with premium styling
 
 ## Current
 - _(none — all committed)_

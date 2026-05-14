@@ -74,101 +74,109 @@ export default function AdminSearchPage() {
 
   const clusterColor = (s: string) => s === 'green' ? '#2e7d32' : s === 'yellow' ? '#f57c00' : '#c62828';
 
-  if (loading) return <div style={{ padding: '20px' }}>Loading...</div>;
+  // Design tokens
+  const tabBtn = (active: boolean): React.CSSProperties => ({ padding: '8px 16px', border: 'none', borderBottom: active ? '2px solid var(--accent)' : '2px solid transparent', background: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: active ? 'bold' : 'normal', color: active ? 'var(--accent)' : 'var(--text-muted)' });
+  const primaryBtn = (disabled: boolean): React.CSSProperties => ({ padding: '8px 20px', background: disabled ? 'var(--border-primary)' : 'var(--accent-gradient)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', cursor: disabled ? 'not-allowed' : 'pointer', fontSize: '13px', fontWeight: 'bold' });
+
+  if (loading) return <div style={{ padding: '20px', color: 'var(--text-muted)' }}>Loading...</div>;
 
   return (
     <div>
-      <h1 style={{ fontSize: '20px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><Icon name="Search" size={22} /> Search Management</h1>
+      <h1 style={{ fontSize: '20px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
+        <Icon name="Search" size={22} color="var(--accent)" /> Search Management
+      </h1>
 
-      <div style={{ display: 'flex', gap: '0', marginBottom: '20px', borderBottom: '1px solid #ddd' }}>
-        <button onClick={() => setTab('status')} style={bt(tab === 'status')}>Cluster Status</button>
-        <button onClick={() => { setTab('analytics'); fetchAnalytics(); }} style={bt(tab === 'analytics')}>Search Analytics</button>
+      <div style={{ display: 'flex', gap: '0', marginBottom: '20px', borderBottom: '1px solid var(--border-primary)' }}>
+        <button onClick={() => setTab('status')} style={tabBtn(tab === 'status')}>Cluster Status</button>
+        <button onClick={() => { setTab('analytics'); fetchAnalytics(); }} style={tabBtn(tab === 'analytics')}>Search Analytics</button>
       </div>
 
-      {/* ═══ CLUSTER STATUS ══════════════════════════════════════ */}
+      {/* CLUSTER STATUS */}
       {tab === 'status' && status && (
         <>
-          <div style={{ marginBottom: '20px', padding: '14px 18px', background: '#fafafa', border: '1px solid #eee', borderRadius: '6px' }}>
+          <div style={{ marginBottom: '20px', padding: '14px 18px', background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-md)' }}>
             <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-              <span>Cluster: <strong style={{ color: clusterColor(status.cluster) }}>{status.cluster}</strong></span>
-              <button onClick={fetchStatus} style={{ padding: '4px 12px', border: '1px solid #ddd', borderRadius: '3px', background: '#fff', cursor: 'pointer', fontSize: '12px' }}><Icon name="RefreshCw" size={14} /> Refresh</button>
+              <span style={{ color: 'var(--text-secondary)' }}>Cluster: <strong style={{ color: clusterColor(status.cluster) }}>{status.cluster}</strong></span>
+              <button onClick={fetchStatus} style={{ padding: '6px 14px', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', background: 'var(--bg-tertiary)', cursor: 'pointer', fontSize: '12px', color: 'var(--text-primary)' }}>
+                <Icon name="RefreshCw" size={14} /> Refresh
+              </button>
             </div>
           </div>
 
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', marginBottom: '24px' }}>
-            <thead><tr style={{ borderBottom: '2px solid #ddd', textAlign: 'left' }}><th style={{ padding: '8px' }}>Index</th><th style={{ padding: '8px' }}>ES Docs</th><th style={{ padding: '8px' }}>Size</th><th style={{ padding: '8px' }}>DB Count</th><th style={{ padding: '8px' }}>Gap</th></tr></thead>
-            <tbody>{Object.entries(status.indices).map(([name, idx]) => { const gap = status.gaps[name]; const gc = gap && gap.pct === 0 ? '#2e7d32' : '#c62828'; return <tr key={name} style={{ borderBottom: '1px solid #eee' }}><td style={{ padding: '8px', fontWeight: 'bold' }}>{name}</td><td style={{ padding: '8px' }}>{idx.docs}</td><td style={{ padding: '8px', color: '#666' }}>{idx.size}</td><td style={{ padding: '8px' }}>{status.db_counts[name] || 0}</td><td style={{ padding: '8px', color: gc, fontWeight: 'bold' }}>{gap ? `${gap.diff > 0 ? '+' : ''}${gap.diff} (${gap.pct}%)` : '—'}</td></tr>; })}</tbody>
+            <thead><tr style={{ borderBottom: '2px solid var(--border-primary)', textAlign: 'left' }}><th style={{ padding: '10px', color: 'var(--text-muted)' }}>Index</th><th style={{ padding: '10px', color: 'var(--text-muted)' }}>ES Docs</th><th style={{ padding: '10px', color: 'var(--text-muted)' }}>Size</th><th style={{ padding: '10px', color: 'var(--text-muted)' }}>DB Count</th><th style={{ padding: '10px', color: 'var(--text-muted)' }}>Gap</th></tr></thead>
+            <tbody>{Object.entries(status.indices).map(([name, idx]) => { const gap = status.gaps[name]; const gc = gap && gap.pct === 0 ? '#2e7d32' : '#c62828'; return <tr key={name} style={{ borderBottom: '1px solid var(--border-primary)' }}><td style={{ padding: '10px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{name}</td><td style={{ padding: '10px', color: 'var(--text-secondary)' }}>{idx.docs}</td><td style={{ padding: '10px', color: 'var(--text-muted)' }}>{idx.size}</td><td style={{ padding: '10px', color: 'var(--text-secondary)' }}>{status.db_counts[name] || 0}</td><td style={{ padding: '10px', color: gc, fontWeight: 'bold' }}>{gap ? `${gap.diff > 0 ? '+' : ''}${gap.diff} (${gap.pct}%)` : '\u2014'}</td></tr>; })}</tbody>
           </table>
 
           <S title={<><Icon name="RefreshCw" size={16} /> Reindex</>}>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              <select value={reindexScope} onChange={e => setReindexScope(e.target.value)} style={{ padding: '6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px' }}>
+              <select value={reindexScope} onChange={e => setReindexScope(e.target.value)} style={sel}>
                 <option value="all">All</option><option value="posts">Posts</option><option value="comments">Comments</option><option value="categories">Categories</option><option value="users">Users</option>
               </select>
-              <button onClick={handleReindex} disabled={reindexing} style={btn(reindexing)}>{reindexing ? 'Reindexing...' : 'Reindex'}</button>
+              <button onClick={handleReindex} disabled={reindexing} style={primaryBtn(reindexing)}>{reindexing ? 'Reindexing...' : 'Reindex'}</button>
             </div>
           </S>
 
-          <S title="🔎 Test Query">
+          <S title={<><Icon name="Search" size={16} /> Test Query</>}>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <input value={previewQ} onChange={e => setPreviewQ(e.target.value)} onKeyDown={e => e.key === 'Enter' && handlePreview()} placeholder="Enter query..." style={{ flex: 1, padding: '6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px' }} />
-              <button onClick={handlePreview} style={btn(false)}>Search</button>
+              <input value={previewQ} onChange={e => setPreviewQ(e.target.value)} onKeyDown={e => e.key === 'Enter' && handlePreview()} placeholder="Enter query..." style={{ flex: 1, padding: '8px 12px', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', fontSize: '13px', background: 'var(--bg-tertiary)', color: 'var(--text-primary)', outline: 'none' }} />
+              <button onClick={handlePreview} style={primaryBtn(false)}>Search</button>
             </div>
-            {previewResult && <div style={{ marginTop: '12px', fontSize: '13px' }}><L><B>{previewResult.results}</B> results.</L>{previewResult.top.map(r => <L key={r.slug}><B>{r.title}</B> — score: {r.score.toFixed(2)}</L>)}</div>}
+            {previewResult && <div style={{ marginTop: '12px', fontSize: '13px' }}>
+              <div style={{ marginBottom: '4px', color: 'var(--text-secondary)' }}><strong style={{ color: 'var(--text-primary)' }}>{previewResult.results}</strong> results.</div>
+              {previewResult.top.map(r => <div key={r.slug} style={{ marginBottom: '4px', color: 'var(--text-secondary)' }}><strong style={{ color: 'var(--text-primary)' }}>{r.title}</strong> \u2014 score: {r.score.toFixed(2)}</div>)}
+            </div>}
           </S>
 
           <S title={<><Icon name="ClipboardList" size={16} /> Mappings</>}>
-            <button onClick={handleShowMappings} style={btn(false)}>View Mappings</button>
-            {showMappings && mappings && <pre style={{ marginTop: '12px', fontSize: '11px', background: '#f0f0f0', padding: '12px', borderRadius: '4px', maxHeight: '300px', overflow: 'auto' }}>{JSON.stringify(mappings, null, 2)}</pre>}
+            <button onClick={handleShowMappings} style={primaryBtn(false)}>View Mappings</button>
+            {showMappings && mappings && <pre style={{ marginTop: '12px', fontSize: '11px', background: 'var(--bg-tertiary)', padding: '12px', borderRadius: 'var(--radius-sm)', maxHeight: '300px', overflow: 'auto', color: 'var(--text-secondary)', border: '1px solid var(--border-primary)' }}>{JSON.stringify(mappings, null, 2)}</pre>}
           </S>
 
           <S title={<><Icon name="TriangleAlert" size={16} color="#e65100" /> Delete Index</>} warn>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              <select value={deleteIdx} onChange={e => setDeleteIdx(e.target.value)} style={{ padding: '6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px' }}>
+              <select value={deleteIdx} onChange={e => setDeleteIdx(e.target.value)} style={sel}>
                 <option value="">Select...</option><option value="posts">Posts</option><option value="comments">Comments</option><option value="categories">Categories</option><option value="users">Users</option>
               </select>
-              <button onClick={handleDeleteIndex} disabled={!deleteIdx} style={{ padding: '8px 20px', background: deleteIdx ? '#c62828' : '#ccc', color: '#fff', border: 'none', borderRadius: '4px', cursor: deleteIdx ? 'pointer' : 'not-allowed', fontSize: '13px' }}>Delete & Recreate</button>
+              <button onClick={handleDeleteIndex} disabled={!deleteIdx} style={{ padding: '8px 20px', background: deleteIdx ? '#c62828' : 'var(--border-primary)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', cursor: deleteIdx ? 'pointer' : 'not-allowed', fontSize: '13px', fontWeight: 'bold' }}>Delete & Recreate</button>
             </div>
           </S>
         </>
       )}
 
-      {/* ═══ ANALYTICS ═══════════════════════════════════════════ */}
+      {/* ANALYTICS */}
       {tab === 'analytics' && (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '16px' }}>
             <MetricsCard label="Trending Now" count={trending.length} color="#c62828" />
-            <MetricsCard label="Popular (7d)" count={popular.length} color="#1565c0" />
+            <MetricsCard label="Popular (7d)" count={popular.length} color="var(--accent)" />
             <MetricsCard label="Most Engaged" count={engaged.length} color="#2e7d32" />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
-            {/* Trending */}
-            <Section title={<><Icon name="Flame" size={16} /> Trending Now</>} subtitle="EMA spike detection: current hour vs 24h baseline">
+            <Section title={<><Icon name="Flame" size={16} color="#e65100" /> Trending Now</>} subtitle="EMA spike detection: current hour vs 24h baseline">
               {trending.length === 0 ? <Empty /> : (
                 <table style={tbl}>
                   <thead><tr><th>Query</th><th style={{ textAlign: 'right' }}>1h</th><th style={{ textAlign: 'right' }}>Score</th></tr></thead>
-                  <tbody>{trending.map(t => <tr key={t.query}><td style={{ fontWeight: 'bold' }}>{t.query}</td><td style={{ textAlign: 'right' }}>{t.count}</td><td style={{ textAlign: 'right' }}><span style={{ color: t.level === 'hot' ? '#c62828' : '#f57c00', fontWeight: 'bold' }}>{t.trending_score}×</span></td></tr>)}</tbody>
+                  <tbody>{trending.map(t => <tr key={t.query}><td style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>{t.query}</td><td style={{ textAlign: 'right', color: 'var(--text-secondary)' }}>{t.count}</td><td style={{ textAlign: 'right' }}><span style={{ color: t.level === 'hot' ? '#c62828' : '#f57c00', fontWeight: 'bold' }}>{t.trending_score}x</span></td></tr>)}</tbody>
                 </table>
               )}
             </Section>
 
-            {/* Popular */}
             <Section title={<><Icon name="ChartBar" size={16} /> Popular</>} subtitle="Decay-weighted rank over 7 days (0.95^d)">
               {popular.length === 0 ? <Empty /> : (
                 <table style={tbl}>
                   <thead><tr><th>Query</th><th style={{ textAlign: 'right' }}>Total</th><th style={{ textAlign: 'right' }}>Score</th></tr></thead>
-                  <tbody>{popular.map(p => <tr key={p.query}><td style={{ fontWeight: 'bold' }}>{p.query}</td><td style={{ textAlign: 'right' }}>{p.total}</td><td style={{ textAlign: 'right' }}>{p.popularity_score.toFixed(1)}</td></tr>)}</tbody>
+                  <tbody>{popular.map(p => <tr key={p.query}><td style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>{p.query}</td><td style={{ textAlign: 'right', color: 'var(--text-secondary)' }}>{p.total}</td><td style={{ textAlign: 'right', color: 'var(--text-secondary)' }}>{p.popularity_score.toFixed(1)}</td></tr>)}</tbody>
                 </table>
               )}
             </Section>
 
-            {/* Most Engaged */}
-            <Section title="👆 Most Engaged" subtitle="Bayesian CTR (α=1, β=99 prior)">
+            <Section title={<><Icon name="Target" size={16} /> Most Engaged</>} subtitle="Bayesian CTR (alpha=1, beta=99 prior)">
               {engaged.length === 0 ? <Empty /> : (
                 <table style={tbl}>
                   <thead><tr><th>Query</th><th style={{ textAlign: 'right' }}>CTR</th><th style={{ textAlign: 'right' }}>Clicks</th></tr></thead>
-                  <tbody>{engaged.map(e => <tr key={e.query}><td style={{ fontWeight: 'bold' }}>{e.query}</td><td style={{ textAlign: 'right' }}>{e.bayesian_ctr}%</td><td style={{ textAlign: 'right' }}>{e.clicks}/{e.impressions}</td></tr>)}</tbody>
+                  <tbody>{engaged.map(e => <tr key={e.query}><td style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>{e.query}</td><td style={{ textAlign: 'right', color: 'var(--text-secondary)' }}>{e.bayesian_ctr}%</td><td style={{ textAlign: 'right', color: 'var(--text-secondary)' }}>{e.clicks}/{e.impressions}</td></tr>)}</tbody>
                 </table>
               )}
             </Section>
@@ -179,13 +187,9 @@ export default function AdminSearchPage() {
   );
 }
 
-// ─── Shared components ─────────────────────────────────────────────
-const bt = (active: boolean) => ({ padding: '8px 16px', border: 'none', borderBottom: active ? '2px solid #1565c0' : '2px solid transparent', background: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: active ? 'bold' as const : 'normal' as const, color: active ? '#1565c0' : '#666' });
-const btn = (disabled: boolean) => ({ padding: '8px 20px', background: disabled ? '#ccc' : '#1565c0', color: 'white', border: 'none', borderRadius: '4px', cursor: disabled ? 'not-allowed' : 'pointer', fontSize: '13px' });
+const sel: React.CSSProperties = { padding: '7px 10px', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', fontSize: '13px', background: 'var(--bg-tertiary)', color: 'var(--text-primary)', outline: 'none' };
 const tbl: React.CSSProperties = { width: '100%', borderCollapse: 'collapse', fontSize: '12px' };
-const S = ({ title, children, warn }: { title: React.ReactNode; children: React.ReactNode; warn?: boolean }) => <div style={{ marginBottom: '20px', padding: '16px', background: warn ? '#fff3e0' : '#fafafa', border: warn ? '1px solid #ffb74d' : '1px solid #eee', borderRadius: '6px' }}><h3 style={{ fontSize: '15px', margin: '0 0 12px', color: warn ? '#e65100' : '#333' }}>{title}</h3>{children}</div>;
-const L = ({ children }: { children: React.ReactNode }) => <div style={{ marginBottom: '4px', fontSize: '13px', lineHeight: '1.6' }}>{children}</div>;
-const B = ({ children }: { children: React.ReactNode }) => <strong>{children}</strong>;
-const MetricsCard = ({ label, count, color }: { label: string; count: number; color: string }) => <div style={{ padding: '14px', background: '#fafafa', border: '1px solid #eee', borderRadius: '6px', textAlign: 'center' }}><div style={{ fontSize: '28px', fontWeight: 'bold', color }}>{count}</div><div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>{label}</div></div>;
-const Section = ({ title, subtitle, children }: { title: React.ReactNode; subtitle: string; children: React.ReactNode }) => <div style={{ background: '#fafafa', border: '1px solid #eee', borderRadius: '6px', padding: '14px' }}><h3 style={{ fontSize: '14px', margin: '0 0 2px' }}>{title}</h3><p style={{ fontSize: '11px', color: '#999', margin: '0 0 10px' }}>{subtitle}</p>{children}</div>;
-const Empty = () => <div style={{ padding: '24px', textAlign: 'center', color: '#999', fontSize: '13px' }}>No data yet — searches will appear here as users search</div>;
+const S = ({ title, children, warn }: { title: React.ReactNode; children: React.ReactNode; warn?: boolean }) => <div style={{ marginBottom: '16px', padding: '16px', background: warn ? 'var(--accent-soft)' : 'var(--bg-secondary)', border: warn ? '1px solid var(--accent)' : '1px solid var(--border-primary)', borderRadius: 'var(--radius-md)' }}><h3 style={{ fontSize: '15px', margin: '0 0 12px', color: 'var(--text-primary)' }}>{title}</h3>{children}</div>;
+const MetricsCard = ({ label, count, color }: { label: string; count: number; color: string }) => <div style={{ padding: '16px', background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-md)', textAlign: 'center' }}><div style={{ fontSize: '28px', fontWeight: 'bold', color }}>{count}</div><div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>{label}</div></div>;
+const Section = ({ title, subtitle, children }: { title: React.ReactNode; subtitle: string; children: React.ReactNode }) => <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-md)', padding: '16px' }}><h3 style={{ fontSize: '14px', margin: '0 0 2px', color: 'var(--text-primary)' }}>{title}</h3><p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '0 0 10px' }}>{subtitle}</p>{children}</div>;
+const Empty = () => <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>No data yet \u2014 searches will appear here as users search</div>;

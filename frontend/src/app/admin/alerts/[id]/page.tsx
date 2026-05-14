@@ -75,66 +75,72 @@ export default function AlertDetailPage() {
     setSettling(false);
   };
 
-  if (loading) return <div style={{ padding: '20px' }}>Loading...</div>;
-  if (!detail) return <div style={{ padding: '20px' }}>Alert not found</div>;
+  if (loading) return <div style={{ padding: '20px', color: 'var(--text-muted)' }}>Loading...</div>;
+  if (!detail) return <div style={{ padding: '20px', color: 'var(--text-muted)' }}>Alert not found</div>;
 
   const { notification: n, current_value, threshold_config: tc, still_breaching } = detail;
   const STATUS = still_breaching ? (n.severity === 'critical' ? <><Icon name="Circle" size={16} color="#d32f2f" fill="#d32f2f" /> Critical</> : <><Icon name="Circle" size={16} color="#f57c00" fill="#f57c00" /> Warning</>) : <><Icon name="Circle" size={16} color="#2e7d32" fill="#2e7d32" /> Resolved</>;
   const STATUS_COLOR = still_breaching ? (n.severity === 'critical' ? '#d32f2f' : '#f57c00') : '#2e7d32';
-  const STATUS_BG = still_breaching ? (n.severity === 'critical' ? '#ffcdd2' : '#fff3e0') : '#e8f5e9';
+  const STATUS_BG = still_breaching ? (n.severity === 'critical' ? 'rgba(211,47,47,0.1)' : 'rgba(245,124,0,0.1)') : 'rgba(46,125,50,0.1)';
+  const STATUS_BORDER = still_breaching ? (n.severity === 'critical' ? '#d32f2f' : '#f57c00') : '#2e7d32';
+
+  const cardStyle: React.CSSProperties = {
+    background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)',
+    borderRadius: 'var(--radius-md)', padding: '18px', marginBottom: '20px',
+  };
 
   return (
     <div style={{ maxWidth: '700px', margin: '0 auto', padding: '20px' }}>
-      <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontSize: '13px', marginBottom: '16px' }}>
+      <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '14px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '4px' }}>
           <Icon name="ArrowLeft" size={14} /> Back
       </button>
 
-      <div style={{ background: STATUS_BG, border: `2px solid ${STATUS_COLOR}`, borderRadius: '8px', padding: '16px', marginBottom: '20px' }}>
-        <h1 style={{ fontSize: '20px', margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+      <div style={{ background: STATUS_BG, border: `2px solid ${STATUS_BORDER}`, borderRadius: 'var(--radius-lg)', padding: '20px', marginBottom: '20px' }}>
+        <h1 style={{ fontSize: '20px', margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
           {STATUS} — {METRIC_LABELS[n.alert_type] || n.alert_type}
         </h1>
-        <p style={{ fontSize: '14px', color: '#555', margin: '0 0 8px' }}>{n.message}</p>
-        <div style={{ display: 'flex', gap: '20px', fontSize: '13px', marginTop: '12px' }}>
+        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '0 0 8px' }}>{n.message}</p>
+        <div style={{ display: 'flex', gap: '20px', fontSize: '13px', marginTop: '12px', flexWrap: 'wrap' }}>
           <div>
-            <span style={{ color: '#999' }}>Triggered at:</span>{' '}
-            <strong>{new Date(n.created_at).toLocaleString()}</strong>
+            <span style={{ color: 'var(--text-muted)' }}>Triggered at:</span>{' '}
+            <strong style={{ color: 'var(--text-primary)' }}>{new Date(n.created_at).toLocaleString()}</strong>
           </div>
           <div>
-            <span style={{ color: '#999' }}>Value:</span>{' '}
+            <span style={{ color: 'var(--text-muted)' }}>Value:</span>{' '}
             <strong style={{ color: STATUS_COLOR }}>{n.value}</strong>
             {' '}vs threshold {n.threshold}
           </div>
           {current_value !== null && (
             <div>
-              <span style={{ color: '#999' }}>Current:</span>{' '}
+              <span style={{ color: 'var(--text-muted)' }}>Current:</span>{' '}
               <strong style={{ color: still_breaching ? STATUS_COLOR : '#2e7d32' }}>{current_value}</strong>
             </div>
           )}
         </div>
         {n.settled && (
-          <div style={{ marginTop: '12px', fontSize: '12px', color: '#2e7d32' }}>
-            <Icon name="Check" size={12} color="#2e7d32" /> Settled on {new Date(n.settled_at!).toLocaleString()}
+          <div style={{ marginTop: '12px', fontSize: '13px', color: '#2e7d32', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Icon name="Check" size={14} color="#2e7d32" /> Settled on {new Date(n.settled_at!).toLocaleString()}
           </div>
         )}
       </div>
 
       {/* Resolution Guide */}
-      <div style={{ background: '#fafafa', border: '1px solid #eee', borderRadius: '6px', padding: '16px', marginBottom: '20px' }}>
-        <h2 style={{ fontSize: '16px', margin: '0 0 8px' }}>How to Fix</h2>
-        <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.6', margin: 0 }}>
+      <div style={cardStyle}>
+        <h2 style={{ fontSize: '16px', margin: '0 0 8px', color: 'var(--text-primary)' }}>How to Fix</h2>
+        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6', margin: 0 }}>
           {RESOLUTION_GUIDE[n.alert_type] || 'Review the metric and take appropriate action.'}
         </p>
       </div>
 
       {/* Threshold Config */}
       {tc && (
-        <div style={{ background: '#fafafa', border: '1px solid #eee', borderRadius: '6px', padding: '16px', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '16px', margin: '0 0 8px' }}>Threshold Configuration</h2>
-          <div style={{ fontSize: '13px', color: '#555' }}>
-            <p style={{ margin: '4px 0' }}>Operator: <strong>{tc.operator}</strong></p>
-            <p style={{ margin: '4px 0' }}>Threshold: <strong>{tc.threshold}</strong></p>
+        <div style={cardStyle}>
+          <h2 style={{ fontSize: '16px', margin: '0 0 10px', color: 'var(--text-primary)' }}>Threshold Configuration</h2>
+          <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+            <p style={{ margin: '4px 0' }}>Operator: <strong style={{ color: 'var(--text-primary)' }}>{tc.operator}</strong></p>
+            <p style={{ margin: '4px 0' }}>Threshold: <strong style={{ color: 'var(--text-primary)' }}>{tc.threshold}</strong></p>
             <p style={{ margin: '4px 0' }}>Severity: <span style={{ color: tc.severity === 'critical' ? '#d32f2f' : '#f57c00', fontWeight: 'bold' }}>{tc.severity}</span></p>
-            <button onClick={() => router.push('/admin/alerts')} style={{ marginTop: '8px', padding: '4px 12px', background: '#1565c0', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
+            <button onClick={() => router.push('/admin/alerts')} style={{ marginTop: '10px', padding: '6px 16px', background: 'var(--accent-gradient)', color: 'white', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
               Manage Thresholds <Icon name="ArrowRight" size={12} />
             </button>
           </div>
@@ -145,9 +151,9 @@ export default function AlertDetailPage() {
         <button
           onClick={handleSettle}
           disabled={settling}
-          style={{ padding: '10px 24px', background: settling ? '#ccc' : '#2e7d32', color: 'white', border: 'none', borderRadius: '6px', cursor: settling ? 'not-allowed' : 'pointer', fontSize: '15px', fontWeight: 'bold', width: '100%' }}
+          style={{ padding: '12px 24px', background: settling ? 'var(--border-primary)' : '#2e7d32', color: 'white', border: 'none', borderRadius: 'var(--radius-md)', cursor: settling ? 'not-allowed' : 'pointer', fontSize: '15px', fontWeight: 'bold', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
         >
-          {settling ? 'Settling...' : <><Icon name="Check" size={16} /> Settle This Alert</>}
+          {settling ? 'Settling...' : <><Icon name="Check" size={16} color="#fff" /> Settle This Alert</>}
         </button>
       )}
     </div>

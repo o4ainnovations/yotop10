@@ -69,8 +69,8 @@ export default function CategoryFeedPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', backgroundColor: '#0b0d17', color: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#64748b', fontSize: '14px' }}>Loading...</p>
+      <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Loading...</p>
       </div>
     );
   }
@@ -78,33 +78,33 @@ export default function CategoryFeedPage() {
   if (!category) return <NotFound message="Category does not exist." />;
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#0b0d17', color: '#e2e8f0' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       {/* Header */}
       <header style={{ padding: '24px 20px 0', display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-        <Link href="/" style={{ fontSize: '13px', color: '#00d4aa', textDecoration: 'none', fontWeight: 'bold' }}>
+        <Link href="/" style={{ fontSize: '13px', color: 'var(--accent)', textDecoration: 'none', fontWeight: 'bold' }}>
           YOTOP10
         </Link>
-        <span style={{ color: '#334155' }}>/</span>
-        <Link href="/categories" style={{ fontSize: '13px', color: '#64748b', textDecoration: 'none' }}>
+        <span style={{ color: 'var(--text-muted)' }}>/</span>
+        <Link href="/categories" style={{ fontSize: '13px', color: 'var(--text-secondary)', textDecoration: 'none' }}>
           Categories
         </Link>
-        <span style={{ color: '#334155' }}>/</span>
-        <span style={{ fontSize: '13px', color: '#ff2d78', fontWeight: 'bold' }}>
+        <span style={{ color: 'var(--text-muted)' }}>/</span>
+        <span style={{ fontSize: '13px', color: 'var(--accent)', fontWeight: 'bold' }}>
           {category.name}
         </span>
       </header>
 
       {/* Category Info */}
       <div style={{ padding: '20px 20px 16px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#f1f5f9', margin: '0 0 4px 0' }}>
+        <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--text-primary)', margin: '0 0 4px 0' }}>
           {category.name}
         </h1>
         {category.description && (
-          <p style={{ fontSize: '14px', color: '#64748b', margin: '0 0 8px 0' }}>
+          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '0 0 8px 0' }}>
             {category.description}
           </p>
         )}
-        <p style={{ fontSize: '12px', color: '#475569', margin: 0 }}>
+        <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>
           {category.post_count} posts
         </p>
 
@@ -116,11 +116,13 @@ export default function CategoryFeedPage() {
                 href={`/c/${child.slug}`}
                 style={{
                   fontSize: '12px',
-                  color: '#94a3b8',
-                  border: '1px solid #334155',
+                  color: 'var(--text-secondary)',
+                  border: '1px solid var(--border-primary)',
+                  borderRadius: 'var(--radius-sm)',
                   padding: '4px 10px',
                   textDecoration: 'none',
                   textTransform: 'capitalize',
+                  background: 'var(--bg-secondary)',
                 }}
               >
                 {child.name} ({child.post_count})
@@ -136,7 +138,7 @@ export default function CategoryFeedPage() {
       {/* Feed */}
       <main style={{ padding: '20px', maxWidth: '1100px', margin: '0 auto' }}>
         {posts.length === 0 ? (
-          <div style={{ padding: '60px 0', textAlign: 'center', color: '#64748b' }}>
+          <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--text-muted)' }}>
             <p style={{ fontSize: '14px' }}>No posts yet in this category.</p>
             <Link
               href="/submit"
@@ -144,13 +146,12 @@ export default function CategoryFeedPage() {
                 display: 'inline-block',
                 marginTop: '16px',
                 padding: '12px 24px',
-                backgroundColor: '#ff2d78',
+                background: 'var(--accent-gradient)',
                 color: '#fff',
                 fontSize: '14px',
                 fontWeight: 'bold',
                 textDecoration: 'none',
-                textTransform: 'uppercase',
-                border: '2px solid #ff2d78',
+                borderRadius: 'var(--radius-md)',
               }}
             >
               Submit a List
@@ -182,12 +183,12 @@ export default function CategoryFeedPage() {
                     maxWidth: '400px',
                     padding: '14px',
                     backgroundColor: 'transparent',
-                    color: loadingMore ? '#334155' : '#b8ff3d',
-                    border: `2px solid ${loadingMore ? '#334155' : '#b8ff3d'}`,
+                    color: loadingMore ? 'var(--text-muted)' : 'var(--accent)',
+                    border: `2px solid ${loadingMore ? 'var(--border-primary)' : 'var(--accent)'}`,
+                    borderRadius: 'var(--radius-md)',
                     fontSize: '14px',
                     fontWeight: 'bold',
-                    textTransform: 'uppercase',
-                    letterSpacing: '1px',
+                    letterSpacing: '0.5px',
                     cursor: loadingMore ? 'not-allowed' : 'pointer',
                   }}
                 >
@@ -202,19 +203,19 @@ export default function CategoryFeedPage() {
       {/* Footer */}
       <footer
         style={{
-          borderTop: '2px solid #1e293b',
+          borderTop: '1px solid var(--border-primary)',
           padding: '24px 20px',
           textAlign: 'center',
-          color: '#475569',
+          color: 'var(--text-muted)',
           fontSize: '12px',
         }}
       >
         <p style={{ margin: 0 }}>
-          <Link href="/" style={{ color: '#00d4aa', textDecoration: 'none' }}>Home</Link>
+          <Link href="/" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Home</Link>
           &nbsp;&middot;&nbsp;
-          <Link href="/categories" style={{ color: '#00d4aa', textDecoration: 'none' }}>All Categories</Link>
+          <Link href="/categories" style={{ color: 'var(--accent)', textDecoration: 'none' }}>All Categories</Link>
           &nbsp;&middot;&nbsp;
-          <Link href="/submit" style={{ color: '#00d4aa', textDecoration: 'none' }}>Submit</Link>
+          <Link href="/submit" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Submit</Link>
         </p>
       </footer>
     </div>

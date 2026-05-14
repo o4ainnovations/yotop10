@@ -68,36 +68,40 @@ export default function Home() {
     <div
       style={{
         minHeight: '100vh',
-        backgroundColor: '#0b0d17',
-        color: '#e2e8f0',
+        backgroundColor: 'var(--bg-primary)',
+        color: 'var(--text-primary)',
         fontFamily: 'var(--font-geist-sans), sans-serif',
       }}
     >
       {/* Brand Mark */}
       <header
         style={{
-          padding: '40px 20px 32px',
+          padding: '48px 24px 32px',
           textAlign: 'center',
-          borderBottom: '3px solid #ff2d78',
+          borderBottom: '2px solid var(--border-primary)',
         }}
       >
         <div
           style={{
             fontSize: '42px',
-            fontWeight: '900',
+            fontWeight: 900,
             letterSpacing: '6px',
-            color: '#ff2d78',
+            background: 'var(--accent-gradient)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
             marginBottom: '8px',
+            lineHeight: 1.1,
           }}
         >
           Y O T O P 1 0
         </div>
         <div
           style={{
-            fontSize: '14px',
-            fontWeight: 'bold',
+            fontSize: '13px',
+            fontWeight: 600,
             letterSpacing: '3px',
-            color: '#94a3b8',
+            color: 'var(--text-muted)',
             marginBottom: '24px',
           }}
         >
@@ -108,15 +112,21 @@ export default function Home() {
           <Link
             href="/submit"
             style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               padding: '12px 28px',
-              backgroundColor: '#ff2d78',
+              background: 'var(--accent-gradient)',
               color: '#fff',
-              border: '2px solid #ff2d78',
+              border: 'none',
+              borderRadius: 'var(--radius-md)',
               fontSize: '14px',
-              fontWeight: 'bold',
+              fontWeight: 600,
               textDecoration: 'none',
               textTransform: 'uppercase',
-              letterSpacing: '1px',
+              letterSpacing: '0.8px',
+              boxShadow: '0 2px 8px rgba(255,59,48,0.3)',
+              transition: 'all var(--transition)',
             }}
           >
             + Submit a List
@@ -124,15 +134,20 @@ export default function Home() {
           <Link
             href="/categories"
             style={{
-              padding: '12px 24px',
-              backgroundColor: 'transparent',
-              color: '#00d4aa',
-              border: '2px solid #00d4aa',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '12px 28px',
+              background: 'transparent',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border-primary)',
+              borderRadius: 'var(--radius-md)',
               fontSize: '14px',
-              fontWeight: 'bold',
+              fontWeight: 600,
               textDecoration: 'none',
               textTransform: 'uppercase',
-              letterSpacing: '1px',
+              letterSpacing: '0.8px',
+              transition: 'all var(--transition)',
             }}
           >
             Browse Categories
@@ -148,9 +163,9 @@ export default function Home() {
         style={{
           display: 'flex',
           justifyContent: 'flex-end',
-          gap: '16px',
-          padding: '12px 20px',
-          borderBottom: '1px solid #1e293b',
+          gap: '20px',
+          padding: '14px 24px',
+          borderBottom: '1px solid var(--border-primary)',
         }}
       >
         {(['newest', 'most_viewed', 'most_commented'] as const).map((s) => (
@@ -160,14 +175,15 @@ export default function Home() {
             style={{
               background: 'none',
               border: 'none',
-              color: sort === s ? '#ff2d78' : '#64748b',
+              color: sort === s ? 'var(--text-primary)' : 'var(--text-muted)',
               fontSize: '12px',
-              fontWeight: sort === s ? 'bold' : 'normal',
+              fontWeight: sort === s ? 600 : 400,
               cursor: 'pointer',
               textTransform: 'uppercase',
-              letterSpacing: '0.5px',
+              letterSpacing: '0.6px',
               padding: '4px 0',
-              borderBottom: sort === s ? '2px solid #ff2d78' : '2px solid transparent',
+              borderBottom: sort === s ? '2px solid var(--accent)' : '2px solid transparent',
+              transition: 'color var(--transition), border-color var(--transition)',
             }}
           >
             {s === 'newest' ? 'Newest' : s === 'most_viewed' ? 'Most Viewed' : 'Most Commented'}
@@ -176,32 +192,39 @@ export default function Home() {
       </div>
 
       {/* Feed */}
-      <main style={{ padding: '20px', maxWidth: '1100px', margin: '0 auto' }}>
+      <main style={{ padding: '24px', maxWidth: '1100px', margin: '0 auto' }}>
         {loading && posts.length === 0 ? (
-          <div style={{ padding: '60px 0', textAlign: 'center', color: '#64748b' }}>
-            <p style={{ fontSize: '14px' }}>Loading the debate wall...</p>
+          <div style={{ padding: '80px 0', textAlign: 'center' }}>
+            <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
+              Loading the wall...
+            </p>
           </div>
         ) : posts.length === 0 ? (
-          <div style={{ padding: '60px 0', textAlign: 'center', color: '#64748b' }}>
-            <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#94a3b8', marginBottom: '8px' }}>
+          <div style={{ padding: '80px 0', textAlign: 'center' }}>
+            <p style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '8px' }}>
               The wall is empty
             </p>
-            <p style={{ fontSize: '14px' }}>
+            <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '20px' }}>
               No approved posts yet. Be the first to submit a list.
             </p>
             <Link
               href="/submit"
               style={{
-                display: 'inline-block',
-                marginTop: '16px',
-                padding: '12px 24px',
-                backgroundColor: '#ff2d78',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '12px 28px',
+                background: 'var(--accent-gradient)',
                 color: '#fff',
+                border: 'none',
+                borderRadius: 'var(--radius-md)',
                 fontSize: '14px',
-                fontWeight: 'bold',
+                fontWeight: 600,
                 textDecoration: 'none',
                 textTransform: 'uppercase',
-                border: '2px solid #ff2d78',
+                letterSpacing: '0.8px',
+                boxShadow: '0 2px 8px rgba(255,59,48,0.3)',
+                transition: 'all var(--transition)',
               }}
             >
               Submit a List
@@ -213,20 +236,11 @@ export default function Home() {
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))',
-                gap: '12px',
+                gap: '16px',
               }}
             >
               {posts.map((post) => (
-                <div
-                  key={post.id}
-                  style={
-                    post.post_type === 'counter_list'
-                      ? { borderLeft: '3px solid #00d4aa', paddingLeft: '0' }
-                      : {}
-                  }
-                >
-                  <PostCard post={post} />
-                </div>
+                <PostCard key={post.id} post={post} />
               ))}
             </div>
 
@@ -239,14 +253,16 @@ export default function Home() {
                     width: '100%',
                     maxWidth: '400px',
                     padding: '14px',
-                    backgroundColor: 'transparent',
-                    color: loadingMore ? '#334155' : '#b8ff3d',
-                    border: `2px solid ${loadingMore ? '#334155' : '#b8ff3d'}`,
+                    background: 'transparent',
+                    color: loadingMore ? 'var(--text-muted)' : 'var(--accent)',
+                    border: `1.5px solid ${loadingMore ? 'var(--border-primary)' : 'var(--accent)'}`,
+                    borderRadius: 'var(--radius-md)',
                     fontSize: '14px',
-                    fontWeight: 'bold',
+                    fontWeight: 600,
                     textTransform: 'uppercase',
-                    letterSpacing: '1px',
+                    letterSpacing: '0.8px',
                     cursor: loadingMore ? 'not-allowed' : 'pointer',
+                    transition: 'all var(--transition)',
                   }}
                 >
                   {loadingMore ? 'Loading...' : 'Load More'}
@@ -260,16 +276,16 @@ export default function Home() {
       {/* Footer */}
       <footer
         style={{
-          borderTop: '2px solid #1e293b',
-          padding: '24px 20px',
+          borderTop: '1px solid var(--border-primary)',
+          padding: '24px 24px 36px',
           textAlign: 'center',
-          color: '#475569',
+          color: 'var(--text-muted)',
           fontSize: '12px',
         }}
       >
         <p style={{ margin: '0 0 8px' }}>
           Submit a list &middot; Browse all categories &middot;{' '}
-          <Link href="/search" style={{ color: '#00d4aa', textDecoration: 'none' }}>Search</Link>
+          <Link href="/search" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Search</Link>
         </p>
         <p style={{ margin: 0 }}>YoTop10 &mdash; Open Platform for Ranked Lists</p>
       </footer>

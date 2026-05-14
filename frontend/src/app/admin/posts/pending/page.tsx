@@ -92,7 +92,6 @@ export default function PendingPostsPage() {
     } catch {} finally { setActionLoading(false); }
   }, [rejectReason, retryGuidance, fetchPosts, page]);
 
-  // Keyboard shortcuts
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
@@ -106,105 +105,135 @@ export default function PendingPostsPage() {
   }, [singleAction]);
 
   const ageStr = (d: string) => { const h = Math.round((Date.now() - new Date(d).getTime()) / 3600000); return h < 1 ? 'now' : h < 24 ? `${h}h` : `${Math.floor(h / 24)}d`; };
-  const ageColor = (d: string) => { const h = Math.round((Date.now() - new Date(d).getTime()) / 3600000); return h > 168 ? '#c62828' : h > 48 ? '#e65100' : '#666'; };
+  const ageColor = (d: string) => { const h = Math.round((Date.now() - new Date(d).getTime()) / 3600000); return h > 168 ? '#c62828' : h > 48 ? '#e65100' : 'var(--text-muted)'; };
 
-  const modalOverlay: React.CSSProperties = { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.3)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' };
-  const modalBox: React.CSSProperties = { background: 'white', padding: '20px', borderRadius: '8px', minWidth: '400px', maxWidth: '500px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)' };
+  const modalOverlay: React.CSSProperties = { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' };
+  const modalBox: React.CSSProperties = { background: 'var(--bg-secondary)', padding: '24px', borderRadius: 'var(--radius-lg)', minWidth: '400px', maxWidth: '500px', boxShadow: 'var(--shadow-md)', border: '1px solid var(--border-primary)' };
+
+  const filterSelectStyle: React.CSSProperties = {
+    padding: '8px 12px',
+    border: '1px solid var(--border-primary)',
+    borderRadius: 'var(--radius-sm)',
+    background: 'var(--bg-tertiary)',
+    color: 'var(--text-primary)',
+    fontSize: '13px',
+    outline: 'none',
+  };
+
+  const filterInputStyle: React.CSSProperties = {
+    padding: '8px 12px',
+    border: '1px solid var(--border-primary)',
+    borderRadius: 'var(--radius-sm)',
+    background: 'var(--bg-tertiary)',
+    color: 'var(--text-primary)',
+    fontSize: '13px',
+    outline: 'none',
+  };
+
+  const btnSm: React.CSSProperties = {
+    fontSize: '11px',
+    padding: '2px 8px',
+    cursor: 'pointer',
+    background: 'var(--bg-tertiary)',
+    border: '1px solid var(--border-primary)',
+    borderRadius: 'var(--radius-sm)',
+    color: 'var(--text-primary)',
+  };
 
   return (<div>
-    <h2>Review Queue ({pagination.total} pending)</h2>
+    <h2 style={{ color: 'var(--text-primary)' }}>Review Queue ({pagination.total} pending)</h2>
 
     <div style={{ display: 'flex', gap: '10px', margin: '12px 0', flexWrap: 'wrap' }}>
-      <select value={filters.sort} onChange={e => { setFilters(f => ({ ...f, sort: e.target.value })); setPage(1); }} style={{ padding: '6px' }}>
+      <select value={filters.sort} onChange={e => { setFilters(f => ({ ...f, sort: e.target.value })); setPage(1); }} style={filterSelectStyle}>
         <option value="oldest">Oldest First</option><option value="newest">Newest First</option>
       </select>
-      <select value={filters.post_type} onChange={e => { setFilters(f => ({ ...f, post_type: e.target.value })); setPage(1); }} style={{ padding: '6px' }}>
+      <select value={filters.post_type} onChange={e => { setFilters(f => ({ ...f, post_type: e.target.value })); setPage(1); }} style={filterSelectStyle}>
         <option value="">All Types</option><option value="top_list">Top List</option><option value="best_of">Best Of</option><option value="worst_of">Worst Of</option><option value="hidden_gems">Hidden Gems</option><option value="counter_list">Counter List</option>
       </select>
-      <input placeholder="Author username" value={filters.author} onChange={e => { setFilters(f => ({ ...f, author: e.target.value })); setPage(1); }} style={{ padding: '6px', width: '140px' }} />
-      <select value={filters.category_slug} onChange={e => { setFilters(f => ({ ...f, category_slug: e.target.value })); setPage(1); }} style={{ padding: '6px', maxWidth: '180px' }}>
+      <input placeholder="Author username" value={filters.author} onChange={e => { setFilters(f => ({ ...f, author: e.target.value })); setPage(1); }} style={{ ...filterInputStyle, width: '140px' }} />
+      <select value={filters.category_slug} onChange={e => { setFilters(f => ({ ...f, category_slug: e.target.value })); setPage(1); }} style={{ ...filterSelectStyle, maxWidth: '180px' }}>
         <option value="">All Categories</option>
         {categories.map(c => (<React.Fragment key={c.slug}>
-          <option value={c.slug}><Icon name="Folder" size={12} /> {c.name}</option>
+          <option value={c.slug}>{c.name}</option>
           {c.children?.map(ch => <option key={ch.slug} value={ch.slug}>&nbsp;&nbsp;{ch.name}</option>)}
         </React.Fragment>))}
       </select>
-      <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1); }} style={{ padding: '4px', width: '130px' }} title="From date" />
-      <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(1); }} style={{ padding: '4px', width: '130px' }} title="To date" />
+      <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1); }} style={{ ...filterInputStyle, width: '130px' }} title="From date" />
+      <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(1); }} style={{ ...filterInputStyle, width: '130px' }} title="To date" />
     </div>
 
-    {selected.size > 0 && (<div style={{ background: '#e3f2fd', padding: '8px 12px', borderRadius: '4px', marginBottom: '12px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-      <strong>{selected.size} selected</strong>
-      <button onClick={() => bulkAction('approve')} disabled={actionLoading} style={{ padding: '4px 12px', cursor: 'pointer' }}><Icon name="Check" size={14} color="#2e7d32" /> Approve</button>
-      <button onClick={() => setShowRejectModal(true)} disabled={actionLoading} style={{ padding: '4px 12px', cursor: 'pointer' }}><Icon name="X" size={14} color="#c62828" /> Reject</button>
+    {selected.size > 0 && (<div style={{ background: 'var(--bg-tertiary)', padding: '10px 16px', borderRadius: 'var(--radius-sm)', marginBottom: '12px', display: 'flex', gap: '10px', alignItems: 'center', border: '1px solid var(--border-primary)' }}>
+      <strong style={{ color: 'var(--text-primary)' }}>{selected.size} selected</strong>
+      <button onClick={() => bulkAction('approve')} disabled={actionLoading} style={btnSm}><Icon name="Check" size={14} color="#2e7d32" /> Approve</button>
+      <button onClick={() => setShowRejectModal(true)} disabled={actionLoading} style={btnSm}><Icon name="X" size={14} color="#c62828" /> Reject</button>
     </div>)}
 
-    {loading ? <p>Loading...</p> : posts.length === 0 ? <p>No pending posts.</p> : (
+    {loading ? <p style={{ color: 'var(--text-muted)' }}>Loading...</p> : posts.length === 0 ? <p style={{ color: 'var(--text-muted)' }}>No pending posts.</p> : (
       <div>
-        <div style={{ borderBottom: '2px solid #ccc', paddingBottom: '8px', marginBottom: '8px', display: 'flex', fontSize: '12px', color: '#666', textAlign: 'left' }}>
+        <div style={{ borderBottom: '2px solid var(--border-primary)', paddingBottom: '8px', marginBottom: '8px', display: 'flex', fontSize: '12px', color: 'var(--text-muted)', textAlign: 'left' }}>
           <span style={{ width: '30px' }}><input type="checkbox" checked={selected.size === posts.length && posts.length > 0} onChange={selectAll} /></span>
           <span style={{ flex: 1 }}>Title</span><span style={{ width: '90px' }}>Type</span><span style={{ width: '90px' }}>Author</span><span style={{ width: '50px' }}>Age</span><span style={{ width: '140px' }}>Actions</span>
         </div>
         {posts.map(p => (<div key={p._id}>
-          <div style={{ display: 'flex', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid #eee', cursor: 'pointer' }}>
+          <div style={{ display: 'flex', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border-primary)', cursor: 'pointer' }}>
             <span style={{ width: '30px' }}><input type="checkbox" checked={selected.has(p._id)} onChange={() => toggleSelect(p._id)} onClick={e => e.stopPropagation()} /></span>
-            <span style={{ flex: 1, fontWeight: 'bold', fontSize: '13px' }} onClick={() => toggleExpand(p._id)}>
+            <span style={{ flex: 1, fontWeight: 'bold', fontSize: '13px', color: 'var(--text-primary)' }} onClick={() => toggleExpand(p._id)}>
               {p.title}
               {p.collision && <span style={{ background: '#ffcc02', color: '#333', padding: '1px 5px', borderRadius: '3px', fontSize: '10px', marginLeft: '6px', fontWeight: 'bold' }} title={`Similar pending: ${p.collision.title} (submitted ${new Date(p.collision.submitted_at).toLocaleDateString()})`}><Icon name="Zap" size={10} /> COLLISION</span>}
-              {p.revision_count > 0 && <span style={{ background: '#e3f2fd', color: '#1565c0', padding: '1px 4px', borderRadius: '3px', fontSize: '10px' }}>×{p.revision_count}</span>}
+              {p.revision_count > 0 && <span style={{ background: 'var(--accent-soft)', color: 'var(--accent)', padding: '1px 6px', borderRadius: '3px', fontSize: '10px', marginLeft: '4px' }}>{p.revision_count}x</span>}
             </span>
-            <span style={{ width: '90px', fontSize: '11px', color: '#666' }}>{p.post_type}</span>
-            <span style={{ width: '90px', fontSize: '11px' }}>{p.author_username}</span>
+            <span style={{ width: '90px', fontSize: '11px', color: 'var(--text-muted)' }}>{p.post_type}</span>
+            <span style={{ width: '90px', fontSize: '11px', color: 'var(--text-secondary)' }}>{p.author_username}</span>
             <span style={{ width: '50px', fontSize: '11px', color: ageColor(p.created_at) }}>{ageStr(p.created_at)}</span>
             <span style={{ width: '140px', display: 'flex', gap: '4px' }}>
-              <button onClick={e => { e.stopPropagation(); singleAction(p._id, 'approve'); }} disabled={actionLoading} style={{ fontSize: '11px', padding: '2px 6px', cursor: 'pointer' }}><Icon name="Check" size={14} color="#2e7d32" /></button>
-              <button onClick={e => { e.stopPropagation(); router.push(`/admin/posts/pending/${p._id}`); }} style={{ fontSize: '11px', padding: '2px 6px', cursor: 'pointer' }}><Icon name="Search" size={14} /></button>
-              <button onClick={e => { e.stopPropagation(); setShowRejectModal(true); setSelected(new Set([p._id])); }} disabled={actionLoading} style={{ fontSize: '11px', padding: '2px 6px', cursor: 'pointer' }}><Icon name="X" size={14} color="#c62828" /></button>
-              <button onClick={e => { e.stopPropagation(); setShowRetryModal(true); setSelected(new Set([p._id])); }} disabled={actionLoading} style={{ fontSize: '11px', padding: '2px 6px', cursor: 'pointer' }}><Icon name="RefreshCw" size={14} /></button>
+              <button onClick={e => { e.stopPropagation(); singleAction(p._id, 'approve'); }} disabled={actionLoading} style={btnSm}><Icon name="Check" size={14} color="#2e7d32" /></button>
+              <button onClick={e => { e.stopPropagation(); router.push(`/admin/posts/pending/${p._id}`); }} style={btnSm}><Icon name="Search" size={14} /></button>
+              <button onClick={e => { e.stopPropagation(); setShowRejectModal(true); setSelected(new Set([p._id])); }} disabled={actionLoading} style={btnSm}><Icon name="X" size={14} color="#c62828" /></button>
+              <button onClick={e => { e.stopPropagation(); setShowRetryModal(true); setSelected(new Set([p._id])); }} disabled={actionLoading} style={btnSm}><Icon name="RefreshCw" size={14} /></button>
             </span>
           </div>
-          {expanded.has(p._id) && (<div style={{ padding: '10px 10px 10px 40px', background: '#f9f9f9', borderBottom: '1px solid #eee', fontSize: '12px' }}>
-            <p style={{ color: '#666' }}>Category: <strong>{p.category_slug}</strong></p>
+          {expanded.has(p._id) && (<div style={{ padding: '10px 10px 10px 40px', background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-primary)', fontSize: '12px', color: 'var(--text-secondary)' }}>
+            <p>Category: <strong style={{ color: 'var(--text-primary)' }}>{p.category_slug}</strong></p>
             {previewCache[p._id] ? <div>
-              <p><strong>Intro:</strong> {previewCache[p._id].intro.substring(0, 200)}{(previewCache[p._id].intro?.length || 0) > 200 ? '...' : ''}</p>
-              <div>{previewCache[p._id].items.map(i => <div key={i.rank} style={{ margin: '4px 0' }}><strong>#{i.rank}</strong> {i.title} — {i.justification.substring(0, 80)}</div>)}</div>
+              <p><strong style={{ color: 'var(--text-primary)' }}>Intro:</strong> {previewCache[p._id].intro.substring(0, 200)}{(previewCache[p._id].intro?.length || 0) > 200 ? '...' : ''}</p>
+              <div>{previewCache[p._id].items.map(i => <div key={i.rank} style={{ margin: '4px 0' }}><strong style={{ color: 'var(--text-primary)' }}>#{i.rank}</strong> {i.title} — {i.justification.substring(0, 80)}</div>)}</div>
               <div style={{ marginTop: '8px', display: 'flex', gap: '6px' }}>
-                <button onClick={() => singleAction(p._id, 'approve')} disabled={actionLoading} style={{ fontSize: '12px', padding: '4px 10px', cursor: 'pointer' }}><Icon name="Check" size={14} color="#2e7d32" /> Approve</button>
-                <button onClick={() => { setSelected(new Set([p._id])); setShowRejectModal(true); }} disabled={actionLoading} style={{ fontSize: '12px', padding: '4px 10px', cursor: 'pointer' }}><Icon name="X" size={14} color="#c62828" /> Reject</button>
-                <button onClick={() => { setSelected(new Set([p._id])); setShowRetryModal(true); }} disabled={actionLoading} style={{ fontSize: '12px', padding: '4px 10px', cursor: 'pointer' }}><Icon name="RefreshCw" size={14} /> Request Revision</button>
+                <button onClick={() => singleAction(p._id, 'approve')} disabled={actionLoading} style={{ fontSize: '12px', padding: '4px 12px', cursor: 'pointer', background: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)' }}><Icon name="Check" size={14} color="#2e7d32" /> Approve</button>
+                <button onClick={() => { setSelected(new Set([p._id])); setShowRejectModal(true); }} disabled={actionLoading} style={{ fontSize: '12px', padding: '4px 12px', cursor: 'pointer', background: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)' }}><Icon name="X" size={14} color="#c62828" /> Reject</button>
+                <button onClick={() => { setSelected(new Set([p._id])); setShowRetryModal(true); }} disabled={actionLoading} style={{ fontSize: '12px', padding: '4px 12px', cursor: 'pointer', background: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)' }}><Icon name="RefreshCw" size={14} /> Request Revision</button>
               </div>
-            </div> : <p>Loading preview...</p>}
+            </div> : <p style={{ color: 'var(--text-muted)' }}>Loading preview...</p>}
           </div>)}
         </div>))}
       </div>
     )}
 
-    <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
-      <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Prev</button>
-      <span>Page {page} of {pagination.pages}</span>
-      <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)}>Next</button>
+    <div style={{ marginTop: '16px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+      <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ padding: '6px 14px', cursor: page <= 1 ? 'not-allowed' : 'pointer', background: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)', opacity: page <= 1 ? 0.5 : 1 }}>Prev</button>
+      <span style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>Page {page} of {pagination.pages}</span>
+      <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)} style={{ padding: '6px 14px', cursor: page >= pagination.pages ? 'not-allowed' : 'pointer', background: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)', opacity: page >= pagination.pages ? 0.5 : 1 }}>Next</button>
     </div>
 
-    <p style={{ marginTop: '12px', fontSize: '11px', color: '#999' }}><Icon name="Keyboard" size={12} /> Shortcuts: <strong>A</strong>=Approve first &nbsp; <strong>R</strong>=Reject first &nbsp; <strong>E</strong>=Request revision for first</p>
+    <p style={{ marginTop: '12px', fontSize: '11px', color: 'var(--text-muted)' }}><Icon name="Keyboard" size={12} /> Shortcuts: <strong style={{ color: 'var(--text-secondary)' }}>A</strong>=Approve first · <strong style={{ color: 'var(--text-secondary)' }}>R</strong>=Reject first · <strong style={{ color: 'var(--text-secondary)' }}>E</strong>=Request revision for first</p>
 
     {showRejectModal && <div style={modalOverlay} onClick={() => setShowRejectModal(false)}>
       <div style={modalBox} onClick={e => e.stopPropagation()}>
-        <h3>Reject {selected.size > 1 ? `${selected.size} posts` : 'Post'}</h3>
-        <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="Rejection reason..." rows={3} style={{ width: '100%', marginBottom: '10px', padding: '8px' }} />
+        <h3 style={{ color: 'var(--text-primary)', marginTop: 0 }}>Reject {selected.size > 1 ? `${selected.size} posts` : 'Post'}</h3>
+        <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="Rejection reason..." rows={3} style={{ width: '100%', marginBottom: '10px', padding: '10px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)', fontSize: '13px', boxSizing: 'border-box', resize: 'vertical' }} />
         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-          <button onClick={() => setShowRejectModal(false)}>Cancel</button>
-          <button onClick={() => selected.size > 1 ? bulkAction('reject') : singleAction(Array.from(selected)[0], 'reject')} disabled={!rejectReason.trim() || actionLoading} style={{ background: '#c62828', color: 'white', border: 'none', padding: '6px 16px', borderRadius: '4px' }}>Confirm</button>
+          <button onClick={() => setShowRejectModal(false)} style={{ padding: '8px 16px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text-primary)', fontSize: '13px' }}>Cancel</button>
+          <button onClick={() => selected.size > 1 ? bulkAction('reject') : singleAction(Array.from(selected)[0], 'reject')} disabled={!rejectReason.trim() || actionLoading} style={{ background: !rejectReason.trim() || actionLoading ? 'var(--border-primary)' : '#c62828', color: 'white', border: 'none', padding: '8px 20px', borderRadius: 'var(--radius-sm)', cursor: !rejectReason.trim() || actionLoading ? 'not-allowed' : 'pointer', fontSize: '13px', fontWeight: 'bold' }}>Confirm</button>
         </div>
       </div>
     </div>}
 
     {showRetryModal && <div style={modalOverlay} onClick={() => setShowRetryModal(false)}>
       <div style={modalBox} onClick={e => e.stopPropagation()}>
-        <h3>Request Revision</h3>
-        <textarea value={retryGuidance} onChange={e => setRetryGuidance(e.target.value)} placeholder="Guidance for the author..." rows={4} maxLength={2000} style={{ width: '100%', marginBottom: '10px', padding: '8px' }} />
+        <h3 style={{ color: 'var(--text-primary)', marginTop: 0 }}>Request Revision</h3>
+        <textarea value={retryGuidance} onChange={e => setRetryGuidance(e.target.value)} placeholder="Guidance for the author..." rows={4} maxLength={2000} style={{ width: '100%', marginBottom: '10px', padding: '10px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)', fontSize: '13px', boxSizing: 'border-box', resize: 'vertical' }} />
         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-          <button onClick={() => setShowRetryModal(false)}>Cancel</button>
-          <button onClick={() => singleAction(Array.from(selected)[0], 'retry')} disabled={!retryGuidance.trim() || actionLoading} style={{ background: '#ff9800', color: 'white', border: 'none', padding: '6px 16px', borderRadius: '4px' }}>Send Guidance</button>
+          <button onClick={() => setShowRetryModal(false)} style={{ padding: '8px 16px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text-primary)', fontSize: '13px' }}>Cancel</button>
+          <button onClick={() => singleAction(Array.from(selected)[0], 'retry')} disabled={!retryGuidance.trim() || actionLoading} style={{ background: !retryGuidance.trim() || actionLoading ? 'var(--border-primary)' : '#ff9800', color: 'white', border: 'none', padding: '8px 20px', borderRadius: 'var(--radius-sm)', cursor: !retryGuidance.trim() || actionLoading ? 'not-allowed' : 'pointer', fontSize: '13px', fontWeight: 'bold' }}>Send Guidance</button>
         </div>
       </div>
     </div>}

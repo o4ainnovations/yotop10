@@ -5,6 +5,7 @@ import { API } from '@/lib/api';
 import { generateMnemonic, mnemonicToKeyPair } from '@/lib/identity';
 import { useAuthStore } from '@/stores/auth';
 import { SeedDisplayModal } from './SeedDisplayModal';
+import { Icon } from '@/components/icons/Icon';
 
 interface IdentityStatus {
   has_seed: boolean;
@@ -98,30 +99,39 @@ export function SecureMyAuthority() {
     }
   };
 
+  const sectionStyle: React.CSSProperties = {
+    padding: '20px',
+    border: '1px solid var(--border-primary)',
+    borderRadius: 'var(--radius-lg)',
+    marginTop: '16px',
+    background: 'var(--bg-secondary)',
+    boxShadow: 'var(--shadow-sm)',
+  };
+
   if (loading) {
     return (
-      <div style={{ padding: '16px', border: '1px solid #ddd', borderRadius: '8px', marginTop: '16px' }}>
-        <p style={{ margin: 0 }}>Loading identity status...</p>
+      <div style={sectionStyle}>
+        <p style={{ margin: 0, color: 'var(--text-muted)' }}>Loading identity status...</p>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '16px', border: '1px solid #ddd', borderRadius: '8px', marginTop: '16px' }}>
-      <h3 style={{ margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <span style={{ fontSize: '18px' }}>&#128274;</span>
+    <div style={sectionStyle}>
+      <h3 style={{ margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
+        <Icon name="Lock" size={18} color="var(--accent)" />
         Secure My Authority
       </h3>
 
       {error && (
-        <div style={{ color: '#c62828', fontSize: '13px', marginBottom: '12px', backgroundColor: '#ffebee', padding: '8px', borderRadius: '4px' }}>
+        <div style={{ color: '#c62828', fontSize: '13px', marginBottom: '12px', backgroundColor: 'rgba(198,40,40,0.08)', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(198,40,40,0.2)' }}>
           {error}
         </div>
       )}
 
       {!status?.has_seed ? (
         <div>
-          <p style={{ fontSize: '14px', color: '#555', marginBottom: '16px' }}>
+          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: 1.6 }}>
             Your identity is currently tied to this browser. Generate a 12-word seed phrase to own your reputation permanently. You can use it to recover your account on any device.
           </p>
           <p style={{ fontSize: '13px', color: '#c62828', fontWeight: 'bold', marginBottom: '16px' }}>
@@ -132,13 +142,13 @@ export function SecureMyAuthority() {
             disabled={generating}
             style={{
               padding: '10px 20px',
-              backgroundColor: '#1565c0',
+              background: generating ? 'var(--border-primary)' : 'var(--accent-gradient)',
               color: '#fff',
               border: 'none',
-              borderRadius: '4px',
+              borderRadius: 'var(--radius-md)',
               cursor: generating ? 'not-allowed' : 'pointer',
               fontSize: '14px',
-              opacity: generating ? 0.6 : 1,
+              fontWeight: 'bold',
             }}
           >
             {generating ? 'Generating...' : 'Generate Seed Phrase'}
@@ -146,10 +156,10 @@ export function SecureMyAuthority() {
         </div>
       ) : (
         <div>
-          <p style={{ fontSize: '14px', color: '#2e7d32', marginBottom: '8px' }}>
-            &#10003; Your identity is secured with a seed phrase
+          <p style={{ fontSize: '14px', color: '#2e7d32', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Icon name="Check" size={16} color="#2e7d32" /> Your identity is secured with a seed phrase
           </p>
-          <p style={{ fontSize: '12px', color: '#888', marginBottom: '12px' }}>
+          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>
             Generated {status.seed_generated_at ? new Date(status.seed_generated_at).toLocaleDateString() : 'unknown date'}
           </p>
 
@@ -158,11 +168,12 @@ export function SecureMyAuthority() {
               onClick={fetchDevices}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#f5f5f5',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
+                backgroundColor: 'var(--bg-tertiary)',
+                border: '1px solid var(--border-primary)',
+                borderRadius: 'var(--radius-sm)',
                 cursor: 'pointer',
                 fontSize: '13px',
+                color: 'var(--text-primary)',
               }}
             >
               Manage Devices ({status.devices_linked})
@@ -171,11 +182,12 @@ export function SecureMyAuthority() {
               onClick={() => window.location.href = '/claim'}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#f5f5f5',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
+                backgroundColor: 'var(--bg-tertiary)',
+                border: '1px solid var(--border-primary)',
+                borderRadius: 'var(--radius-sm)',
                 cursor: 'pointer',
                 fontSize: '13px',
+                color: 'var(--text-primary)',
               }}
             >
               Claim on Another Device
@@ -185,10 +197,10 @@ export function SecureMyAuthority() {
       )}
 
       {showDevices && (
-        <div style={{ marginTop: '16px', borderTop: '1px solid #eee', paddingTop: '12px' }}>
-          <h4 style={{ margin: '0 0 8px 0', fontSize: '14px' }}>Linked Devices</h4>
+        <div style={{ marginTop: '16px', borderTop: '1px solid var(--border-primary)', paddingTop: '14px' }}>
+          <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: 'var(--text-primary)' }}>Linked Devices</h4>
           {devices.length === 0 ? (
-            <p style={{ fontSize: '13px', color: '#888' }}>No devices linked.</p>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>No devices linked.</p>
           ) : (
             <div>
               {devices.map((d) => (
@@ -198,22 +210,22 @@ export function SecureMyAuthority() {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    padding: '8px',
-                    borderBottom: '1px solid #f0f0f0',
+                    padding: '10px 0',
+                    borderBottom: '1px solid var(--border-primary)',
                     fontSize: '13px',
                   }}
                 >
                   <div>
-                    <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                    <span style={{ fontFamily: 'Geist Mono, monospace', fontSize: '12px', color: 'var(--text-secondary)' }}>
                       {d.device_fingerprint.substring(0, 16)}...
                     </span>
                     {d.is_current && (
-                      <span style={{ marginLeft: '8px', color: '#2e7d32', fontSize: '12px', fontWeight: 'bold' }}>
-                        (current)
+                      <span style={{ marginLeft: '8px', color: '#2e7d32', fontSize: '12px', fontWeight: 'bold', background: 'rgba(46,125,50,0.1)', padding: '1px 6px', borderRadius: '3px' }}>
+                        current
                       </span>
                     )}
                     <br />
-                    <span style={{ color: '#888', fontSize: '11px' }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>
                       Linked {new Date(d.linked_at).toLocaleDateString()}
                     </span>
                   </div>
@@ -221,11 +233,11 @@ export function SecureMyAuthority() {
                     <button
                       onClick={() => handleUnlink(d.device_fingerprint)}
                       style={{
-                        padding: '4px 10px',
-                        backgroundColor: '#ffebee',
+                        padding: '4px 12px',
+                        backgroundColor: 'rgba(198,40,40,0.08)',
                         color: '#c62828',
-                        border: '1px solid #ef9a9a',
-                        borderRadius: '4px',
+                        border: '1px solid rgba(198,40,40,0.2)',
+                        borderRadius: 'var(--radius-sm)',
                         cursor: 'pointer',
                         fontSize: '12px',
                       }}
@@ -240,11 +252,11 @@ export function SecureMyAuthority() {
           <button
             onClick={() => setShowDevices(false)}
             style={{
-              marginTop: '8px',
+              marginTop: '10px',
               padding: '6px 12px',
               backgroundColor: 'transparent',
               border: 'none',
-              color: '#1565c0',
+              color: 'var(--accent)',
               cursor: 'pointer',
               fontSize: '13px',
             }}
@@ -260,3 +272,5 @@ export function SecureMyAuthority() {
     </div>
   );
 }
+
+

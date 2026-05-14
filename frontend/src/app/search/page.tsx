@@ -47,7 +47,6 @@ export default function SearchPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Debounced autocomplete
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     if (!q || q.length < 2) { setShowSuggestions(false); return; }
@@ -62,7 +61,6 @@ export default function SearchPage() {
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [q]);
 
-  // Debounced search
   const search = useCallback(async (searchPage: number) => {
     if (!q.trim() || q.trim().length < 2) { setResults(null); return; }
     setLoading(true); setError('');
@@ -90,7 +88,6 @@ export default function SearchPage() {
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [q, page, sort, categorySlug, postType, author, search]);
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node) && inputRef.current && !inputRef.current.contains(e.target as Node)) setShowSuggestions(false); };
     document.addEventListener('mousedown', handler);
@@ -107,6 +104,9 @@ export default function SearchPage() {
   const allResults = [...(results?.posts || []).map(p => ({ ...p, _type: 'post' as const })), ...(results?.comments || []).map(c => ({ ...c, _type: 'comment' as const }))].sort((a, b) => b._score - a._score);
   const activeResults = activeTab === 'all' ? allResults : activeTab === 'posts' ? (results?.posts || []) : (results?.comments || []);
 
+  const filterSelect: React.CSSProperties = { width: '100%', padding: '7px 10px', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', fontSize: '13px', background: 'var(--bg-tertiary)', color: 'var(--text-primary)', outline: 'none' };
+  const filterInput: React.CSSProperties = { width: '100%', padding: '7px 10px', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', fontSize: '13px', background: 'var(--bg-tertiary)', color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box' };
+
   return (
     <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '20px' }}>
       {/* Search bar with autocomplete */}
@@ -116,34 +116,33 @@ export default function SearchPage() {
             <input ref={inputRef} type="text" value={q} onChange={e => setQ(e.target.value)} onKeyDown={handleKeyDown}
               onFocus={() => q.length >= 2 && suggestions.titles.length > 0 && setShowSuggestions(true)}
               placeholder="Search posts and comments in real-time..."
-              style={{ width: '100%', padding: '14px 18px', fontSize: '17px', border: '2px solid #ddd', borderRadius: '10px', outline: 'none', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '14px 18px', fontSize: '17px', border: '2px solid var(--border-primary)', borderRadius: 'var(--radius-md)', outline: 'none', boxSizing: 'border-box', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               autoFocus autoComplete="off"
             />
-            {loading && <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#999', fontSize: '13px' }}>...</span>}
+            {loading && <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: '13px' }}>...</span>}
           </div>
           <button onClick={() => { setShowSuggestions(false); search(page); }} disabled={loading}
-            style={{ padding: '14px 28px', fontSize: '16px', background: '#1565c0', color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+            style={{ padding: '14px 28px', fontSize: '16px', background: 'var(--accent-gradient)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
             Search
           </button>
         </div>
 
-        {/* Autocomplete dropdown */}
         {showSuggestions && (suggestions.titles.length > 0 || suggestions.categories.length > 0) && (
-          <div ref={dropdownRef} style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: '#fff', border: '1px solid #ddd', borderRadius: '8px', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', marginTop: '4px', maxHeight: '360px', overflow: 'auto' }}>
+          <div ref={dropdownRef} style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-md)', marginTop: '4px', maxHeight: '360px', overflow: 'auto' }}>
             {suggestions.titles.length > 0 && (
               <div>
-                <div style={{ padding: '8px 14px', fontSize: '11px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Posts</div>
+                <div style={{ padding: '8px 14px', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Posts</div>
                 {suggestions.titles.map(t => (
-                  <div key={t.slug} onClick={() => selectSuggestion(t.title || '')} style={{ padding: '10px 14px', cursor: 'pointer', fontSize: '14px', borderBottom: '1px solid #f5f5f5' }}
+                  <div key={t.slug} onClick={() => selectSuggestion(t.title || '')} style={{ padding: '10px 14px', cursor: 'pointer', fontSize: '14px', borderBottom: '1px solid var(--border-primary)', color: 'var(--text-primary)' }}
                     dangerouslySetInnerHTML={{ __html: t.highlight || t.title || '' }} />
                 ))}
               </div>
             )}
             {suggestions.categories.length > 0 && (
               <div>
-                <div style={{ padding: '8px 14px', fontSize: '11px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px', borderTop: '1px solid #eee' }}>Categories</div>
+                <div style={{ padding: '8px 14px', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', borderTop: '1px solid var(--border-primary)' }}>Categories</div>
                 {suggestions.categories.map(c => (
-                  <div key={c.slug} onClick={() => selectSuggestion(c.name || '')} style={{ padding: '10px 14px', cursor: 'pointer', fontSize: '14px', borderBottom: '1px solid #f5f5f5' }}
+                  <div key={c.slug} onClick={() => selectSuggestion(c.name || '')} style={{ padding: '10px 14px', cursor: 'pointer', fontSize: '14px', borderBottom: '1px solid var(--border-primary)', color: 'var(--text-primary)' }}
                     dangerouslySetInnerHTML={{ __html: c.highlight || c.name || '' }} />
                 ))}
               </div>
@@ -154,8 +153,8 @@ export default function SearchPage() {
 
       {/* Suggestions */}
       {results?.suggestions && (
-        <div style={{ marginBottom: '16px', padding: '10px 16px', background: '#e3f2fd', borderRadius: '6px', fontSize: '14px' }}>
-          Did you mean: <button onClick={() => { setQ(results.suggestions!.suggestion); setPage(1); }} style={{ background: 'none', border: 'none', color: '#1565c0', cursor: 'pointer', fontWeight: 'bold', textDecoration: 'underline', fontSize: '14px' }}>
+        <div style={{ marginBottom: '16px', padding: '10px 16px', background: 'var(--accent-soft)', borderRadius: 'var(--radius-sm)', fontSize: '14px', color: 'var(--text-secondary)' }}>
+          Did you mean: <button onClick={() => { setQ(results.suggestions!.suggestion); setPage(1); }} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 'bold', textDecoration: 'underline', fontSize: '14px' }}>
             {results.suggestions.suggestion}
           </button>?
         </div>
@@ -164,63 +163,63 @@ export default function SearchPage() {
       <div style={{ display: 'flex', gap: '24px' }}>
         {/* Filters */}
         <div style={{ width: '220px', flexShrink: 0 }}>
-          <h3 style={{ fontSize: '14px', marginBottom: '12px' }}>Filters</h3>
+          <h3 style={{ fontSize: '14px', marginBottom: '12px', color: 'var(--text-primary)' }}>Filters</h3>
           <div style={{ marginBottom: '14px' }}>
-            <label style={lbl}>Category</label>
-            <select value={categorySlug} onChange={e => { setCategorySlug(e.target.value); setPage(1); }} style={sel}>
+            <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Category</label>
+            <select value={categorySlug} onChange={e => { setCategorySlug(e.target.value); setPage(1); }} style={filterSelect}>
               <option value="">All</option>
               {(results?.facets.categories || []).map(f => <option key={f.key} value={f.key}>{f.key} ({f.count})</option>)}
             </select>
           </div>
           <div style={{ marginBottom: '14px' }}>
-            <label style={lbl}>Post Type</label>
-            <select value={postType} onChange={e => { setPostType(e.target.value); setPage(1); }} style={sel}>
+            <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Post Type</label>
+            <select value={postType} onChange={e => { setPostType(e.target.value); setPage(1); }} style={filterSelect}>
               <option value="">All</option>
               {(results?.facets.post_types || []).map(f => <option key={f.key} value={f.key}>{f.key} ({f.count})</option>)}
             </select>
           </div>
           <div style={{ marginBottom: '14px' }}>
-            <label style={lbl}>Author</label>
-            <input value={author} onChange={e => { setAuthor(e.target.value); setPage(1); }} placeholder="username..." style={inp} />
+            <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Author</label>
+            <input value={author} onChange={e => { setAuthor(e.target.value); setPage(1); }} placeholder="username..." style={filterInput} />
           </div>
           <div style={{ marginBottom: '14px' }}>
-            <label style={lbl}>Sort</label>
-            <select value={sort} onChange={e => { setSort(e.target.value); setPage(1); }} style={sel}>
+            <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Sort</label>
+            <select value={sort} onChange={e => { setSort(e.target.value); setPage(1); }} style={filterSelect}>
               <option value="_score">Relevance</option><option value="newest">Newest</option><option value="most_comments">Most Comments</option><option value="most_fire">Most Fire</option>
             </select>
           </div>
-          <button onClick={() => { setCategorySlug(''); setPostType(''); setAuthor(''); setSort('_score'); setPage(1); }} style={{ width: '100%', padding: '6px', background: '#f5f5f5', border: '1px solid #ddd', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', color: '#666' }}>Clear All</button>
+          <button onClick={() => { setCategorySlug(''); setPostType(''); setAuthor(''); setSort('_score'); setPage(1); }} style={{ width: '100%', padding: '8px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '12px', color: 'var(--text-secondary)' }}>Clear All</button>
         </div>
 
         {/* Results */}
         <div style={{ flex: 1, minWidth: 0 }}>
           {results && (
-            <div style={{ marginBottom: '14px', fontSize: '13px', color: '#666' }}>
-              Found <strong>{results.total.posts + results.total.comments}</strong> results ({results.total.posts} posts, {results.total.comments} comments)
+            <div style={{ marginBottom: '14px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+              Found <strong style={{ color: 'var(--text-primary)' }}>{results.total.posts + results.total.comments}</strong> results ({results.total.posts} posts, {results.total.comments} comments)
             </div>
           )}
           {results && (
-            <div style={{ display: 'flex', gap: '0', marginBottom: '14px', borderBottom: '1px solid #ddd' }}>
-              <button onClick={() => setActiveTab('all')} style={ts(activeTab === 'all')}>All</button>
-              <button onClick={() => setActiveTab('posts')} style={ts(activeTab === 'posts')}>Posts ({results.total.posts})</button>
-              <button onClick={() => setActiveTab('comments')} style={ts(activeTab === 'comments')}>Comments ({results.total.comments})</button>
+            <div style={{ display: 'flex', gap: '0', marginBottom: '14px', borderBottom: '1px solid var(--border-primary)' }}>
+              <button onClick={() => setActiveTab('all')} style={{ padding: '8px 16px', border: 'none', borderBottom: activeTab === 'all' ? '2px solid var(--accent)' : '2px solid transparent', background: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: activeTab === 'all' ? 'bold' : 'normal', color: activeTab === 'all' ? 'var(--accent)' : 'var(--text-muted)' }}>All</button>
+              <button onClick={() => setActiveTab('posts')} style={{ padding: '8px 16px', border: 'none', borderBottom: activeTab === 'posts' ? '2px solid var(--accent)' : '2px solid transparent', background: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: activeTab === 'posts' ? 'bold' : 'normal', color: activeTab === 'posts' ? 'var(--accent)' : 'var(--text-muted)' }}>Posts ({results.total.posts})</button>
+              <button onClick={() => setActiveTab('comments')} style={{ padding: '8px 16px', border: 'none', borderBottom: activeTab === 'comments' ? '2px solid var(--accent)' : '2px solid transparent', background: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: activeTab === 'comments' ? 'bold' : 'normal', color: activeTab === 'comments' ? 'var(--accent)' : 'var(--text-muted)' }}>Comments ({results.total.comments})</button>
             </div>
           )}
           {error && <p style={{ color: '#c62828' }}>{error}</p>}
-          {loading && <div style={{ padding: '40px', textAlign: 'center', color: '#999' }}>Searching...</div>}
+          {loading && <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Searching...</div>}
           {!loading && results && activeResults.length === 0 && (
-            <div style={{ padding: '60px 20px', textAlign: 'center', color: '#999' }}>
-              <div style={{ fontSize: '40px', marginBottom: '12px' }}><Icon name="Search" size={40} color="#999" /></div>
-              <h2>No results found</h2><p>Try different keywords or remove filters.</p>
+            <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+              <div style={{ fontSize: '40px', marginBottom: '12px' }}><Icon name="Search" size={40} color="var(--text-muted)" /></div>
+              <h2 style={{ color: 'var(--text-primary)' }}>No results found</h2><p>Try different keywords or remove filters.</p>
             </div>
           )}
           {!loading && activeResults.map(r => (
-            <div key={`${r._type}-${r.id}`} style={{ padding: '14px 0', borderBottom: '1px solid #eee' }}>
+            <div key={`${r._type}-${r.id}`} style={{ padding: '14px 0', borderBottom: '1px solid var(--border-primary)' }}>
               {r._type === 'post' ? (
                 <Link href={`/${r.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <h3 style={{ margin: '0 0 4px', fontSize: '16px', color: '#1565c0' }} dangerouslySetInnerHTML={{ __html: r.highlight?.title?.[0] || r.title }} />
-                  <div style={{ fontSize: '13px', color: '#555', marginBottom: '6px', lineHeight: '1.5' }} dangerouslySetInnerHTML={{ __html: r.highlight?.intro?.[0] || (r.intro || '').substring(0, 200) }} />
-                  <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: '#999', flexWrap: 'wrap' }}>
+                  <h3 style={{ margin: '0 0 4px', fontSize: '16px', color: 'var(--accent)' }} dangerouslySetInnerHTML={{ __html: r.highlight?.title?.[0] || r.title }} />
+                  <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px', lineHeight: '1.5' }} dangerouslySetInnerHTML={{ __html: r.highlight?.intro?.[0] || (r.intro || '').substring(0, 200) }} />
+                  <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
                     <span>By {r.author_username}</span>
                     {r.category_slug && <span><Icon name="Folder" size={12} /> {r.category_slug}</span>}
                     {r.post_type && <span><Icon name="Tag" size={12} /> {r.post_type}</span>}
@@ -230,22 +229,22 @@ export default function SearchPage() {
                 </Link>
               ) : (
                 <Link href={`/${r.post_slug || ''}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <div style={{ fontSize: '12px', color: '#999', marginBottom: '2px' }}><Icon name="MessageCircle" size={12} /> Comment on <strong>{r.post_title || 'a post'}</strong></div>
-                  <div style={{ fontSize: '14px', color: '#333', lineHeight: '1.5' }} dangerouslySetInnerHTML={{ __html: r.highlight?.content?.[0] || (r.content || '').substring(0, 200) }} />
-                  <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>By {r.author_username} · {new Date(r.created_at).toLocaleDateString()}</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '2px' }}><Icon name="MessageCircle" size={12} /> Comment on <strong style={{ color: 'var(--text-secondary)' }}>{r.post_title || 'a post'}</strong></div>
+                  <div style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.5' }} dangerouslySetInnerHTML={{ __html: r.highlight?.content?.[0] || (r.content || '').substring(0, 200) }} />
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>By {r.author_username} · {new Date(r.created_at).toLocaleDateString()}</div>
                 </Link>
               )}
             </div>
           ))}
           {results && results.pagination.pages > 1 && (
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '24px' }}>
-              <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={pb(page <= 1)}>← Prev</button>
+              <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ padding: '6px 12px', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', background: page <= 1 ? 'var(--bg-tertiary)' : 'var(--bg-secondary)', cursor: page <= 1 ? 'not-allowed' : 'pointer', fontSize: '13px', color: page <= 1 ? 'var(--text-muted)' : 'var(--text-primary)' }}>Prev</button>
               {Array.from({ length: Math.min(results.pagination.pages, 7) }, (_, i) => {
                 const start = Math.max(1, Math.min(page - 3, results.pagination.pages - 6));
                 const pn = start + i; if (pn > results.pagination.pages) return null;
-                return <button key={pn} onClick={() => setPage(pn)} style={{ padding: '6px 12px', border: pn === page ? '2px solid #1565c0' : '1px solid #ddd', borderRadius: '4px', background: pn === page ? '#e3f2fd' : '#fff', cursor: 'pointer', fontSize: '13px', fontWeight: pn === page ? 'bold' : 'normal' }}>{pn}</button>;
+                return <button key={pn} onClick={() => setPage(pn)} style={{ padding: '6px 12px', border: pn === page ? '2px solid var(--accent)' : '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', background: pn === page ? 'var(--accent-soft)' : 'var(--bg-secondary)', cursor: 'pointer', fontSize: '13px', fontWeight: pn === page ? 'bold' : 'normal', color: pn === page ? 'var(--accent)' : 'var(--text-primary)' }}>{pn}</button>;
               })}
-              <button disabled={page >= results.pagination.pages} onClick={() => setPage(p => p + 1)} style={pb(page >= results.pagination.pages)}>Next →</button>
+              <button disabled={page >= results.pagination.pages} onClick={() => setPage(p => p + 1)} style={{ padding: '6px 12px', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)', background: page >= results.pagination.pages ? 'var(--bg-tertiary)' : 'var(--bg-secondary)', cursor: page >= results.pagination.pages ? 'not-allowed' : 'pointer', fontSize: '13px', color: page >= results.pagination.pages ? 'var(--text-muted)' : 'var(--text-primary)' }}>Next</button>
             </div>
           )}
         </div>
@@ -253,9 +252,3 @@ export default function SearchPage() {
     </div>
   );
 }
-
-const ts = (a: boolean): React.CSSProperties => ({ padding: '8px 16px', border: 'none', borderBottom: a ? '2px solid #1565c0' : '2px solid transparent', background: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: a ? 'bold' : 'normal', color: a ? '#1565c0' : '#666' });
-const pb = (d: boolean): React.CSSProperties => ({ padding: '6px 12px', border: '1px solid #ddd', borderRadius: '4px', background: d ? '#f5f5f5' : '#fff', cursor: d ? 'not-allowed' : 'pointer', fontSize: '13px', color: d ? '#ccc' : '#333' });
-const lbl: React.CSSProperties = { fontSize: '12px', color: '#666', display: 'block', marginBottom: '4px' };
-const sel: React.CSSProperties = { width: '100%', padding: '6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px' };
-const inp: React.CSSProperties = { width: '100%', padding: '6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px', boxSizing: 'border-box' };

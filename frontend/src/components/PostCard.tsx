@@ -15,17 +15,6 @@ const POST_TYPE_LABELS: Record<string, string> = {
   counter_list: 'Counter List',
 };
 
-const POST_TYPE_COLORS: Record<string, string> = {
-  counter_list: '#00d4aa',
-  this_vs_that: '#ff2d78',
-  who_is_better: '#ff2d78',
-  worst_of: '#ff2d78',
-  top_list: '#888',
-  fact_drop: '#888',
-  best_of: '#888',
-  hidden_gems: '#888',
-};
-
 function timeAgo(dateStr: string): string {
   const now = Date.now();
   const then = new Date(dateStr).getTime();
@@ -44,7 +33,6 @@ function timeAgo(dateStr: string): string {
 
 export function PostCard({ post }: { post: Post }) {
   const isCounter = post.post_type === 'counter_list';
-  const badgeColor = POST_TYPE_COLORS[post.post_type] || '#888';
   const label = POST_TYPE_LABELS[post.post_type] || post.post_type;
 
   return (
@@ -54,31 +42,39 @@ export function PostCard({ post }: { post: Post }) {
     >
       <article
         style={{
-          border: `2px solid ${badgeColor}`,
-          borderRadius: '0',
-          padding: '16px',
-          backgroundColor: '#111827',
-          transition: 'border-color 0.15s',
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--border-primary)',
+          borderRadius: 'var(--radius-lg)',
+          padding: '20px',
+          boxShadow: 'var(--shadow-sm)',
+          transition: 'border-color var(--transition), box-shadow var(--transition)',
         }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#ff2d78'; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = badgeColor; }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = 'var(--accent)';
+          e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = 'var(--border-primary)';
+          e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+        }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
             {isCounter && (
-              <span style={{ color: '#00d4aa', fontFamily: 'monospace', fontSize: '13px', fontWeight: 'bold' }}>
+              <span style={{ color: 'var(--accent)', fontFamily: 'Geist Mono, monospace', fontSize: '14px', fontWeight: 'bold' }}>
                 {'\u21B3'}
               </span>
             )}
             <span
               style={{
                 fontSize: '11px',
-                fontWeight: 'bold',
+                fontWeight: 700,
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                color: badgeColor,
-                border: `1px solid ${badgeColor}`,
-                padding: '2px 6px',
+                letterSpacing: '0.6px',
+                color: 'var(--accent)',
+                border: '1.5px solid var(--accent)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '2px 8px',
               }}
             >
               {label}
@@ -86,9 +82,11 @@ export function PostCard({ post }: { post: Post }) {
             <span
               style={{
                 fontSize: '11px',
-                color: '#94a3b8',
-                border: '1px solid #334155',
-                padding: '2px 6px',
+                fontWeight: 500,
+                color: 'var(--text-muted)',
+                border: '1px solid var(--border-primary)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '2px 8px',
                 textTransform: 'capitalize',
               }}
             >
@@ -101,8 +99,8 @@ export function PostCard({ post }: { post: Post }) {
           style={{
             margin: '0 0 8px 0',
             fontSize: '16px',
-            fontWeight: 'bold',
-            color: '#f1f5f9',
+            fontWeight: 700,
+            color: 'var(--text-primary)',
             lineHeight: 1.3,
           }}
         >
@@ -111,9 +109,9 @@ export function PostCard({ post }: { post: Post }) {
 
         <p
           style={{
-            margin: '0 0 10px 0',
+            margin: '0 0 12px 0',
             fontSize: '13px',
-            color: '#64748b',
+            color: 'var(--text-secondary)',
             lineHeight: 1.5,
             display: '-webkit-box',
             WebkitLineClamp: 2,
@@ -130,29 +128,29 @@ export function PostCard({ post }: { post: Post }) {
             justifyContent: 'space-between',
             alignItems: 'center',
             fontSize: '12px',
-            color: '#64748b',
+            color: 'var(--text-muted)',
           }}
         >
           <span>
-            <span style={{ fontFamily: 'monospace', color: '#94a3b8' }}>
+            <span style={{ fontFamily: 'Geist Mono, monospace', color: 'var(--text-secondary)' }}>
               {post.author_display_name}
             </span>
-            <span style={{ margin: '0 8px', color: '#334155' }}>&middot;</span>
+            <span style={{ margin: '0 8px', color: 'var(--border-primary)' }}>&middot;</span>
             {timeAgo(post.created_at)}
           </span>
 
           <span style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <Icon name="ChartBar" size={13} color="#64748b" />
-              <span style={{ color: post.view_count > 1000 ? '#b8ff3d' : '#94a3b8' }}>
+              <Icon name="ChartBar" size={13} color="var(--text-muted)" />
+              <span>
                 {post.view_count > 1000
                   ? `${(post.view_count / 1000).toFixed(1)}k`
                   : post.view_count}
               </span>
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <Icon name="MessageCircle" size={13} color="#64748b" />
-              <span style={{ color: '#94a3b8' }}>{post.comment_count}</span>
+              <Icon name="MessageCircle" size={13} color="var(--text-muted)" />
+              <span>{post.comment_count}</span>
             </span>
           </span>
         </div>
