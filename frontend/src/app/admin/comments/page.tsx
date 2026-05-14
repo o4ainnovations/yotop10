@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { Icon, type LucideIconName } from '@/components/icons/Icon';
+import { formatDate } from '@/lib/dates';
 
 interface Comment { _id: string; id: string; content: string; author_username: string; post_id: string; post_slug: string | null; post_title: string | null; spark_score: number; fire_count: number; reply_count: number; depth: number; is_item_anchored: boolean; depth_badge: string | null; created_at: string; deleted: boolean; hidden: boolean; highlighted: boolean; flag_type: string | null; flag_evidence: Record<string, unknown> | null; }
 
@@ -174,7 +175,7 @@ export default function AdminCommentsPage() {
                   <span><Icon name="Flame" size={12} color="#e65100" /> {c.fire_count}</span>
                   <span><Icon name="MessageCircle" size={12} /> {c.reply_count}</span>
                   <span><Icon name="Sparkles" size={12} /> {Number(c.spark_score).toFixed(2)}</span>
-                  <span>{new Date(c.created_at).toLocaleDateString()}</span>
+                  <span suppressHydrationWarning>{formatDate(c.created_at)}</span>
                 </div>
                 {c.flag_type && isAutoFlag(c.flag_type) && <span onClick={e => { e.stopPropagation(); dismissFlag(c._id); }} className="cursor-pointer mt-1 inline-block">{flagBadge(c.flag_type)}</span>}
                 {c.flag_type === 'manual' && <span className="mt-1 inline-block">{flagBadge(c.flag_type)}</span>}
@@ -219,7 +220,7 @@ export default function AdminCommentsPage() {
                   <td className="p-1.5 text-white/60">{c.fire_count}</td>
                   <td className="p-1.5 text-white/60">{c.reply_count}</td>
                   <td className="p-1.5 text-[11px] text-white/60">{Number(c.spark_score).toFixed(2)}</td>
-                  <td className="p-1.5 text-[11px] text-white/40">{new Date(c.created_at).toLocaleDateString()}</td>
+                  <td className="p-1.5 text-[11px] text-white/40" suppressHydrationWarning>{formatDate(c.created_at)}</td>
                   <td className="p-1.5">
                     {c.deleted ? <><button onClick={() => quickAction(c._id, 'restore')} className={btnSmClass}>Restore</button><button onClick={() => { if (confirm('Permanently delete this comment?')) quickAction(c._id, 'remove'); }} className={`${btnSmClass} text-red-400`}>Rem</button></> : <>
                       <button onClick={() => quickAction(c._id, 'delete')} className={`${btnSmClass} text-red-400`}>Del</button>

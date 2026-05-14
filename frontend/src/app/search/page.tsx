@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Icon } from '@/components/icons/Icon';
+import { formatDate } from '@/lib/dates';
 
 interface SearchResult {
   id: string; title: string; intro?: string; content?: string;
@@ -401,7 +402,7 @@ export default function SearchPage() {
                         <Icon name="Flame" size={12} />
                         {r.fire_count || 0}
                       </span>
-                      <span>{new Date(r.created_at).toLocaleDateString()}</span>
+                      <span suppressHydrationWarning>{formatDate(r.created_at)}</span>
                     </div>
                   </Link>
                 ) : (
@@ -415,7 +416,7 @@ export default function SearchPage() {
                       dangerouslySetInnerHTML={{ __html: r.highlight?.content?.[0] || (r.content || '').substring(0, 200) }}
                     />
                     <div className="text-xs text-zinc-600">
-                      By {r.author_username} &middot; {new Date(r.created_at).toLocaleDateString()}
+                      By {r.author_username} &middot; <span suppressHydrationWarning>{formatDate(r.created_at)}</span>
                     </div>
                   </Link>
                 )}

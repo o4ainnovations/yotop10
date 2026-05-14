@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { Icon } from '@/components/icons/Icon';
+import { formatDate } from '@/lib/dates';
 
 interface SentMessage {
   _id: string; type: 'individual' | 'broadcast'; recipient_id: string | null;
@@ -220,7 +221,7 @@ export default function AdminNotificationsPage() {
                   <span style={{ marginLeft: '8px', fontSize: '11px', color: '#999' }}>{m.type === 'broadcast' ? <><Icon name="Megaphone" size={11} /> Broadcast</> : <><Icon name="User" size={11} /> Individual</>}</span>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '11px', color: '#999' }}>{new Date(m.created_at).toLocaleDateString()}</span>
+                  <span style={{ fontSize: '11px', color: '#999' }} suppressHydrationWarning>{formatDate(m.created_at)}</span>
                   <button onClick={() => handleRetract(m._id)} style={{ background: 'none', border: 'none', color: '#c62828', cursor: 'pointer', fontSize: '12px' }}>Retract</button>
                 </div>
               </div>
@@ -228,7 +229,7 @@ export default function AdminNotificationsPage() {
               <p style={{ fontSize: '12px', color: '#555', margin: '4px 0 0' }}>{m.body.substring(0, 150)}{m.body.length > 150 ? '...' : ''}</p>
               <div style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
                 {m.type === 'broadcast' ? `${m.dismissed_by.length} dismissed` : `To: ${m.recipient_id}`}
-                {' · '}Expires: {new Date(m.expires_at).toLocaleDateString()}
+                {' · '}Expires: <span suppressHydrationWarning>{formatDate(m.expires_at)}</span>
               </div>
             </div>
           ))}

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { Icon } from '@/components/icons/Icon';
+import { formatDate, relativeTime } from '@/lib/dates';
 
 interface PendingPost { _id: string; title: string; author_username: string; post_type: string; created_at: string; revision_count: number; category_slug: string; intro?: string; collision?: { title: string; submitted_at: string; first: boolean } }
 interface CategoryOption { slug: string; name: string; children?: Array<{ slug: string; name: string }> }
@@ -104,7 +105,6 @@ export default function PendingPostsPage() {
     return () => window.removeEventListener('keydown', handleKey);
   }, [singleAction]);
 
-  const ageStr = (d: string) => { const h = Math.round((Date.now() - new Date(d).getTime()) / 3600000); return h < 1 ? 'now' : h < 24 ? `${h}h` : `${Math.floor(h / 24)}d`; };
   const ageColor = (d: string) => { const h = Math.round((Date.now() - new Date(d).getTime()) / 3600000); return h > 168 ? 'text-red-700' : h > 48 ? 'text-orange-600' : 'text-white/40'; };
 
   const filterSelectClass = 'bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none min-h-[36px]';
@@ -161,14 +161,14 @@ export default function PendingPostsPage() {
                       <input type="checkbox" checked={selected.has(p._id)} onChange={() => toggleSelect(p._id)} onClick={e => e.stopPropagation()} />
                       <span className="font-bold text-[13px] text-white flex-1" onClick={() => toggleExpand(p._id)}>
                         {p.title}
-                        {p.collision && <span className="bg-yellow-400 text-zinc-900 px-1 py-px rounded text-[10px] ml-1 font-bold" title={`Similar pending: ${p.collision.title} (submitted ${new Date(p.collision.submitted_at).toLocaleDateString()})`}><Icon name="Zap" size={10} /> COLLISION</span>}
+                        {p.collision && <span className="bg-yellow-400 text-zinc-900 px-1 py-px rounded text-[10px] ml-1 font-bold" title={`Similar pending: ${p.collision.title} (submitted ${formatDate(p.collision.submitted_at)})`}><Icon name="Zap" size={10} /> COLLISION</span>}
                         {p.revision_count > 0 && <span className="bg-orange-500/20 text-orange-400 px-1 py-px rounded text-[10px] ml-1">{p.revision_count}x</span>}
                       </span>
                     </div>
                     <div className="flex gap-3 text-[11px] text-white/50 pl-7">
                       <span>{p.post_type}</span>
                       <span>{p.author_username}</span>
-                      <span className={ageColor(p.created_at)}>{ageStr(p.created_at)}</span>
+                      <span className={ageColor(p.created_at)} suppressHydrationWarning>{relativeTime(p.created_at)}</span>
                     </div>
                     <div className="flex gap-1 pl-7">
                       <button onClick={e => { e.stopPropagation(); singleAction(p._id, 'approve'); }} disabled={actionLoading} className={btnSmClass}><Icon name="Check" size={14} color="#2e7d32" /></button>
@@ -181,12 +181,12 @@ export default function PendingPostsPage() {
                   <span className="hidden sm:block w-[30px]"><input type="checkbox" checked={selected.has(p._id)} onChange={() => toggleSelect(p._id)} onClick={e => e.stopPropagation()} /></span>
                   <span className="hidden sm:block flex-1 font-bold text-[13px] text-white cursor-pointer" onClick={() => toggleExpand(p._id)}>
                     {p.title}
-                    {p.collision && <span className="bg-yellow-400 text-zinc-900 px-1 py-px rounded text-[10px] ml-1 font-bold" title={`Similar pending: ${p.collision.title} (submitted ${new Date(p.collision.submitted_at).toLocaleDateString()})`}><Icon name="Zap" size={10} /> COLLISION</span>}
+                    {p.collision && <span className="bg-yellow-400 text-zinc-900 px-1 py-px rounded text-[10px] ml-1 font-bold" title={`Similar pending: ${p.collision.title} (submitted ${formatDate(p.collision.submitted_at)})`}><Icon name="Zap" size={10} /> COLLISION</span>}
                     {p.revision_count > 0 && <span className="bg-orange-500/20 text-orange-400 px-1 py-px rounded text-[10px] ml-1">{p.revision_count}x</span>}
                   </span>
                   <span className="hidden sm:block w-[90px] text-[11px] text-white/40">{p.post_type}</span>
                   <span className="hidden sm:block w-[90px] text-[11px] text-white/60">{p.author_username}</span>
-                  <span className={`hidden sm:block w-[50px] text-[11px] ${ageColor(p.created_at)}`}>{ageStr(p.created_at)}</span>
+                  <span className={`hidden sm:block w-[50px] text-[11px] ${ageColor(p.created_at)}`} suppressHydrationWarning>{relativeTime(p.created_at)}</span>
                   <span className="hidden sm:flex w-[140px] gap-1">
                     <button onClick={e => { e.stopPropagation(); singleAction(p._id, 'approve'); }} disabled={actionLoading} className={btnSmClass}><Icon name="Check" size={14} color="#2e7d32" /></button>
                     <button onClick={e => { e.stopPropagation(); router.push(`/admin/posts/pending/${p._id}`); }} className={btnSmClass}><Icon name="Search" size={14} /></button>

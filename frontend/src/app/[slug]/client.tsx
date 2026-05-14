@@ -6,6 +6,7 @@ import NotFound from '@/components/NotFound';
 import Link from 'next/link';
 import Image from 'next/image';
 import { API } from '@/lib/api';
+import { formatDate } from '@/lib/dates';
 import { Icon } from '@/components/icons/Icon';
 
 const RESERVED_ROUTES = ['admin', 'api', 'login', 'search', 'settings', 'profile', 'categories', 'c', 'auth'];
@@ -263,8 +264,8 @@ export default function PostDetailClient({ slug }: { slug: string }) {
                 <Icon name="Reply" size={11} /> Reply
               </span>
             )}
-            <span className="text-[11px] text-zinc-500">
-              {new Date(comment.created_at).toLocaleDateString()}
+            <span className="text-[11px] text-zinc-500" suppressHydrationWarning>
+              {formatDate(comment.created_at)}
             </span>
           </div>
           <p className="mb-2.5 text-sm leading-relaxed text-white sm:text-base">
@@ -372,7 +373,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
             >
               {post.category_slug}
             </Link>
-            <span>{new Date(post.created_at).toLocaleDateString()}</span>
+            <span suppressHydrationWarning>{formatDate(post.created_at)}</span>
             <span>{post.view_count} views</span>
           </div>
 

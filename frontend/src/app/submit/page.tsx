@@ -7,6 +7,7 @@ import { API, PostSubmission, PostSubmissionResponse, TitleCheckResponse } from 
 import { Icon } from '@/components/icons/Icon';
 import { useAuthStore } from '@/stores/auth';
 import { toast } from '@/lib/toast';
+import { formatDate } from '@/lib/dates';
 
 const DRAFT_KEY = 'yotop10_submit_draft';
 const DEBOUNCE_MS = 500;
@@ -605,7 +606,7 @@ export default function SubmitPage() {
                         <li key={idx} className="text-zinc-400">
                           {pc.title}
                           <span className="ml-2 text-xs text-zinc-500">
-                            (submitted {new Date(pc.submitted_at).toLocaleDateString()})
+                            (submitted <span suppressHydrationWarning>{formatDate(pc.submitted_at)}</span>)
                           </span>
                         </li>
                       ))}

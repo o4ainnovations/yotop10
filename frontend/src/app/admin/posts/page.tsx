@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { Icon } from '@/components/icons/Icon';
 import { toast } from '@/lib/toast';
+import { formatDate } from '@/lib/dates';
 
 interface Post { _id: string; title: string; slug: string; author_username: string; post_type: string; status: string; category_slug: string; comment_count: number; fire_count?: number; view_count: number; created_at: string; published_at?: string; deleted: boolean; featured: boolean; comments_locked: boolean }
 
@@ -125,7 +126,7 @@ export default function AllPostsPage() {
                   <span><Icon name="Flame" size={12} color="#e65100" /> {p.fire_count || 0}</span>
                   <span><Icon name="MessageCircle" size={12} /> {p.comment_count}</span>
                   <span><Icon name="Eye" size={14} /> {p.view_count}</span>
-                  <span>{p.published_at ? new Date(p.published_at).toLocaleDateString() : '—'}</span>
+                  <span suppressHydrationWarning>{p.published_at ? formatDate(p.published_at) : '—'}</span>
                 </div>
                 <div className="flex gap-1 flex-wrap mt-2">
                   {p.deleted ? <button onClick={() => quickAction(p._id, 'restore')} className={btnSmClass}>Restore</button> : <>
@@ -163,7 +164,7 @@ export default function AllPostsPage() {
                   <td className="p-1 text-white/60">{p.fire_count || 0}</td>
                   <td className="p-1 text-white/60">{p.comment_count}</td>
                   <td className="p-1 text-white/60">{p.view_count}</td>
-                  <td className="p-1 text-[11px] text-white/40">{p.published_at ? new Date(p.published_at).toLocaleDateString() : '—'}</td>
+                  <td className="p-1 text-[11px] text-white/40" suppressHydrationWarning>{p.published_at ? formatDate(p.published_at) : '—'}</td>
                   <td className="p-1">
                     {p.deleted ? <button onClick={() => quickAction(p._id, 'restore')} className={btnSmClass}>Restore</button> : <>
                       <button onClick={() => router.push(`/admin/posts/pending/${p._id}`)} className={btnSmClass}>View</button>

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Icon } from './icons/Icon';
+import { relativeTime } from '@/lib/dates';
 import type { Post } from '@/lib/api/types';
 
 const TYPE_LABEL: Record<string, string> = {
@@ -9,17 +10,6 @@ const TYPE_LABEL: Record<string, string> = {
   fact_drop: 'Fact', best_of: 'Best Of', worst_of: 'Worst',
   hidden_gems: 'Hidden Gem', counter_list: 'Rebuttal',
 };
-
-function ago(d: string): string {
-  const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
-  if (m < 1) return 'now';
-  if (m < 60) return `${m}m`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h`;
-  const days = Math.floor(h / 24);
-  if (days < 7) return `${days}d`;
-  return new Date(d).toLocaleDateString();
-}
 
 export function PostCard({ post }: { post: Post }) {
   const isCounter = post.post_type === 'counter_list';
@@ -50,13 +40,13 @@ export function PostCard({ post }: { post: Post }) {
         )}
 
         <div className="flex items-center justify-between text-xs text-zinc-600">
-          <span className="font-mono text-zinc-500">{post.author_display_name}</span>
+          <span className="font-mono text-zinc-500" suppressHydrationWarning>{post.author_display_name}</span>
           <span className="text-zinc-700">&middot;</span>
-          <span>{ago(post.created_at)}</span>
+          <span suppressHydrationWarning>{relativeTime(post.created_at)}</span>
           <span className="flex-1" />
           <span className="flex items-center gap-1.5">
             <Icon name="ChartBar" size={13} />
-            <span className={post.view_count > 1000 ? 'text-orange-400' : ''}>
+            <span className={post.view_count > 1000 ? 'text-orange-400' : ''} suppressHydrationWarning>
               {post.view_count > 1000 ? `${(post.view_count / 1000).toFixed(1)}k` : post.view_count}
             </span>
           </span>

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { Icon } from '@/components/icons/Icon';
+import { formatDate, formatTime } from '@/lib/dates';
 
 interface NotifDetail {
   _id: string;
@@ -107,7 +108,7 @@ export default function NotificationDetailPage() {
             </div>
             <p className="text-[15px] text-white/70 leading-relaxed whitespace-pre-wrap">{n.body}</p>
             <div className="mt-5 pt-4 border-t border-white/10 flex justify-between items-center">
-              <span className="text-xs text-white/30">{new Date(n.created_at).toLocaleString()}</span>
+              <span className="text-xs text-white/30" suppressHydrationWarning>{formatDate(n.created_at)} {formatTime(n.created_at)}</span>
               {!n.dismissed && (
                 <button onClick={handleDismiss} disabled={actionLoading}
                   className={`px-4 py-2 border border-white/10 rounded-xl cursor-pointer text-[13px] min-h-[40px] ${actionLoading ? 'bg-white/5 cursor-not-allowed text-white/30' : 'bg-white/5 text-white hover:bg-white/10'}`}>
@@ -129,7 +130,7 @@ export default function NotificationDetailPage() {
             </div>
             <p className="text-[15px] text-white/70 leading-relaxed">{n.message}</p>
             <div className="mt-5 pt-4 border-t border-white/10 flex justify-between items-center">
-              <span className="text-xs text-white/30">{new Date(n.created_at).toLocaleString()}</span>
+              <span className="text-xs text-white/30" suppressHydrationWarning>{formatDate(n.created_at)} {formatTime(n.created_at)}</span>
               {n.post_id && (
                 <a href={`/${n.post_id}`} className="text-orange-400 text-[13px] no-underline hover:text-orange-300">
                   View post →

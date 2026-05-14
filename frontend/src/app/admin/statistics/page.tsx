@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import { Icon, type LucideIconName } from '@/components/icons/Icon';
+import { formatDate, formatTime } from '@/lib/dates';
 
 interface PanelState { loading: boolean; data: unknown; error?: string; open: boolean }
 
@@ -125,7 +126,7 @@ export default function StatisticsDashboard() {
             <L>Uptime: <span className="text-white font-bold">{uptimeHrs}h {uptimeMin}m</span>. Memory: <span className="text-white font-bold">{n(mem?.heap_mb)}</span> MB heap / <span className="text-white font-bold">{n(mem?.rss_mb)}</span> MB RSS — {leak}.</L>
             <L>MongoDB: <span className="text-white font-bold">{n(s?.mongodb)}</span> at <span className="text-white font-bold">{n(s?.mongodb_latency_ms)}ms</span>. Redis: <span className="text-white font-bold">{n(s?.redis)}</span> {s?.redis_memory_pct !== null && s?.redis_memory_pct !== undefined ? `at ${n(s?.redis_memory_pct)}% memory (${n(s?.redis_memory_mb)} MB)` : ''}. Elasticsearch: <span className="text-white font-bold">{n(s?.elasticsearch)}</span>.</L>
             <L>Cron Health:</L>
-            {crons && Object.entries(crons).map(([k,v]) => { const hb = v as Record<string, string>; const status = hb.last_success ? <Icon name="Check" size={14} color="#2e7d32" /> : hb.last_error ? <Icon name="X" size={14} color="#c62828" /> : <Icon name="Hourglass" size={14} />; const last = hb.last_success ? ` (${new Date(hb.last_success).toLocaleTimeString()})` : ''; return <L key={k}>  {status} <span className="text-white font-bold">{k}</span>{last}{hb.last_error ? ` — ${hb.last_error}` : ''}</L>; })}
+            {crons && Object.entries(crons).map(([k,v]) => { const hb = v as Record<string, string>; const status = hb.last_success ? <Icon name="Check" size={14} color="#2e7d32" /> : hb.last_error ? <Icon name="X" size={14} color="#c62828" /> : <Icon name="Hourglass" size={14} />; const last = hb.last_success ? ` (${formatTime(hb.last_success)})` : ''; return <L key={k}>  {status} <span className="text-white font-bold">{k}</span>{last}{hb.last_error ? ` — ${hb.last_error}` : ''}</L>; })}
               <L><Icon name="Circle" size={14} color="#d32f2f" fill="#d32f2f" /> <span className="text-white font-bold">{n(d.affected_features_count)}</span> features degraded due to service outages:</L>
               {(arr(d.affected_features) as Array<{ feature: string; degradation: string; depends_on: string[] }>).map(f => <L key={f.feature}>  — <span className="text-white font-bold">{f.feature}</span>: {f.degradation} (needs {f.depends_on.join(', ')})</L>)}
             </>;
@@ -309,7 +310,7 @@ export default function StatisticsDashboard() {
             {active.length === 0 && <L><Icon name="Check" size={14} color="#2e7d32" /> No active alerts.</L>}
             <H3>Thresholds</H3>
             {th.map(t => <L key={t.metric}><span className="text-white font-bold">{t.metric}</span>: {t.operator} {t.threshold} [{t.severity}] {t.enabled ? <Icon name="Check" size={14} color="#2e7d32" /> : <span className="text-white/40">(paused)</span>}</L>)}
-            {hist.length > 0 && <><H3>Recent History</H3>{hist.slice(0, 5).map(h => <L key={`${h.metric}-${h.triggered_at}`}><span className="text-white font-bold">{h.metric}</span>: triggered {new Date(h.triggered_at).toLocaleString()} {h.resolved_at ? <><Icon name="Check" size={12} color="#2e7d32" /> resolved</> : <><Icon name="Circle" size={12} color="#d32f2f" fill="#d32f2f" /> unresolved</>}</L>)}</>}
+            {hist.length > 0 && <><H3>Recent History</H3>{hist.slice(0, 5).map(h => <L key={`${h.metric}-${h.triggered_at}`}><span className="text-white font-bold">{h.metric}</span>: triggered <span suppressHydrationWarning>{formatDate(h.triggered_at)} {formatTime(h.triggered_at)}</span> {h.resolved_at ? <><Icon name="Check" size={12} color="#2e7d32" /> resolved</> : <><Icon name="Circle" size={12} color="#d32f2f" fill="#d32f2f" /> unresolved</>}</L>)}</>}
           </>;
         })() : null}
       </Panel>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { API, CategoriesResponse } from '@/lib/api';
 import { Icon } from '@/components/icons/Icon';
@@ -17,6 +18,7 @@ interface Category {
 }
 
 export default function CategoriesPage() {
+  const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -88,10 +90,10 @@ export default function CategoriesPage() {
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
             {categories.map(cat => (
-              <Link
+              <div
                 key={cat.id}
-                href={`/c/${cat.slug}`}
-                className="group block rounded-2xl border border-white/5 bg-white/[0.02] p-5 backdrop-blur-sm transition-all duration-300 hover:border-orange-500/30 hover:bg-white/[0.04] hover:shadow-lg hover:shadow-orange-500/5 sm:p-6"
+                onClick={() => router.push(`/c/${cat.slug}`)}
+                className="group block cursor-pointer rounded-2xl border border-white/5 bg-white/[0.02] p-5 backdrop-blur-sm transition-all duration-300 hover:border-orange-500/30 hover:bg-white/[0.04] hover:shadow-lg hover:shadow-orange-500/5 sm:p-6"
               >
                 <h2 className="mb-2 flex items-center gap-2 text-lg font-bold text-white">
                   {cat.icon && <span>{cat.icon}</span>}
@@ -115,6 +117,7 @@ export default function CategoriesPage() {
                         <li key={child.id}>
                           <Link
                             href={`/c/${child.slug}`}
+                            onClick={(e) => e.stopPropagation()}
                             className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2 text-[13px] text-zinc-400 transition hover:bg-orange-500/10 hover:text-orange-400"
                           >
                             <span>{child.name}</span>
@@ -125,7 +128,7 @@ export default function CategoriesPage() {
                     </ul>
                   </div>
                 )}
-              </Link>
+              </div>
             ))}
           </div>
         )}

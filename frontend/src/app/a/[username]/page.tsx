@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { API } from '@/lib/api';
+import { formatDate } from '@/lib/dates';
 import { Icon } from '@/components/icons/Icon';
 import { useAuthStore } from '@/stores/auth';
 import { useRateLimitStore } from '@/stores/rateLimit';
@@ -194,7 +195,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
             <Icon name="MessageCircle" size={14} className="text-zinc-500" /> {profile.stats.total_comments} comments
           </span>
           <span>{profile.stats.approval_rate}% approval</span>
-          <span>Member since {new Date(profile.stats.member_since).toLocaleDateString()}</span>
+          <span suppressHydrationWarning>Member since {formatDate(profile.stats.member_since)}</span>
         </div>
       </div>
 
@@ -297,7 +298,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
                   <span className="inline-flex items-center gap-1">
                     <Icon name="MessageCircle" size={12} className="text-zinc-500" /> {post.comment_count}
                   </span>
-                  <span>{new Date(post.created_at).toLocaleDateString()}</span>
+                  <span suppressHydrationWarning>{formatDate(post.created_at)}</span>
                   {profile.is_own_profile && (
                     <span className={`text-xs font-semibold ${
                       post.revision_guidance
@@ -345,7 +346,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
                   <span className="inline-flex items-center gap-1">
                     <Icon name="MessageCircle" size={12} className="text-zinc-500" /> {comment.reply_count}
                   </span>
-                  <span>{new Date(comment.created_at).toLocaleDateString()}</span>
+                  <span suppressHydrationWarning>{formatDate(comment.created_at)}</span>
                 </div>
               </div>
             ))

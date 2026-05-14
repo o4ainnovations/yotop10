@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { API } from '@/lib/api';
 import { generateMnemonic, mnemonicToKeyPair } from '@/lib/identity';
+import { formatDate } from '@/lib/dates';
 import { useAuthStore } from '@/stores/auth';
 import { SeedDisplayModal } from './SeedDisplayModal';
 import { Icon } from '@/components/icons/Icon';
@@ -141,8 +142,8 @@ export function SecureMyAuthority() {
           <p className="text-sm text-green-400 mb-2 flex items-center gap-1">
             <Icon name="Check" size={16} color="#2e7d32" /> Your identity is secured with a seed phrase
           </p>
-          <p className="text-xs text-white/40 mb-3">
-            Generated {status.seed_generated_at ? new Date(status.seed_generated_at).toLocaleDateString() : 'unknown date'}
+          <p className="text-xs text-white/40 mb-3" suppressHydrationWarning>
+            Generated {status.seed_generated_at ? formatDate(status.seed_generated_at) : 'unknown date'}
           </p>
 
           <div className="flex gap-2 flex-wrap">
@@ -184,8 +185,8 @@ export function SecureMyAuthority() {
                       </span>
                     )}
                     <br />
-                    <span className="text-white/40 text-[11px]">
-                      Linked {new Date(d.linked_at).toLocaleDateString()}
+                    <span className="text-white/40 text-[11px]" suppressHydrationWarning>
+                      Linked {formatDate(d.linked_at)}
                     </span>
                   </div>
                   {!d.is_current && (

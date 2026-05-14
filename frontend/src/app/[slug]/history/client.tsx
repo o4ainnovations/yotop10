@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { API, PostHistoryResponse } from '@/lib/api';
+import { formatDate } from '@/lib/dates';
 
 const RESERVED_ROUTES = ['admin', 'api', 'login', 'search', 'settings', 'profile', 'categories', 'c', 'auth'];
 
@@ -69,7 +70,7 @@ export default function PostHistoryClient({ slug }: { slug: string }) {
                     Version {v.version_number}
                     {versions[0]?.version_number === v.version_number && ' (Current)'}
                   </button>
-                  <p>{new Date(v.created_at).toLocaleDateString()}</p>
+                  <p suppressHydrationWarning>{formatDate(v.created_at)}</p>
                   {v.change_summary && <p>{v.change_summary}</p>}
                 </div>
               ))}
@@ -78,7 +79,7 @@ export default function PostHistoryClient({ slug }: { slug: string }) {
               {selectedVersion ? (
                 <div>
                   <h2>Version {selectedVersion.version_number}</h2>
-                  <p>By {selectedVersion.author_username} - {new Date(selectedVersion.created_at).toLocaleDateString()}</p>
+                  <p suppressHydrationWarning>By {selectedVersion.author_username} - {formatDate(selectedVersion.created_at)}</p>
                   {selectedVersion.change_summary && <p><strong>Change:</strong> {selectedVersion.change_summary}</p>}
                   <h3>{selectedVersion.title}</h3>
                   <p>{selectedVersion.intro}</p>

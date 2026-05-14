@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 import { Icon } from './icons/Icon';
+import { formatTime } from '@/lib/dates';
 
 interface AlertNotification {
   _id: string;
@@ -196,8 +197,8 @@ export default function AdminAlertBell() {
                       [{n.severity.toUpperCase()}]
                     </span>
                     <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                      <span style={{ color: '#A1887F', fontSize: '11px' }}>
-                        {new Date(n.created_at).toLocaleTimeString()}
+                      <span style={{ color: '#A1887F', fontSize: '11px' }} suppressHydrationWarning>
+                        {formatTime(n.created_at)}
                       </span>
                       <button
                         onClick={(e) => handleDismiss(e, n._id)}
