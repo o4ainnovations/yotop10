@@ -2,13 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/stores/auth';
 import HeaderBells from './HeaderBells';
 import Link from 'next/link';
 
 export default function DesktopTopBar() {
   const router = useRouter();
-  const user = useAuthStore((s) => s.user);
   const [query, setQuery] = useState('');
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -25,7 +23,7 @@ export default function DesktopTopBar() {
           <span className="font-display text-xl tracking-tight text-white">Top10</span>
         </Link>
 
-        <div className="flex-1 mx-4 flex justify-center">
+        <div className="hidden sm:flex flex-1 mx-4 justify-center">
           <input
             type="text"
             value={query}
@@ -37,11 +35,6 @@ export default function DesktopTopBar() {
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          <div className="bg-white/5 border border-white/10 rounded-full px-3 py-1 text-[10px] font-mono text-zinc-500">
-            {user
-              ? `ID: 0x${user.user_id ? user.user_id.substring(0, 4) : '?'}...`
-              : 'visitor'}
-          </div>
           <HeaderBells />
         </div>
       </div>
