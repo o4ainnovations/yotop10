@@ -69,6 +69,12 @@
   7. `components/NavUserAvatar.tsx` — First-letter circle linked to profile
   Deleted: `PostCard.tsx`, `CategoryBar.tsx`
 
+- **[Feature] Profile image support** — Two frontend components updated for profile images:
+  1. `components/NavUserAvatar.tsx` — Shows `next/image` profile image if `user.profile_image_url` exists, falls back to first-letter circle. Links to `/a/{username}`.
+  2. `app/a/[username]/page.tsx` — Profile header shows 80x80 avatar (image or first-letter gradient fallback). Own profile: hidden file input via clickable label, uploads to `POST /api/upload/profile`, updates user via `PATCH /api/users/me`, refreshes auth store. 200x200 WebP square images.
+  3. Backend: Added `profile_image_url` to `GET /users/:username` response in `routes/users.ts`.
+  4. Auth store: Added `profile_image_url` field to `AuthUser` interface in `stores/auth.ts`.
+
 ## Current
 - **[Fix] Hydration errors — deterministic date/time rendering** — Replaced all `toLocaleDateString()`, `toLocaleTimeString()`, `toLocaleString()`, and custom `ageStr()` with `formatDate()`, `formatTime()`, `relativeTime()` from `@/lib/dates` across 9 files. Added `suppressHydrationWarning` to every date/time rendering element.
 

@@ -248,6 +248,9 @@ export default function PostDetailClient({ slug }: { slug: string }) {
       <div key={comment.id} className={`mt-3 border-l-2 border-white/10 pl-3 ${indentClass}`}>
         <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3.5 sm:p-4">
           <div className="mb-2 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+            <span className="flex items-center justify-center rounded-full bg-white/10 text-xs font-mono text-zinc-400 w-7 h-7 shrink-0">
+              {(comment.author_username || '?')[0].toUpperCase()}
+            </span>
             <strong className="text-[13px] font-mono text-white sm:text-sm">
               {comment.author_display_name}
             </strong>

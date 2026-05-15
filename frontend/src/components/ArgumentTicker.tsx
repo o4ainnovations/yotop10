@@ -134,7 +134,7 @@ export function ArgumentTicker() {
           {items.map((item, i) => (
             <div key={`${item.id}-${i}`} className="rounded-2xl glass-obsidian p-3 mb-2">
               <div className="flex items-center gap-2 mb-2">
-                <span className="w-7 h-7 rounded-full bg-orange-500/20 text-orange-400 font-mono text-[10px] flex items-center justify-center shrink-0">
+                <span className="flex items-center justify-center rounded-full bg-white/10 text-xs font-mono text-zinc-400 w-5 h-5 shrink-0">
                   {item.avatarLetter}
                 </span>
                 <span className="font-mono text-xs text-zinc-300 truncate">

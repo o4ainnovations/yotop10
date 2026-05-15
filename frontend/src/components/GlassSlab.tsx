@@ -142,7 +142,7 @@ export function GlassSlab({ post, variant = 'compact', observe = false, rank }: 
         {/* Footer: author + metrics */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-orange-500/20 text-orange-400 font-mono text-[10px] flex items-center justify-center">
+            <span className="flex items-center justify-center rounded-full bg-white/10 text-xs font-mono text-zinc-400 w-6 h-6 shrink-0">
               {authorInitial}
             </span>
             <span

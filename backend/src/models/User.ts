@@ -13,6 +13,7 @@ export interface IUser extends Document {
   authority_id?: string;
   public_key_hash?: string;
   seed_generated_at?: Date;
+  profile_image_url?: string;
   rate_limit_override?: {
     posts_per_hour?: number | null;
     comments_per_hour?: number | null;
@@ -70,6 +71,9 @@ const userSchema = new Schema<IUser>(
     },
     seed_generated_at: {
       type: Date,
+    },
+    profile_image_url: {
+      type: String,
     },
     trust_score: {
       type: Number,

@@ -5,6 +5,7 @@ interface AuthUser {
   user_id: string;
   username: string;
   custom_display_name?: string | null;
+  profile_image_url?: string | null;
   trust_score: number;
   trust_level: 'troll' | 'neutral' | 'scholar';
   post_count: number;

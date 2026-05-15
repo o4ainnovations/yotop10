@@ -1056,6 +1056,7 @@ This audit analyzed 39 source files:
 | 3.8 | localStorage in fingerprint | ✅ Safe helpers used |
 | 3.9 | Double-fetch on post mount | ✅ Still open — 1 call fetches all |
 | 3.10 | Raw fetch() bypasses API wrapper | ✅ Uses `apiFetch` |
+| NEW | Profile image feature | ✅ NavUserAvatar + profile page image upload |
 
 ### Still Open ⏳
 | Section | Issue | Notes |

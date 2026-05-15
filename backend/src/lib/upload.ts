@@ -59,6 +59,18 @@ export async function processUpload(filePath: string): Promise<{
   return { original, item_thumb: itemThumb, hero_lg: heroLg };
 }
 
+export async function processProfileImage(filePath: string): Promise<string> {
+  const ext = path.extname(filePath);
+  const optimized = filePath.replace(ext, '_profile.webp');
+
+  await sharp(filePath)
+    .resize(200, 200, { fit: 'cover', position: 'centre' })
+    .webp({ quality: 85 })
+    .toFile(optimized);
+
+  return `/uploads/${path.basename(optimized)}`;
+}
+
 export async function deleteUploads(urls: string[]): Promise<void> {
   for (const url of urls) {
     if (!url || !url.startsWith('/uploads/')) continue;

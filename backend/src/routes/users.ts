@@ -22,6 +22,9 @@ router.get('/me', async (req, res) => {
   }
 
   try {
+    // Fetch user for profile_image_url
+    const userDoc = await User.findOne({ user_id: req.user.user_id }).select('profile_image_url').lean();
+
     // Count posts with status breakdown
     const userPosts = await Post.aggregate([
       { $match: { author_id: req.user.user_id } },
@@ -61,6 +64,7 @@ router.get('/me', async (req, res) => {
       user_id: req.user.user_id,
       username: req.user.custom_display_name || req.user.username,
       custom_display_name: req.user.custom_display_name || null,
+      profile_image_url: userDoc?.profile_image_url || null,
       trust_score: req.user.trust_score,
       trust_level: trustLevel,
       post_count: postCount,
@@ -98,6 +102,17 @@ router.patch('/me', ...validateDisplayName as any[], async (req, res) => {
   }
 
   try {
+    // Profile image update (no display_name validation needed)
+    if (req.body.profile_image_url && !req.body.display_name) {
+      const updated = await User.findOneAndUpdate(
+        { user_id: req.user.user_id },
+        { profile_image_url: req.body.profile_image_url },
+        { new: true }
+      ).select('profile_image_url user_id').lean();
+      if (!updated) return res.status(404).json({ error: 'User not found' });
+      return res.json({ success: true, profile_image_url: updated.profile_image_url });
+    }
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -243,6 +258,7 @@ router.get('/:username', async (req, res) => {
     res.json({
       username: currentUsername,
       canonical_url: `/a/${cleanCurrentUsername}`,
+      profile_image_url: user.profile_image_url || null,
       trust_score: isOwnProfile ? user.trust_score : undefined,
       trust_level: trustLevel,
       created_at: user.created_at,

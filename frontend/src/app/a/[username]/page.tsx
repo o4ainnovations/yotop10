@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { API } from '@/lib/api';
 import { formatDate } from '@/lib/dates';
@@ -14,6 +15,7 @@ import NotFound from '@/components/NotFound';
 interface UserProfile {
   username: string;
   canonical_url?: string;
+  profile_image_url?: string | null;
   trust_level: 'troll' | 'neutral' | 'scholar';
   created_at: string;
   stats: {
@@ -65,6 +67,8 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   const [editingName, setEditingName] = useState(false);
   const [newDisplayName, setNewDisplayName] = useState('');
   const [nameError, setNameError] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
 
   const authUser = useAuthStore((s) => s.user);
   const fetchAuthUser = useAuthStore((s) => s.fetchUser);
@@ -151,6 +155,54 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
     }
   };
 
+  const handleProfileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    setImageError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const baseUrl = typeof window !== 'undefined' ? '' : (process.env.INTERNAL_API_URL || 'http://localhost:8000');
+      const uploadRes = await fetch(`${baseUrl}/api/upload/profile`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!uploadRes.ok) {
+        const uploadErr = await uploadRes.text();
+        let msg = 'Upload failed. Please try again.';
+        try {
+          const parsed = JSON.parse(uploadErr);
+          if (parsed.error) msg = parsed.error;
+        } catch { /* not JSON */ }
+        setImageError(msg);
+        return;
+      }
+
+      const { url } = await uploadRes.json() as { success: boolean; url: string };
+
+      await fetch(`/api/users/me`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profile_image_url: url }),
+        credentials: 'include',
+      });
+
+      await fetchAuthUser();
+
+      setProfile((prev) => prev ? { ...prev, profile_image_url: url } : prev);
+    } catch {
+      setImageError('Upload failed. Please try again.');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-500">
@@ -160,6 +212,8 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   }
 
   if (!profile) return <NotFound message="User does not exist." />;
+
+  const profileInitial = (profile.username[0] || '?').toUpperCase();
 
   const tabButtonClasses = (tab: 'posts' | 'comments' | 'stats') =>
     `px-4 sm:px-6 py-3 text-sm font-medium transition-colors border-b-2 ${
@@ -172,31 +226,83 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
     <div className="mx-auto min-h-screen max-w-3xl bg-zinc-950 px-3 py-6 text-white sm:px-6 sm:py-10 sm:pb-16">
       {/* Profile Header Card */}
       <div className="mb-6 rounded-2xl border border-white/5 bg-white/[0.02] p-5 sm:p-8">
-        <h1 className="mb-2 text-2xl font-bold -tracking-[0.02em] text-white sm:text-3xl">
-          {profile.username}
-        </h1>
+        <div className="flex items-start gap-5">
+          {/* Profile image */}
+          <div className="shrink-0">
+            {profile.profile_image_url ? (
+              <Image
+                src={profile.profile_image_url}
+                alt=""
+                width={80}
+                height={80}
+                className="h-20 w-20 rounded-full border-2 border-white/10 object-cover"
+              />
+            ) : (
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-white/10 bg-gradient-to-br from-orange-500/20 to-red-600/20 text-3xl font-bold text-zinc-400">
+                {profileInitial}
+              </div>
+            )}
+          </div>
 
-        <p className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className={`inline-block rounded-lg border px-2.5 py-0.5 text-xs font-semibold capitalize ${trustLevelStyles[profile.trust_level] || trustLevelStyles.neutral}`}>
-            {profile.trust_level}
-          </span>
-          {profile.is_own_profile && authUser && (
-            <span className="text-sm text-zinc-400">
-              Trust Score: {authUser.trust_score.toFixed(2)} / 2.0
-            </span>
-          )}
-        </p>
+          <div className="min-w-0 flex-1">
+            <h1 className="mb-2 text-2xl font-bold -tracking-[0.02em] text-white sm:text-3xl">
+              {profile.username}
+            </h1>
 
-        <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-zinc-400">
-          <span className="inline-flex items-center gap-1.5">
-            <Icon name="MessageCircle" size={14} className="text-zinc-500" /> {profile.stats.total_posts} posts
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <Icon name="MessageCircle" size={14} className="text-zinc-500" /> {profile.stats.total_comments} comments
-          </span>
-          <span>{profile.stats.approval_rate}% approval</span>
-          <span suppressHydrationWarning>Member since {formatDate(profile.stats.member_since)}</span>
+            <p className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span className={`inline-block rounded-lg border px-2.5 py-0.5 text-xs font-semibold capitalize ${trustLevelStyles[profile.trust_level] || trustLevelStyles.neutral}`}>
+                {profile.trust_level}
+              </span>
+              {profile.is_own_profile && authUser && (
+                <span className="text-sm text-zinc-400">
+                  Trust Score: {authUser.trust_score.toFixed(2)} / 2.0
+                </span>
+              )}
+            </p>
+
+            <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-zinc-400">
+              <span className="inline-flex items-center gap-1.5">
+                <Icon name="MessageCircle" size={14} className="text-zinc-500" /> {profile.stats.total_posts} posts
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Icon name="MessageCircle" size={14} className="text-zinc-500" /> {profile.stats.total_comments} comments
+              </span>
+              <span>{profile.stats.approval_rate}% approval</span>
+              <span suppressHydrationWarning>Member since {formatDate(profile.stats.member_since)}</span>
+            </div>
+          </div>
         </div>
+
+        {/* Own profile: profile image upload */}
+        {profile.is_own_profile && (
+          <div className="mt-5 border-t border-white/5 pt-4">
+            {imageError && (
+              <div role="alert" className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
+                {imageError}
+              </div>
+            )}
+            <label className="inline-flex cursor-pointer items-center gap-2 text-xs text-zinc-500 transition hover:text-zinc-400">
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleProfileUpload}
+                disabled={uploadingImage}
+                className="hidden"
+              />
+              {uploadingImage ? (
+                <span className="inline-flex items-center gap-1.5 text-zinc-400">
+                  <Icon name="RefreshCw" size={12} className="animate-spin" />
+                  Uploading...
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5">
+                  <Icon name="Camera" size={12} />
+                  Change profile image
+                </span>
+              )}
+            </label>
+          </div>
+        )}
       </div>
 
       {/* Own Profile Actions */}
