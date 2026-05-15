@@ -29,8 +29,8 @@ export function DynamicIsland() {
   return (
     <>
       <nav
-        className={`fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-5 rounded-full px-6 py-3 glass-obsidian ${
-          scrolled ? 'dynamic-island-scrolled' : 'dynamic-island'
+        className={`fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-5 rounded-full px-8 py-4 bg-white/[0.03] backdrop-blur-xl border border-white/10 transition-opacity duration-400 ${
+          scrolled ? 'opacity-50' : 'opacity-100'
         }`}
       >
         {tabs.map((tab) => {
@@ -49,7 +49,7 @@ export function DynamicIsland() {
               }`}
               aria-label={tab.label}
             >
-              <Icon name={tab.icon} size={19} />
+              <Icon name={tab.icon} size={22} />
             </button>
           );
         })}

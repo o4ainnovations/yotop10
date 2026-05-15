@@ -1,5 +1,5 @@
-@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Anton&family=Monoton&display=swap');
+@import "tailwindcss";
 
 @font-face {
   font-family: 'Geist';
@@ -20,12 +20,51 @@
   --font-accent: 'Monoton', cursive;
 }
 
-/* ═══ Base ═══ */
+:root {
+  --color-bg: #05050f;
+}
+
+.dark {
+  --color-bg: #05050f;
+}
+
+.light {
+  --color-bg: #f8f8fa;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) { --color-bg: #05050f; }
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) { --color-bg: #f8f8fa; }
+}
+
 body {
   font-family: var(--font-sans);
+  background: #05050f;
+  color: #eaeaef;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background 0.3s ease, color 0.3s ease;
 }
+
+body.light-mode {
+  background: #f8f8fa;
+  color: #0f0f1a;
+}
+/* Override text colors in light mode via cascade */
+body.light-mode .bg-zinc-950 { background: #f8f8fa; }
+body.light-mode .text-white { color: #0f0f1a; }
+body.light-mode .text-zinc-400 { color: #5a5a6e; }
+body.light-mode .text-zinc-500 { color: #6b6b80; }
+body.light-mode .text-zinc-600 { color: #808090; }
+body.light-mode .bg-white\/\[0\.02\] { background: rgba(255,255,255,0.6); }
+body.light-mode .bg-white\/5 { background: rgba(0,0,0,0.04); }
+body.light-mode .bg-white\/10 { background: rgba(0,0,0,0.06); }
+body.light-mode .border-white\/5 { border-color: rgba(0,0,0,0.1); }
+body.light-mode .border-white\/10 { border-color: rgba(0,0,0,0.15); }
+body.light-mode .border-white\/20 { border-color: rgba(0,0,0,0.2); }
 
 /* ═══ Adaptive Glass Layers ═══ */
 .glass-obsidian {
@@ -97,18 +136,16 @@ body {
   overflow: hidden;
 }
 
-/* ═══ Dynamic Island ═══ */
-.dynamic-island {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow:
-    0 0 40px rgba(249, 115, 22, 0.15),
-    0 0 80px rgba(220, 38, 38, 0.08),
-    0 10px 30px rgba(0, 0, 0, 0.5);
+/* ═══ Ticker Scroll ═══ */
+@keyframes ticker-scroll {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
 }
-.dynamic-island-scrolled {
-  transform: scale(0.7);
-  opacity: 0.4;
-  box-shadow: 0 0 20px rgba(249, 115, 22, 0.05);
+.animate-ticker {
+  animation: ticker-scroll 45s linear infinite;
+}
+.animate-ticker:hover {
+  animation-play-state: paused;
 }
 
 /* ═══ Argument Bars ═══ */
@@ -141,3 +178,7 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* ═══ Logo Font Fallbacks ═══ */
+.font-accent { font-family: 'Monoton', cursive !important; }
+.font-display { font-family: 'Anton', sans-serif !important; }

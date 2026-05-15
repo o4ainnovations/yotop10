@@ -1,47 +1,44 @@
 import { GlassSlab } from '@/components/GlassSlab';
+import { ArgumentBar } from '@/components/ArgumentBar';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Icon } from '@/components/icons/Icon';
+import { relativeTime } from '@/lib/dates';
 import type { Post, CategoriesResponse, PostsResponse } from '@/lib/api/types';
 
 const API_BASE = process.env.INTERNAL_API_URL || 'http://localhost:8000/api';
 
-const SPARKLINE_HEIGHTS = ['h-1', 'h-2', 'h-3', 'h-4', 'h-5'] as const;
-
-function sparklineFromId(id: string): Array<typeof SPARKLINE_HEIGHTS[number]> {
+function generateSerial(post: Post): string {
+  const prefix = (post.category_slug || 'UNK').substring(0, 3).toUpperCase();
   let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = ((hash << 5) - hash) + id.charCodeAt(i);
+  for (let i = 0; i < post.id.length; i++) {
+    hash = ((hash << 5) - hash) + post.id.charCodeAt(i);
     hash |= 0;
   }
-  const bars: Array<typeof SPARKLINE_HEIGHTS[number]> = [];
-  for (let j = 0; j < 8; j++) {
-    const v = Math.abs((hash >> (j * 3)) & 7);
-    const idx = v < SPARKLINE_HEIGHTS.length ? v : v % SPARKLINE_HEIGHTS.length;
-    bars.push(SPARKLINE_HEIGHTS[idx]);
-  }
-  return bars;
+  const num = String(Math.abs(hash) % 10000).padStart(4, '0');
+  const suffix = (post.author_username || 'X')[0].toUpperCase();
+  return `${prefix}-${num}-${suffix}`;
 }
 
-function computeVelocity(post: Post): string {
-  const created = new Date(post.created_at).getTime();
-  const hours = Math.max(0.1, (Date.now() - created) / 3600000);
-  const vph = post.comment_count / hours;
-  if (vph >= 1) return `${vph.toFixed(1)}/hr`;
-  const vpm = vph / 60;
-  return `${vpm.toFixed(1)}/min`;
-}
-
-async function getPosts(): Promise<{ posts: Post[]; hasMore: boolean }> {
+async function getSiteData(): Promise<{
+  posts: Post[];
+  hasMore: boolean;
+  totalPosts: number;
+  totalComments: number;
+}> {
   try {
     const res = await fetch(`${API_BASE}/posts?page=1&limit=12`, { cache: 'no-store' });
-    if (!res.ok) return { posts: [], hasMore: false };
+    if (!res.ok) return { posts: [], hasMore: false, totalPosts: 0, totalComments: 0 };
     const data: PostsResponse = await res.json();
+    const posts = data.posts || [];
     return {
-      posts: data.posts || [],
+      posts,
       hasMore: (data.pagination?.page || 1) < (data.pagination?.totalPages || 1),
+      totalPosts: data.pagination?.total || posts.length,
+      totalComments: posts.reduce((sum, p) => sum + (p.comment_count || 0), 0),
     };
   } catch {
-    return { posts: [], hasMore: false };
+    return { posts: [], hasMore: false, totalPosts: 0, totalComments: 0 };
   }
 }
 
@@ -70,14 +67,16 @@ async function getCategories(): Promise<FlatCategory[]> {
 }
 
 export default async function Home() {
-  const [{ posts }, categories] = await Promise.all([getPosts(), getCategories()]);
+  const [{ posts, totalPosts, totalComments }, categories] = await Promise.all([
+    getSiteData(),
+    getCategories(),
+  ]);
   const powerTrio = posts.slice(0, 3);
   const stripLogic = posts.slice(3, 12);
-  const pulsePosts = posts.slice(0, 7);
 
   return (
     <>
-      {/* MOBILE CARD DECK */}
+      {/* ── MOBILE CARD DECK ── */}
       <div className="lg:hidden space-y-3 px-3 py-4 pb-24">
         {posts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -105,27 +104,35 @@ export default async function Home() {
         )}
       </div>
 
-      {/* DESKTOP TRIPLE PANE */}
-      <div className="hidden lg:flex h-[calc(100vh-56px)]">
-        {/* LEFT WING — Category Rail */}
-        <aside className="w-[200px] shrink-0 h-full overflow-y-auto border-r border-white/5">
-          <nav className="py-6">
+      {/* ── DESKTOP TRIPLE PANE ── */}
+      <div className="hidden lg:flex h-[calc(100vh-56px)] bg-[#05050f]">
+        {/* LEFT WING — Navigator */}
+        <aside className="w-1/5 min-w-[200px] max-w-[260px] flex flex-col h-full border-r border-white/5 overflow-y-auto p-6">
+          <nav className="flex flex-col">
             {categories.map((cat) => (
-              <Link
-                key={cat.slug}
-                href={`/c/${cat.slug}`}
-                className="block border-l border-white/10 pl-4 py-3 transition-all hover:border-orange-500/60"
-              >
-                <span className="block font-sans font-extralight text-6xl tracking-widest text-zinc-800 transition-all hover:text-white hover:font-semibold">
-                  {cat.name}
-                </span>
-              </Link>
+              <div key={cat.slug} className="relative group/cat">
+                <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-transparent opacity-0 group-hover/cat:opacity-100 transition-opacity duration-700 pointer-events-none" />
+                <Link
+                  href={`/c/${cat.slug}`}
+                  className="relative block border-l-2 border-white/5 pl-4 py-3 transition-all hover:border-orange-500"
+                >
+                  <span className="font-sans font-extralight text-4xl tracking-widest text-white/10 uppercase transition-all duration-500 hover:text-white/90 hover:font-semibold">
+                    {cat.name}
+                  </span>
+                </Link>
+              </div>
             ))}
           </nav>
+          <div className="mt-auto pt-8 border-t border-white/5">
+            <div className="text-[10px] font-mono text-zinc-600 space-y-1">
+              <div>TOTAL FACT-MINES <span className="text-white/60 font-bold">{totalPosts}</span></div>
+              <div>ACTIVE ARGUMENTS <span className="text-white/60 font-bold">{totalComments}</span></div>
+            </div>
+          </div>
         </aside>
 
-        {/* CENTER STAGE */}
-        <div className="flex-1 overflow-y-auto max-w-3xl mx-auto px-8 py-6">
+        {/* CENTER STAGE — Workstation */}
+        <div className="flex-1 max-w-3xl mx-auto overflow-y-auto px-8 py-6 space-y-5">
           {posts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-28 text-center">
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5">
@@ -142,77 +149,83 @@ export default async function Home() {
             </div>
           ) : (
             <>
-              {/* Power Trio */}
-              <div className="space-y-4 mb-8">
-                {powerTrio.map((post) => (
-                  <GlassSlab key={post.id} post={post} variant="featured" />
-                ))}
-              </div>
+              {/* Power Trio #1-#3 */}
+              {powerTrio.map((post) => {
+                const hasHero = (post.format === 'hero_list' || post.format === 'full_list') && post.hero_image_url;
+                return (
+                  <Link key={post.id} href={`/${post.slug}`} className="block">
+                    <article className="glass-slab spatial-depth rounded-2xl p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="wiki-badge">{generateSerial(post)}</span>
+                        <span className="text-[10px] font-mono text-zinc-600" suppressHydrationWarning>
+                          {relativeTime(post.created_at)}
+                        </span>
+                      </div>
+                      <div className="flex gap-5">
+                        {hasHero && (
+                          <Image
+                            src={post.hero_image_url!}
+                            alt=""
+                            width={224}
+                            height={144}
+                            className="w-56 h-36 rounded-xl object-cover shrink-0"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-xl font-display text-white mb-2">{post.title}</h3>
+                          <div className="flex items-center gap-4 mb-3">
+                            <span className="font-mono text-xs text-zinc-600">@{post.author_username}</span>
+                            <span className="flex items-center gap-1 font-mono text-[10px] text-zinc-600">
+                              <Icon name="Eye" size={11} />
+                              {post.view_count}
+                            </span>
+                            <span className="flex items-center gap-1 font-mono text-[10px] text-zinc-600">
+                              <Icon name="MessageCircle" size={11} />
+                              {post.comment_count}
+                            </span>
+                          </div>
+                          <ArgumentBar support={50} contradict={50} />
+                        </div>
+                      </div>
+                    </article>
+                  </Link>
+                );
+              })}
 
-              {/* Strip Logic */}
+              {/* Strip Logic #4+ */}
               {stripLogic.length > 0 && (
                 <>
-                  <div className="mb-4">
+                  <div className="pt-2">
                     <h2 className="text-[11px] font-mono tracking-widest text-zinc-600 uppercase">
                       Strip Logic
                     </h2>
                   </div>
-                  <div className="space-y-3">
-                    {stripLogic.map((post) => (
-                      <GlassSlab key={post.id} post={post} variant="compact" observe />
-                    ))}
-                  </div>
+                  {stripLogic.map((post) => (
+                    <Link key={post.id} href={`/${post.slug}`} className="block">
+                      <article className="glass-slab rounded-2xl py-2 px-4 overflow-hidden max-h-[40px] transition-all duration-500 ease-out hover:max-h-[150px] group/strip">
+                        <div className="flex items-center justify-between min-h-[24px]">
+                          <h3 className="font-bold text-white text-sm truncate mr-4">{post.title}</h3>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="wiki-badge">{post.category_slug}</span>
+                            <span className="text-[10px] font-mono text-zinc-600" suppressHydrationWarning>
+                              {relativeTime(post.created_at)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="opacity-0 transition-opacity duration-300 group-hover/strip:opacity-100 mt-2">
+                          {post.intro && (
+                            <p className="text-xs text-zinc-500 mb-2 line-clamp-2">{post.intro}</p>
+                          )}
+                          <ArgumentBar support={50} contradict={50} />
+                        </div>
+                      </article>
+                    </Link>
+                  ))}
                 </>
               )}
             </>
           )}
         </div>
-
-        {/* RIGHT WING — Live Pulse */}
-        <aside className="w-[280px] shrink-0 h-full overflow-y-auto border-l border-white/5 p-4">
-          <h2 className="text-[11px] font-mono tracking-widest text-zinc-600 mb-4">
-            LIVE PULSE
-          </h2>
-          {pulsePosts.length === 0 ? (
-            <p className="text-xs text-zinc-600">No pulse data yet.</p>
-          ) : (
-            <div className="space-y-3">
-              {pulsePosts.map((post) => {
-                const initial = (post.author_display_name || post.author_username || '?')[0].toUpperCase();
-                const snippet = post.title.length > 40 ? post.title.slice(0, 40) + '\u2026' : post.title;
-                const bars = sparklineFromId(post.id);
-                const velocity = computeVelocity(post);
-
-                return (
-                  <Link
-                    key={post.id}
-                    href={`/${post.slug}`}
-                    className="block rounded-2xl glass-obsidian p-3 transition hover:border-white/10"
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="w-8 h-8 rounded-full bg-orange-500/20 text-orange-400 font-mono text-xs flex items-center justify-center shrink-0">
-                        {initial}
-                      </span>
-                      <span className="text-xs text-zinc-400 truncate">
-                        {snippet}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-end gap-0.5 h-5">
-                        {bars.map((h, i) => (
-                          <div key={i} className={`w-1 rounded-full ${h} bg-orange-500/60`} />
-                        ))}
-                      </div>
-                      <span className="text-[10px] font-mono text-orange-400 ml-auto shrink-0">
-                        {velocity}
-                      </span>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </aside>
       </div>
     </>
   );

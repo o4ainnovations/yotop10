@@ -8,23 +8,16 @@ export function ThemeToggle() {
 
   useEffect(() => {
     const stored = localStorage.getItem('yotop10_theme');
-    if (stored === 'light') {
-      setDark(false);
-      document.documentElement.classList.add('light');
-    } else {
-      document.documentElement.classList.remove('light');
-    }
+    const isLight = stored === 'light';
+    setDark(!isLight);
+    document.body.classList.toggle('light-mode', isLight);
   }, []);
 
   const toggle = () => {
     const next = !dark;
     setDark(next);
     localStorage.setItem('yotop10_theme', next ? 'dark' : 'light');
-    if (next) {
-      document.documentElement.classList.remove('light');
-    } else {
-      document.documentElement.classList.add('light');
-    }
+    document.body.classList.toggle('light-mode', !next);
   };
 
   return (

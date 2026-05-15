@@ -74,6 +74,14 @@
 
 - **[UI] Desktop triple-pane + Dynamic Island + GlassSlab** — Rewrote homepage with desktop triple-pane layout (Left Wing category rail, Center Stage power trio/strip logic, Right Wing live pulse), Dynamic Island floating dock (search modal, scroll shrink, pathname active, hide on /admin), GlassSlab self-animating card component (IntersectionObserver, glass-slab/spatial-depth/card-deck-enter CSS classes), simplified FeedClient (infinite scroll only, no sort pills), CommandSearch converted to modal. All files: zero inline styles, Tailwind + custom CSS classes only, Lucide Icon component used throughout.
 
+- **[UI] Desktop triple-pane rewrite — Left Wing Navigator + Center Stage Workstation** — Rewrote page.tsx: Left Wing Navigator (w-1/5, category tree with border-l-2 vertical lines, orange hover accent, site stats with TOTAL FACT-MINES + ACTIVE ARGUMENTS at bottom), Center Stage Workstation (Power Trio #1-#3: glass-slab + spatial-depth cards with wiki-badge serial, hero image w-56 h-36, font-display title, ArgumentBar 50/50; Expandable Strips #4+: 40px compact with CSS max-height hover expand to 150px revealing intro + ArgumentBar). Mobile card deck unchanged. SSR: getSiteData() + getCategories(). generateSerial() helper for ENT-9472-B style badges. All Tailwind + custom CSS classes only, zero inline styles, Lucide Icon for all icons, suppressHydrationWarning on dates.
+
+- **[UI] Mobile styling polish — GlassSlab + DataCard + FeedClient** — Rewrote 3 core feed components + patched page.tsx:
+  1. `components/GlassSlab.tsx` (170 lines) — Removed internal `<Link>` (avoids double-nesting), added expand/collapse chevron toggle (Show N more / Show less, `role="button"` with `preventDefault`+`stopPropagation` for valid `<a>` nesting, `min-h-[44px]` touch target), responsive padding (`px-4 py-4` mobile, `lg:px-6 lg:py-5` compact / `lg:px-6 lg:py-6` featured), `tabular-nums` on metrics, `suppressHydrationWarning` on date spans, `w-full` for full-width mobile cards
+  2. `components/DataCard.tsx` (17 lines) — Thin `<Link>` > `<GlassSlab>` wrapper (no double nesting), passes all post props
+  3. `app/FeedClient.tsx` (160 lines) — Sort pills (Latest / Most Viewed / Discussed, small `font-mono text-[11px]` pills, orange accent on active), empty state with CTA when `posts.length === 0`, Link > GlassSlab per card, IntersectionObserver infinite scroll (400px rootMargin, no spinner, no Load More button), sort change resets feed and refetches page 1
+  4. `app/page.tsx` (patched) — Added `<Link>` wrappers around GlassSlab in mobile card deck (needed after GlassSlab dropped internal Link)
+
 ## Next
 - Frontend `/search` page (M12)
 - Admin search panel (health badge, reindex button, test search)
