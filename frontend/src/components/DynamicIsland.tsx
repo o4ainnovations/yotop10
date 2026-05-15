@@ -21,15 +21,17 @@ export function DynamicIsland() {
   if (pathname.startsWith('/admin')) return null;
 
   const tabs = [
+    { icon: 'House' as const, label: 'Home', href: '/' },
     { icon: 'Search' as const, label: 'Search', action: () => setSearchOpen(true) },
-    { icon: 'Plus' as const, label: 'Submit', href: '/submit' },
-    { icon: 'Folder' as const, label: 'Categories', href: '/categories' },
+    { icon: 'MessageCircle' as const, label: 'Arguments', href: '/arguments' },
+    { icon: 'Bell' as const, label: 'Notifications', href: '/notifications' },
+    { icon: 'User' as const, label: 'Profile', href: '/a' },
   ];
 
   return (
     <>
       <nav
-        className={`fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-5 rounded-full px-8 py-4 bg-white/[0.03] backdrop-blur-xl border border-white/10 transition-opacity duration-400 ${
+        className={`fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-5 rounded-full px-6 py-3.5 bg-white/[0.03] backdrop-blur-xl border border-white/10 transition-opacity duration-400 lg:hidden ${
           scrolled ? 'opacity-50' : 'opacity-100'
         }`}
       >

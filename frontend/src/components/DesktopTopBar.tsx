@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import HeaderBells from './HeaderBells';
 import Link from 'next/link';
+import { Icon } from './icons/Icon';
 
 export default function DesktopTopBar() {
   const router = useRouter();
@@ -17,12 +18,19 @@ export default function DesktopTopBar() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-[#05050f]/80 backdrop-blur-2xl border-b border-white/5">
-      <div className="mx-auto flex h-full max-w-6xl items-center justify-between px-4 sm:px-6">
-        <Link href="/" className="flex items-baseline gap-0 shrink-0">
-          <span className="font-accent gradient-text text-xl tracking-normal">YO</span>
-          <span className="font-display text-xl tracking-tight text-white">Top10</span>
+      <div className="mx-auto flex h-full max-w-6xl items-center justify-between px-3 sm:px-6">
+        {/* Mobile: hamburger */}
+        <button className="sm:hidden text-zinc-400 hover:text-white transition min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label="Menu">
+          <Icon name="Menu" size={22} />
+        </button>
+
+        {/* Logo */}
+        <Link href="/" className="flex items-baseline gap-0 shrink-0 mx-auto sm:mx-0">
+          <span className="font-accent gradient-text text-lg sm:text-xl tracking-normal">YO</span>
+          <span className="font-display text-lg sm:text-xl tracking-tight text-white">Top10</span>
         </Link>
 
+        {/* Desktop search */}
         <div className="hidden sm:flex flex-1 mx-4 justify-center">
           <input
             type="text"
@@ -34,8 +42,20 @@ export default function DesktopTopBar() {
           />
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
-          <HeaderBells />
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {/* Desktop: notification bell */}
+          <div className="hidden sm:block">
+            <HeaderBells />
+          </div>
+
+          {/* Hanging + button — always visible */}
+          <Link
+            href="/submit"
+            className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-lg transition hover:scale-105 active:scale-95"
+            aria-label="Submit"
+          >
+            <Icon name="Plus" size={20} />
+          </Link>
         </div>
       </div>
     </header>
