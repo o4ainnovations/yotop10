@@ -19,13 +19,8 @@ export default function DesktopTopBar() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-[#05050f]/80 backdrop-blur-2xl border-b border-white/5">
       <div className="mx-auto flex h-full max-w-6xl items-center justify-between px-3 sm:px-6">
-        {/* Mobile: hamburger */}
-        <button className="sm:hidden text-zinc-400 hover:text-white transition min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label="Menu">
-          <Icon name="Menu" size={22} />
-        </button>
-
-        {/* Logo */}
-        <Link href="/" className="flex items-baseline gap-0 shrink-0 mx-auto sm:mx-0">
+        {/* Logo — left */}
+        <Link href="/" className="flex items-baseline gap-0 shrink-0">
           <span className="font-accent gradient-text text-lg sm:text-xl tracking-normal">YO</span>
           <span className="font-display text-lg sm:text-xl tracking-tight text-white">Top10</span>
         </Link>
@@ -48,14 +43,19 @@ export default function DesktopTopBar() {
             <HeaderBells />
           </div>
 
-          {/* Hanging + button — always visible */}
+          {/* Desktop: submit button */}
           <Link
             href="/submit"
-            className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-lg transition hover:scale-105 active:scale-95"
+            className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-lg transition hover:scale-105 active:scale-95"
             aria-label="Submit"
           >
             <Icon name="Plus" size={20} />
           </Link>
+
+          {/* Mobile: hamburger */}
+          <button className="sm:hidden text-zinc-400 hover:text-white transition min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label="Menu">
+            <Icon name="Menu" size={22} />
+          </button>
         </div>
       </div>
     </header>
