@@ -69,6 +69,10 @@
   7. `components/NavUserAvatar.tsx` — First-letter circle linked to profile
   Deleted: `PostCard.tsx`, `CategoryBar.tsx`
 
+- **[Test] Vitest test files for 4 backend libs** — Created comprehensive tests for `upload.ts` (16 tests: optimizeImage, processUpload, processProfileImage, deleteUploads with edge cases), `postCountReconciler.ts` (10 tests: reconciliation logic, cron start/stop, edge cases), `trustScoreWorker.ts` (11 tests: queue processing, retry logic, edge cases), `listTitleValidation.ts` (33 tests: validateListTitle with all error codes, needsListTitleValidation, edge cases). All 70 tests pass, zero new lint errors, zero new type errors.
+
+- **[Test] Vitest test files for 5 more backend libs** — Created comprehensive tests for `env.ts` (14 tests: validateEnv defaults/errors/caching, getEnv), `elasticsearch.ts` (4 tests: singleton creation with custom/default URL), `fingerprintMatching.ts` (16 tests: Tier 0/1/2 matching, negative matching, age decay, storeFingerprintObservation), `modelRegistry.ts` (6 tests: register/re-register, multiple models, cached returns), `redis.ts` (13 tests: client singleton, atomicCheckRateLimit allowed/blocked/error formats). All 53 tests pass, zero lint errors on new files.
+
 - **[Feature] Profile image support** — Two frontend components updated for profile images:
   1. `components/NavUserAvatar.tsx` — Shows `next/image` profile image if `user.profile_image_url` exists, falls back to first-letter circle. Links to `/a/{username}`.
   2. `app/a/[username]/page.tsx` — Profile header shows 80x80 avatar (image or first-letter gradient fallback). Own profile: hidden file input via clickable label, uploads to `POST /api/upload/profile`, updates user via `PATCH /api/users/me`, refreshes auth store. 200x200 WebP square images.
