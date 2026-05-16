@@ -125,6 +125,10 @@ export default function AdminCommentsPage() {
     <div className="space-y-3 sm:space-y-4">
       <h2 className="text-white text-lg font-bold">All Comments ({pagination.total})</h2>
 
+      <div className="text-[10px] font-mono text-zinc-600">
+        DOUBLE-BLIND REVIEW — Decisions based on content, not author reputation
+      </div>
+
       <div className="flex gap-2 flex-wrap">
         {statCards.map(k => <div key={k} onClick={() => applyStatFilter(k)} className="bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white/60 cursor-pointer hover:border-orange-500/30"><strong className="text-white">{k}</strong>: {stats[k] ?? 0}</div>)}
       </div>

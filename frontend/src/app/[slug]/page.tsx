@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import PostDetailClient from './client';
 import { API } from '@/lib/api';
+import { RESERVED_ROUTES } from '@/lib/reservedRoutes';
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -11,6 +12,10 @@ type PageProps = {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const resolvedParams = await params;
   const slug = String(resolvedParams.slug);
+
+  if (RESERVED_ROUTES.has(slug)) {
+    return { title: 'Post Not Found' };
+  }
   
   try {
     const data = await API.getPost(slug);
@@ -32,11 +37,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function PostDetailPage({ params }: PageProps) {
   const resolvedParams = await params;
+  const slug = String(resolvedParams.slug);
+
+  if (RESERVED_ROUTES.has(slug)) {
+    notFound();
+  }
 
   let items: Array<{ id: string; rank: number; title: string; justification: string; image_url?: string; source_url?: string }> = [];
   
   try {
-    const data = await API.getPost(resolvedParams.slug);
+    const data = await API.getPost(slug);
     items = data.items || [];
   } catch {
     notFound();
@@ -68,7 +78,7 @@ export default async function PostDetailPage({ params }: PageProps) {
         />
       )}
       <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center' }}>Loading...</div>}>
-        <PostDetailClient slug={String(resolvedParams.slug)} />
+        <PostDetailClient slug={slug} />
       </Suspense>
     </>
   );

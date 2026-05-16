@@ -119,6 +119,10 @@ export default function AdminPendingPostPreviewPage() {
         Back to pending posts
       </button>
 
+      <div className="text-[10px] font-mono text-zinc-600">
+        DOUBLE-BLIND REVIEW — Decisions based on content, not author reputation
+      </div>
+
       <div className="space-y-4 sm:space-y-6 mt-5">
         <div>
           <h1 className="text-white text-xl sm:text-2xl font-bold">{post.title}</h1>

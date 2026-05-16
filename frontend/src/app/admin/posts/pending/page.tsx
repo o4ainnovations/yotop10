@@ -115,6 +115,10 @@ export default function PendingPostsPage() {
     <div className="space-y-3 sm:space-y-4">
       <h2 className="text-white text-lg font-bold">Review Queue ({pagination.total} pending)</h2>
 
+      <div className="text-[10px] font-mono text-zinc-600">
+        DOUBLE-BLIND REVIEW — Decisions based on content, not author reputation
+      </div>
+
       <div className="flex gap-2 flex-wrap">
         <select value={filters.sort} onChange={e => { setFilters(f => ({ ...f, sort: e.target.value })); setPage(1); }} className={filterSelectClass}>
           <option value="oldest" className="bg-zinc-900">Oldest First</option><option value="newest" className="bg-zinc-900">Newest First</option>

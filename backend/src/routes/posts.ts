@@ -302,10 +302,21 @@ router.get('/check-title', async (req, res) => {
   }
 });
 
+const RESERVED_SLUGS = new Set([
+  'admin', 'api', 'login', 'search', 'settings', 'profile',
+  'categories', 'c', 'auth', 'submit', 'explore', 'articles',
+  'saved', 'arguments', 'hall-of-fame', 'claim', 'notifications',
+  'username-history', 'submit-article',
+]);
+
 // GET /api/posts/:idOrSlug — Single post with items and comments
 router.get('/:idOrSlug', async (req, res) => {
   try {
     const { idOrSlug } = req.params;
+
+    if (RESERVED_SLUGS.has(idOrSlug)) {
+      return res.status(404).json({ error: 'Not found' });
+    }
 
     // Find approved post - try both _id and slug
     let post: { _id: { toString(): string }; [key: string]: unknown } | null = null;

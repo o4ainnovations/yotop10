@@ -237,6 +237,9 @@ router.post('/logout', async (req, res) => {
 /**
  * GET /api/admin/posts/pending
  * Protected — list pending posts for review
+ *
+ * DOUBLE-BLIND MODERATION: Author trust score is intentionally hidden.
+ * Review decisions must be based on content quality, not author reputation.
  */
 router.get('/posts/pending', async (req, res) => {
   try {
@@ -300,6 +303,9 @@ router.get('/posts/pending', async (req, res) => {
 /**
  * GET /api/admin/posts/pending/:id
  * Protected — get full pending post preview
+ *
+ * DOUBLE-BLIND MODERATION: Author trust score is intentionally hidden.
+ * Review decisions must be based on content quality, not author reputation.
  */
 router.get('/posts/pending/:id', async (req, res) => {
   try {
@@ -335,6 +341,9 @@ router.get('/posts/pending/:id', async (req, res) => {
 /**
  * PATCH /api/admin/posts/:id/approve
  * Protected — approve post and publish to public feed
+ *
+ * DOUBLE-BLIND: Trust score recalculation happens AFTER admin decision.
+ * Admins never see author trust scores during review.
  */
 router.patch('/posts/:id/approve', async (req, res) => {
   try {
@@ -438,6 +447,9 @@ router.post('/posts/:id/retry', async (req, res) => {
 /**
  * PATCH /api/admin/posts/:id/reject
  * Protected — reject pending post
+ *
+ * DOUBLE-BLIND: Trust score recalculation happens AFTER admin decision.
+ * Admins never see author trust scores during review.
  */
 router.patch('/posts/:id/reject', async (req, res) => {
   try {

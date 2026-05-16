@@ -97,6 +97,8 @@
   2. `articles/[slug]/page.tsx` — Article reader (author avatar initial, cover image, paragraph-rendered body, sources list, related posts horizontal scroll, fact-check badge with conditional ShieldCheck/TriangleAlert/Info icons, stats bar)
   3. `submit-article/page.tsx` — Submission form (title, category selector, body textarea, cover image URL, dynamic source fields with add/remove, auto-calculated reading time preview, validation, success confirmation card, submit-another button)
 
+- **[Security] RESERVED_ROUTES guard** — Shared reserved route set preventing user-created content from clobbering system routes. `frontend/src/lib/reservedRoutes.ts` (20 reserved slugs), `frontend/src/app/[slug]/page.tsx` (notFound for reserved slugs in both generateMetadata + PostDetailPage), `backend/src/routes/posts.ts` (RESERVED_SLUGS check returns 404 before DB query in GET /:idOrSlug), `frontend/src/lib/reservedRoutes.test.ts` (10 tests). 10/10 tests pass, 0 lint errors, 0 type errors.
+
 - **[UI] Tailwind explore page** — Created algorithmic Explore feed at `app/explore/page.tsx` with 4 files:
    - `lib/api/types.ts` — Added `ExplorePost` + `ExploreResponse` interfaces
    - `lib/api/endpoints/explore.ts` — `exploreApi.getExplore(page, limit)` client
