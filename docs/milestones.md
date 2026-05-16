@@ -75,6 +75,7 @@ All limits use 2D soft gradient floor algorithm:
 ### M2 — Database Schema
 - [x] `users` collection
 - [x] `posts` collection (author_id, author_username, author_display_name, title, post_type, intro, status, category_id, comment_count, view_count, format, hero_image_url, created_at, updated_at)
+  - [x] `post_type` enum: `top_list`, `this_vs_that`, `best_of`, `counter`, `article`, `who_is_better`, `fact_drop`, `worst_of`, `hidden_gems`
 - [x] `list_items` collection (post_id, rank, title, justification, image_url, source_url)
 - [x] `comments` collection (post_id, list_item_id, parent_comment_id, depth, author_id, author_username, author_display_name, content, fire_count, reply_count, created_at, updated_at)
 - [x] `reactions` collection (user_device_fingerprint, target_type, target_id, reaction_type, created_at)
@@ -82,6 +83,8 @@ All limits use 2D soft gradient floor algorithm:
 - [x] `admin_user` collection (username, password_hash)
 - [x] MongoDB indexes for performance
 - [x] Seed 10 parent + 300 child categories
+- [ ] `articles` collection (author_id, title, slug, body (markdown), reading_time, cover_image, sources[], fact_check_status, related_posts[], created_at, updated_at) — separate long-form content model
+- [ ] `saved_posts` collection (user_id, post_id, saved_at) — compound index on (user_id, saved_at)
 
 ### M4 — Public Feed
 - [x] `GET /api/posts` — Approved posts only
@@ -102,11 +105,12 @@ All limits use 2D soft gradient floor algorithm:
 
 ### M3 — Anonymous Post Submission ✅ COMPLETED
 - [x] `POST /api/posts` — Submit post (no auth) - BACKEND COMPLETE
-  - Body: `{ title, post_type (MVP: top_list only), intro, category_slug, items, author_display_name }`
+  - Body: `{ title, post_type, intro, category_slug, items, author_display_name }`
+  - Supported post types: `top_list`, `this_vs_that`, `best_of`, `counter`, `article`
   - All posts default to `pending_review`
   - Generate `a_XXXX` username from device fingerprint
   - Rate limit: 2-8 posts/hour per fingerprint (trust score based)
-  - Other post types (this_vs_that, who_is_better, etc.) coming post-MVP
+  - Other post types (`who_is_better`, `fact_drop`, `worst_of`, `hidden_gems`) coming post-MVP
   - ✅ Counter lists are UNLIMITED for all users
 - [x] Frontend: `/submit` page - COMPLETE ✅
   - Category selector with icon (slug-based, 341 options)
@@ -119,6 +123,15 @@ All limits use 2D soft gradient floor algorithm:
   - WCAG 2.1 AA accessibility compliance
   - Draft recovery with localStorage (1 hour expiry, beforeunload sync)
   - Character counters and error handling
+
+### M3.X — Article Post Type (NEW)
+- [ ] `POST /api/articles` — Submit long-form article
+  - Body: `{ title, body (markdown), cover_image?, sources[]?, author_display_name }`
+  - Auto-generates `reading_time` from body length
+  - Uses separate `Article` model (not `Post`)
+  - Defaults to `pending_review`
+- [ ] `GET /api/articles` — All articles (approved only)
+- [ ] `GET /api/articles/:slug` — Single article by slug
 
 ### M3.1 — Title Similarity Check (SEO & Quality Control) ✅ COMPLETED
 [x] **Title Similarity Engine**
@@ -905,7 +918,7 @@ These patterns are required to prevent catastrophic failure modes at scale. Must
   - Neutrals (1.0 trust): Standard limits
   - Scholars (2.0 trust): 8 posts/hour, 40 comments/hour
 - [x] **Rate Limit Status Endpoint**:
-  - `GET /api/users/me/rate-limits` - Returns real-time remaining counts
+  - `GET /api/users/me/rate-limits` — Returns real-time remaining counts
   - Shows current trust score, tier, limits, and reset times
   - Updates automatically after every action
 
@@ -953,8 +966,8 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 - [x] Sort: relevance, newest, most comments, most liked (fires)
 - [x] Frontend: `/search`
 
-### M13 — Arguments Page (Post-MVP / Phase 2)
-- [ ] `GET /api/arguments` — Hot debates
+### M13 — Arguments Page
+- [ ] `GET /api/arguments` — Hot debates: `this_vs_that` + `counter` posts sorted by comment velocity. Pre-computed hourly into Redis.
 - [ ] Most active item-anchored comments
 - [ ] Filter by category, time range
 - [ ] Frontend: `/arguments`
@@ -963,6 +976,21 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 - [ ] `GET /api/hall-of-fame` — Featured lists
 - [ ] Admin curation controls
 - [ ] Frontend: `/hall-of-fame`
+
+---
+
+### M16 — Explore, Articles, Saved Posts (NEW)
+- [ ] `GET /api/explore` — Algorithmic trending feed using multi-factor scoring (recency, engagement, authority, velocity, diversity). All post types mixed.
+- [ ] Frontend: `/explore`
+
+- [ ] `GET /api/articles` — All article-type posts displayed like Medium homepage
+- [ ] `GET /api/articles/:slug` — Single article by slug
+- [ ] Frontend: `/articles`
+
+- [ ] `POST /api/posts/:id/save` — Bookmark a post
+- [ ] `DELETE /api/posts/:id/save` — Remove bookmark
+- [ ] `GET /api/users/me/saved` — User's bookmarked posts (requires fingerprint auth)
+- [ ] Frontend: `/saved`
 
 ---
 
@@ -985,8 +1013,15 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 - [x] User profiles at `/a/[username]` ✅
 - [x] Elasticsearch search with autocomplete (backend: 4 indices, search, autocomplete, admin management; frontend page pending)
 - [x] M15 Identity Portability (seed phrases, multi-device linking) ✅
-- [ ] Hall of Fame
 - [x] Frontend `/search` page
+- [ ] `/explore` page — Algorithmic trending feed
+- [ ] `/articles` page — Long-form article content
+- [ ] `/saved` page — User's bookmarked posts
+- [ ] `/arguments` page — Hot debates (this_vs_that + counter posts)
+- [ ] Bookmark/save system
+- [ ] Share system (OG tags, UTM, copy link)
+- [ ] Article content type (separate model)
+- [ ] Hall of Fame
 - [ ] Deployed and verified
 
 ---
@@ -1060,11 +1095,19 @@ POST   /api/reactions              # Toggle fire reaction
 GET    /api/reactions/state        # Get reaction states
 GET    /api/search                 # Full search
 GET    /api/search/autocomplete    # Autocomplete
+GET    /api/explore                # Algorithmic trending feed
+GET    /api/articles               # All articles
+GET    /api/articles/:slug         # Single article
+POST   /api/articles               # Submit article
+GET    /api/arguments              # Hot debates
 GET    /api/users/me               # Current user context
 GET    /api/users/me/rate-limits   # Current user rate limit status
+GET    /api/users/me/saved         # User's bookmarked posts
 GET    /api/users/:username        # User profile
 GET    /api/users/:username/posts  # User posts
 PATCH  /api/users/me/display-name  # Update display name
+POST   /api/posts/:id/save         # Bookmark post
+DELETE /api/posts/:id/save         # Remove bookmark
 ```
 
 ### Identity (Auth: fingerprint)
@@ -1080,7 +1123,6 @@ DELETE /api/identity/devices/:fingerprint # Unlink a device
 
 ### Phase 2 (Post-MVP)
 ```
-GET    /api/arguments              # Hot debates
 GET    /api/hall-of-fame           # Featured lists
 ```
 
@@ -1168,7 +1210,7 @@ GET    /api/admin/audit-logs/stats    # Quick audit stats (cached 30s)
 #### 1. Homepage — `/`
 **Description**: The main landing page displaying the public feed of approved posts.
 - **Features**:
-  - Header with logo, search bar, navigation links (Categories, Hall of Fame [post-MVP], Arguments [post-MVP]), Submit button
+  - Header with logo, search bar, navigation links (Categories, Hall of Fame [post-MVP], Arguments), Submit button
   - Category filter dropdown in sidebar or header
   - Sort controls: Newest (default), Most Viewed, Most Commented
   - Responsive grid of PostCards (1-3 columns based on screen)
@@ -1302,8 +1344,8 @@ GET    /api/admin/audit-logs/stats    # Quick audit stats (cached 30s)
 
 ---
 
-#### 8. Arguments Page — `/arguments` (Post-MVP / Phase 2)
-**Description**: Hot debates page showing most active item-anchored comments (the "Talk" page). Deferred to post-MVP.
+#### 8. Arguments Page — `/arguments`
+**Description**: Hot debates page showing most active `this_vs_that` and `counter` posts sorted by comment velocity. MVP feature.
 - **Features**:
   - Page title: "Arguments" or "Hot Debates"
   - Description: "Most active item-anchored discussions"
@@ -1311,6 +1353,7 @@ GET    /api/admin/audit-logs/stats    # Quick audit stats (cached 30s)
     - Category dropdown (filter by category)
     - Time range: Today, This Week, This Month, All Time (default)
   - Sort toggle: Most Replies, Recent Activity
+  - Data pre-computed hourly into Redis for fast reads
   - List of ArgumentItems:
     - Post title
     - List item number and title (e.g., "#4: The Godfather")
@@ -1322,7 +1365,53 @@ GET    /api/admin/audit-logs/stats    # Quick audit stats (cached 30s)
 
 ---
 
-#### 9. Hall of Fame Page — `/hall-of-fame`
+#### 9. Explore Page — `/explore` (NEW)
+**Description**: Algorithmic trending feed using multi-factor scoring.
+- **Features**:
+  - Multi-factor scoring: recency, engagement (fires/comments/views), authority (author trust score), velocity (growth rate), diversity (category spread)
+  - All post types mixed in feed
+  - Continuous scroll or pagination
+  - Responsive card layout matching homepage
+- **API Calls**: `GET /api/explore`
+
+---
+
+#### 10. Articles Page — `/articles` (NEW)
+**Description**: All article-type posts displayed like Medium homepage.
+- **Features**:
+  - Grid/list of article cards with cover image, title, reading time, author, date
+  - Sort by newest, most read, longest read
+  - Category filter
+  - Click card → navigate to `/articles/:slug`
+- **API Calls**: `GET /api/articles`
+
+---
+
+#### 11. Article Detail Page — `/articles/:slug` (NEW)
+**Description**: Full long-form article display.
+- **Features**:
+  - Cover image hero
+  - Title, author, reading time, published date
+  - Markdown body rendered
+  - Sources section at bottom
+  - Fact-check status badge
+  - Related posts sidebar/bottom
+- **API Calls**: `GET /api/articles/:slug`
+
+---
+
+#### 12. Saved Posts Page — `/saved` (NEW)
+**Description**: User's bookmarked posts. Requires fingerprint auth.
+- **Features**:
+  - Grid of saved PostCards sorted by save date (newest first)
+  - Remove bookmark button on each card
+  - Empty state: "No saved posts yet"
+  - Requires device fingerprint to authenticate
+- **API Calls**: `GET /api/users/me/saved`, `DELETE /api/posts/:id/save`
+
+---
+
+#### 13. Hall of Fame Page — `/hall-of-fame`
 **Description**: Curated best lists - the "Gold Standard" lists like Wikipedia's Featured Articles.
 - **Features**:
   - Page title: "Hall of Fame"
@@ -1346,7 +1435,7 @@ GET    /api/admin/audit-logs/stats    # Quick audit stats (cached 30s)
 
 ---
 
-#### 10. User Profile Page — `/users/[username]`
+#### 14. User Profile Page — `/users/[username]`
 **Description**: Anonymous user profile showing their posts and customizable display name.
 - **Features**:
   - Profile header:
@@ -1381,7 +1470,7 @@ GET    /api/admin/audit-logs/stats    # Quick audit stats (cached 30s)
 
 ---
 
-#### 10b. Notifications Page — `/notifications` (Ghost — Built, Previously Undocumented)
+#### 15. Notifications Page — `/notifications` (Ghost — Built, Previously Undocumented)
 **Description**: Merged feed of system notifications and admin outbound messages.
 - **Features**:
   - System notifications: post_approved, post_rejected, revision_requested
@@ -1389,24 +1478,13 @@ GET    /api/admin/audit-logs/stats    # Quick audit stats (cached 30s)
   - Mark-as-read on click
   - Unread badge count in header bell
 
-#### 10c. Notification Detail — `/notifications/[id]` (Ghost — Built, Previously Undocumented)
+#### 16. Notification Detail — `/notifications/[id]` (Ghost — Built, Previously Undocumented)
 **Description**: Full notification view with body, dismiss button, and navigation.
 
-#### 10d. Username History — `/username-history` (Ghost — Built, Previously Undocumented)
+#### 17. Username History — `/username-history` (Ghost — Built, Previously Undocumented)
 **Description**: Shows all past display name changes with dates and release status.
 
 ---
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1570,14 +1648,9 @@ We treat the site as a permanent encyclopedia. Indexing is earned through qualit
 
 
 
-
-
-
-
-
 ### Admin Pages
 
-#### 15. Admin Login Page — `/admin/login`
+#### 18. Admin Login Page — `/admin/login`
 **Description**: Admin authentication page.
 - **Features**:
   - YoTop10 logo/branding
@@ -1590,7 +1663,7 @@ We treat the site as a permanent encyclopedia. Indexing is earned through qualit
 
 ---
 
-#### 16. Admin Dashboard — `/admin/dashboard`
+#### 19. Admin Dashboard — `/admin/dashboard`
 **Description**: Overview of platform statistics.
 - **Features**:
   - Sidebar navigation (collapsible)
@@ -1613,7 +1686,7 @@ We treat the site as a permanent encyclopedia. Indexing is earned through qualit
 
 ---
 
-#### 17. Review Queue — `/admin/posts/pending`
+#### 20. Review Queue — `/admin/posts/pending`
 **Description**: List of posts awaiting approval.
 - **Features**:
   - Header: "Pending Reviews", count badge
@@ -1638,7 +1711,7 @@ We treat the site as a permanent encyclopedia. Indexing is earned through qualit
 
 ---
 
-#### 18. All Posts Management — `/admin/posts`
+#### 21. All Posts Management — `/admin/posts`
 **Description**: Complete posts management table.
 - **Features**:
   - Header: "All Posts", search input
@@ -1665,7 +1738,7 @@ We treat the site as a permanent encyclopedia. Indexing is earned through qualit
 
 ---
 
-#### 19. Comments Management — `/admin/comments`
+#### 22. Comments Management — `/admin/comments`
 **Description**: All comments management with moderation tools.
 - **Features**:
   - Header: "Comments", search input
@@ -1691,7 +1764,7 @@ We treat the site as a permanent encyclopedia. Indexing is earned through qualit
 
 ---
 
-#### 20. Users Management — `/admin/users`
+#### 23. Users Management — `/admin/users`
 **Description**: Anonymous users management.
 - **Features**:
   - Header: "Users", search by username or fingerprint
@@ -1713,7 +1786,7 @@ We treat the site as a permanent encyclopedia. Indexing is earned through qualit
 
 ---
 
-#### 21. Categories Management — `/admin/categories`
+#### 24. Categories Management — `/admin/categories`
 **Description**: CRUD for categories with tree view.
 - **Features**:
   - Header: "Categories", "Add Category" button
@@ -1737,7 +1810,7 @@ We treat the site as a permanent encyclopedia. Indexing is earned through qualit
 
 ---
 
-#### 21. Hall of Fame Management — `/admin/hall-of-fame`
+#### 25. Hall of Fame Management — `/admin/hall-of-fame`
 **Description**: Manage featured posts.
 - **Features**:
   - Header: "Hall of Fame Management"
@@ -1758,7 +1831,7 @@ We treat the site as a permanent encyclopedia. Indexing is earned through qualit
 
 ---
 
-#### 22. Reactions Management — `/admin/reactions`
+#### 26. Reactions Management — `/admin/reactions`
 **Description**: Overview of all fire reactions with anti-fraud.
 - **Features**:
   - Header: "Reactions"
@@ -1781,7 +1854,7 @@ We treat the site as a permanent encyclopedia. Indexing is earned through qualit
 
 ---
 
-#### 23. Search Management — `/admin/search`
+#### 27. Search Management — `/admin/search`
 **Description**: Elasticsearch management and reindexing.
 - **Features**:
   - Header: "Search Management"
@@ -1806,7 +1879,7 @@ We treat the site as a permanent encyclopedia. Indexing is earned through qualit
 
 ---
 
-#### 24. Settings Page — `/admin/settings`
+#### 28. Settings Page — `/admin/settings`
 **Description**: Rate limits and trust score configuration.
 - **Features**:
   - Header: "Settings"
@@ -1825,7 +1898,7 @@ We treat the site as a permanent encyclopedia. Indexing is earned through qualit
 
 ---
 
-#### 25. Audit Logs — `/admin/audit`
+#### 29. Audit Logs — `/admin/audit`
 **Description**: History of all admin actions.
 - **Features**:
   - Header: "Audit Logs"
