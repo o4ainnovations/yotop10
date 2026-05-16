@@ -358,7 +358,7 @@ Single unified notification system that handles all user feedback across the ent
 - [x] `POST /api/admin/login` — Login with username/password
 - [x] `POST /api/admin/logout` — Invalidate session
 - [x] `GET /api/admin/me` — Get current admin user
-- [ ] `POST /api/admin/refresh` — Refresh JWT token (auto-refresh handled inline in middleware)
+- [x] `POST /api/admin/refresh` — Refresh JWT token (auto-refresh handled inline in middleware)
 - [x] JWT stored in httpOnly, secure cookie
 - [x] Token expiry: 24 hours
 - [x] Rate limit: 10 login attempts per 15 minutes per IP
@@ -581,20 +581,20 @@ Single unified notification system that handles all user feedback across the ent
 - [x] Live status badges — 🟢🟠🔴 in thresholds table reflecting real-time Redis state
 
 #### M10.9b — Admin Outbound Notifications (NEW)
-- [ ] `AdminMessage` model — separate from user `Notification`, supports individual + broadcast
-- [ ] `POST /api/admin/messages` — Send individual or broadcast message
+- [x] `AdminMessage` model — separate from user `Notification`, supports individual + broadcast
+- [x] `POST /api/admin/messages` — Send individual or broadcast message
   - Request: `{ type: 'individual'|'broadcast', recipient_id?, title, body, priority }`
   - Broadcast creates 1 document, `dismissed_by[]` tracks per-user read state
   - Zod validated
-- [ ] `GET /api/admin/messages` — List sent messages (paginated, filterable)
-- [ ] `DELETE /api/admin/messages/:id` — Retract/expire a message
-- [ ] `GET /api/admin/messages/:id/stats` — Delivery stats (sent, seen_by count, dismissed_by count)
-- [ ] `POST /api/admin/messages/templates` — Save reusable message template
-- [ ] `GET /api/admin/messages/templates` — List all templates
-- [ ] `DELETE /api/admin/messages/templates/:id` — Delete template
-- [ ] `GET /api/users/me/messages` — User-facing: merged feed of personal + active broadcasts
-- [ ] Frontend: `/admin/notifications` page in sidebar — Compose (user search + broadcast toggle), Sent history, Templates tabs
-- [ ] React Hooks for every blueprint: client-side typing, SWR/re-fetch, toast, error handling
+- [x] `GET /api/admin/messages` — List sent messages (paginated, filterable)
+- [x] `DELETE /api/admin/messages/:id` — Retract/expire a message
+- [x] `GET /api/admin/messages/:id/stats` — Delivery stats (sent, seen_by count, dismissed_by count)
+- [x] `POST /api/admin/messages/templates` — Save reusable message template
+- [x] `GET /api/admin/messages/templates` — List all templates
+- [x] `DELETE /api/admin/messages/templates/:id` — Delete template
+- [x] `GET /api/users/me/messages` — User-facing: merged feed of personal + active broadcasts
+- [x] Frontend: `/admin/notifications` page in sidebar — Compose (user search + broadcast toggle), Sent history, Templates tabs
+- [x] React Hooks for every blueprint: client-side typing, SWR/re-fetch, toast, error handling
 
 #### M10.10 — Search & Elasticsearch Management
 - [x] `GET /api/admin/search/status` — Elasticsearch connection status (at `/api/search/admin/status`)
@@ -671,9 +671,9 @@ Single unified notification system that handles all user feedback across the ent
 - [x] `/admin/audit` — Audit logs
 - [x] `/admin/profile` — Admin profile
 - [ ] `/admin/users` — Anonymous users management
-- [ ] `/admin/categories` — Categories CRUD
-- [ ] `/admin/notifications` — Outbound messaging (individual + broadcast)
-- [ ] `/admin/search` — Search management
+- [x] `/admin/categories` — Categories CRUD
+- [x] `/admin/notifications` — Outbound messaging (individual + broadcast)
+- [x] `/admin/search` — Search management
 - [ ] `/admin/settings` — Rate limits, trust scores
 
 #### M10.14 — Admin UI Components
@@ -790,7 +790,7 @@ Single unified notification system that handles all user feedback across the ent
 ### ✅ M11.C.1: Non-Negotiable Defensive Patterns
 These patterns are required to prevent catastrophic failure modes at scale. Must be implemented alongside core formula.
 
-- [ ] **Hysteresis Thresholds**:
+- [x] **Hysteresis Thresholds**:
   - Enter Scholar status: **≥ 1.85**
   - Lose Scholar status: **≤ 1.70**
   - Eliminates cliff edge gaming and status flickering
@@ -881,7 +881,7 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 - [x] `GET /api/search/autocomplete` — Autocomplete (with highlighting)
 - [x] Filters: category, post type, author (date range not in public search)
 - [x] Sort: relevance, newest, most comments, most liked (fires)
-- [ ] Frontend: `/search`
+- [x] Frontend: `/search`
 
 ### M13 — Arguments Page (Post-MVP / Phase 2)
 - [ ] `GET /api/arguments` — Hot debates
@@ -916,7 +916,7 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 - [x] Elasticsearch search with autocomplete (backend: 4 indices, search, autocomplete, admin management; frontend page pending)
 - [x] M15 Identity Portability (seed phrases, multi-device linking) ✅
 - [ ] Hall of Fame
-- [ ] Frontend `/search` page
+- [x] Frontend `/search` page
 - [ ] Deployed and verified
 
 ---
@@ -926,20 +926,20 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 ✅ **Philosophy**: Crypto wallet style identity. No passwords, no emails. User owns their reputation completely.
 
 ### Implementation:
-- [ ] `POST /api/identity/generate-key` — Generate 12-word seed phrase for authenticated user
-- [ ] `POST /api/identity/claim` — Claim identity on new device using seed phrase
-- [ ] `POST /api/identity/link` — Link additional device fingerprint to existing identity
-- [ ] User cluster system: Multiple fingerprints can map to single authority ID
-- [ ] Seed phrases are NOT stored on server - only bcrypt hash of public key
-- [ ] No recovery system. If seed is lost, identity is permanently lost.
-- [ ] **Trust Score Prefix Removal**: Users with Scholar trust score (>1.8) automatically lose the `a_` prefix. Usernames become completely custom.
+- [x] `POST /api/identity/generate-key` — Generate 12-word seed phrase for authenticated user
+- [x] `POST /api/identity/claim` — Claim identity on new device using seed phrase
+- [x] `POST /api/identity/link` — Link additional device fingerprint to existing identity
+- [x] User cluster system: Multiple fingerprints can map to single authority ID
+- [x] Seed phrases are NOT stored on server - only bcrypt hash of public key
+- [x] No recovery system. If seed is lost, identity is permanently lost.
+- [x] **Trust Score Prefix Removal**: Users with Scholar trust score (>1.8) automatically lose the `a_` prefix. Usernames become completely custom.
 
 ### UX:
-- [ ] Profile page section: "Secure My Authority"
+- [x] Profile page section: "Secure My Authority"
 - [ ] "This is your only key. We do not store this. If you lose it, your reputation is gone forever."
-- [ ] 12 word BIP39 standard seed phrase
+- [x] 12 word BIP39 standard seed phrase
 - [ ] Optional JSON identity file download
-- [ ] Claim identity page for new devices
+- [x] Claim identity page for new devices
 - [ ] Username customization: Only `a_` prefix is mandatory for new users. Suffix can be any alphanumeric string of any length (minimum 1 character).
 
 ---
