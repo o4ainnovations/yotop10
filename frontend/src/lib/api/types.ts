@@ -108,3 +108,36 @@ export interface PostSubmissionResponse {
   items: Array<{ id: string; rank: number; title: string }>;
   rate_limit: { remaining: number; resetTime: number };
 }
+
+export interface Article {
+  id: string;
+  slug: string;
+  title: string;
+  body: string;
+  reading_time: number;
+  cover_image?: string;
+  sources: Array<{ url: string; title: string; accessed_at: string }>;
+  fact_check_status: 'unverified' | 'verified' | 'disputed';
+  related_posts: string[];
+  author_username: string;
+  author_display_name: string;
+  view_count: number;
+  comment_count: number;
+  bookmark_count: number;
+  category_slug: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ArticlesResponse {
+  articles: Article[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+}
+
+export interface ArticleSubmission {
+  title: string;
+  body: string;
+  category_slug: string;
+  cover_image?: string;
+  sources?: Array<{ url: string; title: string }>;
+}

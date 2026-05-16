@@ -92,6 +92,11 @@
   3. `app/FeedClient.tsx` (160 lines) — Sort pills (Latest / Most Viewed / Discussed, small `font-mono text-[11px]` pills, orange accent on active), empty state with CTA when `posts.length === 0`, Link > GlassSlab per card, IntersectionObserver infinite scroll (400px rootMargin, no spinner, no Load More button), sort change resets feed and refetches page 1
   4. `app/page.tsx` (patched) — Added `<Link>` wrappers around GlassSlab in mobile card deck (needed after GlassSlab dropped internal Link)
 
+- **[UI] Three Article pages** — Created 3 complete frontend article pages with Tailwind CSS only:
+  1. `articles/page.tsx` — Medium-style feed with article cards (cover image, reading time badge, category badge, fact-check badge, stats row, Load More pagination, empty state)
+  2. `articles/[slug]/page.tsx` — Article reader (author avatar initial, cover image, paragraph-rendered body, sources list, related posts horizontal scroll, fact-check badge with conditional ShieldCheck/TriangleAlert/Info icons, stats bar)
+  3. `submit-article/page.tsx` — Submission form (title, category selector, body textarea, cover image URL, dynamic source fields with add/remove, auto-calculated reading time preview, validation, success confirmation card, submit-another button)
+
 ## Next
 - Frontend `/search` page (M12)
 - Admin search panel (health badge, reindex button, test search)

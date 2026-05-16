@@ -4,6 +4,7 @@ import { reactionsApi } from './api/endpoints/reactions';
 import { usersApi } from './api/endpoints/users';
 import { identityApi } from './api/endpoints/identity';
 import { adminApi } from './api/endpoints/admin';
+import { articlesApi } from './api/endpoints/articles';
 
 export { apiFetch, getBaseUrl } from './api/client';
 export * from './api/types';
@@ -15,6 +16,7 @@ export const API = {
   getReactionState: reactionsApi.getReactionState,
   ...usersApi,
   ...identityApi,
+  ...articlesApi,
   adminLogin: adminApi.login,
   adminLogout: adminApi.logout,
   adminGetMe: adminApi.getMe,

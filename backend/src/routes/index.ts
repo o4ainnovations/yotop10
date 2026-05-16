@@ -12,6 +12,7 @@ import reviewsRouter from './reviews';
 import uploadRouter from './upload';
 import searchRouter from './search';
 import usersRouter from './users';
+import articlesRouter from './articles';
 import adminRouter from './admin';
 
 export interface RouteDefinition {
@@ -34,4 +35,5 @@ export const routes: RouteDefinition[] = [
   { path: '/api/upload',      router: uploadRouter },
   { path: '/api/users',       router: usersRouter },
   { path: '/api/admin',       router: adminRouter },
+  { path: '/api/articles',    router: articlesRouter },
 ];
