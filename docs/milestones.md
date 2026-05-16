@@ -454,6 +454,18 @@ Single unified notification system that handles all user feedback across the ent
 - [x] Search: Full-text search in title, intro, list items
 - [x] Export: CSV/Excel export of filtered results
 
+#### Advanced Post Operations (Ghost — Built, Previously Undocumented)
+- [x] `POST /api/admin/posts/:id/duplicate` — Duplicate a post
+- [x] `POST /api/admin/posts/:id/retry` — Request revision with admin guidance
+- [x] `GET /api/admin/posts/:id/activity` — Post activity log
+- [x] `POST /api/admin/posts/quality-check` — Quality validation
+- [x] `PATCH /api/admin/posts/:id/items/:itemId` — Edit individual list item
+- [x] `DELETE /api/admin/posts/:id/items/:itemId` — Remove list item
+- [x] `POST /api/admin/posts/:id/items` — Add new list item
+- [x] `GET /api/admin/posts/:id/revisions` — Full revision history
+- [x] `GET /api/admin/posts/export` — CSV export
+- [x] `GET /api/admin/posts/compare` — Compare two posts
+
 #### M10.5 — All Comments Management
 - [x] `GET /api/admin/comments` — All comments
   - Query params: `page`, `limit`, `post_id`, `author`, `status`, `date_from`, `date_to`, `sort`, `search`
@@ -485,6 +497,14 @@ Single unified notification system that handles all user feedback across the ent
   - Auto-flag: High fire count negative (controversial)
   - Auto-flag: Very long comments (potential spam)
   - Auto-flag: Many replies in short time (brigading) — implemented in flagEngine.ts cron
+
+#### Advanced Comment Operations (Ghost — Built, Previously Undocumented)
+- [x] `POST /api/admin/comments/:id/apply-penalty` — Apply trust score penalty
+- [x] `POST /api/admin/comments/:id/dismiss-flag` — Dismiss auto-detected flag
+- [x] `POST /api/admin/comments/:id/unhide` — Unhide comment
+- [x] `POST /api/admin/comments/:id/unhighlight` — Remove highlight
+- [x] `GET /api/admin/comments/stats` — Comment statistics
+- [x] `GET /api/admin/comments/export` — CSV export
 
 #### M10.6 — Users Management (Anonymous)
 - [ ] `GET /api/admin/users` — All anonymous users
@@ -611,6 +631,15 @@ Single unified notification system that handles all user feedback across the ent
 - [x] Index mappings viewer (at `GET /api/search/admin/mappings`)
 - [x] Test search query tool (at `GET /api/search/admin/preview`)
 
+#### Search Analytics System (Ghost — Built, Previously Undocumented)
+- [x] `SearchEvent` model — Records every search query (normalized_query, fingerprint, zero_results, response_time_ms, had_suggestion)
+- [x] `SearchClick` model — Tracks result clicks (query, result_type, result_position, result_id)
+- [x] `SearchDailyStats` model — Daily aggregation (total_searches, unique_searchers, top_queries, zero_result_rate, avg_response_time, index_gap_pct)
+- [x] `SearchDeadLetter` model — Failed ES indexing with retry queue
+- [x] `searchAnalyticsCron.ts` — Hourly cron: SearchEvent → SearchDailyStats
+- [x] `POST /api/search/click` — Result click beacon for CTR tracking
+- [x] 9 analytics endpoints: `search/overview`, `queries`, `relevance`, `trends`, `infrastructure`, `behavior`, `trending`, `popular`, `engaged`
+
 #### M10.11 — Rate Limiting & Trust Scores
 - [ ] `GET /api/admin/rate-limits` — View rate limit settings
 - [ ] `PATCH /api/admin/rate-limits` — Adjust global base rate limits
@@ -656,6 +685,19 @@ Single unified notification system that handles all user feedback across the ent
 - [x] Retention: 90 days default (TTL index on AuditLog.created_at)
 - [x] Export: CSV export for compliance (GET /api/admin/audit-logs/export + frontend button)
 
+#### Trust & Identity Infrastructure (Ghost — Built, Previously Undocumented)
+- [x] `TrustScoreLog` model — Permanent immutable audit log of all trust score changes
+- [x] `UsernameHistory` model — Tracks all username/display name changes with release dates
+- [x] `UserEvent` model — General user event tracking
+- [x] `CategoryAudit` model — Category mutation audit trail (duplicate, publish, hide, merge)
+- [x] `FingerprintObservation` model — Browser fingerprint signals with 90-day TTL for cross-browser matching
+- [x] `PlatformSnapshot` model — Hourly platform state snapshots (content, community, moderation, engagement, traffic)
+- [x] `PageVisit` model — Page visit analytics with country detection
+- [x] Ladder System (`ladderSystem.ts`) — Temporary rate limit boosts for low-trust users on positive actions (post approval, comment fires, replies, counter list submission)
+- [x] Rate limit override per user (`rate_limit_override` field on User) — Admin-set per-user post/comment limits
+- [x] User restriction (`restricted_until` field on User) — Temporary read-only restriction
+- [x] Active boost system (`active_boost` field on User) — Posts/comments boost with expiry
+
 #### M10.13 — Frontend Admin Pages
 - [x] `/admin` — Redirect to dashboard (or login if not authenticated)
 - [x] `/admin/login` — Login page
@@ -694,6 +736,28 @@ Single unified notification system that handles all user feedback across the ent
 - [ ] `DateRangePicker` — Filter by date
 - [ ] `ExportButton` — CSV/Excel export
 - [ ] `ConfirmDialog` — Destructive action confirmation
+
+#### Design System & Premium UI Components (Ghost — Built, Previously Undocumented)
+- [x] 4-font system: Geist Sans (body), Geist Mono (metadata), Anton (display titles), Monoton (logo "YO")
+- [x] Dark/light mode toggle (`ThemeToggle.tsx`) — localStorage persistence, `body.light-mode` class
+- [x] Glass CSS: `glass-obsidian`, `glass-frosted`, `glass-slab` with backdrop-blur + gradient borders
+- [x] Spatial depth shadows, neon wireframe borders, gradient text utilities
+- [x] Argument bar CSS: `argument-bar-support` (orange), `argument-bar-contradict` (red)
+- [x] Wiki badge CSS: `wiki-badge` — monospace 10px serial badges (REF-992-K)
+- [x] Animation keyframes: `cardSlideUp`, `cardExpandDown` (mobile card deck)
+- [x] `GlassSlab` — Self-animating glassmorphism card with wiki badges, expand/collapse, argument bars
+- [x] `DataCard` — Link wrapper around GlassSlab for feed
+- [x] `DesktopTopBar` — Fixed desktop header with logo, search, bells, submit button
+- [x] `DynamicIsland` — Mobile floating 5-tab dock (Home/Search/Arguments/Notifications/Profile)
+- [x] `FloatingDock` — Mobile bottom navigation (Feed/Categories/Search/Submit)
+- [x] `CommandSearch` — Command palette search modal with trending queries
+- [x] `ArgumentBar` — Support/contradict percentage bar
+- [x] `ArgumentTicker` — Live debate pulse scroll
+- [x] `ConsensusHeatmap` — Consensus heatmap visualization
+- [x] `NavUserAvatar` — User avatar with profile image or first-letter fallback
+- [x] `AnalyticsBeacon` — Page visit tracking via `POST /api/analytics/visit`
+- [x] `AuthInitializer` — Auth store hydration on mount
+- [x] `Toast` — Singleton notification system (4s auto-dismiss, 3-toast stack)
 
 ---
 
@@ -869,6 +933,12 @@ These patterns are required to prevent catastrophic failure modes at scale. Must
   - Add "Edit Display Name" button
   - Add "Secure My Authority" section (for M15 seed phrase)
   - Show exact trust score number
+- [x] Profile image support (Ghost — Built, Previously Undocumented):
+  - `profile_image_url` field on User model
+  - `POST /api/upload/profile` — Upload 200×200 WebP profile image
+  - `PATCH /api/users/me` — Update profile_image_url
+  - Click avatar on own profile → file upload → auto-patch
+  - NavUserAvatar shows image when available, first-letter circle when not
 
 ---
 
@@ -1310,6 +1380,24 @@ GET    /api/admin/audit-logs/stats    # Quick audit stats (cached 30s)
 - **API Calls**: `GET /api/users/:username`, `GET /api/users/:username/posts`
 
 ---
+
+#### 10b. Notifications Page — `/notifications` (Ghost — Built, Previously Undocumented)
+**Description**: Merged feed of system notifications and admin outbound messages.
+- **Features**:
+  - System notifications: post_approved, post_rejected, revision_requested
+  - Admin messages: individual + broadcast with dismiss
+  - Mark-as-read on click
+  - Unread badge count in header bell
+
+#### 10c. Notification Detail — `/notifications/[id]` (Ghost — Built, Previously Undocumented)
+**Description**: Full notification view with body, dismiss button, and navigation.
+
+#### 10d. Username History — `/username-history` (Ghost — Built, Previously Undocumented)
+**Description**: Shows all past display name changes with dates and release status.
+
+---
+
+
 
 
 
