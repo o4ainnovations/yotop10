@@ -83,7 +83,7 @@ All limits use 2D soft gradient floor algorithm:
 - [x] `admin_user` collection (username, password_hash)
 - [x] MongoDB indexes for performance
 - [x] Seed 10 parent + 300 child categories
-- [ ] `articles` collection (author_id, title, slug, body (markdown), reading_time, cover_image, sources[], fact_check_status, related_posts[], created_at, updated_at) — separate long-form content model
+- [x] `articles` collection (author_id, title, slug, body (markdown), reading_time, cover_image, sources[], fact_check_status, related_posts[], created_at, updated_at) — separate long-form content model
 - [ ] `saved_posts` collection (user_id, post_id, saved_at) — compound index on (user_id, saved_at)
 
 ### M4 — Public Feed
@@ -124,14 +124,14 @@ All limits use 2D soft gradient floor algorithm:
   - Draft recovery with localStorage (1 hour expiry, beforeunload sync)
   - Character counters and error handling
 
-### M3.X — Article Post Type (NEW)
-- [ ] `POST /api/articles` — Submit long-form article
+### M3.X — Article Post Type ✅ COMPLETED
+- [x] `POST /api/articles` — Submit long-form article
   - Body: `{ title, body (markdown), cover_image?, sources[]?, author_display_name }`
   - Auto-generates `reading_time` from body length
   - Uses separate `Article` model (not `Post`)
   - Defaults to `pending_review`
-- [ ] `GET /api/articles` — All articles (approved only)
-- [ ] `GET /api/articles/:slug` — Single article by slug
+- [x] `GET /api/articles` — All articles (approved only)
+- [x] `GET /api/articles/:slug` — Single article by slug
 
 ### M3.1 — Title Similarity Check (SEO & Quality Control) ✅ COMPLETED
 [x] **Title Similarity Engine**
@@ -980,17 +980,33 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 ---
 
 ### M16 — Explore, Articles, Saved Posts (NEW)
-- [ ] `GET /api/explore` — Algorithmic trending feed using multi-factor scoring (recency, engagement, authority, velocity, diversity). All post types mixed.
-- [ ] Frontend: `/explore`
+- [x] `GET /api/explore` — Algorithmic trending feed using multi-factor scoring (recency, engagement, authority, velocity, diversity). All post types mixed.
+- [x] Frontend: `/explore`
 
-- [ ] `GET /api/articles` — All article-type posts displayed like Medium homepage
-- [ ] `GET /api/articles/:slug` — Single article by slug
-- [ ] Frontend: `/articles`
+- [x] `GET /api/articles` — All article-type posts displayed like Medium homepage
+- [x] `GET /api/articles/:slug` — Single article by slug
+- [x] Frontend: `/articles`
 
 - [ ] `POST /api/posts/:id/save` — Bookmark a post
 - [ ] `DELETE /api/posts/:id/save` — Remove bookmark
 - [ ] `GET /api/users/me/saved` — User's bookmarked posts (requires fingerprint auth)
 - [ ] Frontend: `/saved`
+
+#### M16.1 — Article Content Type ✅
+- [x] Separate `Article` model (not Post subtype): author, slug, body, reading_time, cover_image, sources[], fact_check_status, related_posts[]
+- [x] `GET /api/articles` — Paginated approved articles with excerpts
+- [x] `GET /api/articles/:slug` — Full article with view tracking
+- [x] `POST /api/articles` — Auto slug, reading time (200wpm), pending_review
+- [x] Frontend `/articles` — Medium-style feed with reading time badges
+- [x] Frontend `/articles/[slug]` — Full reader with sources, fact-check badge
+- [x] Frontend `/submit-article` — Form with body, sources, cover image
+
+#### M16.2 — Explore Page (Algorithmic Feed) ✅
+- [x] Multi-factor scoring engine (recency 15%, engagement 25%, authority 20%, velocity 30%, diversity 10%)
+- [x] `GET /api/explore` — Top-200 scoring pipeline with pagination
+- [x] `POST /api/explore/view` — Redis velocity tracking (1h TTL)
+- [x] Frontend `/explore` — 2-col grid, score badges, type tabs (All/Top Lists/VS Battles/Articles), infinite scroll
+- [x] 17 unit tests for scoring algorithm
 
 ---
 
@@ -1014,13 +1030,13 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 - [x] Elasticsearch search with autocomplete (backend: 4 indices, search, autocomplete, admin management; frontend page pending)
 - [x] M15 Identity Portability (seed phrases, multi-device linking) ✅
 - [x] Frontend `/search` page
-- [ ] `/explore` page — Algorithmic trending feed
-- [ ] `/articles` page — Long-form article content
+- [x] `/explore` page — Algorithmic trending feed
+- [x] `/articles` page — Long-form article content
 - [ ] `/saved` page — User's bookmarked posts
 - [ ] `/arguments` page — Hot debates (this_vs_that + counter posts)
 - [ ] Bookmark/save system
 - [ ] Share system (OG tags, UTM, copy link)
-- [ ] Article content type (separate model)
+- [x] Article content type (separate model)
 - [ ] Hall of Fame
 - [ ] Deployed and verified
 
