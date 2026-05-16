@@ -5,6 +5,7 @@ import { usersApi } from './api/endpoints/users';
 import { identityApi } from './api/endpoints/identity';
 import { adminApi } from './api/endpoints/admin';
 import { articlesApi } from './api/endpoints/articles';
+import { exploreApi } from './api/endpoints/explore';
 
 export { apiFetch, getBaseUrl } from './api/client';
 export * from './api/types';
@@ -17,6 +18,7 @@ export const API = {
   ...usersApi,
   ...identityApi,
   ...articlesApi,
+  ...exploreApi,
   adminLogin: adminApi.login,
   adminLogout: adminApi.logout,
   adminGetMe: adminApi.getMe,

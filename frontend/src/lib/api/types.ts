@@ -141,3 +141,25 @@ export interface ArticleSubmission {
   cover_image?: string;
   sources?: Array<{ url: string; title: string }>;
 }
+
+export interface ExplorePost {
+  id: string;
+  slug: string;
+  title: string;
+  post_type: string;
+  category_slug: string;
+  author_username: string;
+  author_display_name: string;
+  comment_count: number;
+  view_count: number;
+  format?: string;
+  hero_image_url?: string | null;
+  topItems?: Array<{ rank: number; title: string }>;
+  explore_score: number;
+  created_at: string;
+}
+
+export interface ExploreResponse {
+  posts: ExplorePost[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+}

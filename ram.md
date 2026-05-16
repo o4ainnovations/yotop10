@@ -97,6 +97,12 @@
   2. `articles/[slug]/page.tsx` — Article reader (author avatar initial, cover image, paragraph-rendered body, sources list, related posts horizontal scroll, fact-check badge with conditional ShieldCheck/TriangleAlert/Info icons, stats bar)
   3. `submit-article/page.tsx` — Submission form (title, category selector, body textarea, cover image URL, dynamic source fields with add/remove, auto-calculated reading time preview, validation, success confirmation card, submit-another button)
 
+- **[UI] Tailwind explore page** — Created algorithmic Explore feed at `app/explore/page.tsx` with 4 files:
+   - `lib/api/types.ts` — Added `ExplorePost` + `ExploreResponse` interfaces
+   - `lib/api/endpoints/explore.ts` — `exploreApi.getExplore(page, limit)` client
+   - `lib/api.ts` — Spread `exploreApi` into API object
+   - `app/explore/page.tsx` — Full client-side page: font-display header, post_type tabs (All/Top Lists/VS Battles/Articles) with orange underline, 2-col responsive grid, glass-slab cards with score badge (font-mono text-orange-400), category slug badge, title (line-clamp-2), top 3 items preview, author/relativeTime row, Eye/MessageCircle stats, IntersectionObserver infinite scroll (400px rootMargin), empty state, spinner loading. Zero inline styles, all Tailwind.
+
 ## Next
 - Frontend `/search` page (M12)
 - Admin search panel (health badge, reindex button, test search)
