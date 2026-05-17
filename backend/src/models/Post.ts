@@ -37,6 +37,7 @@ export interface IPost extends Document {
   bumped_at: Date | null;
   format: 'list_only' | 'hero_list' | 'full_list';
   hero_image_url: string | null;
+  meta_robots: string | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -175,6 +176,7 @@ const postSchema = new Schema<IPost>(
       default: 'list_only',
     },
     hero_image_url: { type: String, default: null },
+    meta_robots: { type: String, default: null },
     published_at: {
       type: Date,
     },

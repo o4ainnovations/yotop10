@@ -23,10 +23,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const description = post.intro?.substring(0, 160) ?? '';
     const ogDescription = post.intro?.substring(0, 200) ?? '';
 
+    // SEO Indexing Guard
+    const ageHours = (Date.now() - new Date(post.created_at).getTime()) / 3600000;
+    const isStale = (post.comment_count === 0 || !post.comment_count) && (post.view_count === 0 || !post.view_count) && ageHours > 48;
+    const isThin = ((post.intro?.length || 0) < 100) && ageHours > 24;
+    const isUnpublished = post.status !== 'approved';
+    const isNoindex = isStale || isThin || isUnpublished;
+
     return {
       title: `${post.title} — YoTop10`,
       description,
-      robots: 'index, follow',
+      robots: {
+        index: !isNoindex,
+        follow: true,
+      },
       alternates: {
         canonical: `https://yotop10.fun/${post.slug}`,
       },

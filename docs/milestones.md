@@ -102,6 +102,8 @@ All limits use 2D soft gradient floor algorithm:
 - [x] Fire reactions (toggle on/off)
 - [x] "Submit a Counter-List" button
 - [x] Post history/changelog
+- [x] Share system — share_count on Post model, `POST /:idOrSlug/share` endpoint, ShareButton with clipboard copy + UTM tracking, OG/Twitter Card metadata
+- [x] BookmarkButton — optimistic toggle, Lucide Bookmark icon
 
 ### M3 — Anonymous Post Submission ✅ COMPLETED
 - [x] `POST /api/posts` — Submit post (no auth) - BACKEND COMPLETE
@@ -132,6 +134,9 @@ All limits use 2D soft gradient floor algorithm:
   - Defaults to `pending_review`
 - [x] `GET /api/articles` — All articles (approved only)
 - [x] `GET /api/articles/:slug` — Single article by slug
+- [x] Frontend: `/articles` — Medium-style feed with article cards (cover image, reading time badge, category badge, fact-check badge, stats row, Load More pagination)
+- [x] Frontend: `/articles/[slug]` — Article reader with cover image, paragraph rendering, sources list, fact-check badge (ShieldCheck/TriangleAlert/Info icons), stats bar
+- [x] Frontend: `/submit-article` — Submission form with title, category, body textarea, cover image URL, dynamic source fields, auto-calculated reading time preview
 
 ### M3.1 — Title Similarity Check (SEO & Quality Control) ✅ COMPLETED
 [x] **Title Similarity Engine**
@@ -958,6 +963,18 @@ These patterns are required to prevent catastrophic failure modes at scale. Must
 ✅ **M11 DEFINITION OF DONE**:
 All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M11 is complete, the user system is FINISHED FOREVER. You will never need to modify it again for the entire lifetime of the platform.
 
+### Bookmarks — Saved Posts System
+- [x] `SavedPost` model — user_id + post_id with compound unique index, (user_id, saved_at) compound index
+- [x] `POST /api/bookmarks/save` — Bookmark a post
+- [x] `DELETE /api/bookmarks/save` — Remove bookmark
+- [x] `GET /api/bookmarks/saved` — Paginated saved posts feed
+- [x] `GET /api/bookmarks/check` — O(1) Redis check with MongoDB fallback
+- [x] `bookmark_count` field on Post model
+- [x] Redis caching: Set per user, 1h TTL, O(1) checks
+- [x] Core bookmark service (`lib/bookmarkService.ts`) with 16 unit tests
+- [x] Frontend `BookmarkButton` component — optimistic toggle, Lucide Bookmark icon, 44px touch target, 8 unit tests
+- [x] Frontend `/saved` page — Twitter-style bookmark feed with glass cards, IntersectionObserver infinite scroll
+
 ### M12 — Search & Discovery
 - [x] Elasticsearch indexes for posts + comments (also categories + users — 4 indices total)
 - [x] `GET /api/search` — Full search (with facets, highlighting, "did you mean?" suggestions)
@@ -965,6 +982,10 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 - [x] Filters: category, post type, author (date range not in public search)
 - [x] Sort: relevance, newest, most comments, most liked (fires)
 - [x] Frontend: `/search`
+- [x] `GET /api/explore` — Algorithmic trending feed using multi-factor scoring (recency 15%, engagement 25%, authority 20%, velocity 30%, diversity 10%). All post types mixed, top-200 scoring pipeline with pagination.
+- [x] `POST /api/explore/view` — Redis velocity tracking (1h TTL)
+- [x] Frontend: `/explore` — 2-col grid, score badges, type tabs (All/Top Lists/VS Battles/Articles), IntersectionObserver infinite scroll
+- [x] 17 unit tests for explore scoring algorithm
 
 ### M13 — Arguments Page
 - [ ] `GET /api/arguments` — Hot debates: `this_vs_that` + `counter` posts sorted by comment velocity. Pre-computed hourly into Redis.
@@ -976,49 +997,6 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 - [ ] `GET /api/hall-of-fame` — Featured lists
 - [ ] Admin curation controls
 - [ ] Frontend: `/hall-of-fame`
-
----
-
-### M16 — Explore, Articles, Saved Posts (NEW)
-- [x] `GET /api/explore` — Algorithmic trending feed using multi-factor scoring (recency, engagement, authority, velocity, diversity). All post types mixed.
-- [x] Frontend: `/explore`
-
-- [x] `GET /api/articles` — All article-type posts displayed like Medium homepage
-- [x] `GET /api/articles/:slug` — Single article by slug
-- [x] Frontend: `/articles`
-
-- [x] `POST /api/bookmarks/save` — Bookmark a post
-- [x] `DELETE /api/bookmarks/save` — Remove bookmark
-- [x] `GET /api/bookmarks/saved` — Paginated saved posts feed
-- [x] `GET /api/bookmarks/check` — O(1) Redis check with MongoDB fallback
-- [x] Frontend: `/saved`
-
-#### M16.1 — Article Content Type ✅
-- [x] Separate `Article` model (not Post subtype): author, slug, body, reading_time, cover_image, sources[], fact_check_status, related_posts[]
-- [x] `GET /api/articles` — Paginated approved articles with excerpts
-- [x] `GET /api/articles/:slug` — Full article with view tracking
-- [x] `POST /api/articles` — Auto slug, reading time (200wpm), pending_review
-- [x] Frontend `/articles` — Medium-style feed with reading time badges
-- [x] Frontend `/articles/[slug]` — Full reader with sources, fact-check badge
-- [x] Frontend `/submit-article` — Form with body, sources, cover image
-
-#### M16.2 — Explore Page (Algorithmic Feed) ✅
-- [x] Multi-factor scoring engine (recency 15%, engagement 25%, authority 20%, velocity 30%, diversity 10%)
-- [x] `GET /api/explore` — Top-200 scoring pipeline with pagination
-- [x] `POST /api/explore/view` — Redis velocity tracking (1h TTL)
-- [x] Frontend `/explore` — 2-col grid, score badges, type tabs (All/Top Lists/VS Battles/Articles), infinite scroll
-- [x] 17 unit tests for scoring algorithm
-
-#### M16.3 — Bookmark System
-- [x] `SavedPost` model — user_id + post_id with compound unique index
-- [x] `POST /api/bookmarks/save` — Bookmark a post
-- [x] `DELETE /api/bookmarks/save` — Remove bookmark
-- [x] `GET /api/bookmarks/saved` — Paginated saved posts feed
-- [x] `GET /api/bookmarks/check` — O(1) Redis check with MongoDB fallback
-- [x] `bookmark_count` field on Post model
-- [x] Redis caching: Set per user, 1h TTL, O(1) checks
-- [x] Frontend `BookmarkButton` component — optimistic toggle, Lucide icon
-- [x] Frontend `/saved` page — Twitter-style bookmark feed
 
 ---
 
@@ -1232,6 +1210,8 @@ GET    /api/admin/audit-logs/stats    # Quick audit stats (cached 30s)
 ---
 
 ## FRONTEND ROUTES & PAGE DESCRIPTIONS
+
+> **Note**: A reusable `PostFeed` component with IntersectionObserver infinite scroll and DataCard/GlassSlab rendering is shared across feed pages (homepage, explore, saved, category).
 
 ### Public Pages
 

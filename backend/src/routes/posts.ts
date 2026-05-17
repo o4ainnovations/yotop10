@@ -4,6 +4,7 @@ import { body, validationResult } from 'express-validator';
 import crypto from 'crypto';
 import mongoose from 'mongoose';
 import { Post, generateUniqueSlug } from '../models/Post';
+import { shouldNoIndex } from '../lib/seoGuard';
 import { ListItem } from '../models/ListItem';
 import { Category } from '../models/Category';
 import { Comment } from '../models/Comment';
@@ -343,6 +344,18 @@ router.get('/:idOrSlug', async (req, res) => {
       ]);
     }
 
+    // Compute SEO robots
+    const ageHours = (Date.now() - new Date(post.created_at as string).getTime()) / 3600000;
+    const seoSignals = {
+      comment_count: post.comment_count as number,
+      view_count: post.view_count as number,
+      content_length: (post.intro as string)?.length || 0,
+      status: post.status as string,
+      age_hours: ageHours,
+    };
+    const noindex = shouldNoIndex(seoSignals);
+    const robots = (post as Record<string, unknown>).meta_robots || (noindex ? 'noindex, follow' : 'index, follow');
+
     // Get list items for this post
     const listItems = await ListItem.find({ post_id: post._id })
       .sort({ rank: 1 })
@@ -371,12 +384,14 @@ router.get('/:idOrSlug', async (req, res) => {
         author_username: post.author_username,
         author_display_name: post.author_display_name,
         category_slug: post.category_slug,
+        status: post.status,
         format: (post as Record<string, unknown>).format || 'list_only',
         hero_image_url: (post as Record<string, unknown>).hero_image_url || null,
         share_count: (post as Record<string, unknown>).share_count || 0,
         created_at: post.created_at,
         updated_at: post.updated_at,
         published_at: post.published_at,
+        robots,
       },
       items: listItems.map((item) => ({
         id: item._id,

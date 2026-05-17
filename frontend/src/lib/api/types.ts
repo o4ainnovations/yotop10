@@ -38,6 +38,7 @@ export interface Post {
   author_username: string;
   author_display_name: string;
   category_slug: string;
+  status?: string;
   format?: 'list_only' | 'hero_list' | 'full_list';
   hero_image_url?: string | null;
   topItems?: Array<{ rank: number; title: string }>;
@@ -114,6 +115,7 @@ export interface Article {
   slug: string;
   title: string;
   body: string;
+  status: string;
   reading_time: number;
   cover_image?: string;
   sources: Array<{ url: string; title: string; accessed_at: string }>;

@@ -143,6 +143,14 @@
   2. `lib/bookmarkService.test.ts` — 16 tests: save/duplicate/increment, remove/decrement/not-found, getSavedPosts pagination/sort/empty, checkBookmark Redis hit/miss/fallback/error/edge cases
   3. `models/SavedPost.ts` — user_id + post_id compound unique index, (user_id, saved_at) compound index
 
+- **[Feature] SEO Indexing Guard** — 6 files:
+  1. `backend/src/lib/seoGuard.ts` — Pure `shouldNoIndex()` function: noindex if status !== 'approved', or stale (0 comments + 0 views + >48h), or thin content (<100 chars + >24h)
+  2. `backend/src/lib/seoGuard.test.ts` — 12 tests: approved/engaged, pending, rejected, stale, stale-at-boundary, thin, thin-within-window, normal, zero-length, old-engaged, boundary cases
+  3. `backend/src/models/Post.ts` — Added `meta_robots: string | null` field (admin override)
+  4. `backend/src/routes/posts.ts` — GET /:idOrSlug returns computed `robots` field; imports seoGuard; respects `meta_robots` admin override
+  5. `frontend/src/app/[slug]/page.tsx` — Dynamic robots in generateMetadata: noindex for stale/thin/unpublished, else index/follow
+  6. `frontend/src/app/articles/[slug]/page.tsx` — Server page + ArticleDetailClient client component; dynamic robots in generateMetadata (thin <200 chars body + >24h, zero engagement, unpublished)
+
 ## Next
 - Frontend `/search` page (M12)
 - Admin search panel (health badge, reindex button, test search)
