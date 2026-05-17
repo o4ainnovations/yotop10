@@ -79,6 +79,16 @@
   3. Backend: Added `profile_image_url` to `GET /users/:username` response in `routes/users.ts`.
   4. Auth store: Added `profile_image_url` field to `AuthUser` interface in `stores/auth.ts`.
 
+- **[Feature] PWA & Offline Support** — Full progressive web app with service worker, web manifest, install prompt, and offline caching:
+  1. `public/manifest.json` — PWA manifest (standalone, portrait-primary, #05050f theme, 192x192 + 512x512 icons)
+  2. `public/sw.js` — Service worker: cache-first for static assets, network-first for API calls, cache name `yotop10-v1`, precaches /, /categories, /search, /submit, /explore, install (skipWaiting), activate (clean old caches), fetch (API→networkFirst, everything else→cacheFirst)
+  3. `src/app/sw-register.ts` — Client-side SW registration utility with SSR/navigator guards
+  4. `src/components/SWRegister.tsx` — Client component calling registerSW() in useEffect
+  5. `src/components/PWAInstallPrompt.tsx` — beforeinstallprompt listener, gradient Install button, dismiss button, mobile-only positioning
+  6. `public/generate-icons.sh` — Imagemagick script to generate 192x192 + 512x512 PNG icons
+  7. `src/app/layout.tsx` — Updated metadata (manifest, themeColor, appleWebApp), imported SWRegister + PWAInstallPrompt
+  8. `src/app/sw-register.test.ts` — 5 tests: function exists, doesn't throw, registers load listener, no-op when no serviceWorker, no-op in SSR
+
 ## Current
 - **[Feature] Share system** — Complete share infrastructure:
   1. `backend/src/models/Post.ts` — Added `share_count` field to Post model

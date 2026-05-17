@@ -1100,8 +1100,8 @@ After MVP launch. Optional features:
 
 
 ### V2.5 — PWA & Mobile
-- [ ] Progressive Web App manifest
-- [ ] Offline support
+- [x] Progressive Web App manifest
+- [x] Offline support
 
 ---
 
