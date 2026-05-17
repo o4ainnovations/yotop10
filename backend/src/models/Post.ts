@@ -32,6 +32,7 @@ export interface IPost extends Document {
   featured_at: Date | null;
   editorial_note: string | null;
   bookmark_count: number;
+  share_count: number;
   comments_locked: boolean;
   bumped_at: Date | null;
   format: 'list_only' | 'hero_list' | 'full_list';
@@ -165,6 +166,7 @@ const postSchema = new Schema<IPost>(
     featured_at: { type: Date, default: null },
     editorial_note: { type: String, default: null },
     bookmark_count: { type: Number, default: 0 },
+    share_count: { type: Number, default: 0 },
     comments_locked: { type: Boolean, default: false },
     bumped_at: { type: Date, default: null },
     format: {

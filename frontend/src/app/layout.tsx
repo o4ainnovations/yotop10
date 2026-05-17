@@ -6,12 +6,21 @@ import ToastContainer from "@/components/Toast";
 import AnalyticsBeacon from "@/components/AnalyticsBeacon";
 import { DynamicIsland } from "@/components/DynamicIsland";
 import DesktopTopBar from "@/components/DesktopTopBar";
+import SWRegister from "@/components/SWRegister";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import Link from "next/link";
 import { Icon } from "@/components/icons/Icon";
 
 export const metadata: Metadata = {
   title: "YoTop10 — Fact Mine. Debate Ground.",
   description: "The open catalog of ranked lists.",
+  manifest: "/manifest.json",
+  themeColor: "#05050f",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "YoTop10",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -24,6 +33,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Eruda />
         <ToastContainer />
         <AnalyticsBeacon />
+        <SWRegister />
+        <PWAInstallPrompt />
 
         {/* Hanging + button — mobile only, positioned above DynamicIsland */}
         <Link

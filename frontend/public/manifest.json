@@ -1,0 +1,22 @@
+{
+  "name": "YoTop10 — Fact Mine. Debate Ground.",
+  "short_name": "YoTop10",
+  "description": "The open catalog of ranked lists. Submit your list. Defend your rankings.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#05050f",
+  "theme_color": "#05050f",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -9,6 +9,7 @@ import { API } from '@/lib/api';
 import { formatDate } from '@/lib/dates';
 import { Icon } from '@/components/icons/Icon';
 import { BookmarkButton } from '@/components/BookmarkButton';
+import { ShareButton } from '@/components/ShareButton';
 
 const RESERVED_ROUTES = ['admin', 'api', 'login', 'search', 'settings', 'profile', 'categories', 'c', 'auth'];
 
@@ -380,6 +381,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
             <span suppressHydrationWarning>{formatDate(post.created_at)}</span>
             <span>{post.view_count} views</span>
             <BookmarkButton postId={post.id} />
+            <ShareButton slug={post.slug} title={post.title} postId={post.id} />
           </div>
 
           <h1 className="mb-4 text-2xl font-bold leading-tight -tracking-[0.02em] text-white sm:text-3xl">

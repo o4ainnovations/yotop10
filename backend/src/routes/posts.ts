@@ -373,6 +373,7 @@ router.get('/:idOrSlug', async (req, res) => {
         category_slug: post.category_slug,
         format: (post as Record<string, unknown>).format || 'list_only',
         hero_image_url: (post as Record<string, unknown>).hero_image_url || null,
+        share_count: (post as Record<string, unknown>).share_count || 0,
         created_at: post.created_at,
         updated_at: post.updated_at,
         published_at: post.published_at,
@@ -799,6 +800,38 @@ router.post('/:idOrSlug/comments', [
   } catch (error) {
     console.error('Create comment error:', error);
     res.status(500).json({ error: 'Failed to create comment' });
+  }
+});
+
+// POST /api/posts/:idOrSlug/share — Track share analytics
+router.post('/:idOrSlug/share', async (req, res) => {
+  try {
+    const { idOrSlug } = req.params;
+
+    let post: { _id: { toString(): string } } | null = null;
+    if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
+      post = await Post.findById(idOrSlug);
+    }
+    if (!post) {
+      post = await Post.findOne({ slug: idOrSlug });
+    }
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    const postId = post._id.toString();
+
+    const { trackExploreView } = await import('../lib/exploreScore');
+
+    await Promise.all([
+      Post.findByIdAndUpdate(postId, { $inc: { share_count: 1 } }),
+      trackExploreView(postId),
+    ]);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Share tracking error:', error);
+    res.status(500).json({ error: 'Failed to track share' });
   }
 });
 

@@ -7,6 +7,7 @@ import { adminApi } from './api/endpoints/admin';
 import { articlesApi } from './api/endpoints/articles';
 import { exploreApi } from './api/endpoints/explore';
 import { bookmarksApi } from './api/endpoints/bookmarks';
+import { shareApi } from './api/endpoints/share';
 
 export { apiFetch, getBaseUrl } from './api/client';
 export * from './api/types';
@@ -21,6 +22,7 @@ export const API = {
   ...articlesApi,
   ...exploreApi,
   ...bookmarksApi,
+  ...shareApi,
   adminLogin: adminApi.login,
   adminLogout: adminApi.logout,
   adminGetMe: adminApi.getMe,

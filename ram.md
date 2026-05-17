@@ -80,6 +80,18 @@
   4. Auth store: Added `profile_image_url` field to `AuthUser` interface in `stores/auth.ts`.
 
 ## Current
+- **[Feature] Share system** — Complete share infrastructure:
+  1. `backend/src/models/Post.ts` — Added `share_count` field to Post model
+  2. `backend/src/routes/posts.ts` — Added `POST /:idOrSlug/share` endpoint (increments share_count + trackExploreView), added `share_count` to GET `/:idOrSlug` response
+  3. `frontend/src/lib/api/endpoints/share.ts` — API client for share tracking
+  4. `frontend/src/lib/api.ts` — Spread shareApi into API object
+  5. `frontend/src/components/ShareButton.tsx` — Copy link button with UTM tracking, toast feedback, Lucide Share2 icon, 44px touch target, fire-and-forget analytics
+  6. `frontend/src/components/ShareButton.test.tsx` — 8 tests (render, UTM generation, clipboard copy, toast, API call, error handling, pending state)
+  7. `frontend/src/components/DataCard.tsx` — Added ShareButton alongside BookmarkButton in actions slot
+  8. `frontend/src/app/[slug]/client.tsx` — Added ShareButton to post header metadata row
+  9. `frontend/src/app/[slug]/page.tsx` — Full OG metadata (title, description, type: article, images), Twitter Card (summary_large_image), robots: index/follow, canonical URL
+
+## Next
 - **[Fix] Hydration errors — deterministic date/time rendering** — Replaced all `toLocaleDateString()`, `toLocaleTimeString()`, `toLocaleString()`, and custom `ageStr()` with `formatDate()`, `formatTime()`, `relativeTime()` from `@/lib/dates` across 9 files. Added `suppressHydrationWarning` to every date/time rendering element.
 
 - **[UI] Desktop triple-pane + Dynamic Island + GlassSlab** — Rewrote homepage with desktop triple-pane layout (Left Wing category rail, Center Stage power trio/strip logic, Right Wing live pulse), Dynamic Island floating dock (search modal, scroll shrink, pathname active, hide on /admin), GlassSlab self-animating card component (IntersectionObserver, glass-slab/spatial-depth/card-deck-enter CSS classes), simplified FeedClient (infinite scroll only, no sort pills), CommandSearch converted to modal. All files: zero inline styles, Tailwind + custom CSS classes only, Lucide Icon component used throughout.

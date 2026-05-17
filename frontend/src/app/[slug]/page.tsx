@@ -19,11 +19,29 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   
   try {
     const data = await API.getPost(slug);
+    const post = data.post;
+    const description = post.intro?.substring(0, 160) ?? '';
+    const ogDescription = post.intro?.substring(0, 200) ?? '';
+
     return {
-      title: data.post.title,
-      description: data.post.intro.substring(0, 160),
+      title: `${post.title} — YoTop10`,
+      description,
+      robots: 'index, follow',
       alternates: {
-        canonical: `https://yotop10.fun/${resolvedParams.slug}`,
+        canonical: `https://yotop10.fun/${post.slug}`,
+      },
+      openGraph: {
+        title: post.title,
+        description: ogDescription,
+        type: 'article',
+        images: post.hero_image_url ? [post.hero_image_url] : [],
+        url: `https://yotop10.fun/${post.slug}`,
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: post.title,
+        description: ogDescription,
+        images: post.hero_image_url ? [post.hero_image_url] : [],
       },
     };
   } catch {

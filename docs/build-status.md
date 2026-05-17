@@ -1,10 +1,10 @@
 # YoTop10 — Build Status (Re-Evaluated)
 
-> Updated after architecture review + feature additions. 2026-05-15.
+> Updated after architecture review + feature additions. 2026-05-17.
 
 ---
 
-## FULLY BUILT (47 items)
+## FULLY BUILT (50 items)
 
 | # | Feature | Milestone |
 |---|---------|-----------|
@@ -15,46 +15,49 @@
 | 5 | Public feed (API + SSR homepage + infinite scroll) | M4 |
 | 6 | Post detail (items, comments, reactions, changelog link) | M5 |
 | 7 | SEO slug routing (`/[slug]`, `/post/[id]` removed, canonical) | M5.5 |
-| 8 | Categories system (310 entries, nested slugs, hierarchy) | M6 |
-| 9 | Category management — backend (CRUD, bulk, analytics, export, 17+ endpoints) | M10.7 |
-| 10 | Comment system (nested 10 levels, item-anchored, 2hr edit window, rate limit) | M7 |
-| 11 | Fire reactions (toggle on comments, spark recalculation, ladder boost) | M8 |
-| 12 | Admin authentication (JWT, brute force, token versioning, setup token, account lock) | M9 |
-| 13 | Notification system (Toast, bell badge, admin-to-user, mark-read) | M9.1 |
-| 14 | Admin dashboard + 26 stats endpoints + 21-panel statistics UI | M10.1-2 |
-| 15 | Review queue (approve/reject/retry, bulk ops, collision detection) | M10.3 |
-| 16 | Posts management (CRUD, feature, lock, bump, bulk, export) | M10.4 |
-| 17 | Advanced post operations (duplicate, item CRUD, revisions, quality check, compare, activity) | Ghost |
-| 18 | Comments management (CRUD, flag, hide, highlight, bulk) | M10.5 |
-| 19 | Advanced comment operations (penalty, dismiss-flag, unhide, unhighlight, stats, export) | Ghost |
-| 20 | Outbound messaging (AdminMessage, templates, individual+broadcast, 7 endpoints, frontend) | M10.9b |
-| 21 | Alert system (12 metrics, threshold CRUD, breach/resolution, cooldown) | M10.9 |
-| 22 | Search backend (4 ES indices, facets, highlights, did-you-mean, admin) | M12 |
-| 23 | Search frontend (autocomplete, filters, tabs, pagination, URL sharing) | M12 |
-| 24 | Search analytics system (4 models, hourly cron, click beacon, 9 analytics endpoints) | Ghost |
-| 25 | Audit logs (90-day TTL, CSV export, filtering, Redis-cached stats) | M10.12 |
-| 26 | User system (GET/PATCH /me, trust tiers, rate limits endpoint) | M11.A-D |
-| 27 | User profile page (3 tabs, posts/comments/stats, edit name, trust display) | M11.E |
-| 28 | Identity portability (7 endpoints, BIP39, ed25519, multi-device, claim page) | M15 |
-| 29 | SecureMyAuthority + SeedDisplayModal + DeviceManager | M15 UX |
-| 30 | Post changelog (version history, side-by-side comparison, edit tracking) | V2.2 |
-| 31 | Profile image upload (200×200 WebP, first-letter fallback, NavUserAvatar) | Ghost |
-| 32 | Image upload system (multer, sharp WebP, 3 variants, express.static) | Ghost |
-| 33 | Design system (glassmorphism CSS, spatial shadows, neon borders, wiki badges) | Ghost |
-| 34 | Font system (Geist Sans, Geist Mono, Anton, Monoton) | Ghost |
-| 35 | Dark/light toggle (ThemeToggle, localStorage persistence) | V2.1 |
-| 36 | Mobile-first responsive (DynamicIsland, DesktopTopBar, breakpoints) | Ghost |
-| 37 | 12 premium UI components (GlassSlab, DataCard, CommandSearch, etc.) | Ghost |
-| 38 | Trust & identity infrastructure (TrustScoreLog, UsernameHistory, etc.) | Ghost |
-| 39 | Ladder system (temporary boosts for low-trust users) | Ghost |
-| 40 | Fingerprint cross-browser matching (Tier 0/1/2 signals, 90-day TTL) | Ghost |
-| 41 | Ghost frontend pages (`/username-history`, `/notifications`, `/notifications/[id]`) | Ghost |
-| 42 | 29 test files, 475 tests, zero failures | Ghost |
-| 43 | Hydration immune system (lib/dates.ts, suppressHydrationWarning, modelRegistry) | Ghost |
-| 44 | 8 architecture decision documents (docs/architecture-*.md) | Ghost |
-| 45 | Bookmark/save system (SavedPost model, bookmarkService, Redis cache, 4 endpoints) | M16.3 |
-| 46 | BookmarkButton component (optimistic toggle, Lucide icon) | M16.3 |
-| 47 | Saved posts page (`/saved`) | M16 |
+| 8 | Route Guard (RESERVED_ROUTES Set, 6 tests, [slug] protection) | M5.5 |
+| 9 | Categories system (310 entries, nested slugs, hierarchy) | M6 |
+| 10 | Category management — backend (CRUD, bulk, analytics, export, 17+ endpoints) | M10.7 |
+| 11 | Comment system (nested 10 levels, item-anchored, 2hr edit window, rate limit) | M7 |
+| 12 | Fire reactions (toggle on comments, spark recalculation, ladder boost) | M8 |
+| 13 | Admin authentication (JWT, brute force, token versioning, setup token, account lock) | M9 |
+| 14 | Notification system (Toast, bell badge, admin-to-user, mark-read) | M9.1 |
+| 15 | Admin dashboard + 26 stats endpoints + 21-panel statistics UI | M10.1-2 |
+| 16 | Review queue (approve/reject/retry, bulk ops, collision detection) | M10.3 |
+| 17 | Double-Blind Moderation (author identity hidden during review) | M11.C.1 |
+| 18 | Posts management (CRUD, feature, lock, bump, bulk, export) | M10.4 |
+| 19 | Advanced post operations (duplicate, item CRUD, revisions, quality check, compare, activity) | Ghost |
+| 20 | Comments management (CRUD, flag, hide, highlight, bulk) | M10.5 |
+| 21 | Advanced comment operations (penalty, dismiss-flag, unhide, unhighlight, stats, export) | Ghost |
+| 22 | Outbound messaging (AdminMessage, templates, individual+broadcast, 7 endpoints, frontend) | M10.9b |
+| 23 | Alert system (12 metrics, threshold CRUD, breach/resolution, cooldown) | M10.9 |
+| 24 | Search backend (4 ES indices, facets, highlights, did-you-mean, admin) | M12 |
+| 25 | Search frontend (autocomplete, filters, tabs, pagination, URL sharing) | M12 |
+| 26 | Search analytics system (4 models, hourly cron, click beacon, 9 analytics endpoints) | Ghost |
+| 27 | Audit logs (90-day TTL, CSV export, filtering, Redis-cached stats) | M10.12 |
+| 28 | User system (GET/PATCH /me, trust tiers, rate limits endpoint) | M11.A-D |
+| 29 | User profile page (3 tabs, posts/comments/stats, edit name, trust display) | M11.E |
+| 30 | Identity portability (7 endpoints, BIP39, ed25519, multi-device, claim page) | M15 |
+| 31 | SecureMyAuthority + SeedDisplayModal + DeviceManager | M15 UX |
+| 32 | Post changelog (version history, side-by-side comparison, edit tracking) | V2.2 |
+| 33 | Profile image upload (200x200 WebP, first-letter fallback, NavUserAvatar) | Ghost |
+| 34 | Image upload system (multer, sharp WebP, 3 variants, express.static) | Ghost |
+| 35 | Design system (glassmorphism CSS, spatial shadows, neon borders, wiki badges) | Ghost |
+| 36 | Font system (Geist Sans, Geist Mono, Anton, Monoton) | Ghost |
+| 37 | Dark/light toggle (ThemeToggle, localStorage persistence) | V2.1 |
+| 38 | Mobile-first responsive (DynamicIsland, DesktopTopBar, breakpoints) | Ghost |
+| 39 | 12 premium UI components (GlassSlab, DataCard, CommandSearch, etc.) | Ghost |
+| 40 | Trust & identity infrastructure (TrustScoreLog, UsernameHistory, etc.) | Ghost |
+| 41 | Ladder system (temporary boosts for low-trust users) | Ghost |
+| 42 | Fingerprint cross-browser matching (Tier 0/1/2 signals, 90-day TTL) | Ghost |
+| 43 | Ghost frontend pages (`/username-history`, `/notifications`, `/notifications/[id]`) | Ghost |
+| 44 | 29 test files, 475 tests, zero failures | Ghost |
+| 45 | Hydration immune system (lib/dates.ts, suppressHydrationWarning, modelRegistry) | Ghost |
+| 46 | 8 architecture decision documents (docs/architecture-*.md) | Ghost |
+| 47 | Bookmark/save system (SavedPost model, bookmarkService, Redis cache, 4 endpoints, BookmarkButton, /saved page) | M16.3 |
+| 48 | Article content type (Article model, endpoints, submit form, view tracking) | M3.X |
+| 49 | Article frontend (`/articles` feed, `/articles/[slug]` detail, `/submit-article` form) | M3.X / M16 |
+| 50 | Explore system (`/explore` page, multi-factor scoring API, 17 scoring tests) | M16 |
 
 ---
 
@@ -72,58 +75,46 @@
 
 ---
 
-## NOT BUILT — 0% Implementation (20 items)
+## NOT BUILT — 0% Implementation (14 items)
 
-### Core Platform Gaps
+### No Blockers — Ready to Build (10 items)
+
 | # | Feature | Milestone |
 |---|---------|-----------|
 | 1 | Users Management (admin listing, ban, whitelist, shadow-ban) | M10.6 |
-| 2 | Rate Limits & Trust Scores Admin (settings page) | M10.11 |
-| 3 | Double-Blind Moderation (hide trust during review) | M11.C.1 |
-| 4 | SEO Indexing Guard (noindex logic) | M5.5 |
-| 5 | Route Guard (RESERVED_ROUTES protection) | M5.5 |
+| 2 | Rate Limits & Trust Scores Admin (settings page, tier adjustment, per-user override UI) | M10.11 |
+| 3 | SEO Indexing Guard (noindex for low-spark + short-description posts) | M5.5 |
+| 4 | Arguments page (`/arguments`) + API (`GET /api/arguments` — pre-computed Redis) | M13 |
+| 5 | Share system (OG tags, UTM, copy link, analytics) | M16 |
+| 6 | PostFeed reusable component (shared feed rendering across pages) | M16 |
+| 7 | Admin Hall of Fame management (curation, reorder, auto-candidate suggestions) | M10.8 |
+| 8 | Futuristic theme | V2.1 |
+| 9 | Retro theme | V2.1 |
+| 10 | PWA & Offline (service worker, manifest, offline cache) | V2.5 |
 
-### New MVP Features (Architecture Review)
-| # | Feature | Milestone | Architecture Doc |
-|---|---------|-----------|-----------------|
-| 6 | Article content type (separate model, not Post subtype) | M3.X | [01](architecture-01-article-model.md) |
-| 7 | Article submission form (body, sources, cover) | M3.X | [01](architecture-01-article-model.md) |
-| 8 | Article detail page (`/articles/:slug`) | M3.X | [07](architecture-07-article-identity.md) |
-| 9 | Explore page (`/explore`) — algorithmic multi-factor scoring | M16 | [03](architecture-03-explore-algorithm.md) |
-| 10 | Explore API (`GET /api/explore`) | M16 | [03](architecture-03-explore-algorithm.md) |
-| 11 | Articles feed page (`/articles`) | M16 | [06](architecture-06-postfeed-component.md) |
-| 12 | Arguments page (`/arguments`) — hot debates | M13 (now MVP) | [04](architecture-04-arguments-precompute.md) |
-| 13 | Arguments API (`GET /api/arguments`) — pre-computed Redis | M13 (now MVP) | [04](architecture-04-arguments-precompute.md) |
-| 14 | Share system (OG tags, UTM, copy link, analytics) | M16 | [05](architecture-05-share-system.md) |
-| 15 | PostFeed reusable component | M16 | [06](architecture-06-postfeed-component.md) |
+### Blocked by Dependencies (4 items)
 
-### Arena / Counter-List (unchanged)
-| # | Feature | Milestone |
-|---|---------|-----------|
-| 16 | Counter-List Arena (challenger editor, VS view, challenges gallery) | M5.6 |
-| 17 | Post-Level Spark Engine (60/40, trust multipliers) | M5.6.1 |
-| 18 | Dynamic Reputation Engine ($R$) | M5.6.2 |
-
-### Phase 2 / V2
-| # | Feature | Milestone |
-|---|---------|-----------|
-| 21 | Futuristic + Retro themes | V2.1 |
-| 22 | PWA & Offline | V2.5 |
+| # | Feature | Milestone | Blocked By |
+|---|---------|-----------|------------|
+| 11 | Counter-List Arena (challenger editor, VS view, challenges gallery) | M5.6 | Post model fields (parent_id, spark_score) |
+| 12 | Post-Level Spark Engine (60/40, trust multipliers) | M5.6.1 | Post model fields |
+| 13 | Dynamic Reputation Engine ($R$) | M5.6.2 | Post model fields |
+| 14 | Public Hall of Fame page (`/hall-of-fame`) | M14 | M10.8 (admin HoF management) |
 
 ---
 
 ## BLOCKER CHAINS
 
-### Chain 1: Arena (12 features blocked)
+### Chain 1: Post Model → Arena (12 features blocked)
 ```
 Post model missing 6 fields (parent_id, spark_score, version_id, etc.)
     └── BLOCKS: M5.6.1 through M5.6.8 (entire Arena)
 ```
 **Fix**: Add 6 Post fields → unblocks 12 features.
 
-### Chain 2: Hall of Fame (2 features)
+### Chain 2: M10.8 → Public Hall of Fame (1 feature)
 ```
-M10.8 (admin HoF) not built → Blocks M14 (public HoF)
+M10.8 (admin HoF management) not built → Blocks M14 (public /hall-of-fame page)
 ```
 
 ### Chain 3: PostFeed Component (4 features)
@@ -132,29 +123,15 @@ PostFeed component not extracted → Each feed page must be built from scratch
 ```
 **Fix**: Build PostFeed once → use in /explore, /articles, /saved, /arguments.
 
-### No Blockers (Can Build Anytime)
-- M10.6 Users Management
-- M10.11 Rate Limits Admin  
-- M3.X Article content type
-- M16 Explore
-- M16 Articles feed
-- M13 Arguments
-- M16 Share system
-- M5.5 SEO Guard + Route Guard
-- M11.C.1 Double-Blind Moderation
-
 ---
 
 ## SUMMARY
 
 | Status | Count |
 |---|---|
-| **FULLY BUILT** | 47 |
+| **FULLY BUILT** | 50 |
 | **PARTIALLY BUILT** | 7 |
-| **NOT BUILT — existing gaps** | 5 |
-| **NOT BUILT — new MVP features** | 10 |
-| **NOT BUILT — Arena / Phase 2** | 5 |
-| **TOTAL NOT BUILT** | **20** |
-| **Blocked by other features** | 14 |
-| **No blockers (can start now)** | 11 |
+| **NOT BUILT — no blockers** | 10 |
+| **NOT BUILT — blocked** | 4 |
+| **TOTAL NOT BUILT** | **14** |
 | **Architecture decision docs** | 8 |

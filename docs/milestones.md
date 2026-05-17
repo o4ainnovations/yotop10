@@ -151,7 +151,7 @@ All limits use 2D soft gradient floor algorithm:
   - Append last 6 chars of post ID
 - [x] Migration script to populate slug for all existing posts
 
-[ ] **Part B: The "Flat" Wikipedia Route (Next.js)**
+[x] **Part B: The "Flat" Wikipedia Route (Next.js)**
 - [x] Restructure: `app/post/[id]/page.tsx` → `app/[slug]/page.tsx`
 - [x] Update page to fetch via slug instead of ID
 - [x] **Route Guard**:
@@ -168,11 +168,11 @@ All limits use 2D soft gradient floor algorithm:
     - `post.spark_score === 0` AND `post.age > 48h`
     - Post description < 100 characters
 
-[ ] **Part D: Schema.org "Rich Results" Integration**
+[x] **Part D: Schema.org "Rich Results" Integration**
 - [x] Post detail page injects ItemList JSON-LD with ListItem schema (position, name, description)
 - [x] Dynamic canonical tag: `<link rel="canonical" href="https://yotop10.com/${slug}" />`
 
-[ ] **Part E: Internal Link Refactor**
+[x] **Part E: Internal Link Refactor**
 - [x] All `<Link>` components across the app use `href={"/" + post.slug}` exclusively
 
 ### M5.6 — The Arena (Counter-List System)
@@ -880,7 +880,7 @@ These patterns are required to prevent catastrophic failure modes at scale. Must
   - Old actions expire automatically
   - No permanent lifetime penalties
   - Eliminates death spiral feedback loops
-- [ ] **Double-Blind Moderation**:
+- [x] **Double-Blind Moderation**:
   - Moderators **never see** username, user_id, or trust score during review
   - Only content is visible
   - Eliminates moderator bias feedback loops
