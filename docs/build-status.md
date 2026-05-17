@@ -58,6 +58,7 @@
 | 48 | Article content type (Article model, endpoints, submit form, view tracking) | M3.X |
 | 49 | Article frontend (`/articles` feed, `/articles/[slug]` detail, `/submit-article` form) | M3.X |
 | 50 | Explore system (`/explore` page, multi-factor scoring API, 17 scoring tests) | M12.Explore |
+| 51 | Arguments page (`/arguments` page, `GET /api/arguments`, ArgumentCard, ArgumentBar, argumentCron) | M13 |
 
 ---
 
@@ -84,7 +85,6 @@
 | 1 | Users Management (admin listing, ban, whitelist, shadow-ban) | M10.6 |
 | 2 | Rate Limits & Trust Scores Admin (settings page, tier adjustment, per-user override UI) | M10.11 |
 | 3 | SEO Indexing Guard (noindex for low-spark + short-description posts) | M5.5 |
-| 4 | Arguments page (`/arguments`) + API (`GET /api/arguments` — pre-computed Redis) | M13 |
 | 5 | Share system (OG tags, UTM, copy link, analytics) | M5.Share |
 | 7 | Admin Hall of Fame management (curation, reorder, auto-candidate suggestions) | M10.8 |
 | 8 | Futuristic theme | V2.1 |
@@ -122,9 +122,9 @@ M10.8 (admin HoF management) not built → Blocks M14 (public /hall-of-fame page
 
 | Status | Count |
 |---|---|
-| **FULLY BUILT** | 50 |
+| **FULLY BUILT** | 51 |
 | **PARTIALLY BUILT** | 7 |
-| **NOT BUILT — no blockers** | 10 |
+| **NOT BUILT — no blockers** | 9 |
 | **NOT BUILT — blocked** | 4 |
-| **TOTAL NOT BUILT** | **14** |
+| **TOTAL NOT BUILT** | **13** |
 | **Architecture decision docs** | 8 |

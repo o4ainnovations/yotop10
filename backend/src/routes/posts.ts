@@ -811,6 +811,12 @@ router.post('/:idOrSlug/comments', [
 
     await Post.findByIdAndUpdate(postId, { $inc: { comment_count: 1 } });
 
+    if (post && ['this_vs_that', 'counter_list'].includes((post as Record<string, unknown>).post_type as string)) {
+      const velocityKey = `arguments:velocity:${postId}`;
+      redis.incr(velocityKey).catch(() => {});
+      redis.expire(velocityKey, 3600).catch(() => {});
+    }
+
     res.status(201).json({ comment });
   } catch (error) {
     console.error('Create comment error:', error);

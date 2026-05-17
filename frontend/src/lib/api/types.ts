@@ -179,3 +179,32 @@ export interface SavedPostsResponse {
   posts: SavedPost[];
   pagination: { page: number; limit: number; total: number; totalPages: number };
 }
+
+export interface ArgumentPost {
+  id: string;
+  slug: string;
+  title: string;
+  post_type: string;
+  category_slug: string;
+  author_username: string;
+  author_display_name: string;
+  comment_count: number;
+  view_count: number;
+  argument_score: number;
+  velocity: number;
+  last_active: string;
+  top_comments: Array<{
+    rank: number;
+    item_title: string;
+    content: string;
+    author_username: string;
+    fire_count: number;
+  }>;
+  support_pct: number;
+  contradict_pct: number;
+}
+
+export interface ArgumentsResponse {
+  arguments: ArgumentPost[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+}

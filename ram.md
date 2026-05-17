@@ -101,6 +101,18 @@
   8. `frontend/src/app/[slug]/client.tsx` — Added ShareButton to post header metadata row
   9. `frontend/src/app/[slug]/page.tsx` — Full OG metadata (title, description, type: article, images), Twitter Card (summary_large_image), robots: index/follow, canonical URL
 
+- **[M13] Arguments system** — Complete backend + frontend:
+  1. `backend/src/lib/argumentCron.ts` — 60s cron: scores into `arguments:hot` zset (zAdd) + `arguments:scored` cache (set). Formula: velocity×0.5 + freshness×0.3 + spark×0.2. 30-day window. this_vs_that + counter_list only.
+  2. `backend/src/lib/argumentCron.test.ts` — 12 tests: this_vs_that/counter_list scoring, ignores non-argument/deleted/rejected, empty candidates, velocity+freshness+spark formula, Redis error resilience, 30-day age exclusion, start/stop/duplicate cron
+  3. `backend/src/routes/arguments.ts` — `GET /api/arguments`: paginated, time filter (today/week/month/all), category filter, Redis zRange hot-sorted with DB fallback, top 3 item-anchored comments (fire_count desc), support/contradict percentages, velocity from Redis mGet
+  4. `backend/src/routes/posts.ts` — Added velocity tracking after comment creation: `arguments:velocity:{postId}` incremented + 3600s TTL for this_vs_that/counter_list posts
+  5. `backend/src/server.ts` — startArgumentCron() on boot, stopArgumentCron() on SIGTERM/SIGINT
+  6. `backend/src/routes/index.ts` — Registered `/api/arguments` route
+  7. `frontend/src/components/ArgumentBar.tsx` — Accepts `supportPct`/`contradictPct` (not raw counts), animated `transition-all duration-700 ease-out`, "No arguments yet" for zero state, `className` prop
+  8. `frontend/src/components/ArgumentCard.test.tsx` — 7 tests: render, category badge, post type label, ArgumentBar percentages, author, post link
+  9. `docs/build-status.md` — Arguments moved from NOT BUILT to FULLY BUILT (51 built, 13 not built)
+  10. `docs/milestones.md` — M13 all 4 checkboxes flipped to [x]
+
 ## Next
 - **[Fix] Hydration errors — deterministic date/time rendering** — Replaced all `toLocaleDateString()`, `toLocaleTimeString()`, `toLocaleString()`, and custom `ageStr()` with `formatDate()`, `formatTime()`, `relativeTime()` from `@/lib/dates` across 9 files. Added `suppressHydrationWarning` to every date/time rendering element.
 

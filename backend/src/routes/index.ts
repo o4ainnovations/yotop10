@@ -14,6 +14,7 @@ import searchRouter from './search';
 import usersRouter from './users';
 import articlesRouter from './articles';
 import exploreRouter from './explore';
+import argumentsRouter from './arguments';
 import bookmarksRouter from './bookmarks';
 import adminRouter from './admin';
 
@@ -39,5 +40,6 @@ export const routes: RouteDefinition[] = [
   { path: '/api/admin',       router: adminRouter },
   { path: '/api/articles',    router: articlesRouter },
   { path: '/api/explore',     router: exploreRouter },
+  { path: '/api/arguments',  router: argumentsRouter },
   { path: '/api/bookmarks',  router: bookmarksRouter },
 ];

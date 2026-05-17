@@ -3,37 +3,42 @@
 import { useState, useEffect } from 'react';
 
 interface ArgumentBarProps {
-  support: number;
-  contradict: number;
+  supportPct: number;
+  contradictPct: number;
+  className?: string;
 }
 
-export function ArgumentBar({ support, contradict }: ArgumentBarProps) {
+export function ArgumentBar({ supportPct, contradictPct, className }: ArgumentBarProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const total = support + contradict;
-  const supportPct = total > 0 ? Math.round((support / total) * 100) : 50;
-  const contradictPct = 100 - supportPct;
+  const isZero = supportPct === 0 && contradictPct === 0;
 
   return (
-    <div>
-      <div className="h-2 lg:h-4 rounded-full overflow-hidden bg-white/5 flex">
-        <div
-          className="argument-bar-support h-full"
-          style={{ width: mounted ? `${supportPct}%` : '0%' }}
-        />
-        <div
-          className="argument-bar-contradict h-full"
-          style={{ width: mounted ? `${contradictPct}%` : '0%' }}
-        />
-      </div>
-      <div className="text-[10px] font-mono text-zinc-600 flex justify-between mt-1">
-        <span>{supportPct}% Support</span>
-        <span>{contradictPct}% Contradict</span>
-      </div>
+    <div className={className}>
+      {isZero ? (
+        <div className="text-[10px] text-zinc-600">No arguments yet</div>
+      ) : (
+        <>
+          <div className="h-2 lg:h-3 rounded-full overflow-hidden bg-white/5 flex">
+            <div
+              className="argument-bar-support h-full transition-all duration-700 ease-out"
+              style={{ width: mounted ? `${supportPct}%` : '0%' }}
+            />
+            <div
+              className="argument-bar-contradict h-full transition-all duration-700 ease-out"
+              style={{ width: mounted ? `${contradictPct}%` : '0%' }}
+            />
+          </div>
+          <div className="text-[10px] font-mono text-zinc-600 flex justify-between mt-1">
+            <span>{supportPct}% support</span>
+            <span>{contradictPct}% contradict</span>
+          </div>
+        </>
+      )}
     </div>
   );
 }

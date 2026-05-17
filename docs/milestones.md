@@ -988,10 +988,10 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 - [x] 17 unit tests for explore scoring algorithm
 
 ### M13 — Arguments Page
-- [ ] `GET /api/arguments` — Hot debates: `this_vs_that` + `counter` posts sorted by comment velocity. Pre-computed hourly into Redis.
-- [ ] Most active item-anchored comments
-- [ ] Filter by category, time range
-- [ ] Frontend: `/arguments`
+- [x] `GET /api/arguments` — Hot debates: `this_vs_that` + `counter` posts sorted by comment velocity. Pre-computed hourly into Redis.
+- [x] Most active item-anchored comments
+- [x] Filter by category, time range
+- [x] Frontend: `/arguments`
 
 ### M14 — Hall of Fame (Post-MVP / Phase 2)
 - [ ] `GET /api/hall-of-fame` — Featured lists
@@ -1023,7 +1023,7 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 - [x] `/explore` page — Algorithmic trending feed
 - [x] `/articles` page — Long-form article content
 - [x] `/saved` page — User's bookmarked posts
-- [ ] `/arguments` page — Hot debates (this_vs_that + counter posts)
+- [x] `/arguments` page — Hot debates (this_vs_that + counter posts)
 - [x] Bookmark/save system
 - [ ] Share system (OG tags, UTM, copy link)
 - [x] Article content type (separate model)

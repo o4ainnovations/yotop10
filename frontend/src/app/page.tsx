@@ -184,7 +184,7 @@ export default async function Home() {
                               {post.comment_count}
                             </span>
                           </div>
-                          <ArgumentBar support={50} contradict={50} />
+                          <ArgumentBar supportPct={50} contradictPct={50} />
                         </div>
                       </div>
                     </article>
@@ -216,7 +216,7 @@ export default async function Home() {
                           {post.intro && (
                             <p className="text-xs text-zinc-500 mb-2 line-clamp-2">{post.intro}</p>
                           )}
-                          <ArgumentBar support={50} contradict={50} />
+                          <ArgumentBar supportPct={50} contradictPct={50} />
                         </div>
                       </article>
                     </Link>
