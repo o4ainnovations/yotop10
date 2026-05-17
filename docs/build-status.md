@@ -4,7 +4,7 @@
 
 ---
 
-## FULLY BUILT (44 items)
+## FULLY BUILT (47 items)
 
 | # | Feature | Milestone |
 |---|---------|-----------|
@@ -52,6 +52,9 @@
 | 42 | 29 test files, 475 tests, zero failures | Ghost |
 | 43 | Hydration immune system (lib/dates.ts, suppressHydrationWarning, modelRegistry) | Ghost |
 | 44 | 8 architecture decision documents (docs/architecture-*.md) | Ghost |
+| 45 | Bookmark/save system (SavedPost model, bookmarkService, Redis cache, 4 endpoints) | M16.3 |
+| 46 | BookmarkButton component (optimistic toggle, Lucide icon) | M16.3 |
+| 47 | Saved posts page (`/saved`) | M16 |
 
 ---
 
@@ -69,7 +72,7 @@
 
 ---
 
-## NOT BUILT — 0% Implementation (22 items)
+## NOT BUILT — 0% Implementation (20 items)
 
 ### Core Platform Gaps
 | # | Feature | Milestone |
@@ -86,22 +89,20 @@
 | 6 | Article content type (separate model, not Post subtype) | M3.X | [01](architecture-01-article-model.md) |
 | 7 | Article submission form (body, sources, cover) | M3.X | [01](architecture-01-article-model.md) |
 | 8 | Article detail page (`/articles/:slug`) | M3.X | [07](architecture-07-article-identity.md) |
-| 9 | Bookmark/save system (SavedPost model, Redis cache) | M16 | [02](architecture-02-bookmarks.md) |
-| 10 | Saved posts page (`/saved`) | M16 | [06](architecture-06-postfeed-component.md) |
-| 11 | Explore page (`/explore`) — algorithmic multi-factor scoring | M16 | [03](architecture-03-explore-algorithm.md) |
-| 12 | Explore API (`GET /api/explore`) | M16 | [03](architecture-03-explore-algorithm.md) |
-| 13 | Articles feed page (`/articles`) | M16 | [06](architecture-06-postfeed-component.md) |
-| 14 | Arguments page (`/arguments`) — hot debates | M13 (now MVP) | [04](architecture-04-arguments-precompute.md) |
-| 15 | Arguments API (`GET /api/arguments`) — pre-computed Redis | M13 (now MVP) | [04](architecture-04-arguments-precompute.md) |
-| 16 | Share system (OG tags, UTM, copy link, analytics) | M16 | [05](architecture-05-share-system.md) |
-| 17 | PostFeed reusable component | M16 | [06](architecture-06-postfeed-component.md) |
+| 9 | Explore page (`/explore`) — algorithmic multi-factor scoring | M16 | [03](architecture-03-explore-algorithm.md) |
+| 10 | Explore API (`GET /api/explore`) | M16 | [03](architecture-03-explore-algorithm.md) |
+| 11 | Articles feed page (`/articles`) | M16 | [06](architecture-06-postfeed-component.md) |
+| 12 | Arguments page (`/arguments`) — hot debates | M13 (now MVP) | [04](architecture-04-arguments-precompute.md) |
+| 13 | Arguments API (`GET /api/arguments`) — pre-computed Redis | M13 (now MVP) | [04](architecture-04-arguments-precompute.md) |
+| 14 | Share system (OG tags, UTM, copy link, analytics) | M16 | [05](architecture-05-share-system.md) |
+| 15 | PostFeed reusable component | M16 | [06](architecture-06-postfeed-component.md) |
 
 ### Arena / Counter-List (unchanged)
 | # | Feature | Milestone |
 |---|---------|-----------|
-| 18 | Counter-List Arena (challenger editor, VS view, challenges gallery) | M5.6 |
-| 19 | Post-Level Spark Engine (60/40, trust multipliers) | M5.6.1 |
-| 20 | Dynamic Reputation Engine ($R$) | M5.6.2 |
+| 16 | Counter-List Arena (challenger editor, VS view, challenges gallery) | M5.6 |
+| 17 | Post-Level Spark Engine (60/40, trust multipliers) | M5.6.1 |
+| 18 | Dynamic Reputation Engine ($R$) | M5.6.2 |
 
 ### Phase 2 / V2
 | # | Feature | Milestone |
@@ -135,7 +136,6 @@ PostFeed component not extracted → Each feed page must be built from scratch
 - M10.6 Users Management
 - M10.11 Rate Limits Admin  
 - M3.X Article content type
-- M16 Bookmarks
 - M16 Explore
 - M16 Articles feed
 - M13 Arguments
@@ -149,12 +149,12 @@ PostFeed component not extracted → Each feed page must be built from scratch
 
 | Status | Count |
 |---|---|
-| **FULLY BUILT** | 44 |
+| **FULLY BUILT** | 47 |
 | **PARTIALLY BUILT** | 7 |
 | **NOT BUILT — existing gaps** | 5 |
-| **NOT BUILT — new MVP features** | 12 |
+| **NOT BUILT — new MVP features** | 10 |
 | **NOT BUILT — Arena / Phase 2** | 5 |
-| **TOTAL NOT BUILT** | **22** |
+| **TOTAL NOT BUILT** | **20** |
 | **Blocked by other features** | 14 |
 | **No blockers (can start now)** | 11 |
 | **Architecture decision docs** | 8 |

@@ -11,9 +11,10 @@ interface GlassSlabProps {
   variant?: 'featured' | 'compact';
   observe?: boolean;
   rank?: number;
+  actions?: React.ReactNode;
 }
 
-export function GlassSlab({ post, variant = 'compact', observe = false, rank }: GlassSlabProps) {
+export function GlassSlab({ post, variant = 'compact', observe = false, rank, actions }: GlassSlabProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(!observe);
   const [expanded, setExpanded] = useState(false);
@@ -162,6 +163,7 @@ export function GlassSlab({ post, variant = 'compact', observe = false, rank }: 
               <Icon name="MessageCircle" size={11} />
               {post.comment_count}
             </span>
+            {actions && <span className="flex items-center">{actions}</span>}
           </div>
         </div>
       </article>

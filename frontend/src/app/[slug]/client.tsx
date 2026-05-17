@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { API } from '@/lib/api';
 import { formatDate } from '@/lib/dates';
 import { Icon } from '@/components/icons/Icon';
+import { BookmarkButton } from '@/components/BookmarkButton';
 
 const RESERVED_ROUTES = ['admin', 'api', 'login', 'search', 'settings', 'profile', 'categories', 'c', 'auth'];
 
@@ -378,6 +379,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
             </Link>
             <span suppressHydrationWarning>{formatDate(post.created_at)}</span>
             <span>{post.view_count} views</span>
+            <BookmarkButton postId={post.id} />
           </div>
 
           <h1 className="mb-4 text-2xl font-bold leading-tight -tracking-[0.02em] text-white sm:text-3xl">

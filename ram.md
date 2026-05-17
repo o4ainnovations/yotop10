@@ -105,6 +105,22 @@
    - `lib/api.ts` — Spread `exploreApi` into API object
    - `app/explore/page.tsx` — Full client-side page: font-display header, post_type tabs (All/Top Lists/VS Battles/Articles) with orange underline, 2-col responsive grid, glass-slab cards with score badge (font-mono text-orange-400), category slug badge, title (line-clamp-2), top 3 items preview, author/relativeTime row, Eye/MessageCircle stats, IntersectionObserver infinite scroll (400px rootMargin), empty state, spinner loading. Zero inline styles, all Tailwind.
 
+- **[Feature] Frontend bookmark system** — 8 files:
+  1. `components/BookmarkButton.tsx` — Toggle button with optimistic updates, toast feedback, Lucide Bookmark icon (filled/orange active, outline/zinc-500 inactive), `min-w-[44px] min-h-[44px]` touch target
+  2. `components/DataCard.tsx` — Passes `BookmarkButton` as `actions` slot to `GlassSlab`
+  3. `components/GlassSlab.tsx` — Added optional `actions` prop rendered in footer metrics row
+  4. `app/[slug]/client.tsx` — Added `BookmarkButton` to post header metadata row
+  5. `app/saved/page.tsx` — Twitter-style Bookmarks page: header with @username subtitle, empty state (Bookmark icon + prose), compact glass cards (author avatar + @username + relativeTime saved_at, title link, item preview/article excerpt, category badge, view/comment counts, active BookmarkButton), IntersectionObserver infinite scroll
+  6. `lib/api/endpoints/bookmarks.ts` — API client: save/unsave/getSaved/checkBookmark
+  7. `lib/api/types.ts` — Added `BookmarkResponse`, `SavedPost`, `SavedPostsResponse` types
+  8. `lib/api.ts` — Spread `bookmarksApi` into API object
+  9. `components/BookmarkButton.test.tsx` — 8 tests, all passing
+
+- **[Test] Bookmark system unit tests** — 2 files:
+  1. `lib/bookmarkService.ts` — Core bookmark logic: saveBookmark (creates SavedPost + increments Post.bookmark_count + Redis set), removeBookmark (deletes SavedPost + decrements + Redis removal), getSavedPosts (paginated, sorted by saved_at desc), checkBookmark (Redis sIsMember with MongoDB fallback)
+  2. `lib/bookmarkService.test.ts` — 16 tests: save/duplicate/increment, remove/decrement/not-found, getSavedPosts pagination/sort/empty, checkBookmark Redis hit/miss/fallback/error/edge cases
+  3. `models/SavedPost.ts` — user_id + post_id compound unique index, (user_id, saved_at) compound index
+
 ## Next
 - Frontend `/search` page (M12)
 - Admin search panel (health badge, reindex button, test search)

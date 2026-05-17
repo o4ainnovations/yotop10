@@ -84,7 +84,7 @@ All limits use 2D soft gradient floor algorithm:
 - [x] MongoDB indexes for performance
 - [x] Seed 10 parent + 300 child categories
 - [x] `articles` collection (author_id, title, slug, body (markdown), reading_time, cover_image, sources[], fact_check_status, related_posts[], created_at, updated_at) — separate long-form content model
-- [ ] `saved_posts` collection (user_id, post_id, saved_at) — compound index on (user_id, saved_at)
+- [x] `saved_posts` collection (user_id, post_id, saved_at) — compound index on (user_id, saved_at)
 
 ### M4 — Public Feed
 - [x] `GET /api/posts` — Approved posts only
@@ -987,10 +987,11 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 - [x] `GET /api/articles/:slug` — Single article by slug
 - [x] Frontend: `/articles`
 
-- [ ] `POST /api/posts/:id/save` — Bookmark a post
-- [ ] `DELETE /api/posts/:id/save` — Remove bookmark
-- [ ] `GET /api/users/me/saved` — User's bookmarked posts (requires fingerprint auth)
-- [ ] Frontend: `/saved`
+- [x] `POST /api/bookmarks/save` — Bookmark a post
+- [x] `DELETE /api/bookmarks/save` — Remove bookmark
+- [x] `GET /api/bookmarks/saved` — Paginated saved posts feed
+- [x] `GET /api/bookmarks/check` — O(1) Redis check with MongoDB fallback
+- [x] Frontend: `/saved`
 
 #### M16.1 — Article Content Type ✅
 - [x] Separate `Article` model (not Post subtype): author, slug, body, reading_time, cover_image, sources[], fact_check_status, related_posts[]
@@ -1007,6 +1008,17 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 - [x] `POST /api/explore/view` — Redis velocity tracking (1h TTL)
 - [x] Frontend `/explore` — 2-col grid, score badges, type tabs (All/Top Lists/VS Battles/Articles), infinite scroll
 - [x] 17 unit tests for scoring algorithm
+
+#### M16.3 — Bookmark System
+- [x] `SavedPost` model — user_id + post_id with compound unique index
+- [x] `POST /api/bookmarks/save` — Bookmark a post
+- [x] `DELETE /api/bookmarks/save` — Remove bookmark
+- [x] `GET /api/bookmarks/saved` — Paginated saved posts feed
+- [x] `GET /api/bookmarks/check` — O(1) Redis check with MongoDB fallback
+- [x] `bookmark_count` field on Post model
+- [x] Redis caching: Set per user, 1h TTL, O(1) checks
+- [x] Frontend `BookmarkButton` component — optimistic toggle, Lucide icon
+- [x] Frontend `/saved` page — Twitter-style bookmark feed
 
 ---
 
@@ -1032,9 +1044,9 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 - [x] Frontend `/search` page
 - [x] `/explore` page — Algorithmic trending feed
 - [x] `/articles` page — Long-form article content
-- [ ] `/saved` page — User's bookmarked posts
+- [x] `/saved` page — User's bookmarked posts
 - [ ] `/arguments` page — Hot debates (this_vs_that + counter posts)
-- [ ] Bookmark/save system
+- [x] Bookmark/save system
 - [ ] Share system (OG tags, UTM, copy link)
 - [x] Article content type (separate model)
 - [ ] Hall of Fame

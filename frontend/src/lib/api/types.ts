@@ -163,3 +163,17 @@ export interface ExploreResponse {
   posts: ExplorePost[];
   pagination: { page: number; limit: number; total: number; totalPages: number };
 }
+
+export interface BookmarkResponse {
+  success: boolean;
+  bookmarked: boolean;
+}
+
+export interface SavedPost extends Post {
+  saved_at: string;
+}
+
+export interface SavedPostsResponse {
+  posts: SavedPost[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+}
