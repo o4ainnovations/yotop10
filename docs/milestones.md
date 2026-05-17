@@ -1211,8 +1211,6 @@ GET    /api/admin/audit-logs/stats    # Quick audit stats (cached 30s)
 
 ## FRONTEND ROUTES & PAGE DESCRIPTIONS
 
-> **Note**: A reusable `PostFeed` component with IntersectionObserver infinite scroll and DataCard/GlassSlab rendering is shared across feed pages (homepage, explore, saved, category).
-
 ### Public Pages
 
 #### 1. Homepage — `/`

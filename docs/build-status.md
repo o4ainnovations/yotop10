@@ -86,7 +86,6 @@
 | 3 | SEO Indexing Guard (noindex for low-spark + short-description posts) | M5.5 |
 | 4 | Arguments page (`/arguments`) + API (`GET /api/arguments` — pre-computed Redis) | M13 |
 | 5 | Share system (OG tags, UTM, copy link, analytics) | M5.Share |
-| 6 | PostFeed reusable component (shared feed rendering across pages) | M4.Feed |
 | 7 | Admin Hall of Fame management (curation, reorder, auto-candidate suggestions) | M10.8 |
 | 8 | Futuristic theme | V2.1 |
 | 9 | Retro theme | V2.1 |
@@ -116,12 +115,6 @@ Post model missing 6 fields (parent_id, spark_score, version_id, etc.)
 ```
 M10.8 (admin HoF management) not built → Blocks M14 (public /hall-of-fame page)
 ```
-
-### Chain 3: PostFeed Component (4 features)
-```
-PostFeed component not extracted → Each feed page must be built from scratch
-```
-**Fix**: Build PostFeed once → use in /explore, /articles, /saved, /arguments.
 
 ---
 
