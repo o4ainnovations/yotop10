@@ -4,7 +4,7 @@
 
 ---
 
-## FULLY BUILT (50 items)
+## FULLY BUILT (56 items)
 
 | # | Feature | Milestone |
 |---|---------|-----------|
@@ -59,6 +59,11 @@
 | 49 | Article frontend (`/articles` feed, `/articles/[slug]` detail, `/submit-article` form) | M3.X |
 | 50 | Explore system (`/explore` page, multi-factor scoring API, 17 scoring tests) | M12.Explore |
 | 51 | Arguments page (`/arguments` page, `GET /api/arguments`, ArgumentCard, ArgumentBar, argumentCron) | M13 |
+| 52 | Users Management (admin listing, ban, whitelist, shadow-ban) | M10.6 |
+| 53 | Rate Limits & Trust Scores Admin (settings page, tier adjustment, per-user override UI) | M10.11 |
+| 54 | SEO Indexing Guard (noindex for low-spark + short-description posts) | M5.5 |
+| 55 | Share system (OG tags, UTM, copy link, analytics) | M5.Share |
+| 56 | PWA & Offline (service worker, manifest, offline cache) | V2.5 |
 
 ---
 
@@ -76,20 +81,15 @@
 
 ---
 
-## NOT BUILT — 0% Implementation (14 items)
+## NOT BUILT — 0% Implementation (7 items)
 
-### No Blockers — Ready to Build (10 items)
+### No Blockers — Ready to Build (3 items)
 
 | # | Feature | Milestone |
 |---|---------|-----------|
-| 1 | Users Management (admin listing, ban, whitelist, shadow-ban) | M10.6 |
-| 2 | Rate Limits & Trust Scores Admin (settings page, tier adjustment, per-user override UI) | M10.11 |
-| 3 | SEO Indexing Guard (noindex for low-spark + short-description posts) | M5.5 |
-| 5 | Share system (OG tags, UTM, copy link, analytics) | M5.Share |
-| 7 | Admin Hall of Fame management (curation, reorder, auto-candidate suggestions) | M10.8 |
-| 8 | Futuristic theme | V2.1 |
-| 9 | Retro theme | V2.1 |
-| 10 | PWA & Offline (service worker, manifest, offline cache) | V2.5 |
+| 1 | Admin Hall of Fame management (curation, reorder, auto-candidate suggestions) | M10.8 |
+| 2 | Futuristic theme | V2.1 |
+| 3 | Retro theme | V2.1 |
 
 ### Blocked by Dependencies (4 items)
 
@@ -121,10 +121,10 @@ M10.8 (admin HoF management) not built → Blocks M14 (public /hall-of-fame page
 ## SUMMARY
 
 | Status | Count |
-|---|---|
-| **FULLY BUILT** | 51 |
+|---|--|
+| **FULLY BUILT** | 56 |
 | **PARTIALLY BUILT** | 7 |
-| **NOT BUILT — no blockers** | 9 |
+| **NOT BUILT — no blockers** | 3 |
 | **NOT BUILT — blocked** | 4 |
-| **TOTAL NOT BUILT** | **13** |
+| **TOTAL NOT BUILT** | **7** |
 | **Architecture decision docs** | 8 |

@@ -1,4 +1,20 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('./systemConfig', () => ({
+  getConfig: vi.fn(() => ({
+    rate_limits: {
+      base_posts_per_hour: 4,
+      base_comments_per_hour: 20,
+      tiers: {
+        troll: { multiplier: 0.5, min_posts: 2 },
+        neutral: { multiplier: 1.0, min_posts: 4 },
+        scholar: { multiplier: 2.0, min_posts: 8 },
+      },
+      counter_lists_unlimited: true,
+    },
+  })),
+}));
+
 import { calculateEffectivePostLimit, calculateEffectiveCommentLimit, getRateLimitKey } from '../lib/rateLimit';
 
 describe('RateLimit — NaN guard', () => {

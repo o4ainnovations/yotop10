@@ -167,6 +167,18 @@
 - Frontend `/search` page (M12)
 - Admin search panel (health badge, reindex button, test search)
 - Per-post "is my post searchable?" button
-- M10.6: Users management
-- M10.11: Rate limits & trust scores admin UI
 - M10.8: Hall of Fame management
+
+## Current
+- **[Feature] M10.6 + M10.11 — 10 Admin endpoints for Users & Config management** — Backend complete:
+  1. `GET /api/admin/users` — Paginated user listing with search, trust/status filters, post/comment aggregation, filter counts
+  2. `GET /api/admin/users/:user_id` — Single user detail with post_count, comment_count, posts_approved, posts_rejected
+  3. `PATCH /api/admin/users/:user_id/restrict` — Ban/unban user with restricted_until
+  4. `PATCH /api/admin/users/:user_id/rate-limits` — Per-user rate limit override
+  5. `PATCH /api/admin/users/:user_id/trust` — Manual trust adjustment with TrustScoreLog entry + audit
+  6. `GET /api/admin/users/:user_id/trust-history` — Paginated trust change log
+  7. `GET /api/admin/config` — Get current system config
+  8. `PUT /api/admin/config` — Update config with audit logging
+  9. `GET /api/admin/config/impact` — Preview config change impact on users
+  10. `GET /api/admin/config/versions` — Config version history
+- Files: `routes/admin.ts`, `models/TrustScoreLog.ts`, `schemas/admin.ts`, `lib/systemConfig.ts`, `models/index.ts`

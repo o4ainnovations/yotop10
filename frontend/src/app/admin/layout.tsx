@@ -31,6 +31,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {nav('/admin/posts/pending', 'Pending Posts')}
       {nav('/admin/posts', 'All Posts')}
       {nav('/admin/comments', 'Comments')}
+      {nav('/admin/users', 'Users')}
       {nav('/admin/categories', 'Categories')}
       {nav('/admin/statistics', 'Statistics')}
       {nav('/admin/alerts', 'Alerts')}

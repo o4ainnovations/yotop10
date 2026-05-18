@@ -64,4 +64,26 @@ export const adminApi = {
   getMessageTemplates: () => apiFetch('/admin/messages/templates'),
   deleteMessageTemplate: (id: string) =>
     apiFetch(`/admin/messages/templates/${id}`, { method: 'DELETE' }),
+
+  // Users
+  getUsers: (params: Record<string, string> = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return apiFetch(`/admin/users${qs ? '?' + qs : ''}`);
+  },
+  getUser: (userId: string) => apiFetch(`/admin/users/${userId}`),
+  restrictUser: (userId: string, body: Record<string, unknown>) =>
+    apiFetch(`/admin/users/${userId}/restrict`, { method: 'PATCH', body: JSON.stringify(body) }),
+  overrideRateLimits: (userId: string, body: Record<string, unknown>) =>
+    apiFetch(`/admin/users/${userId}/rate-limits`, { method: 'PATCH', body: JSON.stringify(body) }),
+  adjustTrust: (userId: string, body: Record<string, unknown>) =>
+    apiFetch(`/admin/users/${userId}/trust`, { method: 'PATCH', body: JSON.stringify(body) }),
+  getTrustHistory: (userId: string) =>
+    apiFetch(`/admin/users/${userId}/trust-history`),
+
+  // Config
+  getConfig: () => apiFetch('/admin/config'),
+  updateConfig: (body: Record<string, unknown>) =>
+    apiFetch('/admin/config', { method: 'PUT', body: JSON.stringify(body) }),
+  getConfigImpact: (body: Record<string, unknown>) =>
+    apiFetch('/admin/config/impact', { method: 'POST', body: JSON.stringify(body) }),
 };

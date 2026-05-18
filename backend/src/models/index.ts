@@ -10,3 +10,4 @@ export { SetupToken } from './SetupToken';
 export { UsernameHistory } from './UsernameHistory';
 export { FingerprintObservation } from './FingerprintObservation';
 export { SparkThreshold } from './SparkThreshold';
+export { SystemConfig } from './SystemConfig';

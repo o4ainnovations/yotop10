@@ -28,6 +28,9 @@ import { AlertNotificationModel } from '../models/AlertNotification';
 import { AdminMessage } from '../models/AdminMessage';
 import { MessageTemplate } from '../models/MessageTemplate';
 import { UserEvent } from '../models/UserEvent';
+import { TrustScoreLog } from '../models/TrustScoreLog';
+import { SystemConfig as _SystemConfig } from '../models/SystemConfig';
+import { getConfig, updateConfig, getConfigVersions } from '../lib/systemConfig';
 import { redis } from '../lib/redis';
 import { trustScoreWorker } from '../lib/trustScoreWorker';
 import { indexPost, removePost, indexComment, removeComment } from '../elasticsearch/lib/indexWriter';
@@ -1571,6 +1574,7 @@ router.get('/stats/alerts', async (req, res) => {
 // ═══ Alert Management ═══════════════════════════════════════════════
 
 import { createThresholdSchema, updateThresholdSchema, notificationQuerySchema, historyQuerySchema } from '../schemas/alert';
+import { userListQuerySchema, restrictUserSchema, rateLimitOverrideSchema, trustAdjustSchema, trustHistoryQuerySchema, configUpdateSchema, configImpactQuerySchema } from '../schemas/admin';
 
 // Thresholds CRUD
 router.get('/alerts/thresholds', async (req, res) => {
@@ -2207,6 +2211,432 @@ router.get('/stats/search/engaged', async (req, res) => {
 
     res.json({ engaged: engaged.slice(0, 30) });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+// ═══ M10.6-M10.11 Users & Config Management ═══════════════════════
+
+// 1. GET /api/admin/users — User listing
+router.get('/users', async (req, res) => {
+  try {
+    const query = userListQuerySchema.parse(req.query);
+    const { page, limit, q, trust_tier, status, sort, sort_dir } = query;
+    const skip = (page - 1) * limit;
+
+    const filter: Record<string, unknown> = {};
+
+    if (q) {
+      filter.$or = [
+        { username: { $regex: q, $options: 'i' } },
+        { user_id: { $regex: q, $options: 'i' } },
+      ];
+    }
+
+    if (trust_tier === 'troll') {
+      filter.trust_score = { $lt: 0.5 };
+    } else if (trust_tier === 'neutral') {
+      filter.trust_score = { $gte: 0.5, $lt: 1.8 };
+    } else if (trust_tier === 'scholar') {
+      filter.trust_score = { $gte: 1.8 };
+    }
+
+    const now = new Date();
+    if (status === 'active') {
+      filter.$or = [
+        { restricted_until: null },
+        { restricted_until: { $lte: now } },
+      ];
+    } else if (status === 'restricted') {
+      filter.restricted_until = { $gt: now };
+    }
+
+    const sortMap: Record<string, string> = { created_at: 'created_at', trust_score: 'trust_score', post_count: 'post_count' };
+    const sortField = sortMap[sort] || 'created_at';
+    const sortDirVal = sort_dir === 'asc' ? 1 : -1;
+
+    const userAgg = await User.aggregate([
+      { $match: filter },
+      { $sort: { [sortField]: sortDirVal } },
+      {
+        $lookup: {
+          from: 'posts',
+          localField: 'user_id',
+          foreignField: 'author_id',
+          as: 'posts_data',
+        },
+      },
+      {
+        $lookup: {
+          from: 'comments',
+          localField: 'user_id',
+          foreignField: 'author_id',
+          as: 'comments_data',
+        },
+      },
+      {
+        $addFields: {
+          post_count: { $size: { $filter: { input: '$posts_data', as: 'p', cond: { $eq: ['$$p.deleted', false] } } } },
+          comment_count: { $size: { $filter: { input: '$comments_data', as: 'c', cond: { $and: [{ $eq: ['$$c.deleted', false] }, { $eq: ['$$c.hidden', false] }] } } } },
+        },
+      },
+      { $project: { posts_data: 0, comments_data: 0, last_50_reviews: 0, __v: 0 } },
+      { $skip: skip },
+      { $limit: limit },
+    ]);
+
+    const total = await User.countDocuments(filter);
+
+    const [trollCount, neutralCount, scholarCount, activeCount, restrictedCount] = await Promise.all([
+      User.countDocuments({ trust_score: { $lt: 0.5 } }),
+      User.countDocuments({ trust_score: { $gte: 0.5, $lt: 1.8 } }),
+      User.countDocuments({ trust_score: { $gte: 1.8 } }),
+      User.countDocuments({ $or: [{ restricted_until: null }, { restricted_until: { $lte: now } }] }),
+      User.countDocuments({ restricted_until: { $gt: now } }),
+    ]);
+
+    res.json({
+      users: userAgg,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+      filter_counts: {
+        trolls: trollCount,
+        neutrals: neutralCount,
+        scholars: scholarCount,
+        active: activeCount,
+        restricted: restrictedCount,
+      },
+    });
+  } catch (e: any) {
+    if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
+    console.error('Error fetching users:', e);
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch users' });
+  }
+});
+
+// 2. GET /api/admin/users/:user_id — Single user detail
+router.get('/users/:user_id', async (req, res) => {
+  try {
+    const user = await User.findOne({ user_id: req.params.user_id });
+    if (!user) {
+      return res.status(404).json({ code: 'NOT_FOUND', error: 'User not found' });
+    }
+
+    const [postCount, commentCount, postsApproved, postsRejected] = await Promise.all([
+      Post.countDocuments({ author_id: user.user_id, deleted: false }),
+      Comment.countDocuments({ author_id: user.user_id, deleted: false, hidden: false }),
+      Post.countDocuments({ author_id: user.user_id, status: 'approved', deleted: false }),
+      Post.countDocuments({ author_id: user.user_id, status: 'rejected', deleted: false }),
+    ]);
+
+    const userObj = user.toObject();
+    res.json({
+      user: {
+        ...userObj,
+        post_count: postCount,
+        comment_count: commentCount,
+        posts_approved: postsApproved,
+        posts_rejected: postsRejected,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch user' });
+  }
+});
+
+// 3. PATCH /api/admin/users/:user_id/restrict — Ban/restrict user
+router.patch('/users/:user_id/restrict', async (req, res) => {
+  try {
+    const body = restrictUserSchema.parse(req.body);
+    const user = await User.findOne({ user_id: req.params.user_id });
+    if (!user) {
+      return res.status(404).json({ code: 'NOT_FOUND', error: 'User not found' });
+    }
+
+    const oldRestrictedUntil = user.restricted_until;
+
+    if (body.restricted_until === null) {
+      user.restricted_until = null;
+      await user.save();
+      logAudit({
+        admin_id: (req.admin?.id as string) || 'unknown',
+        action: 'unrestrict_user',
+        ip: getClientIp(req),
+        metadata: { user_id: user.user_id, username: user.username, old_restricted_until: oldRestrictedUntil },
+        user_agent: req.headers['user-agent'] || '',
+      });
+    } else {
+      user.restricted_until = new Date(body.restricted_until);
+      await user.save();
+      logAudit({
+        admin_id: (req.admin?.id as string) || 'unknown',
+        action: 'restrict_user',
+        ip: getClientIp(req),
+        metadata: { user_id: user.user_id, username: user.username, restricted_until: body.restricted_until },
+        user_agent: req.headers['user-agent'] || '',
+      });
+    }
+
+    res.json({ success: true, user });
+  } catch (e: any) {
+    if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to update restriction' });
+  }
+});
+
+// 4. PATCH /api/admin/users/:user_id/rate-limits — Override rate limits
+router.patch('/users/:user_id/rate-limits', async (req, res) => {
+  try {
+    const body = rateLimitOverrideSchema.parse(req.body);
+    const user = await User.findOne({ user_id: req.params.user_id });
+    if (!user) {
+      return res.status(404).json({ code: 'NOT_FOUND', error: 'User not found' });
+    }
+
+    const oldOverride = user.rate_limit_override ? { ...user.rate_limit_override } : null;
+
+    const currentOverride = user.rate_limit_override || { posts_per_hour: null, comments_per_hour: null };
+    const newPostsPerHour = body.posts_per_hour !== undefined ? body.posts_per_hour : (currentOverride.posts_per_hour ?? null);
+    const newCommentsPerHour = body.comments_per_hour !== undefined ? body.comments_per_hour : (currentOverride.comments_per_hour ?? null);
+
+    const updateData: Record<string, unknown> = {};
+    if (newPostsPerHour === null && newCommentsPerHour === null) {
+      updateData.$unset = { rate_limit_override: 1 };
+    } else {
+      updateData.$set = {
+        rate_limit_override: {
+          posts_per_hour: newPostsPerHour,
+          comments_per_hour: newCommentsPerHour,
+        },
+      };
+    }
+
+    const updated = await User.findByIdAndUpdate(user._id, updateData, { new: true });
+
+    logAudit({
+      admin_id: (req.admin?.id as string) || 'unknown',
+      action: 'override_rate_limits',
+      ip: getClientIp(req),
+      metadata: {
+        user_id: user.user_id,
+        username: user.username,
+        old_override: oldOverride,
+        new_override: (newPostsPerHour === null && newCommentsPerHour === null) ? null : { posts_per_hour: newPostsPerHour, comments_per_hour: newCommentsPerHour },
+      },
+      user_agent: req.headers['user-agent'] || '',
+    });
+
+    res.json({ success: true, user: updated });
+  } catch (e: any) {
+    if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to update rate limits' });
+  }
+});
+
+// 5. PATCH /api/admin/users/:user_id/trust — Manual trust adjustment
+router.patch('/users/:user_id/trust', async (req, res) => {
+  try {
+    const body = trustAdjustSchema.parse(req.body);
+    const user = await User.findOne({ user_id: req.params.user_id });
+    if (!user) {
+      return res.status(404).json({ code: 'NOT_FOUND', error: 'User not found' });
+    }
+
+    const oldScore = user.trust_score;
+    const oldLocked = user.trust_locked;
+
+    if (body.trust_score !== undefined) {
+      user.trust_score = body.trust_score;
+      user.trust_locked = true;
+      user.trust_version += 1;
+      await user.save();
+
+      await TrustScoreLog.create({
+        user_id: user.user_id,
+        post_id: `manual_${Date.now()}`,
+        action: 'manual_adjust',
+        delta: body.trust_score - oldScore,
+        old_score: oldScore,
+        new_score: body.trust_score,
+        version: user.trust_version,
+        multiplier: 1,
+        base_delta: body.trust_score - oldScore,
+        admin_id: (req.admin?.id as string) || 'unknown',
+        reason: 'Manual trust adjustment by admin',
+      });
+
+      logAudit({
+        admin_id: (req.admin?.id as string) || 'unknown',
+        action: 'manual_trust_adjust',
+        ip: getClientIp(req),
+        metadata: { user_id: user.user_id, username: user.username, old_score: oldScore, new_score: body.trust_score },
+        user_agent: req.headers['user-agent'] || '',
+      });
+    }
+
+    if (body.trust_locked !== undefined && body.trust_locked !== oldLocked) {
+      user.trust_locked = body.trust_locked;
+      await user.save();
+      logAudit({
+        admin_id: (req.admin?.id as string) || 'unknown',
+        action: body.trust_locked ? 'lock_trust' : 'unlock_trust',
+        ip: getClientIp(req),
+        metadata: { user_id: user.user_id, username: user.username },
+        user_agent: req.headers['user-agent'] || '',
+      });
+    }
+
+    res.json({ success: true, user });
+  } catch (e: any) {
+    if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
+    console.error('Error adjusting trust:', e);
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to adjust trust' });
+  }
+});
+
+// 6. GET /api/admin/users/:user_id/trust-history — Trust change log
+router.get('/users/:user_id/trust-history', async (req, res) => {
+  try {
+    const { page, limit } = trustHistoryQuerySchema.parse(req.query);
+    const skip = (page - 1) * limit;
+
+    const [logs, total] = await Promise.all([
+      TrustScoreLog.find({ user_id: req.params.user_id })
+        .sort({ created_at: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      TrustScoreLog.countDocuments({ user_id: req.params.user_id }),
+    ]);
+
+    const entries = logs.map((l: Record<string, unknown>) => ({
+      created_at: l.created_at,
+      admin_id: l.admin_id || null,
+      action: l.action,
+      old_score: l.old_score,
+      new_score: l.new_score,
+      reason: l.reason || null,
+    }));
+
+    res.json({
+      entries,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+    });
+  } catch (e: any) {
+    if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch trust history' });
+  }
+});
+
+// 7. GET /api/admin/config — Get current config
+router.get('/config', async (req, res) => {
+  try {
+    const config = getConfig();
+    res.json({ config });
+  } catch (error) {
+    console.error('Error fetching config:', error);
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch config' });
+  }
+});
+
+// 8. PUT /api/admin/config — Update config
+router.put('/config', async (req, res) => {
+  try {
+    const body = configUpdateSchema.parse(req.body);
+    const result = await updateConfig(body as Record<string, unknown>, (req.admin?.id as string) || 'unknown');
+
+    res.json({ success: true, config: result, version: result.version });
+  } catch (e: any) {
+    if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to update config' });
+  }
+});
+
+// 9. GET /api/admin/config/impact — Preview config change impact
+router.get('/config/impact', async (req, res) => {
+  try {
+    const { changes: changesRaw } = configImpactQuerySchema.parse(req.query);
+    if (!changesRaw) {
+      return res.json({
+        users_affected: 0,
+        tier_changes: { to_scholar: 0, from_scholar: 0 },
+        rate_changes: { increased: 0, decreased: 0 },
+      });
+    }
+
+    let changes: Record<string, unknown>;
+    try {
+      changes = JSON.parse(changesRaw);
+    } catch {
+      return res.status(400).json({ code: 'VALIDATION', error: 'Invalid JSON in changes parameter' });
+    }
+
+    const current = getConfig();
+    const currentScholar = current.trust_tiers.scholar_min;
+    const currentTroll = current.trust_tiers.troll_max;
+
+    const proposedTrust = (changes as Record<string, Record<string, number>>).trust_tiers || {};
+    const newScholar = proposedTrust.scholar_min ?? currentScholar;
+    const newTroll = proposedTrust.troll_max ?? currentTroll;
+
+    const allUsers = await User.find({}).select('trust_score').lean();
+    let toScholar = 0;
+    let fromScholar = 0;
+
+    for (const u of allUsers as Array<{ trust_score: number }>) {
+      const wasScholar = u.trust_score >= currentScholar;
+      const nowScholar = u.trust_score >= newScholar;
+      if (!wasScholar && nowScholar) toScholar++;
+      if (wasScholar && !nowScholar) fromScholar++;
+    }
+
+    const usersWithoutOverride = await User.find({
+      $or: [
+        { rate_limit_override: { $exists: false } },
+        { 'rate_limit_override.posts_per_hour': null, 'rate_limit_override.comments_per_hour': null },
+      ],
+    }).select('trust_score').lean();
+
+    const proposedRates = (changes as Record<string, Record<string, Record<string, Record<string, number>>>>).rate_limits || {};
+    const proposedTiers = proposedRates.tiers || {};
+
+    let ratesIncreased = 0;
+    let ratesDecreased = 0;
+
+    for (const u of usersWithoutOverride as Array<{ trust_score: number }>) {
+      const tier = u.trust_score >= newScholar ? 'scholar' : u.trust_score < newTroll ? 'troll' : 'neutral';
+      const curTier = current.rate_limits.tiers[tier];
+      const curTotal = (curTier.multiplier * current.rate_limits.base_posts_per_hour) + (curTier.multiplier * current.rate_limits.base_comments_per_hour);
+
+      const newTierConfig = (proposedTiers as unknown as Record<string, Record<string, number>>)[tier] || {};
+      const flatRates = proposedRates as unknown as Record<string, number>;
+      const newBasePosts = flatRates.base_posts_per_hour ?? current.rate_limits.base_posts_per_hour;
+      const newBaseComments = flatRates.base_comments_per_hour ?? current.rate_limits.base_comments_per_hour;
+      const newMult = newTierConfig.multiplier ?? curTier.multiplier;
+      const newTotal = (newMult * newBasePosts) + (newMult * newBaseComments);
+
+      if (newTotal > curTotal) ratesIncreased++;
+      else if (newTotal < curTotal) ratesDecreased++;
+    }
+
+    res.json({
+      users_affected: toScholar + fromScholar + ratesIncreased + ratesDecreased,
+      tier_changes: { to_scholar: toScholar, from_scholar: fromScholar },
+      rate_changes: { increased: ratesIncreased, decreased: ratesDecreased },
+    });
+  } catch (error) {
+    console.error('Error computing config impact:', error);
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to compute config impact' });
+  }
+});
+
+// 10. GET /api/admin/config/versions — Config version history
+router.get('/config/versions', async (req, res) => {
+  try {
+    const versions = getConfigVersions();
+    res.json({ versions });
+  } catch (error) {
+    console.error('Error fetching config versions:', error);
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch config versions' });
+  }
 });
 
 export default router;

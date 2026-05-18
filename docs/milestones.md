@@ -525,8 +525,8 @@ Single unified notification system that handles all user feedback across the ent
 - [x] `GET /api/admin/comments/export` — CSV export
 
 #### M10.6 — Users Management (Anonymous)
-- [ ] `GET /api/admin/users` — All anonymous users
-- [ ] Table columns:
+- [x] `GET /api/admin/users` — All anonymous users
+- [x] Table columns:
   - Username (any_XXXX)
   - Custom Display Name (if set)
   - Device Fingerprint (truncated)
@@ -535,13 +535,13 @@ Single unified notification system that handles all user feedback across the ent
   - Trust Score (Scholar/Neutral/Troll)
   - First Seen
   - Last Active
-- [ ] Actions:
+- [x] Actions:
   - **View Profile**: See all their posts/comments
   - **Ban**: Prevent from posting (by fingerprint)
   - **Whitelist**: Mark as trusted (bypass rate limits)
   - **Shadow Ban**: Can post but only they see it
-- [ ] Search: By username, by fingerprint
-- [ ] Filters:
+- [x] Search: By username, by fingerprint
+- [x] Filters:
   - By trust score
   - By post count (high/low)
   - By ban status
@@ -659,35 +659,35 @@ Single unified notification system that handles all user feedback across the ent
 - [x] 9 analytics endpoints: `search/overview`, `queries`, `relevance`, `trends`, `infrastructure`, `behavior`, `trending`, `popular`, `engaged`
 
 #### M10.11 — Rate Limiting & Trust Scores
-- [ ] `GET /api/admin/rate-limits` — View rate limit settings
-- [ ] `PATCH /api/admin/rate-limits` — Adjust global base rate limits
+- [x] `GET /api/admin/rate-limits` — View rate limit settings
+- [x] `PATCH /api/admin/rate-limits` — Adjust global base rate limits
   - General comments per hour
   - Item-anchored comments per hour
   - Posts per hour
   - Burst limit
-- [ ] `PATCH /api/admin/rate-limits/tiers` — Set tier-specific rate limit multipliers
+- [x] `PATCH /api/admin/rate-limits/tiers` — Set tier-specific rate limit multipliers
   - Troll multiplier: Default 0.5x
   - Neutral multiplier: Default 1.0x  
   - Scholar multiplier: Default 2.0x
   - Admins can adjust each tier's multiplier independently
-- [ ] `GET /api/admin/trust-scores` — View trust score distribution
+- [x] `GET /api/admin/trust-scores` — View trust score distribution
   - Count of Scholars
   - Count of Neutrals
   - Count of Trolls
   - Recently flagged users
-- [ ] Manual user trust level locking:
+- [x] Manual user trust level locking:
   - `PATCH /api/admin/users/:user_id/trust` — Lock user to specific trust level
   - Options: scholar, neutral, troll, automatic (default)
   - When locked, automatic trust score calculation is permanently disabled for this user
   - User will always remain at the assigned level until manually changed
-- [ ] Trust Score History Tracking:
+- [x] Trust Score History Tracking:
   - All trust score changes are permanently logged
   - `GET /api/admin/users/:user_id/trust-history` — Full audit trail of trust score changes
   - Fields: timestamp, previous_score, new_score, reason (approval/rejection/manual)
   - Source: auto-calculated vs manual admin override
   - Viewable on user admin profile page
   - Retention: Permanent record
-- [ ] Per-user rate limit overrides:
+- [x] Per-user rate limit overrides:
   - `PATCH /api/admin/users/:user_id/rate-limits` — Set custom rate limits for individual users
   - Admins can set custom post/comment limits for any user, bypassing tier multipliers
   - Overrides persist permanently until removed

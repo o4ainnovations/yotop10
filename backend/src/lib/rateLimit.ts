@@ -3,42 +3,50 @@
  * 
  * Two independent constraints:
  * 1. Soft gradient mapping for trust < 1.0
- * 2. Hard minimum guarantee that never goes below 2 posts/hour
+ * 2. Hard minimum guarantee that never goes below the troll tier min_posts
  * 
  * No silent bans, no hard discontinuities, preserves full incentive gradient.
+ * Base limits read from enterprise config store (memory-cached, 0ms overhead).
  */
 
-export const BASE_POSTS_PER_HOUR = 4;
-export const BASE_COMMENTS_PER_HOUR = 20;
-export const MINIMUM_POSTS_PER_HOUR = 2;
-export const MINIMUM_COMMENTS_PER_HOUR = 10;
+import { getConfig } from './systemConfig';
 
 export function calculateEffectivePostLimit(trustScore: number, postType?: string): number {
+  const config = getConfig();
+
   if (postType === 'counter_list') {
-    return 9999;
+    if (config.rate_limits.counter_lists_unlimited) {
+      return 9999;
+    }
   }
 
-  if (!Number.isFinite(trustScore)) return MINIMUM_POSTS_PER_HOUR;
+  const minPosts = config.rate_limits.tiers.troll.min_posts;
+
+  if (!Number.isFinite(trustScore)) return minPosts;
 
   const effectiveTrust = trustScore < 1.0
     ? 0.5 + (trustScore * 0.5)
     : trustScore;
 
-  const proportional = BASE_POSTS_PER_HOUR * effectiveTrust;
+  const proportional = config.rate_limits.base_posts_per_hour * effectiveTrust;
 
-  return Math.max(MINIMUM_POSTS_PER_HOUR, Math.floor(proportional));
+  return Math.max(minPosts, Math.floor(proportional));
 }
 
 export function calculateEffectiveCommentLimit(trustScore: number): number {
-  if (!Number.isFinite(trustScore)) return MINIMUM_COMMENTS_PER_HOUR;
+  const config = getConfig();
+
+  const minComments = Math.floor(config.rate_limits.tiers.troll.multiplier * config.rate_limits.base_comments_per_hour);
+
+  if (!Number.isFinite(trustScore)) return minComments;
 
   const effectiveTrust = trustScore < 1.0
     ? 0.5 + (trustScore * 0.5)
     : trustScore;
 
-  const proportional = BASE_COMMENTS_PER_HOUR * effectiveTrust;
+  const proportional = config.rate_limits.base_comments_per_hour * effectiveTrust;
 
-  return Math.max(MINIMUM_COMMENTS_PER_HOUR, Math.floor(proportional));
+  return Math.max(minComments, Math.floor(proportional));
 }
 
 export function getRateLimitKey(namespace: 'posts' | 'comments', fingerprint: string): string {

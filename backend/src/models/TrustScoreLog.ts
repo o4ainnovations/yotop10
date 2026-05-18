@@ -4,13 +4,15 @@ import { registerModel } from '../lib/modelRegistry';
 export interface ITrustScoreLog extends Document {
   user_id: string;
   post_id: string;
-  action: 'approve' | 'reject';
+  action: 'approve' | 'reject' | 'manual_adjust';
   delta: number;
   old_score: number;
   new_score: number;
   version: number;
   multiplier: number;
   base_delta: number;
+  admin_id: string | null;
+  reason: string | null;
   created_at: Date;
 }
 
@@ -28,7 +30,15 @@ const trustScoreLogSchema = new Schema<ITrustScoreLog>(
     action: {
       type: String,
       required: true,
-      enum: ['approve', 'reject'],
+      enum: ['approve', 'reject', 'manual_adjust'],
+    },
+    admin_id: {
+      type: String,
+      default: null,
+    },
+    reason: {
+      type: String,
+      default: null,
     },
     delta: {
       type: Number,

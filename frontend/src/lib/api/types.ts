@@ -208,3 +208,82 @@ export interface ArgumentsResponse {
   arguments: ArgumentPost[];
   pagination: { page: number; limit: number; total: number; totalPages: number };
 }
+
+export interface UserSummary {
+  _id: string;
+  id: string;
+  username: string;
+  display_name: string;
+  trust_score: number;
+  trust_tier: 'scholar' | 'neutral' | 'troll';
+  trust_locked: boolean;
+  post_count: number;
+  comment_count: number;
+  effective_rate_limit_posts: number;
+  effective_rate_limit_comments: number;
+  restricted: boolean;
+  restricted_until: string | null;
+  profile_image_url: string | null;
+  created_at: string;
+}
+
+export interface UserDetail extends UserSummary {
+  bio?: string;
+  email?: string;
+  trust_score_breakdown?: Record<string, number>;
+  rate_limit_overrides?: {
+    posts_per_hour: number | null;
+    comments_per_hour: number | null;
+  };
+  restriction_history?: Array<{ action: string; date: string; reason: string }>;
+}
+
+export interface TrustHistoryEntry {
+  _id: string;
+  user_id: string;
+  old_score: number;
+  new_score: number;
+  change: number;
+  reason: string;
+  admin_username: string | null;
+  created_at: string;
+}
+
+export interface UserListResponse {
+  users: UserSummary[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+  stats: Record<string, number>;
+}
+
+export interface SystemConfig {
+  rate_limits: {
+    base_posts_per_hour: number;
+    base_comments_per_hour: number;
+    troll_multiplier: number;
+    neutral_multiplier: number;
+    scholar_multiplier: number;
+    counter_lists_toggle: boolean;
+    comment_edit_window_minutes: number;
+  };
+  trust_tiers: {
+    scholar_threshold: number;
+    troll_threshold: number;
+    hysteresis: number;
+    review_window_hours: number;
+    double_blind: boolean;
+  };
+}
+
+export interface ConfigImpact {
+  users_affected: number;
+  tier_changes: {
+    to_scholar: number;
+    to_neutral: number;
+    to_troll: number;
+  };
+  rate_changes: {
+    increased: number;
+    decreased: number;
+    unchanged: number;
+  };
+}

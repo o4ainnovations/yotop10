@@ -118,6 +118,10 @@ const startServer = async () => {
     const { startArgumentCron } = await import('./lib/argumentCron');
     startArgumentCron();
 
+    const { initConfig, startConfigCron } = await import('./lib/systemConfig');
+    await initConfig();
+    startConfigCron();
+
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
@@ -139,6 +143,8 @@ process.on('SIGTERM', async () => {
   stopSnapshotCron();
   const { stopArgumentCron } = await import('./lib/argumentCron');
   stopArgumentCron();
+  const { stopConfigCron } = await import('./lib/systemConfig');
+  stopConfigCron();
   await redis.quit();
   await mongoose.connection.close();
   process.exit(0);
@@ -154,6 +160,8 @@ process.on('SIGINT', async () => {
   stopSnapshotCron();
   const { stopArgumentCron } = await import('./lib/argumentCron');
   stopArgumentCron();
+  const { stopConfigCron } = await import('./lib/systemConfig');
+  stopConfigCron();
   await redis.quit();
   await mongoose.connection.close();
   process.exit(0);
