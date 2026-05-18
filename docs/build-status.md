@@ -1,6 +1,25 @@
 # YoTop10 — Build Status (Re-Evaluated)
 
-> Updated after architecture review + feature additions. 2026-05-17.
+> Updated after architecture review + feature additions. 2026-05-18.
+
+---
+
+## BLOCKER SUMMARY
+
+### Ready to Build (3 — no dependencies)
+| # | Feature | Milestone |
+|---|---------|-----------|
+| 1 | Futuristic Theme | V2.1 |
+| 2 | Retro Theme (Myspace-style) | V2.1 |
+| 3 | Admin Hall of Fame management | M10.8 |
+
+### Blocked (4 — dependencies not met)
+| # | Feature | Milestone | Blocked By | Fix Required |
+|---|---------|-----------|------------|--------------|
+| 1 | Counter-List Arena | M5.6.3-7 | Post model | Add 6 fields: parent_id, spark_score, version_id, counter_count, meta_robots, agreement_pct |
+| 2 | Post-Level Spark Engine | M5.6.1 | Post model | Add spark_score field |
+| 3 | Dynamic Reputation Engine | M5.6.2 | Post model + Arena | Add fields + build Arena first |
+| 4 | Public Hall of Fame | M14 | M10.8 | Build admin Hall of Fame first |
 
 ---
 
@@ -67,21 +86,18 @@
 
 ---
 
-## PARTIALLY BUILT (7 items)
+## PARTIALLY BUILT (4 items)
 
 | # | Feature | Done | Missing | Milestone | Blockers |
 |---|---------|------|---------|-----------|----------|
 | 1 | Admin Categories page | Backend fully built. Page exists. | Drag-drop tree, status UI, templates | M10.7 | None |
 | 2 | Admin Notifications page | Backend fully built. Page exists. | User-facing message endpoint verification | M10.9b | None |
 | 3 | Admin Search page | Backend fully built. Page exists. | — | M10.10 | None |
-| 4 | Hall of Fame | Featured fields + toggle exist. | Public page, admin page, curation UI | M10.8 + M14 | Blocked by M10.8 |
-| 5 | Counter-List System | Type exists, rate exempt. | Arena spec (parent linking, VS view, etc.) | M5.6.3-7 | Blocked by Post model fields |
-| 6 | Comment Spark Score | Fully built for comments. | Post-level spark scoring | M5.6.1 | Blocked by Post.spark_score |
-| 7 | Submit page | Full form with all features. | Post type selector — hardcoded to top_list | M3 | None |
+| 4 | Submit page | Full form with all features. | Post type selector — hardcoded to top_list | M3 | None |
 
 ---
 
-## NOT BUILT — 0% Implementation (7 items)
+## NOT BUILT (7 items)
 
 ### No Blockers — Ready to Build (3 items)
 
@@ -95,25 +111,25 @@
 
 | # | Feature | Milestone | Blocked By |
 |---|---------|-----------|------------|
-| 11 | Counter-List Arena (challenger editor, VS view, challenges gallery) | M5.6 | Post model fields (parent_id, spark_score) |
-| 12 | Post-Level Spark Engine (60/40, trust multipliers) | M5.6.1 | Post model fields |
-| 13 | Dynamic Reputation Engine ($R$) | M5.6.2 | Post model fields |
-| 14 | Public Hall of Fame page (`/hall-of-fame`) | M14 | M10.8 (admin HoF management) |
+| 1 | Counter-List Arena (challenger editor, VS view, challenges gallery, governance engine) | M5.6.3-7 | Post model (6 fields) |
+| 2 | Post-Level Spark Engine (60/40 split, trust multipliers, decay + library guard) | M5.6.1 | Post model (spark_score) |
+| 3 | Dynamic Reputation Engine (tiered quality matrix, R formula, S/A/B/C rank) | M5.6.2 | Post model + Arena |
+| 4 | Public Hall of Fame page (`/hall-of-fame`) | M14 | M10.8 (admin HoF management) |
 
 ---
 
 ## BLOCKER CHAINS
 
-### Chain 1: Post Model → Arena (12 features blocked)
+### Chain 1: Post Model → Arena (3 feature groups blocked)
 ```
-Post model missing 6 fields (parent_id, spark_score, version_id, etc.)
-    └── BLOCKS: M5.6.1 through M5.6.8 (entire Arena)
+Post model missing 6 fields (parent_id, spark_score, version_id, counter_count, meta_robots, agreement_pct)
+    → BLOCKS: M5.6.1 (Spark Engine), M5.6.2 (Reputation Engine), M5.6.3-7 (Counter-List Arena)
 ```
-**Fix**: Add 6 Post fields → unblocks 12 features.
+**Fix**: Add 6 Post fields → unblocks all Arena features.
 
 ### Chain 2: M10.8 → Public Hall of Fame (1 feature)
 ```
-M10.8 (admin HoF management) not built → Blocks M14 (public /hall-of-fame page)
+M10.8 (admin HoF management) not built → BLOCKS: M14 (public /hall-of-fame page)
 ```
 
 ---
@@ -123,7 +139,7 @@ M10.8 (admin HoF management) not built → Blocks M14 (public /hall-of-fame page
 | Status | Count |
 |---|--|
 | **FULLY BUILT** | 56 |
-| **PARTIALLY BUILT** | 7 |
+| **PARTIALLY BUILT** | 4 |
 | **NOT BUILT — no blockers** | 3 |
 | **NOT BUILT — blocked** | 4 |
 | **TOTAL NOT BUILT** | **7** |

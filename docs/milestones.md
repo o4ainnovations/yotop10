@@ -730,11 +730,11 @@ Single unified notification system that handles all user feedback across the ent
 - [x] `/admin/alerts/[id]` — Alert detail with live status + resolution guide
 - [x] `/admin/audit` — Audit logs
 - [x] `/admin/profile` — Admin profile
-- [ ] `/admin/users` — Anonymous users management
+- [x] `/admin/users` — Anonymous users management
 - [x] `/admin/categories` — Categories CRUD
 - [x] `/admin/notifications` — Outbound messaging (individual + broadcast)
 - [x] `/admin/search` — Search management
-- [ ] `/admin/settings` — Rate limits, trust scores
+- [x] `/admin/settings` — Rate limits, trust scores
 
 #### M10.14 — Admin UI Components
 - [x] `AdminLayout` — Sidebar navigation + header
