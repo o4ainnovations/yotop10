@@ -1,6 +1,15 @@
 # RAM — Runtime Action Manifest
 
 ## Completed
+- **[M10.8] Hall of Fame backend** — Complete backend Hall of Fame system:
+  1. `GET /api/admin/hall-of-fame` — List curated entries with populated post data, sorted by sort_order asc/featured_at desc
+  2. `POST /api/admin/hall-of-fame` — Add post to HoF (validates approved, prevents duplicates, sets featured flags)
+  3. `PATCH /api/admin/hall-of-fame/:id` — Edit editorial note
+  4. `DELETE /api/admin/hall-of-fame/:id` — Remove from HoF, unset post.featured
+  5. `PATCH /api/admin/hall-of-fame/reorder` — Bulk sort_order update
+  6. `GET /api/admin/hall-of-fame/candidates` — Auto-suggestions (comment_count >= 10 OR view_count >= 500, last 90 days)
+  7. `GET /api/hall-of-fame` — Public endpoint, no auth, sorted by sort_order asc
+  - Files: `routes/admin.ts`, `routes/hallOfFame.ts`, `routes/index.ts`, `schemas/admin.ts`, `models/HallOfFame.ts` (already existed)
 - **[M00.0] Dev ports changed** — Frontend `3000→3100`, Backend `8000→8100`
 - **[Fix] PM2 7 compatibility** — JSON ecosystem config, Node entry points, pm2 install
 - **[Fix] Hydration mismatch** — `useRef` counter for deterministic item IDs
@@ -89,6 +98,14 @@
   7. `src/app/layout.tsx` — Updated metadata (manifest, themeColor, appleWebApp), imported SWRegister + PWAInstallPrompt
   8. `src/app/sw-register.test.ts` — 5 tests: function exists, doesn't throw, registers load listener, no-op when no serviceWorker, no-op in SSR
 
+- **[Feature] Hall of Fame system (M10.8 + M14)** — Complete admin + public infrastructure:
+  1. `backend/src/routes/hallOfFame.ts` — Public `GET /api/hall-of-fame`: featured posts sorted by sort_order, filters deleted/unapproved posts, null-safe post references
+  2. `backend/src/routes/admin.ts:2643-2831` — 6 admin endpoints: GET/POST/DELETE/PATCH hall-of-fame, candidates, reorder, editorial note
+  3. `backend/src/routes/hallOfFame.test.ts` — 40 integration tests: public endpoint (empty, deleted filter, unapproved filter, null post, DB error), admin endpoints (add/sort/duplicate/status/reorder/editorial-note/candidates/delete/unauthorized/edge-cases), 10 documented flaws
+  4. `frontend/src/components/HallOfFameCard.tsx` — Reusable card with 3 variants: `public` (compact with FEATURED badge, link, stats), `admin` (sort_order badge, edit/remove buttons), `featured` (large with hero image, amber badge, editorial note)
+  5. `frontend/src/app/hall-of-fame/page.test.tsx` — 29 component tests: public (title, badge, category, note, author, counts, null post, null note, zero counts, missing slug), admin (sort badge, buttons, conditional buttons, note, missing author, relative time, empty title), featured (badge, hero image, no hero, title link, author, missing display name, null note), edge cases
+  6. `backend/src/routes/index.ts` — Registered `/api/hall-of-fame` route
+
 ## Current
 - **[Feature] Share system** — Complete share infrastructure:
   1. `backend/src/models/Post.ts` — Added `share_count` field to Post model
@@ -167,18 +184,25 @@
 - Frontend `/search` page (M12)
 - Admin search panel (health badge, reindex button, test search)
 - Per-post "is my post searchable?" button
-- M10.8: Hall of Fame management
 
 ## Current
 - **[Feature] M10.6 + M10.11 — 10 Admin endpoints for Users & Config management** — Backend complete:
-  1. `GET /api/admin/users` — Paginated user listing with search, trust/status filters, post/comment aggregation, filter counts
-  2. `GET /api/admin/users/:user_id` — Single user detail with post_count, comment_count, posts_approved, posts_rejected
-  3. `PATCH /api/admin/users/:user_id/restrict` — Ban/unban user with restricted_until
-  4. `PATCH /api/admin/users/:user_id/rate-limits` — Per-user rate limit override
-  5. `PATCH /api/admin/users/:user_id/trust` — Manual trust adjustment with TrustScoreLog entry + audit
-  6. `GET /api/admin/users/:user_id/trust-history` — Paginated trust change log
-  7. `GET /api/admin/config` — Get current system config
-  8. `PUT /api/admin/config` — Update config with audit logging
-  9. `GET /api/admin/config/impact` — Preview config change impact on users
-  10. `GET /api/admin/config/versions` — Config version history
+   1. `GET /api/admin/users` — Paginated user listing with search, trust/status filters, post/comment aggregation, filter counts
+   2. `GET /api/admin/users/:user_id` — Single user detail with post_count, comment_count, posts_approved, posts_rejected
+   3. `PATCH /api/admin/users/:user_id/restrict` — Ban/unban user with restricted_until
+   4. `PATCH /api/admin/users/:user_id/rate-limits` — Per-user rate limit override
+   5. `PATCH /api/admin/users/:user_id/trust` — Manual trust adjustment with TrustScoreLog entry + audit
+   6. `GET /api/admin/users/:user_id/trust-history` — Paginated trust change log
+   7. `GET /api/admin/config` — Get current system config
+   8. `PUT /api/admin/config` — Update config with audit logging
+   9. `GET /api/admin/config/impact` — Preview config change impact on users
+   10. `GET /api/admin/config/versions` — Config version history
 - Files: `routes/admin.ts`, `models/TrustScoreLog.ts`, `schemas/admin.ts`, `lib/systemConfig.ts`, `models/index.ts`
+
+- **[Feature] M10.8 Hall of Fame — Frontend pages** — 6 files:
+  1. `types.ts` — Added `HallOfFameEntry` + `HallOfFameCandidate` interfaces
+  2. `api/endpoints/admin.ts` — Added 6 admin API functions: getHallOfFame, addToHallOfFame, removeFromHallOfFame, reorderHallOfFame, updateEditorialNote, getHallOfFameCandidates
+  3. `api.ts` — Wired Hall of Fame admin functions + `getPublicHallOfFame()` export
+  4. `app/admin/hall-of-fame/page.tsx` — Admin curation page: Featured/Candidates toggle, reorder with up/down buttons, inline editorial note editing, remove with confirmation, candidate feature button, empty states
+  5. `app/hall-of-fame/page.tsx` — Public page: Wikipedia-style layout, 1-3 featured hero cards with cover image + editorial quote + Featured badge, 2-3 column grid for remaining, glassmorphism hover, empty state
+  6. `app/admin/layout.tsx` — Added "Hall of Fame" nav item in admin sidebar

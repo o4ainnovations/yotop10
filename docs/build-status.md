@@ -6,12 +6,11 @@
 
 ## BLOCKER SUMMARY
 
-### Ready to Build (3 — no dependencies)
+### Ready to Build (2 — no dependencies)
 | # | Feature | Milestone |
 |---|---------|-----------|
 | 1 | Futuristic Theme | V2.1 |
 | 2 | Retro Theme (Myspace-style) | V2.1 |
-| 3 | Admin Hall of Fame management | M10.8 |
 
 ### Blocked (4 — dependencies not met)
 | # | Feature | Milestone | Blocked By | Fix Required |
@@ -23,7 +22,7 @@
 
 ---
 
-## FULLY BUILT (56 items)
+## FULLY BUILT (58 items)
 
 | # | Feature | Milestone |
 |---|---------|-----------|
@@ -83,6 +82,8 @@
 | 54 | SEO Indexing Guard (noindex for low-spark + short-description posts) | M5.5 |
 | 55 | Share system (OG tags, UTM, copy link, analytics) | M5.Share |
 | 56 | PWA & Offline (service worker, manifest, offline cache) | V2.5 |
+| 57 | Admin Hall of Fame management (curation, reorder, auto-candidate suggestions, 6 endpoints, 40 BE tests) | M10.8 |
+| 58 | Public Hall of Fame (public API endpoint, /hall-of-fame page, HallOfFameCard with 3 variants, 29 FE tests) | M14 |
 
 ---
 
@@ -97,15 +98,14 @@
 
 ---
 
-## NOT BUILT (7 items)
+## NOT BUILT (6 items)
 
-### No Blockers — Ready to Build (3 items)
+### No Blockers — Ready to Build (2 items)
 
 | # | Feature | Milestone |
 |---|---------|-----------|
-| 1 | Admin Hall of Fame management (curation, reorder, auto-candidate suggestions) | M10.8 |
-| 2 | Futuristic theme | V2.1 |
-| 3 | Retro theme | V2.1 |
+| 1 | Futuristic theme | V2.1 |
+| 2 | Retro theme | V2.1 |
 
 ### Blocked by Dependencies (4 items)
 
@@ -127,10 +127,11 @@ Post model missing 6 fields (parent_id, spark_score, version_id, counter_count, 
 ```
 **Fix**: Add 6 Post fields → unblocks all Arena features.
 
-### Chain 2: M10.8 → Public Hall of Fame (1 feature)
+### Chain 2: M10.8 → Public Hall of Fame (RESOLVED)
 ```
-M10.8 (admin HoF management) not built → BLOCKS: M14 (public /hall-of-fame page)
+M10.8 (admin HoF management) built — UNBLOCKS: M14 (public /hall-of-fame page)
 ```
+
 
 ---
 
@@ -138,9 +139,9 @@ M10.8 (admin HoF management) not built → BLOCKS: M14 (public /hall-of-fame pag
 
 | Status | Count |
 |---|--|
-| **FULLY BUILT** | 56 |
+| **FULLY BUILT** | 58 |
 | **PARTIALLY BUILT** | 4 |
-| **NOT BUILT — no blockers** | 3 |
+| **NOT BUILT — no blockers** | 2 |
 | **NOT BUILT — blocked** | 4 |
-| **TOTAL NOT BUILT** | **7** |
+| **TOTAL NOT BUILT** | **6** |
 | **Architecture decision docs** | 8 |

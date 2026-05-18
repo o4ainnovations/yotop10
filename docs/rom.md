@@ -1073,11 +1073,11 @@ This audit analyzed 39 source files:
 | M11.C.1 | Double-blind moderation | Not implemented |
 | M5.6 | Counter-list system | Not implemented |
 | M10.6 | Users management | Not implemented |
-| M10.8 | Hall of Fame management | Not implemented |
+| M10.8 | Hall of Fame management | Implemented |
 | M10.9 | Reactions management | Not implemented |
 | M10.11 | Rate limits & trust scores UI | Not implemented |
 | M13 | Arguments page | Not implemented (post-MVP) |
-| M14 | Hall of Fame | Not implemented (post-MVP) |
+| M14 | Hall of Fame | Implemented |
 | M15 | Identity Portability | Implemented |
 
 ---

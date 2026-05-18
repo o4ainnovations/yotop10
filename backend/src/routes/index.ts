@@ -16,6 +16,7 @@ import articlesRouter from './articles';
 import exploreRouter from './explore';
 import argumentsRouter from './arguments';
 import bookmarksRouter from './bookmarks';
+import hallOfFameRouter from './hallOfFame';
 import adminRouter from './admin';
 
 export interface RouteDefinition {
@@ -42,4 +43,5 @@ export const routes: RouteDefinition[] = [
   { path: '/api/explore',     router: exploreRouter },
   { path: '/api/arguments',  router: argumentsRouter },
   { path: '/api/bookmarks',  router: bookmarksRouter },
+  { path: '/api/hall-of-fame', router: hallOfFameRouter },
 ];

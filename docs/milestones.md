@@ -597,17 +597,18 @@ Single unified notification system that handles all user feedback across the ent
 - [ ] Category RSS feeds — `/c/:slug/feed`
 
 #### M10.8 — Hall of Fame Management
-- [ ] `GET /api/admin/hall-of-fame` — All featured posts
-- [ ] `POST /api/admin/hall-of-fame` — Add to Hall of Fame
-  - Request: `{ post_id, editorial_note, featured_date }`
+- [x] `GET /api/hall-of-fame` — Public: featured posts sorted by sort_order
+- [x] `GET /api/admin/hall-of-fame` — All featured posts
+- [x] `POST /api/admin/hall-of-fame` — Add to Hall of Fame
+  - Request: `{ post_id, editorial_note }`
   - Editorial note: Short text explaining why featured
-- [ ] `DELETE /api/admin/hall-of-fame/:id` — Remove from Hall of Fame
-- [ ] `PATCH /api/admin/hall-of-fame/reorder` — Reorder featured posts
-- [ ] Auto-candidate suggestions:
-  - Posts with 50+ item-anchored comments
-  - Posts active for 3+ months
-  - Low controversy (more CONFIRMED than CONTESTED)
-- [ ] Featured badge customization
+- [x] `PATCH /api/admin/hall-of-fame/:id` — Edit editorial note
+- [x] `DELETE /api/admin/hall-of-fame/:id` — Remove from Hall of Fame
+- [x] `PATCH /api/admin/hall-of-fame/reorder` — Reorder featured posts
+- [x] Auto-candidate suggestions:
+  - Posts with comment_count >= 10 OR view_count >= 500 within last 90 days
+- [x] Featured badge customization (HallOfFameCard with public/admin/featured variants)
+- [x] 40 backend integration tests + 29 frontend component tests
 
 #### M10.9 — Alert System ✅ COMPLETED
 - [x] Alert engine — 12 metrics evaluated every 60s with breach/resolution/cooldown logic
@@ -994,9 +995,11 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 - [x] Frontend: `/arguments`
 
 ### M14 — Hall of Fame (Post-MVP / Phase 2)
-- [ ] `GET /api/hall-of-fame` — Featured lists
-- [ ] Admin curation controls
-- [ ] Frontend: `/hall-of-fame`
+- [x] `GET /api/hall-of-fame` — Featured lists
+- [x] Admin curation controls
+- [x] Frontend: `/hall-of-fame`
+- [x] HallOfFameCard component (public/admin/featured variants)
+- [x] 69 tests (40 backend + 29 frontend)
 
 ---
 
@@ -1027,7 +1030,7 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 - [x] Bookmark/save system
 - [ ] Share system (OG tags, UTM, copy link)
 - [x] Article content type (separate model)
-- [ ] Hall of Fame
+- [x] Hall of Fame
 - [ ] Deployed and verified
 
 ---

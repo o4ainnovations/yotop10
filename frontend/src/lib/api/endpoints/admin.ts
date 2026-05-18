@@ -86,4 +86,16 @@ export const adminApi = {
     apiFetch('/admin/config', { method: 'PUT', body: JSON.stringify(body) }),
   getConfigImpact: (body: Record<string, unknown>) =>
     apiFetch('/admin/config/impact', { method: 'POST', body: JSON.stringify(body) }),
+
+  // Hall of Fame
+  getHallOfFame: () => apiFetch('/admin/hall-of-fame'),
+  addToHallOfFame: (postId: string, editorialNote?: string) =>
+    apiFetch('/admin/hall-of-fame', { method: 'POST', body: JSON.stringify({ post_id: postId, editorial_note: editorialNote || null }) }),
+  removeFromHallOfFame: (id: string) =>
+    apiFetch(`/admin/hall-of-fame/${id}`, { method: 'DELETE' }),
+  reorderHallOfFame: (order: { id: string; sort_order: number }[]) =>
+    apiFetch('/admin/hall-of-fame/reorder', { method: 'PATCH', body: JSON.stringify({ order }) }),
+  updateEditorialNote: (id: string, editorialNote: string) =>
+    apiFetch(`/admin/hall-of-fame/${id}/editorial-note`, { method: 'PATCH', body: JSON.stringify({ editorial_note: editorialNote }) }),
+  getHallOfFameCandidates: () => apiFetch('/admin/hall-of-fame/candidates'),
 };

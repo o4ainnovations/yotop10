@@ -76,3 +76,24 @@ export const configUpdateSchema = z.object({
 export const configImpactQuerySchema = z.object({
   changes: z.string().optional(),
 });
+
+export const addToHallOfFameSchema = z.object({
+  post_id: z.string().min(1),
+  editorial_note: z.string().max(500).optional(),
+});
+
+export const reorderHallOfFameSchema = z.object({
+  entries: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        sort_order: z.number().int().min(0),
+      })
+    )
+    .min(1)
+    .max(200),
+});
+
+export const updateHallOfFameNoteSchema = z.object({
+  editorial_note: z.string().max(500),
+});

@@ -287,3 +287,31 @@ export interface ConfigImpact {
     unchanged: number;
   };
 }
+
+export interface HallOfFameEntry {
+  id: string;
+  post_id: string;
+  post: Post;
+  editorial_note: string | null;
+  featured_at: string;
+  sort_order: number;
+  created_by: string;
+  status_warning?: string | null;
+}
+
+export interface HallOfFameCandidate {
+  id: string;
+  slug: string;
+  title: string;
+  post_type: string;
+  category_slug: string;
+  author_username: string;
+  author_display_name: string;
+  comment_count: number;
+  view_count: number;
+  hero_image_url?: string | null;
+  format?: string;
+  comment_count_last_90_days?: number;
+  view_count_last_90_days?: number;
+  created_at: string;
+}

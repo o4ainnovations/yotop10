@@ -41,4 +41,16 @@ export const API = {
   adminMarkAllAlertNotificationsRead: adminApi.markAllAlertNotificationsRead,
   adminDismissAlertNotification: adminApi.dismissAlertNotification,
   adminGetAlertHistory: adminApi.getAlertHistory,
+  // Hall of Fame (admin)
+  getHallOfFame: adminApi.getHallOfFame,
+  addToHallOfFame: adminApi.addToHallOfFame,
+  removeFromHallOfFame: adminApi.removeFromHallOfFame,
+  reorderHallOfFame: adminApi.reorderHallOfFame,
+  updateEditorialNote: adminApi.updateEditorialNote,
+  getHallOfFameCandidates: adminApi.getHallOfFameCandidates,
 };
+
+export async function getPublicHallOfFame() {
+  const { apiFetch } = await import('./api/client');
+  return apiFetch('/hall-of-fame');
+}

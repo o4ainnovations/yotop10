@@ -30,6 +30,7 @@ import { MessageTemplate } from '../models/MessageTemplate';
 import { UserEvent } from '../models/UserEvent';
 import { TrustScoreLog } from '../models/TrustScoreLog';
 import { SystemConfig as _SystemConfig } from '../models/SystemConfig';
+import { HallOfFame } from '../models/HallOfFame';
 import { getConfig, updateConfig, getConfigVersions } from '../lib/systemConfig';
 import { redis } from '../lib/redis';
 import { trustScoreWorker } from '../lib/trustScoreWorker';
@@ -780,6 +781,13 @@ router.post('/posts/:id/feature', async (req, res) => {
   post.featured = true; post.featured_at = new Date();
   if (req.body.editorial_note) post.editorial_note = req.body.editorial_note;
   await post.save();
+
+  await HallOfFame.findOneAndUpdate(
+    { post_id: post._id },
+    { post_id: post._id, featured_at: new Date(), created_by: req.admin?.username || 'admin', sort_order: 0 },
+    { upsert: true, new: true }
+  );
+
   logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'feature_post', ip: getClientIp(req), metadata: { post_id: (post._id as { toString(): string }).toString(), post_title: post.title }, user_agent: req.headers['user-agent'] || '' });
   indexPost(post as unknown as Record<string, unknown>);
   res.json({ success: true, post });
@@ -791,6 +799,9 @@ router.post('/posts/:id/unfeature', async (req, res) => {
   if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
   post.featured = false; post.featured_at = null; post.editorial_note = null;
   await post.save();
+
+  await HallOfFame.deleteOne({ post_id: post._id });
+
   logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'unfeature_post', ip: getClientIp(req), metadata: { post_id: (post._id as { toString(): string }).toString(), post_title: post.title }, user_agent: req.headers['user-agent'] || '' });
   indexPost(post as unknown as Record<string, unknown>);
   res.json({ success: true, post });
@@ -1574,7 +1585,7 @@ router.get('/stats/alerts', async (req, res) => {
 // ═══ Alert Management ═══════════════════════════════════════════════
 
 import { createThresholdSchema, updateThresholdSchema, notificationQuerySchema, historyQuerySchema } from '../schemas/alert';
-import { userListQuerySchema, restrictUserSchema, rateLimitOverrideSchema, trustAdjustSchema, trustHistoryQuerySchema, configUpdateSchema, configImpactQuerySchema } from '../schemas/admin';
+import { userListQuerySchema, restrictUserSchema, rateLimitOverrideSchema, trustAdjustSchema, trustHistoryQuerySchema, configUpdateSchema, configImpactQuerySchema, addToHallOfFameSchema, reorderHallOfFameSchema, updateHallOfFameNoteSchema } from '../schemas/admin';
 
 // Thresholds CRUD
 router.get('/alerts/thresholds', async (req, res) => {
@@ -2636,6 +2647,226 @@ router.get('/config/versions', async (req, res) => {
   } catch (error) {
     console.error('Error fetching config versions:', error);
     res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch config versions' });
+  }
+});
+
+// ═══ M10.8 Hall of Fame Management ═════════════════════════════════
+
+// GET /api/admin/hall-of-fame — List curated entries
+router.get('/hall-of-fame', async (req, res) => {
+  try {
+    const entries = await HallOfFame.find()
+      .sort({ sort_order: 1, featured_at: -1 })
+      .populate('post_id', 'title slug author_username author_display_name comment_count view_count category_slug hero_image_url intro post_type format created_at deleted status')
+      .lean();
+
+    const populated = entries.map((entry: Record<string, unknown>) => {
+      const post = entry.post_id as Record<string, unknown> | null;
+      return {
+        id: (entry._id as { toString(): string }).toString(),
+        post_id: entry.post_id ? (entry.post_id as { toString(): string }).toString() : '',
+        post: post && !post.deleted && post.status === 'approved' ? {
+          id: (post._id as { toString(): string }).toString(),
+          slug: post.slug || '',
+          title: post.title || '',
+          intro: post.intro || '',
+          post_type: post.post_type || '',
+          comment_count: post.comment_count || 0,
+          view_count: post.view_count || 0,
+          author_username: post.author_username || '',
+          author_display_name: post.author_display_name || '',
+          category_slug: post.category_slug || '',
+          hero_image_url: post.hero_image_url || null,
+          format: post.format || 'list_only',
+          created_at: post.created_at || new Date().toISOString(),
+        } : null,
+        editorial_note: entry.editorial_note || null,
+        featured_at: entry.featured_at || new Date().toISOString(),
+        sort_order: entry.sort_order || 0,
+        created_by: entry.created_by || '',
+        status_warning: post ? (post.deleted ? 'deleted' : post.status !== 'approved' ? post.status : null) : null,
+      };
+    });
+
+    res.json({ featured: populated, total: populated.length });
+  } catch (error) {
+    console.error('Error fetching Hall of Fame entries:', error);
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch Hall of Fame entries' });
+  }
+});
+
+// POST /api/admin/hall-of-fame — Add post to Hall of Fame
+router.post('/hall-of-fame', async (req, res) => {
+  try {
+    const body = addToHallOfFameSchema.parse(req.body);
+
+    const post = await Post.findById(body.post_id);
+    if (!post) {
+      return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
+    }
+    if (post.status !== 'approved') {
+      return res.status(400).json({ code: 'INVALID_STATUS', error: 'Only approved posts can be added to Hall of Fame' });
+    }
+
+    const existing = await HallOfFame.findOne({ post_id: body.post_id });
+    if (existing) {
+      return res.status(409).json({ code: 'ALREADY_FEATURED', error: 'Already featured' });
+    }
+
+    const maxEntry = await HallOfFame.findOne().sort({ sort_order: -1 }).select('sort_order').lean();
+    const sortOrder = (maxEntry?.sort_order ?? -1) + 1;
+
+    const entry = await HallOfFame.create({
+      post_id: body.post_id,
+      editorial_note: body.editorial_note || null,
+      featured_at: new Date(),
+      sort_order: sortOrder,
+      created_by: req.admin?.username || 'admin',
+    });
+
+    post.featured = true;
+    post.featured_at = new Date();
+    await post.save();
+
+    logAudit({
+      admin_id: (req.admin?.id as string) || 'unknown',
+      action: 'hall_of_fame_add',
+      ip: getClientIp(req),
+      metadata: { entry_id: (entry._id as { toString(): string }).toString(), post_id: body.post_id, post_title: post.title },
+      user_agent: req.headers['user-agent'] || '',
+    });
+
+    const populated = await HallOfFame.findById(entry._id)
+      .populate('post_id', 'title slug author_username comment_count view_count category_slug hero_image_url')
+      .lean();
+
+    res.status(201).json({ entry: populated });
+  } catch (e: any) {
+    if (e?.code === 11000) return res.status(409).json({ code: 'ALREADY_FEATURED', error: 'Already featured' });
+    if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
+    console.error('Error adding to Hall of Fame:', e);
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to add to Hall of Fame' });
+  }
+});
+
+// GET /api/admin/hall-of-fame/candidates — Auto-candidate suggestions
+router.get('/hall-of-fame/candidates', async (req, res) => {
+  try {
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000);
+
+    const existingPostIds = (await HallOfFame.find().select('post_id').lean())
+      .map((e: Record<string, unknown>) => (e.post_id as { toString(): string }).toString());
+
+    const candidates = await Post.find({
+      _id: { $nin: existingPostIds },
+      status: 'approved',
+      deleted: false,
+      created_at: { $gte: ninetyDaysAgo },
+      $or: [
+        { comment_count: { $gte: 10 } },
+        { view_count: { $gte: 500 } },
+      ],
+    })
+      .sort({ comment_count: -1, view_count: -1 })
+      .limit(20)
+      .select('title slug author_username comment_count view_count category_slug hero_image_url created_at')
+      .lean();
+
+    res.json({ candidates });
+  } catch (error) {
+    console.error('Error fetching HoF candidates:', error);
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch candidates' });
+  }
+});
+
+// PATCH /api/admin/hall-of-fame/reorder — Reorder entries
+router.patch('/hall-of-fame/reorder', async (req, res) => {
+  try {
+    const body = reorderHallOfFameSchema.parse(req.body);
+
+    const bulkOps = body.entries.map((e) => ({
+      updateOne: {
+        filter: { _id: e.id },
+        update: { $set: { sort_order: e.sort_order } },
+      },
+    }));
+
+    await HallOfFame.bulkWrite(bulkOps);
+
+    logAudit({
+      admin_id: (req.admin?.id as string) || 'unknown',
+      action: 'hall_of_fame_reorder',
+      ip: getClientIp(req),
+      metadata: { count: body.entries.length },
+      user_agent: req.headers['user-agent'] || '',
+    });
+
+    res.json({ success: true });
+  } catch (e: any) {
+    if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
+    console.error('Error reordering HoF:', e);
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to reorder entries' });
+  }
+});
+
+// PATCH /api/admin/hall-of-fame/:id — Edit editorial note
+router.patch('/hall-of-fame/:id', async (req, res) => {
+  try {
+    const body = updateHallOfFameNoteSchema.parse(req.body);
+
+    const sanitized = (body.editorial_note || '').replace(/<[^>]*>/g, '').substring(0, 500);
+
+    const entry = await HallOfFame.findByIdAndUpdate(
+      req.params.id,
+      { editorial_note: sanitized || null },
+      { new: true }
+    ).populate('post_id', 'title slug author_username comment_count view_count category_slug hero_image_url');
+
+    if (!entry) {
+      return res.status(404).json({ code: 'NOT_FOUND', error: 'Hall of Fame entry not found' });
+    }
+
+    logAudit({
+      admin_id: (req.admin?.id as string) || 'unknown',
+      action: 'hall_of_fame_edit_note',
+      ip: getClientIp(req),
+      metadata: { entry_id: req.params.id, post_id: (entry.post_id as unknown as { _id: { toString(): string } })._id.toString() },
+      user_agent: req.headers['user-agent'] || '',
+    });
+
+    res.json({ entry });
+  } catch (e: any) {
+    if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
+    console.error('Error editing HoF note:', e);
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to update editorial note' });
+  }
+});
+
+// DELETE /api/admin/hall-of-fame/:id — Remove from Hall of Fame
+router.delete('/hall-of-fame/:id', async (req, res) => {
+  try {
+    const entry = await HallOfFame.findById(req.params.id);
+    if (!entry) {
+      return res.status(404).json({ code: 'NOT_FOUND', error: 'Hall of Fame entry not found' });
+    }
+
+    const postId = entry.post_id;
+    await HallOfFame.findByIdAndDelete(req.params.id);
+
+    await Post.findByIdAndUpdate(postId, { featured: false });
+
+    logAudit({
+      admin_id: (req.admin?.id as string) || 'unknown',
+      action: 'hall_of_fame_remove',
+      ip: getClientIp(req),
+      metadata: { entry_id: req.params.id, post_id: postId.toString() },
+      user_agent: req.headers['user-agent'] || '',
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error removing from HoF:', error);
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to remove from Hall of Fame' });
   }
 });
 
