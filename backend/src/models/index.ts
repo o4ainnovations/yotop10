@@ -5,6 +5,7 @@ export { Comment } from './Comment';
 export { Reaction } from './Reaction';
 export { Category } from './Category';
 export { AdminUser } from './AdminUser';
+export { PermissionPreset } from './PermissionPreset';
 export { TrustScoreLog } from './TrustScoreLog';
 export { SetupToken } from './SetupToken';
 export { UsernameHistory } from './UsernameHistory';

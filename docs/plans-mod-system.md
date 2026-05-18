@@ -1,5 +1,7 @@
 # Moderator System — Enterprise Implementation Plan (v2)
 
+✅ IMPLEMENTED — 2026-05-18 — commit `50803fb`
+
 ## Objective
 
 Replace the single-admin model with a multi-admin system. One super admin creates moderators with granular, revocable permissions. Mods see only what they're authorized to see. No UI code branches — permissions propagate from a centralized map.

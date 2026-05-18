@@ -97,3 +97,28 @@ export const reorderHallOfFameSchema = z.object({
 export const updateHallOfFameNoteSchema = z.object({
   editorial_note: z.string().max(500),
 });
+
+export const createModSchema = z.object({
+  username: z
+    .string()
+    .min(3, 'Username must be at least 3 characters')
+    .max(30, 'Username must be at most 30 characters')
+    .regex(/^[a-z0-9_]+$/, 'Username must be lowercase alphanumeric with underscores only'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  permissions: z
+    .array(z.string())
+    .min(1, 'At least one permission is required'),
+  preset_name: z.string().optional(),
+});
+
+export const updateModSchema = z.object({
+  permissions: z
+    .array(z.string())
+    .min(1, 'At least one permission is required')
+    .optional(),
+  is_active: z.boolean().optional(),
+});
+
+export const resetPasswordSchema = z.object({
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+});

@@ -20,6 +20,9 @@ declare global {
       admin?: {
         id: string;
         username: string;
+        role: 'super_admin' | 'mod';
+        permissions: string[];
+        permissions_version: number;
         token_version: number;
       };
       fingerprint?: string;

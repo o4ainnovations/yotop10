@@ -1,6 +1,7 @@
 # RAM — Runtime Action Manifest
 
 ## Completed
+- **[M17] Moderator System** — Full multi-admin system with 31 granular permissions, 3-layer enforcement (auto-permission-guard middleware + usePermission hook + sidebar guards), 4 preset roles (Read-Only Auditor, Content Moderator, Full Moderator, Community Manager), 8 mod CRUD endpoints, 4h mod tokens (24h for super admin), permissions_version JWT auto-refresh, double-blind super-admin-only guard, self-disable protection, admin migration on boot, PermissionPreset model + idempotent seeding, 20+ permission guard tests, frontend mods page with Create/Edit/ResetPassword modals. Files: `permissionMap.ts`, `permissionGuard.ts`, `PermissionPreset.ts`, `seedPresets.ts`, `AdminUser.ts` (extended), `adminAuth.ts` (extended), `admin.ts` (mod endpoints + autoPermissionGuard), `server.ts` (migration + seeding), `permissionGuard.test.ts`, `usePermission.ts`, `admin.ts` (frontend API), `stores/admin.ts`, `admin/settings/mods/page.tsx`, `admin/layout.tsx` (sidebar guards), `schemas/admin.ts` (mod schemas), `types/express.d.ts` (admin type), `models/index.ts`, `milestones.md`, `build-status.md`, `plans-mod-system.md`
 - **[M10.8] Hall of Fame backend** — Complete backend Hall of Fame system:
   1. `GET /api/admin/hall-of-fame` — List curated entries with populated post data, sorted by sort_order asc/featured_at desc
   2. `POST /api/admin/hall-of-fame` — Add post to HoF (validates approved, prevents duplicates, sets featured flags)
@@ -205,4 +206,27 @@
   3. `api.ts` — Wired Hall of Fame admin functions + `getPublicHallOfFame()` export
   4. `app/admin/hall-of-fame/page.tsx` — Admin curation page: Featured/Candidates toggle, reorder with up/down buttons, inline editorial note editing, remove with confirmation, candidate feature button, empty states
   5. `app/hall-of-fame/page.tsx` — Public page: Wikipedia-style layout, 1-3 featured hero cards with cover image + editorial quote + Featured badge, 2-3 column grid for remaining, glassmorphism hover, empty state
-  6. `app/admin/layout.tsx` — Added "Hall of Fame" nav item in admin sidebar
+   6. `app/admin/layout.tsx` — Added "Hall of Fame" nav item in admin sidebar
+
+- **[Feature] Frontend moderator system components** — Permission guard + mod management UI:
+  1. `hooks/usePermission.ts` — Permission hook reading role + permissions from admin store, optional loader skeleton
+  2. `stores/admin.ts` — Extended AdminUser with `role` + `permissions`, set from `/admin/me` + `/admin/login` responses
+  3. `lib/api/types.ts` — Added `ModUser`, `PermissionCatalog`, `ModPreset` types
+  4. `lib/api/endpoints/admin.ts` — Added 8 mod API functions: getMods, getMod, createMod, updateMod, deleteMod, resetModPassword, getPermissionCatalog, getPresets
+  5. `lib/api.ts` — Registered 8 mod API functions under API object
+  6. `app/admin/layout.tsx` — Full Tailwind rewrite: sidebar links guarded by usePermission hooks (loading/loaded states), skeleton animations, dark glass sidebar styling
+   7. `components/admin/CreateModModal.tsx` — Modal with username/password inputs, preset selector, 12 accordion categories with checkboxes, live count, create button
+   8. `components/admin/EditModModal.tsx` — Modal with active toggle, perm categories, sync-from-preset button, reset password generator, save/disable buttons
+
+- **[Feature] M10.12 — Backend mod system** — Preset seeder, adminAuth upgrade, mod CRUD, permission guard:
+  1. `models/PermissionPreset.ts` — Mongoose model for permission presets
+  2. `lib/seedPresets.ts` — Idempotent seeder: 4 presets (Read-Only Auditor, Content Moderator, Full Moderator, Community Manager)
+  3. `lib/permissionGuard.ts` — `autoPermissionGuard` middleware, `PERMISSION_CATALOG` (31 permissions), `isValidPermission` validator
+  4. `lib/permissionMap.ts` — `ROUTE_PERMISSIONS` mapping all admin routes to required permissions, `DEFAULT_PERMISSION` for unmapped routes
+  5. `models/AdminUser.ts` — Added `role`, `permissions`, `permissions_version`, `is_active`, `created_by` fields
+  6. `types/express.d.ts` — Expanded `req.admin` with role, permissions, permissions_version
+  7. `lib/adminAuth.ts` — JWT includes role/permissions/permissions_version; is_active check (403 ACCOUNT_DISABLED); permissions_version re-issue; mod=4h / super_admin=24h expiry
+  8. `routes/admin.ts` — 8 mod CRUD endpoints: POST/GET /mods, GET/PATCH/DELETE /mods/:id, POST /mods/:id/reset-password, GET /mods/permissions, GET /mods/presets; autoPermissionGuard applied globally
+  9. `schemas/admin.ts` — Added `createModSchema`, `updateModSchema`, `resetPasswordSchema` with Zod validation
+  10. `server.ts` — `seedPresets()` called on startup after `initConfig()`
+  - Files: 10 backend files created/modified; 638 tests pass, 0 lint errors, 0 type errors, clean build

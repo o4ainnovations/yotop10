@@ -98,4 +98,18 @@ export const adminApi = {
   updateEditorialNote: (id: string, editorialNote: string) =>
     apiFetch(`/admin/hall-of-fame/${id}/editorial-note`, { method: 'PATCH', body: JSON.stringify({ editorial_note: editorialNote }) }),
   getHallOfFameCandidates: () => apiFetch('/admin/hall-of-fame/candidates'),
+
+  // Mods
+  getMods: () => apiFetch('/admin/mods'),
+  getMod: (id: string) => apiFetch(`/admin/mods/${id}`),
+  createMod: (body: Record<string, unknown>) =>
+    apiFetch('/admin/mods', { method: 'POST', body: JSON.stringify(body) }),
+  updateMod: (id: string, body: Record<string, unknown>) =>
+    apiFetch(`/admin/mods/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  deleteMod: (id: string) =>
+    apiFetch(`/admin/mods/${id}`, { method: 'DELETE' }),
+  resetModPassword: (id: string) =>
+    apiFetch(`/admin/mods/${id}/reset-password`, { method: 'POST' }),
+  getPermissionCatalog: () => apiFetch('/admin/mods/permissions'),
+  getPresets: () => apiFetch('/admin/mods/presets'),
 };

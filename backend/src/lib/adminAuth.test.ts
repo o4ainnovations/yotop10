@@ -37,10 +37,18 @@ describe('adminAuth', () => {
       expect(payload.token_version).toBe(5);
     });
 
-    it('includes an exp claim with 24h expiry', () => {
-      const token = generateAdminToken('admin123', 'testadmin', 1);
+    it('includes an exp claim with 24h expiry for super_admin', () => {
+      const token = generateAdminToken('admin123', 'testadmin', 1, 'super_admin');
       const payload = jwt.verify(token, MOCK_SECRET) as { exp: number; iat: number };
       const expectedExp = Math.floor(Date.now() / 1000) + 24 * 60 * 60;
+      expect(payload.exp).toBeGreaterThanOrEqual(expectedExp - 5);
+      expect(payload.exp).toBeLessThanOrEqual(expectedExp + 5);
+    });
+
+    it('includes an exp claim with 4h expiry for mod', () => {
+      const token = generateAdminToken('admin123', 'testadmin', 1, 'mod');
+      const payload = jwt.verify(token, MOCK_SECRET) as { exp: number; iat: number };
+      const expectedExp = Math.floor(Date.now() / 1000) + 4 * 60 * 60;
       expect(payload.exp).toBeGreaterThanOrEqual(expectedExp - 5);
       expect(payload.exp).toBeLessThanOrEqual(expectedExp + 5);
     });
@@ -211,6 +219,10 @@ describe('adminAuth', () => {
       vi.mocked(AdminUser.findById).mockResolvedValue({
         _id: 'admin123',
         username: 'testadmin',
+        role: 'super_admin',
+        permissions: [],
+        permissions_version: 1,
+        is_active: true,
         token_version: 2,
       });
       const token = generateAdminToken('admin123', 'testadmin', 1);
@@ -224,15 +236,22 @@ describe('adminAuth', () => {
       vi.mocked(AdminUser.findById).mockResolvedValue({
         _id: 'admin123',
         username: 'testadmin',
+        role: 'super_admin',
+        permissions: ['dashboard:read'],
+        permissions_version: 0,
+        is_active: true,
         token_version: 1,
       });
-      const token = generateAdminToken('admin123', 'testadmin', 1);
+      const token = generateAdminToken('admin123', 'testadmin', 1, 'super_admin', ['dashboard:read'], 0);
       const { req, res, next } = mockReqRes({ admin_token: token });
       await adminAuthMiddleware(req as never, res as never, next);
       expect(next).toHaveBeenCalled();
       expect(req.admin).toEqual({
         id: 'admin123',
         username: 'testadmin',
+        role: 'super_admin',
+        permissions: ['dashboard:read'],
+        permissions_version: 1,
         token_version: 1,
       });
     });
@@ -241,10 +260,14 @@ describe('adminAuth', () => {
       vi.mocked(AdminUser.findById).mockResolvedValue({
         _id: 'admin123',
         username: 'testadmin',
+        role: 'super_admin',
+        permissions: [],
+        permissions_version: 1,
+        is_active: true,
         token_version: 1,
       });
       const nearExpiryToken = jwt.sign(
-        { id: 'admin123', username: 'testadmin', token_version: 1 },
+        { id: 'admin123', username: 'testadmin', token_version: 1, role: 'super_admin', permissions: [], permissions_version: 1 },
         MOCK_SECRET,
         { expiresIn: '30m' }
       );
@@ -257,14 +280,18 @@ describe('adminAuth', () => {
       expect(next).toHaveBeenCalled();
     });
 
-    it('does not refresh token when far from expiry', async () => {
+    it('does not refresh token when far from expiry and permissions_version matches', async () => {
       vi.mocked(AdminUser.findById).mockResolvedValue({
         _id: 'admin123',
         username: 'testadmin',
+        role: 'super_admin',
+        permissions: [],
+        permissions_version: 1,
+        is_active: true,
         token_version: 1,
       });
       const farExpiryToken = jwt.sign(
-        { id: 'admin123', username: 'testadmin', token_version: 1 },
+        { id: 'admin123', username: 'testadmin', token_version: 1, role: 'super_admin', permissions: [], permissions_version: 1 },
         MOCK_SECRET,
         { expiresIn: '23h' }
       );

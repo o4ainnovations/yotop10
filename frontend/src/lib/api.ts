@@ -48,6 +48,15 @@ export const API = {
   reorderHallOfFame: adminApi.reorderHallOfFame,
   updateEditorialNote: adminApi.updateEditorialNote,
   getHallOfFameCandidates: adminApi.getHallOfFameCandidates,
+  // Mods
+  getMods: adminApi.getMods,
+  getMod: adminApi.getMod,
+  createMod: adminApi.createMod,
+  updateMod: adminApi.updateMod,
+  deleteMod: adminApi.deleteMod,
+  resetModPassword: adminApi.resetModPassword,
+  getPermissionCatalog: adminApi.getPermissionCatalog,
+  getPresets: adminApi.getPresets,
 };
 
 export async function getPublicHallOfFame() {

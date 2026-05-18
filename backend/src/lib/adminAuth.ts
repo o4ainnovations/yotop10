@@ -14,7 +14,8 @@ function getJwtSecret(): string {
   }
 }
 
-const JWT_EXPIRY = '24h';
+const SUPER_ADMIN_EXPIRY = '24h';
+const MOD_EXPIRY = '4h';
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCK_DURATION_MS = 15 * 60 * 1000;
 
@@ -22,15 +23,33 @@ export interface AdminAuthRequest extends Request {
   admin?: {
     id: string;
     username: string;
+    role: 'super_admin' | 'mod';
+    permissions: string[];
+    permissions_version: number;
     token_version: number;
   };
 }
 
-export const generateAdminToken = (adminId: string, username: string, tokenVersion: number): string => {
+export const generateAdminToken = (
+  adminId: string,
+  username: string,
+  tokenVersion: number,
+  role: 'super_admin' | 'mod',
+  permissions: string[],
+  permissionsVersion: number
+): string => {
+  const expiresIn = role === 'super_admin' ? SUPER_ADMIN_EXPIRY : MOD_EXPIRY;
   return jwt.sign(
-    { id: adminId, username, token_version: tokenVersion },
+    {
+      id: adminId,
+      username,
+      role,
+      permissions,
+      permissions_version: permissionsVersion,
+      token_version: tokenVersion,
+    },
     getJwtSecret(),
-    { expiresIn: JWT_EXPIRY }
+    { expiresIn }
   );
 };
 
@@ -45,6 +64,9 @@ export const adminAuthMiddleware: RequestHandler = async (req, res, next) => {
     const decoded = jwt.verify(token, getJwtSecret()) as {
       id: string;
       username: string;
+      role: 'super_admin' | 'mod';
+      permissions: string[];
+      permissions_version: number;
       token_version: number;
       exp?: number;
     };
@@ -54,27 +76,46 @@ export const adminAuthMiddleware: RequestHandler = async (req, res, next) => {
       return res.status(401).json({ code: 'UNAUTHORIZED', error: 'Admin account not found' });
     }
 
+    if (admin.is_active === false) {
+      return res.status(401).json({ code: 'ACCOUNT_DISABLED', error: 'Account has been disabled' });
+    }
+
     if (decoded.token_version !== admin.token_version) {
       return res.status(401).json({ code: 'TOKEN_EXPIRED', error: 'Session expired. Please login again.' });
+    }
+
+    // Check if permissions have changed since token was issued
+    const adminRole = admin.role || 'mod';
+    const needsRefresh =
+      decoded.permissions_version !== (admin.permissions_version || 1) ||
+      (decoded.exp && Date.now() > (decoded.exp * 1000) - (adminRole === 'super_admin' ? 60 * 60 * 1000 : 30 * 60 * 1000));
+
+    if (needsRefresh) {
+      const newToken = generateAdminToken(
+        (admin._id as { toString(): string }).toString(),
+        admin.username,
+        admin.token_version,
+        admin.role || 'mod',
+        admin.permissions || [],
+        admin.permissions_version || 1
+      );
+      const maxAgeMs = (adminRole === 'super_admin' ? 24 : 4) * 60 * 60 * 1000;
+      res.cookie('admin_token', newToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: maxAgeMs,
+      });
     }
 
     req.admin = {
       id: (admin._id as { toString(): string }).toString(),
       username: admin.username,
+      role: admin.role || 'mod',
+      permissions: admin.permissions || [],
+      permissions_version: admin.permissions_version || 1,
       token_version: admin.token_version,
     };
-
-    const REFRESH_THRESHOLD_MS = 60 * 60 * 1000; // 1 hour
-    const expiresAt = (decoded.exp ?? 0) * 1000;
-    if (Date.now() > expiresAt - REFRESH_THRESHOLD_MS) {
-      const newToken = generateAdminToken(req.admin.id, req.admin.username, admin.token_version);
-      res.cookie('admin_token', newToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 24 * 60 * 60 * 1000,
-      });
-    }
 
     next();
   } catch (error) {
@@ -118,3 +159,20 @@ export const generateSetupToken = (): { token: string; expiresAt: Date } => {
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
   return { token, expiresAt };
 };
+
+// Migration: upgrade existing admin users that lack the new fields
+export async function runAdminMigration(): Promise<void> {
+  const result = await AdminUser.updateMany(
+    { role: { $exists: false } },
+    {
+      role: 'super_admin',
+      permissions: [],
+      permissions_version: 1,
+      is_active: true,
+      created_by: 'system',
+    }
+  );
+  if (result.modifiedCount > 0) {
+    console.log('[Mod System] Migrated ' + result.modifiedCount + ' existing admin(s) to super_admin role');
+  }
+}

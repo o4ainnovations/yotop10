@@ -4,9 +4,14 @@ import { registerModel } from '../lib/modelRegistry';
 export interface IAdminUser extends Document {
   username: string;
   password_hash: string;
+  role: 'super_admin' | 'mod';
+  permissions: string[];
+  permissions_version: number;
   token_version: number;
   failed_login_attempts: number;
   locked_until: Date | null;
+  created_by: string;
+  is_active: boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -23,6 +28,19 @@ const adminUserSchema = new Schema<IAdminUser>(
       type: String,
       required: true,
     },
+    role: {
+      type: String,
+      enum: ['super_admin', 'mod'],
+      default: 'mod',
+    },
+    permissions: {
+      type: [String],
+      default: [],
+    },
+    permissions_version: {
+      type: Number,
+      default: 1,
+    },
     token_version: {
       type: Number,
       default: 0,
@@ -34,6 +52,14 @@ const adminUserSchema = new Schema<IAdminUser>(
     locked_until: {
       type: Date,
       default: null,
+    },
+    created_by: {
+      type: String,
+      default: 'system',
+    },
+    is_active: {
+      type: Boolean,
+      default: true,
     },
   },
   {

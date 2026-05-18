@@ -122,6 +122,9 @@ const startServer = async () => {
     await initConfig();
     startConfigCron();
 
+    const { seedPresets } = await import('./lib/seedPresets');
+    await seedPresets();
+
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });

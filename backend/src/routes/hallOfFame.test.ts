@@ -127,10 +127,16 @@ vi.mock('../models/SystemConfig', () => ({ SystemConfig: { findOne: vi.fn() } })
 
 vi.mock('../lib/adminAuth', () => ({
   adminAuthMiddleware: (_req: unknown, _res: unknown, next: () => void) => next(),
-  generateAdminToken: vi.fn(),
-  checkAccountLock: vi.fn(() => ({ locked: false, minutes_remaining: 0 })),
-  recordFailedLogin: vi.fn(),
-  resetLoginAttempts: vi.fn(),
+  generateAdminToken: () => 'mock-token',
+  checkAccountLock: () => null,
+  recordFailedLogin: () => undefined,
+  resetLoginAttempts: () => undefined,
+}));
+
+vi.mock('../lib/permissionGuard', () => ({
+  autoPermissionGuard: (_req: unknown, _res: unknown, next: () => void) => next(),
+  PERMISSION_CATALOG: [],
+  isValidPermission: () => true,
 }));
 
 vi.mock('../lib/auditWriter', () => ({
@@ -189,7 +195,7 @@ function createAdminApp() {
   app.use(express.json());
 
   app.use((req: any, _res, next) => {
-    req.admin = { id: 'admin123', username: 'testadmin' };
+    req.admin = { id: 'admin123', username: 'testadmin', role: 'super_admin', permissions: [], permissions_version: 0, token_version: 1 };
     next();
   });
 
@@ -913,22 +919,15 @@ describe('Hall of Fame — Authorization', () => {
 
     const app = express();
     app.use(express.json());
-    // Mount WITHOUT admin auth bypass
+    app.use((req: any, _res, next) => {
+      req.admin = { id: 'admin123', username: 'testadmin', role: 'super_admin', permissions: [], permissions_version: 0, token_version: 1 };
+      next();
+    });
+    // Mount WITH admin auth bypass for testing
     app.use('/api/admin', adminRouter);
 
-    // The mock makes adminAuthMiddleware pass through.
-    // In reality, the middleware checks JWT cookie and returns 401.
-    // This test verifies the hall-of-fame endpoints ARE on the admin router.
-
-    vi.mocked(HallOfFame.find).mockReturnValue({
-      sort: vi.fn().mockReturnThis(),
-      populate: vi.fn().mockReturnThis(),
-      lean: vi.fn().mockResolvedValue([]),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any);
-
-    // Since we mocked adminAuthMiddleware to always call next(),
-    // this request succeeds. In production, missing JWT cookie → 401.
+    // Since we mocked the middleware to always call next(),
+    // this request succeeds. In production, missing JWT cookie would give 401.
     const res = await request(app).get('/api/admin/hall-of-fame');
     expect(res.status).toBe(200);
   });

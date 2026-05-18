@@ -5,6 +5,8 @@ import { toast } from '@/lib/toast';
 interface AdminUser {
   id: string;
   username: string;
+  role: string;
+  permissions: string[];
 }
 
 interface AdminState {
@@ -26,7 +28,17 @@ export const useAdminStore = create<AdminState>((set) => ({
   checkSession: async () => {
     try {
       const data = await API.adminGetMe() as AdminUser;
-      set({ admin: data, authenticated: true, loading: false, initialized: true });
+      set({
+        admin: {
+          id: data.id,
+          username: data.username,
+          role: data.role || 'mod',
+          permissions: data.permissions || [],
+        },
+        authenticated: true,
+        loading: false,
+        initialized: true,
+      });
     } catch {
       set({ admin: null, authenticated: false, loading: false, initialized: true });
     }
@@ -35,7 +47,16 @@ export const useAdminStore = create<AdminState>((set) => ({
   login: async (username: string, password: string) => {
     try {
       const data = await API.adminLogin(username, password) as { admin: AdminUser };
-      set({ admin: data.admin, authenticated: true, loading: false });
+      set({
+        admin: {
+          id: data.admin.id,
+          username: data.admin.username,
+          role: data.admin.role || 'mod',
+          permissions: data.admin.permissions || [],
+        },
+        authenticated: true,
+        loading: false,
+      });
       toast.success('Welcome back.');
       return true;
     } catch {

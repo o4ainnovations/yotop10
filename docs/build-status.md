@@ -22,7 +22,7 @@
 
 ---
 
-## FULLY BUILT (58 items)
+## FULLY BUILT (59 items)
 
 | # | Feature | Milestone |
 |---|---------|-----------|
@@ -84,6 +84,7 @@
 | 56 | PWA & Offline (service worker, manifest, offline cache) | V2.5 |
 | 57 | Admin Hall of Fame management (curation, reorder, auto-candidate suggestions, 6 endpoints, 40 BE tests) | M10.8 |
 | 58 | Public Hall of Fame (public API endpoint, /hall-of-fame page, HallOfFameCard with 3 variants, 29 FE tests) | M14 |
+| 59 | **Moderator System** — Multi-admin with 31 granular permissions, 3-layer enforcement (auto-permission-guard middleware + usePermission hook + sidebar), 4 preset roles, mod CRUD, 4h mod tokens, permissions_version JWT, double-blind super-admin-only, self-disable guard, admin migration, 20+ tests | M17 |
 
 ---
 
@@ -139,7 +140,7 @@ M10.8 (admin HoF management) built — UNBLOCKS: M14 (public /hall-of-fame page)
 
 | Status | Count |
 |---|--|
-| **FULLY BUILT** | 58 |
+| **FULLY BUILT** | 59 |
 | **PARTIALLY BUILT** | 4 |
 | **NOT BUILT — no blockers** | 2 |
 | **NOT BUILT — blocked** | 4 |

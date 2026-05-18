@@ -18,6 +18,7 @@ import {
   recordFailedLogin,
   resetLoginAttempts,
 } from '../lib/adminAuth';
+import { autoPermissionGuard, PERMISSION_CATALOG, isValidPermission } from '../lib/permissionGuard';
 import { PlatformSnapshot } from '../models/PlatformSnapshot';
 import { Category } from '../models/Category';
 import { PageVisit } from '../models/PageVisit';
@@ -43,6 +44,10 @@ const PUBLIC_PATHS = new Set(['/login', '/setup', '/setup/validate']);
 router.use((req, res, next) => {
   if (PUBLIC_PATHS.has(req.path)) return next();
   return adminAuthMiddleware(req as any, res, next);
+});
+
+router.use((req, res, next) => {
+  return autoPermissionGuard(req, res, next);
 });
 
 /**
@@ -112,19 +117,26 @@ router.post('/login', async (req, res) => {
     const token = generateAdminToken(
       (admin._id as { toString(): string }).toString(),
       admin.username,
-      admin.token_version
+      admin.token_version,
+      admin.role,
+      admin.permissions || [],
+      admin.permissions_version ?? 0
     );
+
+    const cookieMaxAge = admin.role === 'super_admin'
+      ? 24 * 60 * 60 * 1000
+      : 4 * 60 * 60 * 1000;
 
     res.cookie('admin_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000,
+      maxAge: cookieMaxAge,
     });
 
     res.json({
       success: true,
-      admin: { id: admin._id, username: admin.username },
+      admin: { id: admin._id, username: admin.username, role: admin.role },
     });
   } catch (error) {
     console.error('Admin login error:', error);
@@ -171,19 +183,26 @@ router.post('/setup', async (req, res) => {
     const authToken = generateAdminToken(
       (admin._id as { toString(): string }).toString(),
       admin.username,
-      admin.token_version
+      admin.token_version,
+      admin.role,
+      admin.permissions || [],
+      admin.permissions_version ?? 0
     );
+
+    const cookieMaxAge = admin.role === 'super_admin'
+      ? 24 * 60 * 60 * 1000
+      : 4 * 60 * 60 * 1000;
 
     res.cookie('admin_token', authToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000,
+      maxAge: cookieMaxAge,
     });
 
     res.json({
       success: true,
-      admin: { id: admin._id, username: admin.username },
+      admin: { id: admin._id, username: admin.username, role: admin.role },
     });
   } catch (error) {
     console.error('Admin setup error:', error);
@@ -219,6 +238,9 @@ router.get('/me', async (req, res) => {
   res.json({
     id: req.admin!.id,
     username: req.admin!.username,
+    role: req.admin!.role,
+    permissions: req.admin!.permissions,
+    permissions_version: req.admin!.permissions_version,
   });
 });
 
@@ -1585,7 +1607,7 @@ router.get('/stats/alerts', async (req, res) => {
 // ═══ Alert Management ═══════════════════════════════════════════════
 
 import { createThresholdSchema, updateThresholdSchema, notificationQuerySchema, historyQuerySchema } from '../schemas/alert';
-import { userListQuerySchema, restrictUserSchema, rateLimitOverrideSchema, trustAdjustSchema, trustHistoryQuerySchema, configUpdateSchema, configImpactQuerySchema, addToHallOfFameSchema, reorderHallOfFameSchema, updateHallOfFameNoteSchema } from '../schemas/admin';
+import { userListQuerySchema, restrictUserSchema, rateLimitOverrideSchema, trustAdjustSchema, trustHistoryQuerySchema, configUpdateSchema, configImpactQuerySchema, addToHallOfFameSchema, reorderHallOfFameSchema, updateHallOfFameNoteSchema, createModSchema, updateModSchema, resetPasswordSchema } from '../schemas/admin';
 
 // Thresholds CRUD
 router.get('/alerts/thresholds', async (req, res) => {
@@ -2552,6 +2574,15 @@ router.get('/config', async (req, res) => {
 router.put('/config', async (req, res) => {
   try {
     const body = configUpdateSchema.parse(req.body);
+
+    // Double-blind can only be toggled by super admin
+    if (body.trust_tiers?.double_blind !== undefined && req.admin?.role !== 'super_admin') {
+      return res.status(403).json({
+        code: 'FORBIDDEN',
+        error: 'The double_blind setting requires super admin access.',
+      });
+    }
+
     const result = await updateConfig(body as Record<string, unknown>, (req.admin?.id as string) || 'unknown');
 
     res.json({ success: true, config: result, version: result.version });
@@ -2867,6 +2898,251 @@ router.delete('/hall-of-fame/:id', async (req, res) => {
   } catch (error) {
     console.error('Error removing from HoF:', error);
     res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to remove from Hall of Fame' });
+  }
+});
+
+// ═══ M10.12 Mod Management ══════════════════════════════════════════
+
+import { PermissionPreset } from '../models/PermissionPreset';
+
+// POST /api/admin/mods — Create mod (super admin only)
+router.post('/mods', async (req, res) => {
+  try {
+    const body = createModSchema.parse(req.body);
+
+    const existingSuperAdmin = await AdminUser.findOne({ role: 'super_admin' });
+    if (existingSuperAdmin && existingSuperAdmin.username === body.username) {
+      return res.status(400).json({ code: 'VALIDATION', error: 'Username matches super admin. Choose a different username.' });
+    }
+
+    const existingMod = await AdminUser.findOne({ username: body.username });
+    if (existingMod) {
+      return res.status(409).json({ code: 'DUPLICATE', error: 'A mod with this username already exists' });
+    }
+
+    const invalidPerms = body.permissions.filter((p) => !isValidPermission(p));
+    if (invalidPerms.length > 0) {
+      return res.status(400).json({
+        code: 'VALIDATION',
+        error: `Invalid permissions: ${invalidPerms.join(', ')}`,
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(body.password, 12);
+
+    const mod = await AdminUser.create({
+      username: body.username,
+      password_hash: passwordHash,
+      role: 'mod',
+      permissions: body.permissions,
+      permissions_version: 1,
+      is_active: true,
+      created_by: req.admin!.username,
+    });
+
+    logAudit({
+      admin_id: (req.admin?.id as string) || 'unknown',
+      action: 'create_mod',
+      ip: getClientIp(req),
+      metadata: {
+        mod_id: (mod._id as { toString(): string }).toString(),
+        mod_username: mod.username,
+        permissions: body.permissions,
+        preset_name: body.preset_name || null,
+      },
+      user_agent: req.headers['user-agent'] || '',
+    });
+
+    res.status(201).json({
+      success: true,
+      mod: {
+        id: mod._id,
+        username: mod.username,
+        role: mod.role,
+        permissions: mod.permissions,
+        is_active: mod.is_active,
+        created_at: mod.created_at,
+      },
+    });
+  } catch (e: any) {
+    if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
+    console.error('Error creating mod:', e);
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to create mod' });
+  }
+});
+
+// GET /api/admin/mods — List all mods
+router.get('/mods', async (req, res) => {
+  try {
+    const mods = await AdminUser.find({ role: 'mod' })
+      .select('username role permissions is_active created_at')
+      .sort({ created_at: -1 })
+      .lean();
+
+    res.json({ mods });
+  } catch (error) {
+    console.error('Error fetching mods:', error);
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch mods' });
+  }
+});
+
+// GET /api/admin/mods/permissions — Full permission catalog
+router.get('/mods/permissions', async (req, res) => {
+  res.json({ permissions: PERMISSION_CATALOG });
+});
+
+// GET /api/admin/mods/presets — All permission presets
+router.get('/mods/presets', async (req, res) => {
+  try {
+    const presets = await PermissionPreset.find().sort({ name: 1 }).lean();
+    res.json({ presets });
+  } catch (error) {
+    console.error('Error fetching presets:', error);
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch presets' });
+  }
+});
+
+// GET /api/admin/mods/:id — Single mod detail
+router.get('/mods/:id', async (req, res) => {
+  try {
+    const mod = await AdminUser.findById(req.params.id).select('-password_hash -__v').lean();
+    if (!mod || mod.role !== 'mod') {
+      return res.status(404).json({ code: 'NOT_FOUND', error: 'Mod not found' });
+    }
+
+    res.json({ mod });
+  } catch (error) {
+    console.error('Error fetching mod:', error);
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch mod' });
+  }
+});
+
+// PATCH /api/admin/mods/:id — Update permissions, is_active
+router.patch('/mods/:id', async (req, res) => {
+  try {
+    const body = updateModSchema.parse(req.body);
+
+    const mod = await AdminUser.findById(req.params.id);
+    if (!mod || mod.role !== 'mod') {
+      return res.status(404).json({ code: 'NOT_FOUND', error: 'Mod not found' });
+    }
+
+    const updates: Record<string, unknown> = {};
+
+    if (body.permissions) {
+      const invalidPerms = body.permissions.filter((p) => !isValidPermission(p));
+      if (invalidPerms.length > 0) {
+        return res.status(400).json({
+          code: 'VALIDATION',
+          error: `Invalid permissions: ${invalidPerms.join(', ')}`,
+        });
+      }
+      updates.permissions = body.permissions;
+      updates.$inc = { permissions_version: 1 };
+    }
+
+    if (body.is_active !== undefined) {
+      if (body.is_active === false && req.admin?.id === req.params.id) {
+        return res.status(400).json({ code: 'VALIDATION', error: 'Cannot disable your own account' });
+      }
+      updates.is_active = body.is_active;
+    }
+
+    await AdminUser.findByIdAndUpdate(req.params.id, updates);
+
+    logAudit({
+      admin_id: (req.admin?.id as string) || 'unknown',
+      action: 'update_mod',
+      ip: getClientIp(req),
+      metadata: {
+        mod_id: req.params.id,
+        mod_username: mod.username,
+        changes: body,
+      },
+      user_agent: req.headers['user-agent'] || '',
+    });
+
+    const updated = await AdminUser.findById(req.params.id).select('-password_hash -__v').lean();
+
+    res.json({ success: true, mod: updated });
+  } catch (e: any) {
+    if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
+    console.error('Error updating mod:', e);
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to update mod' });
+  }
+});
+
+// DELETE /api/admin/mods/:id — Soft delete (set is_active=false)
+router.delete('/mods/:id', async (req, res) => {
+  try {
+    const mod = await AdminUser.findById(req.params.id);
+    if (!mod) {
+      return res.status(404).json({ code: 'NOT_FOUND', error: 'Mod not found' });
+    }
+
+    if (mod.role === 'super_admin') {
+      return res.status(400).json({ code: 'VALIDATION', error: 'Cannot disable super admin account' });
+    }
+
+    // Prevent a mod from disabling themselves
+    if (req.admin?.id === req.params.id) {
+      return res.status(400).json({ code: 'VALIDATION', error: 'Cannot disable your own account' });
+    }
+
+    mod.is_active = false;
+    await mod.save();
+
+    logAudit({
+      admin_id: (req.admin?.id as string) || 'unknown',
+      action: 'disable_mod',
+      ip: getClientIp(req),
+      metadata: {
+        mod_id: (mod._id as { toString(): string }).toString(),
+        mod_username: mod.username,
+      },
+      user_agent: req.headers['user-agent'] || '',
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error disabling mod:', error);
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to disable mod' });
+  }
+});
+
+// POST /api/admin/mods/:id/reset-password — Force password change
+router.post('/mods/:id/reset-password', async (req, res) => {
+  try {
+    const body = resetPasswordSchema.parse(req.body);
+
+    const mod = await AdminUser.findById(req.params.id);
+    if (!mod || mod.role !== 'mod') {
+      return res.status(404).json({ code: 'NOT_FOUND', error: 'Mod not found' });
+    }
+
+    const passwordHash = await bcrypt.hash(body.password, 12);
+    mod.password_hash = passwordHash;
+    await AdminUser.findByIdAndUpdate(req.params.id, {
+      password_hash: passwordHash,
+      $inc: { permissions_version: 1 },
+    });
+
+    logAudit({
+      admin_id: (req.admin?.id as string) || 'unknown',
+      action: 'reset_mod_password',
+      ip: getClientIp(req),
+      metadata: {
+        mod_id: req.params.id,
+        mod_username: mod.username,
+      },
+      user_agent: req.headers['user-agent'] || '',
+    });
+
+    res.json({ success: true });
+  } catch (e: any) {
+    if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
+    console.error('Error resetting mod password:', e);
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to reset password' });
   }
 });
 

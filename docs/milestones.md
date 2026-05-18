@@ -1962,3 +1962,76 @@ These features from the old social platform are NOT part of V1:
 | Badge/Rank system | Not needed |
 | Multi-account | Not needed |
 | Trust scores (old) | Replaced by Shadow Trust |
+
+---
+
+## M17 — Moderator System
+
+> Multi-admin system with granular, revocable permissions. One super admin creates moderators with specific access levels. Mods see only what they're authorized to see.
+
+### M17.1 — Data Model
+- [x] `AdminUser` extended — `role` ('super_admin' | 'mod'), `permissions` (string[]), `permissions_version` (number), `created_by` (string), `is_active` (boolean)
+- [x] `PermissionPreset` model — `name`, `description`, `permissions` (4 idempotent seed presets: Read-Only Auditor, Content Moderator, Full Moderator, Community Manager)
+- [x] Migration: Existing admin users automatically upgraded to `super_admin` role on server boot
+- [x] `permissions_version` incremented on every mod permission change, stored in JWT
+
+### M17.2 — Permission Catalog (31 permissions)
+- [x] Dashboard — `dashboard:read`
+- [x] Statistics — `statistics:read`
+- [x] Posts — `posts:read`, `posts:approve`, `posts:edit`, `posts:delete`, `posts:manage`
+- [x] Comments — `comments:read`, `comments:moderate`, `comments:penalty`, `comments:delete`
+- [x] Users — `users:read`, `users:restrict`, `users:trust`
+- [x] Categories — `categories:read`, `categories:edit`, `categories:bulk`
+- [x] Hall of Fame — `hof:read`, `hof:manage`
+- [x] Alerts — `alerts:read`, `alerts:manage`
+- [x] Audit — `audit:read`, `audit:export`
+- [x] Search — `search:read`, `search:manage`
+- [x] Notifications — `notifications:read`, `notifications:send`
+- [x] Config — `config:read`, `config:write` (double_blind super-admin-only)
+- [x] Mods — `mods:manage` (super admin only, mapped for audit trail)
+
+### M17.3 — Permission Enforcement (3 layers)
+- [x] **Layer 1: Auto-Middleware** (`permissionGuard.ts`) — Centralized route-to-permission map (`permissionMap.ts`, 150+ routes), applied once to admin router. Login/logout/setup/me routes exempted. Super admin bypasses all checks. Unknown routes default to `__super_admin_only__`.
+- [x] **Layer 2: Frontend Hook** (`usePermission.ts`) — Loading state handling (skeleton during hydration), super admin bypass, exact permission matching.
+- [x] **Layer 3: Sidebar** (`admin/layout.tsx`) — All nav links guarded by `usePermission`. Sidebar collapses for mods with limited permissions.
+
+### M17.4 — Token Handling
+- [x] Super admin tokens: 24h expiry
+- [x] Mod tokens: 4h expiry
+- [x] `permissions_version` in JWT payload — middleware auto-refreshes token when version changes
+- [x] Token stale detection: compares `decoded.permissions_version` with DB `permissions_version`
+
+### M17.5 — Mod CRUD Endpoints (super admin only)
+- [x] `POST /api/admin/mods` — Create moderator (validates permissions, logs audit)
+- [x] `GET /api/admin/mods` — List all moderators
+- [x] `GET /api/admin/mods/:id` — Get single moderator
+- [x] `PATCH /api/admin/mods/:id` — Update permissions, toggle active (increments permissions_version)
+- [x] `DELETE /api/admin/mods/:id` — Soft-disable moderator (sets is_active=false)
+- [x] `POST /api/admin/mods/:id/reset-password` — Force password reset
+- [x] `GET /api/admin/mods/permissions` — Full permission catalog (31)
+- [x] `GET /api/admin/mods/presets` — All presets
+
+### M17.6 — Security Guards
+- [x] Mod cannot disable themselves
+- [x] `config:write` cannot toggle `double_blind` (403 "This setting requires super admin access.")
+- [x] Permission validation: invalid permissions rejected with 400
+- [x] `permissions_version` increment on every permission/password change
+- [x] Audit logging on all mod CRUD operations
+
+### M17.7 — Frontend
+- [x] `/admin/settings/mods` page — Mod list (mobile cards + desktop table), create/edit/delete/toggle/enable/reset-password actions
+- [x] CreateModModal — Username/password fields, preset selector (4 presets), 12-category permission accordion, live permission count
+- [x] EditModModal — Permission edit with live count
+- [x] ResetPasswordModal — Password reset with validation
+- [x] Admin layout sidebar — Permission-guarded nav links using `usePermission` hook
+- [x] Admin store — `role`, `permissions`, `initialized` fields populated from `/me` response
+
+### M17.8 — Tests
+- [x] `permissionGuard.test.ts` — 20+ test cases: super admin bypass, mod permissions, route coverage, catalog validation, CI guard
+- [x] All existing tests updated for new admin model shape
+
+### M17.9 — Documentation
+- [x] `docs/plans-mod-system.md` — Full enterprise implementation plan
+- [x] `docs/plans-mod-system-flaws.md` — 11 flaw review
+- [x] `docs/milestones.md` — This section
+- [x] `docs/build-status.md` — Counts updated

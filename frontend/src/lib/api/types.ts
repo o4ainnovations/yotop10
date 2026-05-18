@@ -315,3 +315,24 @@ export interface HallOfFameCandidate {
   view_count_last_90_days?: number;
   created_at: string;
 }
+
+export interface ModUser {
+  id: string;
+  username: string;
+  role: string;
+  active: boolean;
+  permissions: string[];
+  presets: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PermissionCatalog {
+  permissions: Record<string, string[]>;
+}
+
+export interface ModPreset {
+  id: string;
+  name: string;
+  permissions: string[];
+}
