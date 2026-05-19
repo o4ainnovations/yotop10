@@ -34,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             try {
               var theme = localStorage.getItem('yotop10_theme');
               if (theme === 'light') {
-                document.body.classList.add('light-mode');
+                document.documentElement.classList.add('light-mode');
               }
             } catch(e) {}
           })();
