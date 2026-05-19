@@ -12,7 +12,7 @@ export function DataCard({
   rank?: number;
 }) {
   return (
-    <Link href={`/${post.slug}`} className="block group">
+    <Link href={`/${post.slug}`} className="block group focus:outline-none">
       <GlassSlab
         post={post}
         rank={rank}
