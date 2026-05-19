@@ -179,11 +179,6 @@ body.light-mode .border-white\/20 { border-color: rgba(0,0,0,0.2); }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
-/* ═══ Remove browser focus outlines globally ═══ */
-*:focus-visible {
-  outline: none !important;
-}
-
 /* ═══ Logo Font Fallbacks ═══ */
 .font-accent { font-family: 'Monoton', cursive !important; }
 .font-display { font-family: 'Anton', sans-serif !important; }
