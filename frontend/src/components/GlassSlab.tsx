@@ -52,7 +52,7 @@ export function GlassSlab({ post, variant = 'compact', observe = false, rank, ac
   return (
     <div ref={ref} className={visible ? 'card-deck-enter' : ''}>
       <article
-        className={`rounded-2xl glass-slab spatial-depth transition-all w-full ${
+        className={`rounded-2xl glass-slab spatial-depth transition-all w-full focus:outline-none ${
           variant === 'featured'
             ? 'px-4 py-4 lg:px-6 lg:py-6'
             : 'px-4 py-4 lg:px-6 lg:py-5'
@@ -122,7 +122,7 @@ export function GlassSlab({ post, variant = 'compact', observe = false, rank, ac
                     handleToggle(e);
                   }
                 }}
-                className="inline-flex items-center gap-1 text-[10px] font-mono text-zinc-500 hover:text-orange-400 transition-colors mt-1 py-2 min-h-[44px] cursor-pointer select-none"
+                className="inline-flex items-center gap-1 text-[10px] font-mono text-zinc-500 hover:text-orange-400 transition-colors mt-1 py-2 min-h-[44px] cursor-pointer select-none focus:outline-none"
               >
                 {expanded ? (
                   <>

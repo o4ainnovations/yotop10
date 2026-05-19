@@ -11,7 +11,7 @@ export function MobileMenu() {
       {/* Hamburger — only mobile */}
       <button
         onClick={() => setOpen(true)}
-        className="sm:hidden text-zinc-400 hover:text-white transition min-w-[44px] min-h-[44px] flex items-center justify-center focus:outline-none"
+        className="text-zinc-400 hover:text-white transition min-w-[44px] min-h-[44px] flex items-center justify-center focus:outline-none"
         aria-label="Menu"
       >
         <Icon name="Menu" size={22} />
