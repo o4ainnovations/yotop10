@@ -26,8 +26,20 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="h-full antialiased dark">
-      <body className="h-full bg-[var(--color-bg)] text-[#eaeaef]">
+    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function() {
+            try {
+              var theme = localStorage.getItem('yotop10_theme');
+              if (theme === 'light') {
+                document.documentElement.classList.add('light');
+              }
+            } catch(e) {}
+          })();
+        `}} />
+      </head>
+      <body className="h-full bg-[var(--color-bg)] text-[#eaeaef]" suppressHydrationWarning>
         <DesktopTopBar />
         <SlideMenuPanel />
         <AuthInitializer />
