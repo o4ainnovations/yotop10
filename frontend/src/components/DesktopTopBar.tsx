@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import HeaderBells from './HeaderBells';
 import Link from 'next/link';
-import { Icon } from './icons/Icon';
 import { SlideMenuTrigger } from './SlideMenu';
 
 export default function DesktopTopBar() {
@@ -39,19 +38,10 @@ export default function DesktopTopBar() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {/* Desktop: notification bell */}
+          {/* Notification bell */}
           <div className="hidden sm:block">
             <HeaderBells />
           </div>
-
-          {/* Desktop: submit button */}
-          <Link
-            href="/submit"
-            className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-lg transition hover:scale-105 active:scale-95"
-            aria-label="Submit"
-          >
-            <Icon name="Plus" size={20} />
-          </Link>
 
           {/* Mobile: slide menu */}
           <SlideMenuTrigger />

@@ -31,7 +31,7 @@ export function DynamicIsland() {
   return (
     <>
       <nav
-        className={`fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-6 rounded-full px-7 py-4 bg-[var(--color-bg)] border border-white/10 shadow-lg transition-opacity duration-400 lg:hidden ${
+        className={`fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around px-4 py-3 bg-[var(--color-bg)] border-t border-white/10 transition-opacity duration-400 lg:hidden ${
           scrolled ? 'opacity-60' : 'opacity-100'
         }`}
       >
