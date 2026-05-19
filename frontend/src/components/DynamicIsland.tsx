@@ -31,8 +31,8 @@ export function DynamicIsland() {
   return (
     <>
       <nav
-        className={`fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-5 rounded-full px-6 py-3.5 bg-white/[0.03] backdrop-blur-xl border border-white/10 transition-opacity duration-400 lg:hidden ${
-          scrolled ? 'opacity-50' : 'opacity-100'
+        className={`fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-6 rounded-full px-7 py-4 bg-[var(--color-bg)] border border-white/10 shadow-lg transition-opacity duration-400 lg:hidden ${
+          scrolled ? 'opacity-60' : 'opacity-100'
         }`}
       >
         {tabs.map((tab) => {
@@ -47,11 +47,11 @@ export function DynamicIsland() {
               key={tab.label}
               onClick={() => (tab.action ? tab.action() : router.push(tab.href!))}
               className={`transition ${
-                isActive ? 'text-orange-500' : 'text-zinc-400 hover:text-orange-400'
+                isActive ? 'text-orange-400' : 'text-zinc-500 hover:text-zinc-300'
               }`}
               aria-label={tab.label}
             >
-              <Icon name={tab.icon} size={22} />
+              <Icon name={tab.icon} size={24} />
             </button>
           );
         })}

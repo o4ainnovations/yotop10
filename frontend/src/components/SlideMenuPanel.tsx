@@ -58,7 +58,7 @@ export function SlideMenuPanel() {
 
         <hr className="border-white/5 mx-6" />
 
-        <nav className="flex-1 px-3 pt-3 overflow-y-auto">
+        <nav className="flex-1 px-3 pt-2 pb-2 overflow-y-auto flex flex-col justify-center gap-1"> 
           {navItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             return (
@@ -66,7 +66,7 @@ export function SlideMenuPanel() {
                 key={item.label}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition text-[15px] ${
+                className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition text-[15px] ${
                   isActive
                     ? 'text-white bg-white/10 font-semibold'
                     : 'text-zinc-400 hover:text-white hover:bg-white/5'
