@@ -21,8 +21,8 @@ export function SlideMenuPanel() {
     { icon: 'Folder' as const, label: 'Categories', href: '/categories' },
     { icon: 'MessageCircle' as const, label: 'Argument', href: '/arguments', badge: 'Beta' },
     { icon: 'Search' as const, label: 'Explore', href: '/explore' },
-    { icon: 'Bookmark' as const, label: 'Articles', href: '/articles' },
-    { icon: 'FileText' as const, label: 'Saved', href: '/saved' },
+    { icon: 'Bookmark' as const, label: 'Saved', href: '/saved' },
+    { icon: 'FileText' as const, label: 'Articles', href: '/articles' },
     { icon: 'Crown' as const, label: 'Hall of Fame', href: '/hall-of-fame' },
   ];
 
