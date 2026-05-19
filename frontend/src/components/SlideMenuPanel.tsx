@@ -24,7 +24,6 @@ export function SlideMenuPanel() {
     { icon: 'Bookmark' as const, label: 'Articles', href: '/articles' },
     { icon: 'FileText' as const, label: 'Saved', href: '/saved' },
     { icon: 'Crown' as const, label: 'Hall of Fame', href: '/hall-of-fame' },
-    { icon: 'Rocket' as const, label: 'Creator Studio', href: '/admin' },
   ];
 
   return (
@@ -58,7 +57,7 @@ export function SlideMenuPanel() {
 
         <hr className="border-white/5 mx-6" />
 
-        <nav className="flex-1 px-3 pt-2 pb-2 overflow-y-auto flex flex-col justify-center gap-1"> 
+        <nav className="flex-1 px-3 pt-6 pb-2 overflow-y-auto flex flex-col justify-center gap-1"> 
           {navItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             return (
