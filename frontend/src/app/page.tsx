@@ -105,7 +105,7 @@ export default async function Home() {
       </div>
 
       {/* ── DESKTOP TRIPLE PANE ── */}
-      <div className="hidden lg:flex h-[calc(100vh-56px)] bg-[#05050f]">
+      <div className="hidden lg:flex h-[calc(100vh-56px)] bg-[var(--color-bg)]">
         {/* LEFT WING — Navigator */}
         <aside className="w-1/5 min-w-[200px] max-w-[260px] flex flex-col h-full border-r border-white/5 overflow-y-auto p-6">
           <nav className="flex flex-col">

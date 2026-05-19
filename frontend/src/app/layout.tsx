@@ -6,6 +6,7 @@ import ToastContainer from "@/components/Toast";
 import AnalyticsBeacon from "@/components/AnalyticsBeacon";
 import { DynamicIsland } from "@/components/DynamicIsland";
 import DesktopTopBar from "@/components/DesktopTopBar";
+import { SlideMenuPanel } from "@/components/SlideMenuPanel";
 import SWRegister from "@/components/SWRegister";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import Link from "next/link";
@@ -26,8 +27,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="h-full antialiased dark">
-      <body className="h-full bg-[#05050f] text-[#eaeaef]">
+      <body className="h-full bg-[var(--color-bg)] text-[#eaeaef]">
         <DesktopTopBar />
+        <SlideMenuPanel />
         <AuthInitializer />
         <main className="flex-1 pt-14">{children}</main>
         <Eruda />

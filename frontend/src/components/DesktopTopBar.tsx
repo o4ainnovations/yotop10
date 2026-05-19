@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import HeaderBells from './HeaderBells';
 import Link from 'next/link';
 import { Icon } from './icons/Icon';
-import { SlideMenu } from './SlideMenu';
+import { SlideMenuTrigger } from './SlideMenu';
 
 export default function DesktopTopBar() {
   const router = useRouter();
@@ -18,7 +18,7 @@ export default function DesktopTopBar() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-[#05050f]/80 backdrop-blur-2xl border-b border-white/5">
+    <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-[var(--color-bg)]/80 backdrop-blur-2xl border-b border-white/5">
       <div className="mx-auto flex h-full max-w-6xl items-center justify-between px-3 sm:px-6">
         {/* Logo — left */}
         <Link href="/" className="flex items-baseline gap-0 shrink-0">
@@ -54,7 +54,7 @@ export default function DesktopTopBar() {
           </Link>
 
           {/* Mobile: slide menu */}
-          <SlideMenu />
+          <SlideMenuTrigger />
         </div>
       </div>
     </header>

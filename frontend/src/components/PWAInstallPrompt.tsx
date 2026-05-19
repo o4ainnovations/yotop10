@@ -44,7 +44,7 @@ export default function PWAInstallPrompt() {
 
   return (
     <div className="fixed bottom-20 left-4 right-4 z-50 sm:bottom-6 sm:left-auto sm:right-6 sm:w-80">
-      <div className="flex items-center gap-3 rounded-xl bg-[#05050f]/95 backdrop-blur-xl border border-white/10 px-4 py-3 shadow-lg shadow-black/40">
+      <div className="flex items-center gap-3 rounded-xl bg-[var(--color-bg)]/95 backdrop-blur-xl border border-white/10 px-4 py-3 shadow-lg shadow-black/40">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-red-600">
           <Icon name="Download" size={18} />
         </div>

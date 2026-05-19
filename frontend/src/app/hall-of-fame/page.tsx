@@ -24,7 +24,7 @@ export default function HallOfFamePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#05050f] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
         <p className="text-zinc-500">Loading...</p>
       </div>
     );
@@ -32,7 +32,7 @@ export default function HallOfFamePage() {
 
   if (entries.length === 0) {
     return (
-      <div className="min-h-screen bg-[#05050f] flex flex-col items-center justify-center px-4">
+      <div className="min-h-screen bg-[var(--color-bg)] flex flex-col items-center justify-center px-4">
         <Icon name="Star" size={48} className="text-zinc-600 mb-4" />
         <h1 className="font-display text-3xl sm:text-4xl text-white mb-2">Hall of Fame</h1>
         <p className="text-zinc-500 text-sm">No featured lists yet. The best will rise.</p>
@@ -44,7 +44,7 @@ export default function HallOfFamePage() {
   const grid = entries.slice(3);
 
   return (
-    <div className="min-h-screen bg-[#05050f]">
+    <div className="min-h-screen bg-[var(--color-bg)]">
       <div className="max-w-6xl mx-auto px-4 py-8 sm:py-12">
         {/* Header */}
         <div className="mb-8 sm:mb-12">

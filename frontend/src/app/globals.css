@@ -24,25 +24,13 @@
   --color-bg: #05050f;
 }
 
-.dark {
-  --color-bg: #05050f;
-}
-
-.light {
+body.light-mode {
   --color-bg: #f8f8fa;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) { --color-bg: #05050f; }
-}
-
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) { --color-bg: #f8f8fa; }
 }
 
 body {
   font-family: var(--font-sans);
-  background: #05050f;
+  background: var(--color-bg);
   color: #eaeaef;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
