@@ -47,7 +47,7 @@ export function DynamicIsland() {
               key={tab.label}
               onClick={() => (tab.action ? tab.action() : router.push(tab.href!))}
               className={`transition ${
-                isActive ? 'text-orange-400' : 'text-black dark:text-white'
+                isActive ? 'text-orange-400' : 'text-white'
               }`}
               aria-label={tab.label}
             >
