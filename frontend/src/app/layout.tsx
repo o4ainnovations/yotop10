@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import "./globals.css";
 import Eruda from "./Eruda";
 import AuthInitializer from "@/components/AuthInitializer";
@@ -33,22 +34,39 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             try {
               var theme = localStorage.getItem('yotop10_theme');
               if (theme === 'light') {
-                document.documentElement.classList.add('light');
+                document.body.classList.add('light-mode');
               }
             } catch(e) {}
           })();
         `}} />
       </head>
       <body className="h-full bg-[var(--color-bg)] text-[#eaeaef]" suppressHydrationWarning>
+        {/* Critical: hydrates first — hamburger, search, logo */}
         <DesktopTopBar />
         <SlideMenuPanel />
-        <AuthInitializer />
+
+        {/* Non-critical: deferred hydration */}
+        <Suspense>
+          <AuthInitializer />
+        </Suspense>
+
         <main className="flex-1 pt-14">{children}</main>
-        <Eruda />
-        <ToastContainer />
-        <AnalyticsBeacon />
-        <SWRegister />
-        <PWAInstallPrompt />
+
+        <Suspense>
+          <Eruda />
+        </Suspense>
+        <Suspense>
+          <ToastContainer />
+        </Suspense>
+        <Suspense>
+          <AnalyticsBeacon />
+        </Suspense>
+        <Suspense>
+          <SWRegister />
+        </Suspense>
+        <Suspense>
+          <PWAInstallPrompt />
+        </Suspense>
 
         {/* Hanging + button — mobile only, positioned above DynamicIsland */}
         <Link
@@ -59,9 +77,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Icon name="Plus" size={24} />
         </Link>
 
-        <div className="lg:hidden">
-          <DynamicIsland />
-        </div>
+        <Suspense>
+          <div className="lg:hidden">
+            <DynamicIsland />
+          </div>
+        </Suspense>
       </body>
     </html>
   );

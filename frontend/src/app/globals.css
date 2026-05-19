@@ -34,7 +34,6 @@ body {
   color: #eaeaef;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background 0.3s ease, color 0.3s ease;
 }
 
 body.light-mode {
@@ -53,6 +52,9 @@ body.light-mode .bg-white\/10 { background: rgba(0,0,0,0.06); }
 body.light-mode .border-white\/5 { border-color: rgba(0,0,0,0.1); }
 body.light-mode .border-white\/10 { border-color: rgba(0,0,0,0.15); }
 body.light-mode .border-white\/20 { border-color: rgba(0,0,0,0.2); }
+body.light-mode .text-zinc-300 { color: #3f3f46; }
+body.light-mode .bg-white\/\[0\.03\] { background: rgba(0,0,0,0.03); }
+body.light-mode .bg-white\/\[0\.04\] { background: rgba(0,0,0,0.04); }
 
 /* ═══ Adaptive Glass Layers ═══ */
 .glass-obsidian {

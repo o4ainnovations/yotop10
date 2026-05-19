@@ -9,8 +9,16 @@ export default function AuthInitializer() {
   const initialized = useAuthStore((s) => s.initialized);
 
   useEffect(() => {
-    if (!initialized) {
+    if (initialized) return;
+
+    const init = () => {
       getFingerprint().then(() => fetchUser());
+    };
+
+    if (typeof requestIdleCallback !== 'undefined') {
+      requestIdleCallback(init, { timeout: 2000 });
+    } else {
+      setTimeout(init, 300);
     }
   }, [initialized, fetchUser]);
 
