@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import HeaderBells from './HeaderBells';
 import Link from 'next/link';
 import { Icon } from './icons/Icon';
+import { SlideMenu } from './SlideMenu';
 
 export default function DesktopTopBar() {
   const router = useRouter();
@@ -51,6 +52,9 @@ export default function DesktopTopBar() {
           >
             <Icon name="Plus" size={20} />
           </Link>
+
+          {/* Mobile: slide menu */}
+          <SlideMenu />
         </div>
       </div>
     </header>
