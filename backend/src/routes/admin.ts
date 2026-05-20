@@ -47,6 +47,7 @@ router.use((req, res, next) => {
 });
 
 router.use((req, res, next) => {
+  if (PUBLIC_PATHS.has(req.path)) return next();
   return autoPermissionGuard(req, res, next);
 });
 
@@ -176,6 +177,8 @@ router.post('/setup', async (req, res) => {
     const admin = await AdminUser.create({
       username,
       password_hash: passwordHash,
+      role: 'super_admin',
+      permissions_version: 1,
     });
 
     await SetupToken.findByIdAndUpdate(setupToken._id, { used: true });
