@@ -138,7 +138,7 @@ router.get('/', async (req, res) => {
     const skip = (pageNum - 1) * limitNum;
 
     // Build query - only approved posts
-    const query: Record<string, unknown> = { status: 'approved' };
+    const query: Record<string, unknown> = { status: 'approved', deleted: { $ne: true } };
 
     // Filter by category
     if (category) {
@@ -325,11 +325,11 @@ router.get('/:idOrSlug', async (req, res) => {
     // Find approved post - try both _id and slug
     let post: { _id: { toString(): string }; [key: string]: unknown } | null = null;
     if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
-      post = await Post.findOne({ _id: idOrSlug, status: 'approved' }).lean();
+      post = await Post.findOne({ _id: idOrSlug, status: 'approved', deleted: { $ne: true } }).lean();
     }
     
     if (!post) {
-      post = await Post.findOne({ slug: idOrSlug, status: 'approved' }).lean();
+      post = await Post.findOne({ slug: idOrSlug, status: 'approved', deleted: { $ne: true } }).lean();
     }
 
     if (!post) {
@@ -640,7 +640,7 @@ router.get('/:idOrSlug/comments', async (req, res) => {
 
     let post: { _id: { toString(): string } } | null = null;
     if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
-      post = await Post.findOne({ _id: idOrSlug, status: 'approved' });
+      post = await Post.findOne({ _id: idOrSlug, status: 'approved', deleted: { $ne: true } });
     }
     if (!post) {
       post = await Post.findOne({ slug: idOrSlug, status: 'approved' });
@@ -714,7 +714,7 @@ router.post('/:idOrSlug/comments', [
 
     let post: { _id: { toString(): string }; author_id?: string } | null = null;
     if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
-      post = await Post.findOne({ _id: idOrSlug, status: 'approved' });
+      post = await Post.findOne({ _id: idOrSlug, status: 'approved', deleted: { $ne: true } });
     }
     if (!post) {
       post = await Post.findOne({ slug: idOrSlug, status: 'approved' });
