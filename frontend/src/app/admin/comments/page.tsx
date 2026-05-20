@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { Icon, type LucideIconName } from '@/components/icons/Icon';
@@ -19,6 +19,8 @@ export default function AdminCommentsPage() {
   const [customMin, setCustomMin] = useState(''); const [customTrust, setCustomTrust] = useState('');
   const [filters, setFilters] = useState({ type: '', sort: 'newest', search: '', has_replies: '', filter: '' });
   const [stats, setStats] = useState<Record<string, number>>({});
+  const [mobileDropdownId, setMobileDropdownId] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   const fetchComments = useCallback(async (p: number) => {
     setLoading(true);
@@ -35,10 +37,21 @@ export default function AdminCommentsPage() {
 
   useEffect(() => { fetchComments(page); }, [page, fetchComments]);
 
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setMobileDropdownId(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
   const toggleSelect = (id: string) => setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   const selectAll = () => selected.size === comments.length ? setSelected(new Set()) : setSelected(new Set(comments.map(c => c._id)));
 
   const quickAction = async (id: string, action: string) => {
+    setMobileDropdownId(null);
     try {
       if (action === 'delete') await apiFetch(`/admin/comments/${id}`, { method: 'DELETE' });
       else if (action === 'restore') await apiFetch(`/admin/comments/${id}/restore`, { method: 'POST' });
@@ -118,11 +131,12 @@ export default function AdminCommentsPage() {
     setPage(1);
   };
 
-  const filterSelectClass = 'bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none min-h-[36px]';
+  const filterSelectClass = 'bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none min-h-[44px] w-full sm:w-auto';
   const btnSmClass = 'text-[11px] cursor-pointer px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-white';
+  const dropdownItemClass = 'w-full text-left px-4 py-2.5 text-[13px] text-white hover:bg-white/10 flex items-center gap-2 min-h-[44px]';
 
   return (
-    <div className="space-y-3 sm:space-y-4">
+    <div className="space-y-3 sm:space-y-4 px-3 sm:px-6">
       <h2 className="text-white text-lg font-bold">All Comments ({pagination.total})</h2>
 
       <div className="text-[10px] font-mono text-zinc-600">
@@ -130,10 +144,14 @@ export default function AdminCommentsPage() {
       </div>
 
       <div className="flex gap-2 flex-wrap">
-        {statCards.map(k => <div key={k} onClick={() => applyStatFilter(k)} className="bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white/60 cursor-pointer hover:border-orange-500/30"><strong className="text-white">{k}</strong>: {stats[k] ?? 0}</div>)}
+        {statCards.map(k => (
+          <div key={k} onClick={() => applyStatFilter(k)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/60 cursor-pointer hover:border-orange-500/30 min-h-[44px] flex items-center">
+            <strong className="text-white mr-1">{k}</strong>: {stats[k] ?? 0}
+          </div>
+        ))}
       </div>
 
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex flex-col sm:flex-row gap-2 flex-wrap">
         <select value={filters.type} onChange={e => { setFilters(f => ({ ...f, type: e.target.value })); setPage(1); }} className={filterSelectClass}>
           <option value="" className="bg-zinc-900">All Types</option><option value="post_comment" className="bg-zinc-900">Post Comment</option><option value="item_anchored" className="bg-zinc-900">Item Anchored</option>
         </select>
@@ -143,16 +161,18 @@ export default function AdminCommentsPage() {
         <select value={filters.has_replies} onChange={e => { setFilters(f => ({ ...f, has_replies: e.target.value })); setPage(1); }} className={filterSelectClass}>
           <option value="" className="bg-zinc-900">All</option><option value="yes" className="bg-zinc-900">Has Replies</option><option value="no" className="bg-zinc-900">No Replies</option>
         </select>
-        <input placeholder="Search content" value={filters.search} onChange={e => { setFilters(f => ({ ...f, search: e.target.value })); setPage(1); }} className={`${filterSelectClass} w-[180px]`} />
+        <input placeholder="Search content" value={filters.search} onChange={e => { setFilters(f => ({ ...f, search: e.target.value })); setPage(1); }} className={`${filterSelectClass} sm:w-[180px]`} />
       </div>
 
       {selected.size > 0 && (
-        <div className="bg-white/[0.03] border border-white/10 rounded-lg px-3 py-2 flex gap-2 items-center text-[13px]">
+        <div className="bg-white/[0.03] border border-white/10 rounded-lg px-3 py-2.5 flex flex-col sm:flex-row gap-2 items-start sm:items-center text-[13px]">
           <strong className="text-white">{selected.size} selected</strong>
-          <button onClick={() => bulkAction('delete')} disabled={actionLoading} className={btnSmClass}>Delete</button>
-          <button onClick={() => bulkAction('hide')} disabled={actionLoading} className={btnSmClass}>Hide</button>
-          <button onClick={() => bulkAction('flag')} disabled={actionLoading} className={btnSmClass}>Flag</button>
-          <button onClick={() => bulkAction('unflag')} disabled={actionLoading} className={btnSmClass}>Unflag</button>
+          <div className="flex gap-2 flex-wrap">
+            <button onClick={() => bulkAction('delete')} disabled={actionLoading} className={`${btnSmClass} min-h-[44px] sm:min-h-[28px]`}>Delete</button>
+            <button onClick={() => bulkAction('hide')} disabled={actionLoading} className={`${btnSmClass} min-h-[44px] sm:min-h-[28px]`}>Hide</button>
+            <button onClick={() => bulkAction('flag')} disabled={actionLoading} className={`${btnSmClass} min-h-[44px] sm:min-h-[28px]`}>Flag</button>
+            <button onClick={() => bulkAction('unflag')} disabled={actionLoading} className={`${btnSmClass} min-h-[44px] sm:min-h-[28px]`}>Unflag</button>
+          </div>
         </div>
       )}
 
@@ -161,11 +181,46 @@ export default function AdminCommentsPage() {
           {/* Mobile card view */}
           <div className="sm:hidden flex flex-col gap-2">
             {comments.map(c => (
-              <div key={c._id} className={`bg-white/5 border border-white/10 rounded-xl p-3 ${c.deleted ? 'opacity-40' : ''} ${c.highlighted ? 'bg-orange-500/10' : ''} ${c.hidden ? 'bg-white/[0.02]' : ''}`}>
+              <div key={c._id} className={`bg-white/[0.02] border border-white/5 rounded-2xl p-3 ${c.deleted ? 'opacity-40' : ''} ${c.highlighted ? 'bg-orange-500/10' : ''} ${c.hidden ? 'bg-white/[0.02]' : ''}`}>
                 <div className="flex items-center gap-2 mb-1">
-                  <input type="checkbox" checked={selected.has(c._id)} onChange={() => toggleSelect(c._id)} />
+                  <input type="checkbox" checked={selected.has(c._id)} onChange={() => toggleSelect(c._id)} className="min-h-[44px] min-w-[44px]" />
                   <span className="text-[10px] text-white/40 font-mono">{String(c._id).slice(-6)}</span>
-                  <span className="text-white/60 text-sm font-semibold">{c.author_username}</span>
+                  <span className="text-white/60 text-sm font-semibold flex-1">{c.author_username}</span>
+                  {/* Mobile dropdown trigger */}
+                  <div className="relative" ref={mobileDropdownId === c._id ? dropdownRef : null}>
+                    <button
+                      onClick={e => { e.stopPropagation(); setMobileDropdownId(prev => prev === c._id ? null : c._id); }}
+                      className="min-h-[44px] min-w-[44px] flex items-center justify-center bg-white/5 border border-white/10 rounded-lg"
+                    >
+                      <Icon name="Ellipsis" size={18} />
+                    </button>
+                    {mobileDropdownId === c._id && (
+                      <div className="absolute right-0 top-full mt-1 z-50 bg-zinc-800 border border-white/10 rounded-xl py-1 min-w-[180px] shadow-2xl">
+                        {c.deleted ? (
+                          <>
+                            <button onClick={e => { e.stopPropagation(); quickAction(c._id, 'restore'); }} className={dropdownItemClass}><Icon name="Undo2" size={14} /> Restore</button>
+                            <button onClick={e => { e.stopPropagation(); if (confirm('Permanently delete this comment?')) quickAction(c._id, 'remove'); }} className={`${dropdownItemClass} text-red-400`}><Icon name="Trash2" size={14} /> Remove</button>
+                          </>
+                        ) : (
+                          <>
+                            <button onClick={e => { e.stopPropagation(); quickAction(c._id, 'delete'); }} className={`${dropdownItemClass} text-red-400`}><Icon name="Trash2" size={14} /> Delete</button>
+                            {c.hidden
+                              ? <button onClick={e => { e.stopPropagation(); quickAction(c._id, 'unhide'); }} className={dropdownItemClass}><Icon name="Eye" size={14} /> Show</button>
+                              : <button onClick={e => { e.stopPropagation(); quickAction(c._id, 'hide'); }} className={dropdownItemClass}><Icon name="EyeOff" size={14} /> Hide</button>
+                            }
+                            {c.highlighted
+                              ? <button onClick={e => { e.stopPropagation(); quickAction(c._id, 'unhighlight'); }} className={dropdownItemClass}><Icon name="PinOff" size={14} /> Unpin</button>
+                              : <button onClick={e => { e.stopPropagation(); quickAction(c._id, 'highlight'); }} className={dropdownItemClass}><Icon name="Pin" size={14} /> Pin</button>
+                            }
+                            {c.flag_type
+                              ? <button onClick={e => { e.stopPropagation(); quickAction(c._id, 'unflag'); }} className={`${dropdownItemClass} text-green-400`}><Icon name="FlagOff" size={14} /> Unflag</button>
+                              : <button onClick={e => { e.stopPropagation(); setMobileDropdownId(null); setFlagModal({ comment: c }); }} className={`${dropdownItemClass} text-orange-400`}><Icon name="Flag" size={14} /> Flag</button>
+                            }
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <a href={`/${c.post_slug || '#'}`} target="_blank" className="text-orange-400 text-[11px] no-underline hover:text-orange-300 block truncate">
                   {(c.post_title || c.post_slug || '\u2014').substring(0, 30)}
@@ -183,14 +238,6 @@ export default function AdminCommentsPage() {
                 </div>
                 {c.flag_type && isAutoFlag(c.flag_type) && <span onClick={e => { e.stopPropagation(); dismissFlag(c._id); }} className="cursor-pointer mt-1 inline-block">{flagBadge(c.flag_type)}</span>}
                 {c.flag_type === 'manual' && <span className="mt-1 inline-block">{flagBadge(c.flag_type)}</span>}
-                <div className="flex gap-1 flex-wrap mt-1.5">
-                  {c.deleted ? <><button onClick={() => quickAction(c._id, 'restore')} className={btnSmClass}>Restore</button><button onClick={() => { if (confirm('Permanently delete this comment?')) quickAction(c._id, 'remove'); }} className={`${btnSmClass} text-red-400`}>Rem</button></> : <>
-                    <button onClick={() => quickAction(c._id, 'delete')} className={`${btnSmClass} text-red-400`}>Del</button>
-                    {c.hidden ? <button onClick={() => quickAction(c._id, 'unhide')} className={btnSmClass}>Show</button> : <button onClick={() => quickAction(c._id, 'hide')} className={btnSmClass}>Hide</button>}
-                    {c.highlighted ? <button onClick={() => quickAction(c._id, 'unhighlight')} className={btnSmClass}>Unpin</button> : <button onClick={() => quickAction(c._id, 'highlight')} className={btnSmClass}>Pin</button>}
-                    {c.flag_type ? <button onClick={() => quickAction(c._id, 'unflag')} className={`${btnSmClass} text-green-400`}>Unf</button> : <button onClick={() => setFlagModal({ comment: c })} className={`${btnSmClass} text-orange-400`}>Flag</button>}
-                  </>}
-                </div>
               </div>
             ))}
           </div>
@@ -240,39 +287,43 @@ export default function AdminCommentsPage() {
         </>
       )}
 
-      <div className="flex gap-2 items-center">
-        <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className={`px-3 py-1.5 rounded-lg border border-white/10 text-white text-sm min-h-[36px] ${page <= 1 ? 'opacity-40 cursor-not-allowed bg-white/5' : 'cursor-pointer bg-white/5 hover:bg-white/10'}`}>Prev</button>
+      <div className="flex gap-2 items-center justify-center sm:justify-start">
+        <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className={`px-3 py-1.5 rounded-lg border border-white/10 text-white text-sm min-h-[44px] ${page <= 1 ? 'opacity-40 cursor-not-allowed bg-white/5' : 'cursor-pointer bg-white/5 hover:bg-white/10'}`}>Prev</button>
         <span className="text-white/60 text-[13px]">Page {page} of {pagination.pages}</span>
-        <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)} className={`px-3 py-1.5 rounded-lg border border-white/10 text-white text-sm min-h-[36px] ${page >= pagination.pages ? 'opacity-40 cursor-not-allowed bg-white/5' : 'cursor-pointer bg-white/5 hover:bg-white/10'}`}>Next</button>
+        <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)} className={`px-3 py-1.5 rounded-lg border border-white/10 text-white text-sm min-h-[44px] ${page >= pagination.pages ? 'opacity-40 cursor-not-allowed bg-white/5' : 'cursor-pointer bg-white/5 hover:bg-white/10'}`}>Next</button>
       </div>
 
-      {/* Flag Modal */}
+      {/* Flag Modal — full-screen on mobile */}
       {flagModal && (() => { const rec = getRecommended(flagModal.comment); const ev = flagModal.comment.flag_evidence || {};
-        return <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4" onClick={() => setFlagModal(null)}>
-          <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-xl" onClick={e => e.stopPropagation()}>
-            <h3 className="text-white font-semibold mb-3">Flag: {flagModal.comment.flag_type?.replace(/_/g, ' ')}</h3>
-            <div className="bg-white/[0.03] rounded-xl p-3 mb-3 text-xs text-white/60">
-              <p className="mb-1"><strong className="text-white">Comment:</strong> &ldquo;{flagModal.comment.content?.substring(0, 100)}&rdquo;</p>
-              <p className="mb-1"><strong className="text-white">Author:</strong> {flagModal.comment.author_username}</p>
-              <p><strong className="text-white">Evidence:</strong> {JSON.stringify(ev)}</p>
-            </div>
-            <p className="text-[13px] text-white/60 mb-3">Recommended: <strong className="text-white">{rec.minutes}min pause, {rec.trust_penalty} trust</strong></p>
-            <div className="flex gap-2 mb-3">
-              <button onClick={() => applyPenalty(flagModal.comment._id, rec.minutes, rec.trust_penalty)} className="px-4 py-2 cursor-pointer bg-orange-600 text-white border-none rounded-xl text-[13px] font-bold hover:bg-orange-500">Apply Recommended</button>
-              {isAutoFlag(flagModal.comment.flag_type) && <button onClick={() => dismissFlag(flagModal.comment._id)} className="px-4 py-2 cursor-pointer bg-white/5 border border-white/10 rounded-xl text-[13px] text-white">Dismiss Warning</button>}
-            </div>
-            <div className="border-t border-white/10 pt-3">
-              <p className="text-xs font-bold mb-2 text-white">Custom:</p>
-              <div className="flex gap-2 items-center">
-                <input value={customMin} onChange={e => setCustomMin(e.target.value)} placeholder={`${rec.minutes} min`} className="w-[70px] px-2 py-1.5 text-xs bg-white/5 border border-white/10 rounded-xl text-white outline-none" />
-                <span className="text-white/40 text-xs">min</span>
-                <input value={customTrust} onChange={e => setCustomTrust(e.target.value)} placeholder={`${rec.trust_penalty} trust`} className="w-[90px] px-2 py-1.5 text-xs bg-white/5 border border-white/10 rounded-xl text-white outline-none" />
-                <span className="text-white/40 text-xs">trust</span>
-                <button onClick={() => { const m = parseInt(customMin) || rec.minutes; const t = parseFloat(customTrust) || rec.trust_penalty; applyPenalty(flagModal.comment._id, m, t); }} className="px-3 py-1.5 cursor-pointer text-xs bg-white/5 border border-white/10 rounded-xl text-white">Apply</button>
+        return (
+          <div className="fixed inset-0 z-[200] flex sm:items-center sm:justify-center bg-black/40 p-0 sm:p-4" onClick={() => setFlagModal(null)}>
+            <div className="bg-zinc-900 border border-white/10 sm:rounded-2xl p-6 w-full sm:max-w-md shadow-xl h-full sm:h-auto flex flex-col overflow-y-auto" onClick={e => e.stopPropagation()}>
+              <h3 className="text-white font-semibold mb-3">Flag: {flagModal.comment.flag_type?.replace(/_/g, ' ')}</h3>
+              <div className="bg-white/[0.03] rounded-xl p-3 mb-3 text-xs text-white/60">
+                <p className="mb-1"><strong className="text-white">Comment:</strong> &ldquo;{flagModal.comment.content?.substring(0, 100)}&rdquo;</p>
+                <p className="mb-1"><strong className="text-white">Author:</strong> {flagModal.comment.author_username}</p>
+                <p><strong className="text-white">Evidence:</strong> {JSON.stringify(ev)}</p>
+              </div>
+              <p className="text-[13px] text-white/60 mb-3">Recommended: <strong className="text-white">{rec.minutes}min pause, {rec.trust_penalty} trust</strong></p>
+              <div className="flex flex-col sm:flex-row gap-2 mb-3">
+                <button onClick={() => applyPenalty(flagModal.comment._id, rec.minutes, rec.trust_penalty)} className="px-4 py-2.5 cursor-pointer bg-orange-600 text-white border-none rounded-xl text-[13px] font-bold hover:bg-orange-500 min-h-[44px]">Apply Recommended</button>
+                {isAutoFlag(flagModal.comment.flag_type) && <button onClick={() => dismissFlag(flagModal.comment._id)} className="px-4 py-2.5 cursor-pointer bg-white/5 border border-white/10 rounded-xl text-[13px] text-white min-h-[44px]">Dismiss Warning</button>}
+              </div>
+              <div className="border-t border-white/10 pt-3 mt-auto sm:mt-0">
+                <p className="text-xs font-bold mb-2 text-white">Custom:</p>
+                <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <input value={customMin} onChange={e => setCustomMin(e.target.value)} placeholder={`${rec.minutes} min`} className="w-full sm:w-[70px] px-2 py-2 text-xs bg-white/5 border border-white/10 rounded-xl text-white outline-none min-h-[44px]" />
+                    <span className="text-white/40 text-xs">min</span>
+                    <input value={customTrust} onChange={e => setCustomTrust(e.target.value)} placeholder={`${rec.trust_penalty} trust`} className="w-full sm:w-[90px] px-2 py-2 text-xs bg-white/5 border border-white/10 rounded-xl text-white outline-none min-h-[44px]" />
+                    <span className="text-white/40 text-xs">trust</span>
+                  </div>
+                  <button onClick={() => { const m = parseInt(customMin) || rec.minutes; const t = parseFloat(customTrust) || rec.trust_penalty; applyPenalty(flagModal.comment._id, m, t); }} className="px-4 py-2.5 cursor-pointer text-xs bg-white/5 border border-white/10 rounded-xl text-white min-h-[44px] w-full sm:w-auto">Apply</button>
+                </div>
               </div>
             </div>
           </div>
-        </div>;
+        );
       })()}
     </div>
   );

@@ -18,16 +18,28 @@ interface Template {
 
 type Tab = 'compose' | 'sent' | 'templates';
 
-const PRIORITY_COLORS: Record<string, { bg: string; text: string }> = {
-  info: { bg: '#e3f2fd', text: '#1565c0' },
-  important: { bg: '#fff3e0', text: '#e65100' },
-  urgent: { bg: '#ffebee', text: '#c62828' },
-};
+function priorityBadgeClass(priority: string): string {
+  if (priority === 'urgent') return 'bg-red-500/20 text-red-400 border-red-500/30';
+  if (priority === 'important') return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+  return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+}
+
+function tabClass(active: boolean): string {
+  if (active) return 'px-4 py-2.5 border-none bg-transparent cursor-pointer text-sm min-h-[44px] transition-colors font-bold text-orange-400 border-b-2 border-orange-400';
+  return 'px-4 py-2.5 border-none bg-transparent cursor-pointer text-sm min-h-[44px] transition-colors text-white/40 border-b-2 border-transparent hover:text-white/60';
+}
+
+function inputClass(): string {
+  return 'w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-white/30 outline-none focus:border-orange-500/50 min-h-[36px]';
+}
+
+function selectClass(): string {
+  return 'px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm outline-none focus:border-orange-500/50 min-h-[36px]';
+}
 
 export default function AdminNotificationsPage() {
   const [tab, setTab] = useState<Tab>('compose');
 
-  // Compose state
   const [msgType, setMsgType] = useState<'individual' | 'broadcast'>('broadcast');
   const [recipientQuery, setRecipientQuery] = useState('');
   const [recipient, setRecipient] = useState<string | null>(null);
@@ -37,12 +49,10 @@ export default function AdminNotificationsPage() {
   const [expiresIn, setExpiresIn] = useState(30);
   const [sending, setSending] = useState(false);
 
-  // Sent state
   const [sentMessages, setSentMessages] = useState<SentMessage[]>([]);
   const [sentPage, setSentPage] = useState(1);
   const [sentTotal, setSentTotal] = useState(0);
 
-  // Templates state
   const [templates, setTemplates] = useState<Template[]>([]);
   const [templateName, setTemplateName] = useState('');
   const [templateTitle, setTemplateTitle] = useState('');
@@ -129,165 +139,172 @@ export default function AdminNotificationsPage() {
     setTab('compose');
   };
 
-  const BTN = (active: boolean) => ({
-    padding: '8px 16px', border: 'none', borderBottom: active ? '2px solid #1565c0' : '2px solid transparent',
-    background: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: active ? 'bold' as const : 'normal' as const,
-    color: active ? '#1565c0' : '#666',
-  });
-
   return (
-    <div>
-      <h1 style={{ fontSize: '20px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><Icon name="Mail" size={22} /> Notifications</h1>
+    <div className="space-y-4">
+      <h1 className="text-xl font-bold flex items-center gap-2 text-white">
+        <Icon name="Mail" size={22} /> Notifications
+      </h1>
 
-      <div style={{ display: 'flex', gap: '0', marginBottom: '16px', borderBottom: '1px solid #ddd' }}>
-        <button style={BTN(tab === 'compose')} onClick={() => setTab('compose')}>Compose</button>
-        <button style={BTN(tab === 'sent')} onClick={() => setTab('sent')}>Sent</button>
-        <button style={BTN(tab === 'templates')} onClick={() => setTab('templates')}>Templates</button>
+      <div className="flex gap-0 border-b border-white/10 flex-wrap">
+        <button onClick={() => setTab('compose')} className={tabClass(tab === 'compose')}>Compose</button>
+        <button onClick={() => setTab('sent')} className={tabClass(tab === 'sent')}>Sent</button>
+        <button onClick={() => setTab('templates')} className={tabClass(tab === 'templates')}>Templates</button>
       </div>
 
-      {/* ═══ COMPOSE ══════════════════════════════════════════════ */}
+      {/* COMPOSE */}
       {tab === 'compose' && (
-        <div style={{ maxWidth: '700px' }}>
-          <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
-            <button onClick={() => { setMsgType('broadcast'); setRecipient(null); }}
-              style={{ padding: '6px 16px', border: msgType === 'broadcast' ? '2px solid #1565c0' : '1px solid #ddd', background: msgType === 'broadcast' ? '#e3f2fd' : 'white', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>
+        <div className="w-full space-y-4">
+          <div className="flex gap-3 flex-wrap">
+            <button
+              onClick={() => { setMsgType('broadcast'); setRecipient(null); }}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer min-h-[36px] flex items-center gap-1.5 transition-colors ${msgType === 'broadcast' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10'}`}
+            >
               <Icon name="Megaphone" size={14} /> Broadcast to All
             </button>
-            <button onClick={() => setMsgType('individual')}
-              style={{ padding: '6px 16px', border: msgType === 'individual' ? '2px solid #1565c0' : '1px solid #ddd', background: msgType === 'individual' ? '#e3f2fd' : 'white', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>
+            <button
+              onClick={() => setMsgType('individual')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer min-h-[36px] flex items-center gap-1.5 transition-colors ${msgType === 'individual' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10'}`}
+            >
               <Icon name="User" size={14} /> Individual User
             </button>
           </div>
 
           {msgType === 'individual' && (
-            <div style={{ marginBottom: '12px' }}>
-              <label style={{ fontSize: '12px', color: '#666' }}>Recipient username</label>
-              <input value={recipientQuery} onChange={e => { setRecipientQuery(e.target.value); setRecipient(e.target.value || null); }}
-                placeholder="e.g. a_9Gh7" style={{ width: '100%', padding: '6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px', marginTop: '4px' }} />
+            <div>
+              <label className="block text-xs text-white/40 mb-1">Recipient username</label>
+              <input value={recipientQuery} onChange={e => { setRecipientQuery(e.target.value); setRecipient(e.target.value || null); }} placeholder="e.g. a_9Gh7" className={inputClass()} />
             </div>
           )}
 
-          <div style={{ marginBottom: '12px' }}>
-            <label style={{ fontSize: '12px', color: '#666' }}>Title</label>
-            <input value={title} onChange={e => setTitle(e.target.value)} maxLength={100}
-              placeholder="e.g. Your post needs revision" style={{ width: '100%', padding: '6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px', marginTop: '4px' }} />
+          <div>
+            <label className="block text-xs text-white/40 mb-1">Title</label>
+            <input value={title} onChange={e => setTitle(e.target.value)} maxLength={100} placeholder="e.g. Your post needs revision" className={inputClass()} />
           </div>
 
-          <div style={{ marginBottom: '12px' }}>
-            <label style={{ fontSize: '12px', color: '#666' }}>Message</label>
-            <textarea value={body} onChange={e => setBody(e.target.value)} maxLength={2000} rows={5}
-              placeholder="Write your message..." style={{ width: '100%', padding: '6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px', marginTop: '4px', fontFamily: 'inherit' }} />
-            <span style={{ fontSize: '11px', color: '#999' }}>{body.length}/2000</span>
+          <div>
+            <label className="block text-xs text-white/40 mb-1">Message</label>
+            <textarea value={body} onChange={e => setBody(e.target.value)} maxLength={2000} rows={5} placeholder="Write your message..." className={`${inputClass()} font-inherit`} />
+            <span className="text-[11px] text-white/30">{body.length}/2000</span>
           </div>
 
-          <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+          <div className="flex gap-4 flex-wrap">
             <div>
-              <label style={{ fontSize: '12px', color: '#666' }}>Priority</label>
-              <select value={priority} onChange={e => setPriority(e.target.value as typeof priority)} style={{ padding: '6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px' }}>
-                <option value="info">Info</option>
-                <option value="important">Important</option>
-                <option value="urgent">Urgent</option>
+              <label className="block text-xs text-white/40 mb-1">Priority</label>
+              <select value={priority} onChange={e => setPriority(e.target.value as typeof priority)} className={selectClass()}>
+                <option value="info" className="bg-zinc-900">Info</option>
+                <option value="important" className="bg-zinc-900">Important</option>
+                <option value="urgent" className="bg-zinc-900">Urgent</option>
               </select>
             </div>
             <div>
-              <label style={{ fontSize: '12px', color: '#666' }}>Expires in (days)</label>
-              <input type="number" value={expiresIn} onChange={e => setExpiresIn(parseInt(e.target.value) || 1)} min={1} max={365}
-                style={{ width: '60px', padding: '6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px' }} />
+              <label className="block text-xs text-white/40 mb-1">Expires in (days)</label>
+              <input type="number" value={expiresIn} onChange={e => setExpiresIn(parseInt(e.target.value) || 1)} min={1} max={365} className="w-[80px] px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm outline-none focus:border-orange-500/50 min-h-[36px]" />
             </div>
           </div>
 
           <button onClick={handleSend} disabled={sending}
-            style={{ padding: '10px 24px', background: sending ? '#ccc' : '#1565c0', color: 'white', border: 'none', borderRadius: '6px', cursor: sending ? 'not-allowed' : 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+            className={`px-5 py-2.5 rounded-xl text-white font-bold cursor-pointer min-h-[44px] flex items-center gap-2 transition-colors ${sending ? 'bg-white/10 cursor-not-allowed' : 'bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600'}`}
+          >
             {sending ? 'Sending...' : msgType === 'broadcast' ? <><Icon name="Megaphone" size={14} /> Send to All Users</> : <><Icon name="User" size={14} /> Send Message</>}
           </button>
         </div>
       )}
 
-      {/* ═══ SENT ══════════════════════════════════════════════════ */}
+      {/* SENT */}
       {tab === 'sent' && (
         <div>
-          <div style={{ marginBottom: '12px', fontSize: '13px', color: '#666' }}>
-            {sentTotal} messages sent
-            {sentPage > 1 && <button onClick={() => setSentPage(p => p - 1)} style={{ marginLeft: '8px', padding: '2px 8px', border: '1px solid #ddd', borderRadius: '3px', cursor: 'pointer', fontSize: '12px' }}>← Prev</button>}
-            {sentTotal > sentPage * 20 && <button onClick={() => setSentPage(p => p + 1)} style={{ marginLeft: '4px', padding: '2px 8px', border: '1px solid #ddd', borderRadius: '3px', cursor: 'pointer', fontSize: '12px' }}>Next →</button>}
+          <div className="mb-3 text-sm text-white/40 flex items-center gap-3 flex-wrap">
+            <span>{sentTotal} messages sent</span>
+            {sentPage > 1 && <button onClick={() => setSentPage(p => p - 1)} className="px-2.5 py-1 rounded-md text-xs bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 cursor-pointer min-h-[32px]">Prev</button>}
+            {sentTotal > sentPage * 20 && <button onClick={() => setSentPage(p => p + 1)} className="px-2.5 py-1 rounded-md text-xs bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 cursor-pointer min-h-[32px]">Next</button>}
           </div>
-          {sentMessages.map(m => (
-            <div key={m._id} style={{ padding: '12px', background: '#fafafa', border: '1px solid #eee', borderRadius: '6px', marginBottom: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                <div>
-                  <span style={{ padding: '1px 6px', borderRadius: '3px', fontSize: '11px', fontWeight: 'bold', background: PRIORITY_COLORS[m.priority]?.bg, color: PRIORITY_COLORS[m.priority]?.text }}>
-                    {m.priority.toUpperCase()}
-                  </span>
-                  <span style={{ marginLeft: '8px', fontSize: '11px', color: '#999' }}>{m.type === 'broadcast' ? <><Icon name="Megaphone" size={11} /> Broadcast</> : <><Icon name="User" size={11} /> Individual</>}</span>
+
+          <div className="space-y-2">
+            {sentMessages.map(m => (
+              <div key={m._id} className="bg-white/[0.02] border border-white/5 rounded-2xl p-3.5">
+                <div className="flex justify-between items-center mb-1.5 flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase ${priorityBadgeClass(m.priority)}`}>
+                      {m.priority.toUpperCase()}
+                    </span>
+                    <span className="text-[11px] text-white/40 flex items-center gap-1">
+                      {m.type === 'broadcast' ? <><Icon name="Megaphone" size={11} /> Broadcast</> : <><Icon name="User" size={11} /> Individual</>}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] text-white/30" suppressHydrationWarning>{formatDate(m.created_at)}</span>
+                    <button onClick={() => handleRetract(m._id)} className="px-2.5 py-1 rounded-md text-[11px] text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer min-h-[32px]">
+                      Retract
+                    </button>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '11px', color: '#999' }} suppressHydrationWarning>{formatDate(m.created_at)}</span>
-                  <button onClick={() => handleRetract(m._id)} style={{ background: 'none', border: 'none', color: '#c62828', cursor: 'pointer', fontSize: '12px' }}>Retract</button>
+                <strong className="text-sm text-white block mb-1">{m.title}</strong>
+                <p className="text-xs text-white/50 mb-1">{m.body.substring(0, 150)}{m.body.length > 150 ? '...' : ''}</p>
+                <div className="text-[11px] text-white/30">
+                  {m.type === 'broadcast' ? `${m.dismissed_by.length} dismissed` : `To: ${m.recipient_id}`}
+                  {' · '}Expires: <span suppressHydrationWarning>{formatDate(m.expires_at)}</span>
                 </div>
               </div>
-              <strong style={{ fontSize: '13px' }}>{m.title}</strong>
-              <p style={{ fontSize: '12px', color: '#555', margin: '4px 0 0' }}>{m.body.substring(0, 150)}{m.body.length > 150 ? '...' : ''}</p>
-              <div style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
-                {m.type === 'broadcast' ? `${m.dismissed_by.length} dismissed` : `To: ${m.recipient_id}`}
-                {' · '}Expires: <span suppressHydrationWarning>{formatDate(m.expires_at)}</span>
-              </div>
+            ))}
+          </div>
+          {sentMessages.length === 0 && (
+            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-10 text-center">
+              <p className="text-white/40 text-sm">No messages sent yet</p>
             </div>
-          ))}
-          {sentMessages.length === 0 && <div style={{ padding: '24px', textAlign: 'center', color: '#999', fontSize: '13px' }}>No messages sent yet</div>}
+          )}
         </div>
       )}
 
-      {/* ═══ TEMPLATES ══════════════════════════════════════════════ */}
+      {/* TEMPLATES */}
       {tab === 'templates' && (
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <span style={{ fontSize: '13px', color: '#666' }}>{templates.length} templates</span>
-            <button onClick={() => setShowTemplateForm(!showTemplateForm)} style={{ padding: '6px 14px', background: '#1565c0', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>
+          <div className="flex justify-between items-center mb-3 flex-wrap gap-2">
+            <span className="text-sm text-white/40">{templates.length} templates</span>
+            <button onClick={() => setShowTemplateForm(!showTemplateForm)} className="px-4 py-1.5 rounded-lg text-white text-xs font-semibold cursor-pointer min-h-[36px] bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all">
               {showTemplateForm ? 'Cancel' : '+ New Template'}
             </button>
           </div>
 
           {showTemplateForm && (
-            <div style={{ background: '#f5f5f5', padding: '16px', borderRadius: '6px', marginBottom: '16px' }}>
-              <div style={{ marginBottom: '8px' }}>
-                <input value={templateName} onChange={e => setTemplateName(e.target.value)} placeholder="Template name (e.g. 'Revision needed')"
-                  style={{ width: '100%', padding: '6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px' }} />
-              </div>
-              <div style={{ marginBottom: '8px' }}>
-                <input value={templateTitle} onChange={e => setTemplateTitle(e.target.value)} placeholder="Default title"
-                  style={{ width: '100%', padding: '6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px' }} />
-              </div>
-              <div style={{ marginBottom: '8px' }}>
-                <textarea value={templateBody} onChange={e => setTemplateBody(e.target.value)} placeholder="Default body" rows={3}
-                  style={{ width: '100%', padding: '6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px', fontFamily: 'inherit' }} />
-              </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <select value={templatePriority} onChange={e => setTemplatePriority(e.target.value as typeof templatePriority)} style={{ padding: '6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px' }}>
-                  <option value="info">Info</option>
-                  <option value="important">Important</option>
-                  <option value="urgent">Urgent</option>
+            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 mb-4 space-y-3">
+              <input value={templateName} onChange={e => setTemplateName(e.target.value)} placeholder="Template name (e.g. 'Revision needed')" className={inputClass()} />
+              <input value={templateTitle} onChange={e => setTemplateTitle(e.target.value)} placeholder="Default title" className={inputClass()} />
+              <textarea value={templateBody} onChange={e => setTemplateBody(e.target.value)} placeholder="Default body" rows={3} className={`${inputClass()} font-inherit`} />
+              <div className="flex gap-3 items-center flex-wrap">
+                <select value={templatePriority} onChange={e => setTemplatePriority(e.target.value as typeof templatePriority)} className={selectClass()}>
+                  <option value="info" className="bg-zinc-900">Info</option>
+                  <option value="important" className="bg-zinc-900">Important</option>
+                  <option value="urgent" className="bg-zinc-900">Urgent</option>
                 </select>
-                <button onClick={handleSaveTemplate} style={{ padding: '6px 16px', background: '#2e7d32', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}>Save</button>
+                <button onClick={handleSaveTemplate} className="px-4 py-1.5 rounded-lg text-white text-xs font-semibold cursor-pointer bg-green-700 hover:bg-green-600 transition-colors min-h-[36px]">
+                  Save
+                </button>
               </div>
             </div>
           )}
 
-          {templates.map(t => (
-            <div key={t._id} style={{ padding: '10px', border: '1px solid #eee', borderRadius: '4px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <strong style={{ fontSize: '13px' }}>{t.name}</strong>
-                  <span style={{ padding: '1px 5px', borderRadius: '3px', fontSize: '10px', fontWeight: 'bold', background: PRIORITY_COLORS[t.priority]?.bg, color: PRIORITY_COLORS[t.priority]?.text }}>{t.priority}</span>
+          <div className="space-y-2">
+            {templates.map(t => (
+              <div key={t._id} className="bg-white/[0.02] border border-white/5 rounded-2xl p-3.5 flex justify-between items-center gap-3 flex-wrap">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <strong className="text-sm text-white">{t.name}</strong>
+                    <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase ${priorityBadgeClass(t.priority)}`}>{t.priority}</span>
+                  </div>
+                  <p className="text-xs text-white/50">{t.title}: {t.body.substring(0, 80)}</p>
                 </div>
-                <p style={{ fontSize: '12px', color: '#555', margin: '2px 0 0' }}>{t.title}: {t.body.substring(0, 80)}</p>
+                <div className="flex gap-2 items-center shrink-0">
+                  <button onClick={() => applyTemplate(t)} className="px-3 py-1 rounded-md text-[11px] text-blue-400 bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 transition-colors cursor-pointer min-h-[32px]">Use</button>
+                  <button onClick={() => handleDeleteTemplate(t._id)} className="px-3 py-1 rounded-md text-[11px] text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer min-h-[32px]">Delete</button>
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <button onClick={() => applyTemplate(t)} style={{ padding: '3px 10px', background: '#e3f2fd', color: '#1565c0', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '12px' }}>Use</button>
-                <button onClick={() => handleDeleteTemplate(t._id)} style={{ padding: '3px 10px', background: 'none', border: '1px solid #ddd', borderRadius: '3px', cursor: 'pointer', fontSize: '12px', color: '#c62828' }}>Delete</button>
-              </div>
+            ))}
+          </div>
+          {templates.length === 0 && (
+            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-10 text-center">
+              <p className="text-white/40 text-sm">No templates yet. Create reusable message templates for common notifications.</p>
             </div>
-          ))}
-          {templates.length === 0 && <div style={{ padding: '24px', textAlign: 'center', color: '#999', fontSize: '13px' }}>No templates yet. Create reusable message templates for common notifications.</div>}
+          )}
         </div>
       )}
     </div>

@@ -110,7 +110,7 @@ export default function AdminModsPage() {
         </h2>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="px-3.5 py-1.5 cursor-pointer rounded-lg text-white text-xs font-semibold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all flex items-center gap-1.5"
+          className="px-3.5 py-1.5 cursor-pointer rounded-lg text-white text-xs font-semibold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all flex items-center gap-1.5 min-h-[36px]"
         >
           <Icon name="Plus" size={13} />
           Create Moderator
@@ -126,12 +126,12 @@ export default function AdminModsPage() {
         </div>
       ) : (
         <>
-          {/* Mobile cards */}
+          {/* Mobile: card stack */}
           <div className="block lg:hidden space-y-2">
             {mods.map((mod) => (
               <div
                 key={mod._id}
-                className="bg-white/5 border border-white/10 rounded-xl p-3.5 space-y-2.5"
+                className="bg-white/[0.02] border border-white/5 rounded-2xl p-3.5 space-y-2.5"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-white font-semibold text-sm">
@@ -143,7 +143,7 @@ export default function AdminModsPage() {
                     {roleLabel(mod.role)}
                   </span>
                 </div>
-                <div className="flex items-center gap-3 text-[11px] text-white/40">
+                <div className="flex items-center gap-3 text-[11px] text-white/40 flex-wrap">
                   <span>
                     <span className="text-white/60">
                       {mod.permissions?.length || 0}
@@ -165,14 +165,14 @@ export default function AdminModsPage() {
                 <div className="flex items-center gap-1.5 pt-1 flex-wrap">
                   <button
                     onClick={() => setEditMod(mod)}
-                    className="px-2.5 py-1 rounded-md text-[10px] text-white/70 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex items-center gap-1 cursor-pointer min-h-[32px]"
+                    className="px-2.5 py-1 rounded-md text-[11px] text-white/70 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex items-center gap-1 cursor-pointer min-h-[32px]"
                   >
                     <Icon name="Pencil" size={11} />
                     Edit
                   </button>
                   <button
                     onClick={() => handleToggleActive(mod)}
-                    className={`px-2.5 py-1 rounded-md text-[10px] flex items-center gap-1 cursor-pointer min-h-[32px] transition-colors ${
+                    className={`px-2.5 py-1 rounded-md text-[11px] flex items-center gap-1 cursor-pointer min-h-[32px] transition-colors ${
                       mod.is_active
                         ? 'text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/20'
                         : 'text-green-400 bg-green-500/10 border border-green-500/20 hover:bg-green-500/20'
@@ -186,14 +186,14 @@ export default function AdminModsPage() {
                   </button>
                   <button
                     onClick={() => setResetPasswordMod(mod)}
-                    className="px-2.5 py-1 rounded-md text-[10px] text-white/70 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex items-center gap-1 cursor-pointer min-h-[32px]"
+                    className="px-2.5 py-1 rounded-md text-[11px] text-white/70 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex items-center gap-1 cursor-pointer min-h-[32px]"
                   >
                     <Icon name="Key" size={11} />
                     Reset
                   </button>
                   <button
                     onClick={() => setShowDeleteConfirm(mod._id)}
-                    className="px-2.5 py-1 rounded-md text-[10px] text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors flex items-center gap-1 cursor-pointer min-h-[32px]"
+                    className="px-2.5 py-1 rounded-md text-[11px] text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors flex items-center gap-1 cursor-pointer min-h-[32px]"
                   >
                     <Icon name="Trash2" size={11} />
                     Del
@@ -328,12 +328,12 @@ export default function AdminModsPage() {
 
       {/* Delete Confirm Dialog */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4">
           <div
             className="absolute inset-0 bg-black/60"
             onClick={() => setShowDeleteConfirm(null)}
           />
-          <div className="relative bg-zinc-900 border border-white/10 rounded-xl p-5 w-full max-w-sm space-y-4">
+          <div className="relative bg-zinc-900 border border-white/10 w-full h-full sm:h-auto sm:max-w-sm sm:rounded-xl p-5 space-y-4 flex flex-col justify-center sm:block">
             <div className="flex items-start gap-3">
               <div className="p-2 rounded-lg bg-red-500/10 shrink-0">
                 <Icon name="TriangleAlert" size={18} className="text-red-400" />
@@ -350,13 +350,13 @@ export default function AdminModsPage() {
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setShowDeleteConfirm(null)}
-                className="px-3.5 py-1.5 rounded-lg text-xs text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer"
+                className="px-3.5 py-1.5 rounded-lg text-xs text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer min-h-[44px]"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleDelete(showDeleteConfirm)}
-                className="px-3.5 py-1.5 rounded-lg text-xs text-white bg-red-500 hover:bg-red-600 transition-colors cursor-pointer"
+                className="px-3.5 py-1.5 rounded-lg text-xs text-white bg-red-500 hover:bg-red-600 transition-colors cursor-pointer min-h-[44px]"
               >
                 Remove
               </button>
@@ -496,7 +496,7 @@ function CreateModModal({
   };
 
   const inputClass =
-    'w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-white/30 outline-none focus:border-orange-500/50 transition-colors';
+    'w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-white/30 outline-none focus:border-orange-500/50 transition-colors min-h-[36px]';
 
   return (
     <ModalShell onClose={onClose} title="Create Moderator">
@@ -541,9 +541,9 @@ function CreateModModal({
           value={selectedPreset}
           onChange={(e) => handlePresetChange(e.target.value)}
         >
-          <option value="">Custom permissions</option>
+          <option value="" className="bg-zinc-900">Custom permissions</option>
           {presets.map((p) => (
-            <option key={p.name} value={p.name}>
+            <option key={p.name} value={p.name} className="bg-zinc-900">
               {p.name} ({p.permissions.length} perms)
             </option>
           ))}
@@ -587,14 +587,14 @@ function CreateModModal({
       <div className="flex justify-end gap-2 pt-2">
         <button
           onClick={onClose}
-          className="px-3.5 py-1.5 rounded-lg text-xs text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer"
+          className="px-3.5 py-1.5 rounded-lg text-xs text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer min-h-[44px]"
         >
           Cancel
         </button>
         <button
           onClick={handleSubmit}
           disabled={submitting}
-          className="px-3.5 py-1.5 rounded-lg text-xs text-white font-semibold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all cursor-pointer disabled:opacity-50"
+          className="px-3.5 py-1.5 rounded-lg text-xs text-white font-semibold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all cursor-pointer disabled:opacity-50 min-h-[44px]"
         >
           {submitting ? 'Creating...' : 'Create'}
         </button>
@@ -717,14 +717,14 @@ function EditModModal({
       <div className="flex justify-end gap-2 pt-2">
         <button
           onClick={onClose}
-          className="px-3.5 py-1.5 rounded-lg text-xs text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer"
+          className="px-3.5 py-1.5 rounded-lg text-xs text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer min-h-[44px]"
         >
           Cancel
         </button>
         <button
           onClick={handleSubmit}
           disabled={submitting}
-          className="px-3.5 py-1.5 rounded-lg text-xs text-white font-semibold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all cursor-pointer disabled:opacity-50"
+          className="px-3.5 py-1.5 rounded-lg text-xs text-white font-semibold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all cursor-pointer disabled:opacity-50 min-h-[44px]"
         >
           {submitting ? 'Saving...' : 'Save'}
         </button>
@@ -747,7 +747,7 @@ function ResetPasswordModal({
   const [error, setError] = useState('');
 
   const inputClass =
-    'w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-white/30 outline-none focus:border-orange-500/50 transition-colors';
+    'w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-white/30 outline-none focus:border-orange-500/50 transition-colors min-h-[36px]';
 
   const handleSubmit = async () => {
     if (password.length < 8) {
@@ -795,14 +795,14 @@ function ResetPasswordModal({
       <div className="flex justify-end gap-2 pt-2">
         <button
           onClick={onClose}
-          className="px-3.5 py-1.5 rounded-lg text-xs text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer"
+          className="px-3.5 py-1.5 rounded-lg text-xs text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer min-h-[44px]"
         >
           Cancel
         </button>
         <button
           onClick={handleSubmit}
           disabled={submitting}
-          className="px-3.5 py-1.5 rounded-lg text-xs text-white font-semibold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all cursor-pointer disabled:opacity-50"
+          className="px-3.5 py-1.5 rounded-lg text-xs text-white font-semibold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all cursor-pointer disabled:opacity-50 min-h-[44px]"
         >
           {submitting ? 'Resetting...' : 'Reset Password'}
         </button>
@@ -823,19 +823,19 @@ function ModalShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-start justify-center sm:pt-[10vh] p-0 sm:p-4 overflow-y-auto">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative bg-zinc-900 border border-white/10 rounded-xl w-full max-w-lg">
+      <div className="relative bg-zinc-900 border border-white/10 w-full h-full sm:h-auto sm:max-w-lg sm:rounded-xl">
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
           <h3 className="text-white font-semibold text-sm">{title}</h3>
           <button
             onClick={onClose}
-            className="p-1 rounded-md text-white/40 hover:text-white/70 hover:bg-white/5 transition-colors cursor-pointer min-h-[32px] min-w-[32px] flex items-center justify-center"
+            className="p-1 rounded-md text-white/40 hover:text-white/70 hover:bg-white/5 transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             <Icon name="X" size={16} />
           </button>
         </div>
-        <div className="px-4 py-3 space-y-3 max-h-[70vh] overflow-y-auto">
+        <div className="px-4 py-3 space-y-3 sm:max-h-[70vh] overflow-y-auto">
           {children}
         </div>
       </div>

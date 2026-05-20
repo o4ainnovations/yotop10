@@ -35,7 +35,7 @@ const METRIC_LABELS: Record<string, string> = {
 
 const RESOLUTION_GUIDE: Record<string, string> = {
   pending_queue_depth: 'Approve or reject pending posts in the review queue to reduce the backlog.',
-  approval_rate_drop: 'Too many posts are being rejected vs approved. Review rejection quality — are valid posts being rejected? Or is submission quality actually dropping?',
+  approval_rate_drop: 'Too many posts are being rejected vs approved. Review rejection quality mdash are valid posts being rejected? Or is submission quality actually dropping?',
   zero_review_hours: 'No admin activity detected. Log in and review at least one post to reset this metric.',
   comment_brigade: 'A comment thread is growing rapidly. Check the thread for coordinated attacks or spam. Consider locking the post.',
   es_index_gap_pct: 'Some documents exist in the database but are missing from Elasticsearch. Trigger a reindex from the search management panel.',
@@ -80,23 +80,32 @@ export default function AlertDetailPage() {
 
   const { notification: n, current_value, threshold_config: tc, still_breaching } = detail;
 
-  const severityColor = still_breaching ? (n.severity === 'critical' ? 'border-red-500 bg-red-500/10' : 'border-orange-500 bg-orange-500/10') : 'border-green-500 bg-green-500/10';
-  const severityTextColor = still_breaching ? (n.severity === 'critical' ? 'text-red-500' : 'text-orange-500') : 'text-green-500';
-  const STATUS_ICON = still_breaching ? (n.severity === 'critical' ? <><Icon name="Circle" size={16} color="#d32f2f" fill="#d32f2f" /> Critical</> : <><Icon name="Circle" size={16} color="#f57c00" fill="#f57c00" /> Warning</>) : <><Icon name="Circle" size={16} color="#2e7d32" fill="#2e7d32" /> Resolved</>;
+  const severityBorder = still_breaching
+    ? (n.severity === 'critical' ? 'border-red-500 bg-red-500/10' : 'border-orange-500 bg-orange-500/10')
+    : 'border-green-500 bg-green-500/10';
+  const severityTextColor = still_breaching
+    ? (n.severity === 'critical' ? 'text-red-500' : 'text-orange-500')
+    : 'text-green-500';
 
-  const cardClass = 'bg-white/5 border border-white/10 rounded-xl p-4 sm:p-5 mb-5';
+  const STATUS_ICON = still_breaching
+    ? (n.severity === 'critical'
+      ? <><Icon name="Circle" size={16} color="#d32f2f" fill="#d32f2f" /> Critical</>
+      : <><Icon name="Circle" size={16} color="#f57c00" fill="#f57c00" /> Warning</>)
+    : <><Icon name="Circle" size={16} color="#2e7d32" fill="#2e7d32" /> Resolved</>;
+
+  const cardClass = 'bg-white/[0.02] border border-white/5 rounded-2xl p-4 sm:p-5 mb-4 w-full';
 
   return (
-    <div className="max-w-[700px] mx-auto px-3 sm:px-5 py-5">
-      <button onClick={() => router.back()} className="bg-transparent border-none text-orange-400 cursor-pointer text-sm mb-4 flex items-center gap-1 hover:text-orange-300">
+    <div className="w-full px-3 sm:px-5 py-5">
+      <button onClick={() => router.back()} className="bg-transparent border-none text-orange-400 cursor-pointer text-sm mb-4 flex items-center gap-1 hover:text-orange-300 min-h-[44px]">
         <Icon name="ArrowLeft" size={14} /> Back
       </button>
 
-      <div className={`border-2 rounded-2xl p-5 mb-5 ${severityColor}`}>
-        <h1 className="text-xl font-bold mb-2 flex items-center gap-2 text-white">
-          {STATUS_ICON} — {METRIC_LABELS[n.alert_type] || n.alert_type}
+      <div className={`border-2 rounded-2xl p-5 mb-5 ${severityBorder}`}>
+        <h1 className="text-xl font-bold mb-2 flex items-center gap-2 text-white flex-wrap">
+          {STATUS_ICON} mdash {METRIC_LABELS[n.alert_type] || n.alert_type}
         </h1>
-        <p className="text-sm text-white/60 mb-2">{n.message}</p>
+        <p className="text-sm text-white/50 mb-2">{n.message}</p>
         <div className="flex gap-5 flex-wrap text-[13px] mt-3">
           <div>
             <span className="text-white/40">Triggered at:</span>{' '}
@@ -123,7 +132,7 @@ export default function AlertDetailPage() {
 
       <div className={cardClass}>
         <h2 className="text-base font-bold mb-2 text-white">How to Fix</h2>
-        <p className="text-[13px] text-white/60 leading-relaxed">
+        <p className="text-[13px] text-white/50 leading-relaxed">
           {RESOLUTION_GUIDE[n.alert_type] || 'Review the metric and take appropriate action.'}
         </p>
       </div>
@@ -131,7 +140,7 @@ export default function AlertDetailPage() {
       {tc && (
         <div className={cardClass}>
           <h2 className="text-base font-bold mb-2.5 text-white">Threshold Configuration</h2>
-          <div className="text-[13px] text-white/60">
+          <div className="text-[13px] text-white/50">
             <p className="my-1">Operator: <strong className="text-white">{tc.operator}</strong></p>
             <p className="my-1">Threshold: <strong className="text-white">{tc.threshold}</strong></p>
             <p className="my-1">Severity: <span className={`font-bold ${tc.severity === 'critical' ? 'text-red-500' : 'text-orange-500'}`}>{tc.severity}</span></p>
@@ -142,14 +151,17 @@ export default function AlertDetailPage() {
         </div>
       )}
 
+      {/* Sticky bottom resolve button */}
       {!n.settled && (
-        <button
-          onClick={handleSettle}
-          disabled={settling}
-          className={`w-full py-3 text-white border-none rounded-xl cursor-pointer text-[15px] font-bold flex items-center justify-center gap-2 min-h-[48px] ${settling ? 'bg-white/10 cursor-not-allowed' : 'bg-green-700 cursor-pointer hover:bg-green-600'}`}
-        >
-          {settling ? 'Settling...' : <><Icon name="Check" size={16} color="#fff" /> Settle This Alert</>}
-        </button>
+        <div className="sticky bottom-0 z-10 bg-zinc-950/95 backdrop-blur-sm pt-3 pb-4 -mx-3 sm:-mx-5 px-3 sm:px-5">
+          <button
+            onClick={handleSettle}
+            disabled={settling}
+            className={`w-full py-3 text-white border-none rounded-xl cursor-pointer text-[15px] font-bold flex items-center justify-center gap-2 min-h-[48px] ${settling ? 'bg-white/10 cursor-not-allowed' : 'bg-green-700 cursor-pointer hover:bg-green-600'}`}
+          >
+            {settling ? 'Settling...' : <><Icon name="Check" size={16} color="#fff" /> Settle This Alert</>}
+          </button>
+        </div>
       )}
     </div>
   );

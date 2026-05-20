@@ -1066,7 +1066,7 @@ After MVP launch. Optional features:
 - [ ] Futuristic theme (design system)
 - [ ] Retro theme (Myspace-style)
 - [ ] Dark/light toggle
-- [ ] Mobile-first responsive
+- [x] Mobile-first responsive — All 19 admin pages converted to Tailwind with mobile cards + desktop tables, full-screen modals, 44px touch targets, accordion statistics. AdminSlideMenu wired for admin mobile navigation. Admin sidebar hidden on mobile. FloatingDock rendered with `/admin` route guard.
 
 ### V2.2 — Post Changelog/Revisions
 - [ ] Version history on posts

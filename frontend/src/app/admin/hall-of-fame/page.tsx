@@ -90,15 +90,15 @@ export default function AdminHallOfFamePage() {
     } catch { toast.error('Failed to update note.'); }
   };
 
-  const btnSmClass = 'text-[11px] cursor-pointer px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-white';
+  const btnSmClass = 'text-[11px] cursor-pointer px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-white min-h-[28px] min-w-[28px] flex items-center justify-center';
   const btnDangerSm = `${btnSmClass} text-red-400`;
-  const tabClass = (mode: ViewMode) => `px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer min-h-[40px] ${
+  const tabClass = (mode: ViewMode) => `px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer min-h-[44px] flex items-center gap-1.5 ${
     viewMode === mode ? 'bg-white/10 text-white border border-white/20' : 'text-zinc-500 hover:text-white hover:bg-white/5 border border-transparent'
   }`;
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-white text-lg font-bold">Hall of Fame</h2>
         <div className="flex gap-1 bg-white/5 border border-white/10 rounded-lg p-0.5">
           <button onClick={() => { setViewMode('featured'); setLoading(true); fetchFeatured(); setLoading(false); }} className={tabClass('featured')}>
@@ -122,13 +122,13 @@ export default function AdminHallOfFamePage() {
             </div>
           ) : (
             <>
-              {/* Mobile cards */}
+              {/* Mobile: full-width card stack */}
               <div className="lg:hidden flex flex-col gap-2">
                 {featured.map((entry, i) => {
                   const post = entry.post;
                   const warning = entry.status_warning;
                   return (
-                    <div key={entry.id} className={`bg-white/[0.02] border rounded-xl p-3 ${warning ? 'border-red-500/30' : 'border-white/5'}`}>
+                    <div key={entry.id} className={`bg-white/[0.02] border rounded-2xl p-3.5 ${warning ? 'border-red-500/30' : 'border-white/5'}`}>
                       {warning && (
                         <div className="flex items-center gap-1.5 mb-2 bg-red-500/10 border border-red-500/20 rounded-lg px-2 py-1">
                           <Icon name="TriangleAlert" size={12} className="text-red-400" />
@@ -151,8 +151,8 @@ export default function AdminHallOfFamePage() {
                         {post ? (
                           <>
                             <span>{post.author_username}</span>
-                            <span><Icon name="MessageCircle" size={12} /> {post.comment_count}</span>
-                            <span><Icon name="Eye" size={14} /> {post.view_count}</span>
+                            <span className="flex items-center gap-1"><Icon name="MessageCircle" size={12} /> {post.comment_count}</span>
+                            <span className="flex items-center gap-1"><Icon name="Eye" size={14} /> {post.view_count}</span>
                           </>
                         ) : (
                           <span className="text-zinc-600 italic">Post data unavailable</span>
@@ -160,7 +160,6 @@ export default function AdminHallOfFamePage() {
                         <span suppressHydrationWarning>{formatDate(entry.featured_at)}</span>
                       </div>
 
-                      {/* Editorial note */}
                       {editingId === entry.id ? (
                         <div className="flex gap-1 mb-2">
                           <textarea
@@ -185,16 +184,23 @@ export default function AdminHallOfFamePage() {
                         </div>
                       )}
 
-                      <div className="flex gap-1 flex-wrap">
-                        <button onClick={() => handleMove(i, -1)} disabled={i === 0 || reordering} className={`${btnSmClass} ${i === 0 || reordering ? 'opacity-30' : ''}`}>
-                          <Icon name="ChevronUp" size={12} />
+                      {/* Reorder: up/down buttons + actions */}
+                      <div className="flex gap-1 flex-wrap items-center">
+                        <button onClick={() => handleMove(i, -1)} disabled={i === 0 || reordering}
+                          className={`${btnSmClass} ${i === 0 || reordering ? 'opacity-30 cursor-not-allowed' : ''}`}
+                          title="Move up"
+                        >
+                          <Icon name="ArrowUp" size={12} />
                         </button>
-                        <button onClick={() => handleMove(i, 1)} disabled={i === featured.length - 1 || reordering} className={`${btnSmClass} ${i === featured.length - 1 || reordering ? 'opacity-30' : ''}`}>
-                          <Icon name="ChevronDown" size={12} />
+                        <button onClick={() => handleMove(i, 1)} disabled={i === featured.length - 1 || reordering}
+                          className={`${btnSmClass} ${i === featured.length - 1 || reordering ? 'opacity-30 cursor-not-allowed' : ''}`}
+                          title="Move down"
+                        >
+                          <Icon name="ArrowDown" size={12} />
                         </button>
                         {confirmRemoveId === entry.id ? (
                           <>
-                            <button onClick={() => handleRemove(entry.id)} className={`${btnSmClass} text-red-400`}>Confirm</button>
+                            <button onClick={() => handleRemove(entry.id)} className={`${btnSmClass} text-red-400 border-red-500/30`}>Confirm</button>
                             <button onClick={() => setConfirmRemoveId(null)} className={btnSmClass}>Cancel</button>
                           </>
                         ) : (
@@ -246,7 +252,7 @@ export default function AdminHallOfFamePage() {
                               )}
                             </div>
                           </td>
-                          <td className="p-2 text-zinc-400">{post?.author_username || <span className="text-zinc-600 italic">{'--'}</span>}</td>
+                          <td className="p-2 text-zinc-400">{post?.author_username || <span className="text-zinc-600 italic">--</span>}</td>
                           <td className="p-2">
                             {editingId === entry.id ? (
                               <div className="flex gap-1">
@@ -278,20 +284,26 @@ export default function AdminHallOfFamePage() {
                                 <span><Icon name="Eye" size={14} /> {post.view_count}</span>
                               </>
                             ) : (
-                              <span className="text-zinc-600 italic">{'--'}</span>
+                              <span className="text-zinc-600 italic">--</span>
                             )}
                           </td>
                           <td className="p-2">
                             <div className="flex gap-1 items-center">
-                              <button onClick={() => handleMove(i, -1)} disabled={i === 0 || reordering} className={`${btnSmClass} ${i === 0 || reordering ? 'opacity-30 cursor-not-allowed' : ''}`} title="Move up">
-                                <Icon name="ChevronUp" size={12} />
+                              <button onClick={() => handleMove(i, -1)} disabled={i === 0 || reordering}
+                                className={`${btnSmClass} ${i === 0 || reordering ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                title="Move up"
+                              >
+                                <Icon name="ArrowUp" size={12} />
                               </button>
-                              <button onClick={() => handleMove(i, 1)} disabled={i === featured.length - 1 || reordering} className={`${btnSmClass} ${i === featured.length - 1 || reordering ? 'opacity-30 cursor-not-allowed' : ''}`} title="Move down">
-                                <Icon name="ChevronDown" size={12} />
+                              <button onClick={() => handleMove(i, 1)} disabled={i === featured.length - 1 || reordering}
+                                className={`${btnSmClass} ${i === featured.length - 1 || reordering ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                title="Move down"
+                              >
+                                <Icon name="ArrowDown" size={12} />
                               </button>
                               {confirmRemoveId === entry.id ? (
                                 <span className="flex gap-1">
-                                  <button onClick={() => handleRemove(entry.id)} className={`${btnSmClass} text-red-400`}>Confirm</button>
+                                  <button onClick={() => handleRemove(entry.id)} className={`${btnSmClass} text-red-400 border-red-500/30`}>Confirm</button>
                                   <button onClick={() => setConfirmRemoveId(null)} className={btnSmClass}>Cancel</button>
                                 </span>
                               ) : (
@@ -322,34 +334,34 @@ export default function AdminHallOfFamePage() {
             </div>
           ) : (
             <>
-              {/* Mobile cards */}
+              {/* Mobile: single column cards */}
               <div className="lg:hidden flex flex-col gap-2">
                 {candidates.map(c => (
-                  <div key={c.id} className="bg-white/[0.02] border border-white/5 rounded-xl p-3">
+                  <div key={c.id} className="bg-white/[0.02] border border-white/5 rounded-2xl p-3.5">
                     <p className="text-white text-sm font-semibold mb-1">{c.title}</p>
                     <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-zinc-500 mb-2">
                       <span>{c.author_username}</span>
-                      <span><Icon name="MessageCircle" size={12} /> {c.comment_count}</span>
-                      <span><Icon name="Eye" size={14} /> {c.view_count}</span>
+                      <span className="flex items-center gap-1"><Icon name="MessageCircle" size={12} /> {c.comment_count}</span>
+                      <span className="flex items-center gap-1"><Icon name="Eye" size={14} /> {c.view_count}</span>
                     </div>
-                    <button onClick={() => handleFeature(c.id)} className="bg-gradient-to-r from-orange-500 to-red-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium hover:opacity-90 transition-opacity">
+                    <button onClick={() => handleFeature(c.id)} className="bg-gradient-to-r from-orange-500 to-pink-500 text-white text-xs px-3 py-1.5 rounded-lg font-medium hover:from-orange-600 hover:to-pink-600 transition-all min-h-[36px]">
                       Feature
                     </button>
                   </div>
                 ))}
               </div>
 
-              {/* Desktop cards */}
+              {/* Desktop: grid, multiple columns */}
               <div className="hidden lg:grid lg:grid-cols-2 xl:grid-cols-3 gap-3">
                 {candidates.map(c => (
                   <div key={c.id} className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex flex-col">
                     <p className="text-white font-medium text-sm mb-1 line-clamp-2">{c.title}</p>
                     <p className="text-zinc-500 text-xs mb-1">{c.author_username}</p>
                     <div className="flex gap-3 text-[11px] text-zinc-500 mb-3">
-                      <span><Icon name="MessageCircle" size={12} /> {c.comment_count}</span>
-                      <span><Icon name="Eye" size={14} /> {c.view_count}</span>
+                      <span className="flex items-center gap-1"><Icon name="MessageCircle" size={12} /> {c.comment_count}</span>
+                      <span className="flex items-center gap-1"><Icon name="Eye" size={14} /> {c.view_count}</span>
                     </div>
-                    <button onClick={() => handleFeature(c.id)} className="mt-auto bg-gradient-to-r from-orange-500 to-red-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium hover:opacity-90 transition-opacity">
+                    <button onClick={() => handleFeature(c.id)} className="mt-auto bg-gradient-to-r from-orange-500 to-pink-500 text-white text-xs px-3 py-1.5 rounded-lg font-medium hover:from-orange-600 hover:to-pink-600 transition-all min-h-[36px]">
                       Feature
                     </button>
                   </div>

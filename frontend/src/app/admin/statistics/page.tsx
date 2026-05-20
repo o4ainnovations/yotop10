@@ -38,6 +38,15 @@ export default function StatisticsDashboard() {
     'search/behavior': { loading: false, data: null, open: false },
   });
 
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
   const fetchPanel = useCallback(async (scope: string) => {
     setPanels(prev => ({ ...prev, [scope]: { ...prev[scope], loading: true } }));
     try {
@@ -57,7 +66,20 @@ export default function StatisticsDashboard() {
 
   const toggle = (scope: string) => setPanels(prev => {
     const c = prev[scope];
-    if (!c.open && !c.data) fetchPanel(scope);
+    const isOpening = !c.open;
+    if (isOpening && !c.data) fetchPanel(scope);
+
+    if (isOpening && isMobile) {
+      const next = { ...prev };
+      for (const key of Object.keys(next)) {
+        if (key !== scope && next[key].open) {
+          next[key] = { ...next[key], open: false };
+        }
+      }
+      next[scope] = { ...c, open: true };
+      return next;
+    }
+
     return { ...prev, [scope]: { ...c, open: !c.open } };
   });
 
@@ -73,19 +95,19 @@ export default function StatisticsDashboard() {
       else if (scope === 'moderation') hint = ` ▸ ${n(ov.pending)} pending`;
     }
     return (
-      <div className="border border-white/10 rounded-xl mb-3 overflow-hidden bg-white/5">
-        <button onClick={() => toggle(scope)} className="w-full text-left px-4 py-3.5 bg-white/[0.02] border-none cursor-pointer text-[15px] font-bold flex justify-between text-white min-h-[48px] hover:bg-white/[0.04]">
-          <span>{titleIcon && <><Icon name={titleIcon} size={16} color="var(--color-orange-400)" /> </>}{title}{hint}</span>
-          <span className="text-white/40">{p.open ? '\u25BE' : '\u25B8'}</span>
+      <div className="bg-white/[0.02] border border-white/5 rounded-2xl mb-3 overflow-hidden">
+        <button onClick={() => toggle(scope)} className="w-full text-left px-4 py-3.5 bg-transparent border-none cursor-pointer text-[15px] font-bold flex justify-between items-center text-white min-h-[44px] hover:bg-white/[0.04] transition-colors">
+          <span className="truncate">{titleIcon && <><Icon name={titleIcon} size={16} color="var(--color-orange-400)" />{' '}</>}{title}{hint}</span>
+          <span className="text-white/40 flex-shrink-0 ml-2">{p.open ? '\u25BE' : '\u25B8'}</span>
         </button>
-        {p.open && <div className="p-4 sm:p-4.5">{p.loading ? <p className="text-white/40">Loading...</p> : p.error ? <p className="text-red-500">{p.error}</p> : children}</div>}
+        {p.open && <div className="p-4 sm:p-5">{p.loading ? <p className="text-white/40">Loading...</p> : p.error ? <p className="text-red-500">{p.error}</p> : children}</div>}
       </div>
     );
   };
 
   const statCard = (label: string, value: unknown) => (
-    <div className="bg-white/[0.03] p-4 rounded-xl text-center flex-1 min-w-[90px]">
-      <div className="text-[22px] font-bold text-white">{String(value ?? '\u2014')}</div>
+    <div className="bg-white/[0.03] border border-white/5 rounded-xl p-3 sm:p-4 text-center flex-1 min-w-[90px]">
+      <div className="text-2xl sm:text-3xl font-bold text-white tabular-nums">{String(value ?? '\u2014')}</div>
       <div className="text-[11px] text-white/40 mt-1">{label}</div>
     </div>
   );
@@ -105,7 +127,7 @@ export default function StatisticsDashboard() {
 
       <Panel scope="overview" titleIcon="TrendingUp" title="Overview">
         {overview && <>
-          <div className="flex gap-3 flex-wrap mb-5">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-5">
             {statCard('Posts', op?.total)}{statCard('Comments', oc?.total)}{statCard('Users', ou?.total)}{statCard('Pending', overview.pending)}{statCard('Approved', op?.approved)}{statCard('Rejected', op?.rejected)}
           </div>
           <L><span className="text-white font-bold">{n(op?.total)}</span> total posts. <span className="text-white font-bold">{n(op?.submitted)}</span> submitted, <span className="text-white font-bold">{n(op?.approved)}</span> approved, <span className="text-white font-bold">{n(op?.rejected)}</span> rejected. <span className="text-white font-bold">{n(overview.pending)}</span> pending review.</L>
@@ -123,13 +145,15 @@ export default function StatisticsDashboard() {
           const uptimeHrs = Math.floor(ups / 3600); const uptimeMin = Math.floor((ups % 3600) / 60);
           const leak = mem?.rss_mb > (mem?.heap_mb * 3) ? <><Icon name="TriangleAlert" size={14} color="#e65100" /> Possible memory leak (RSS 3x heap)</> : <><Icon name="Check" size={14} color="#2e7d32" /> Normal</>;
           return <>
-            <L>Uptime: <span className="text-white font-bold">{uptimeHrs}h {uptimeMin}m</span>. Memory: <span className="text-white font-bold">{n(mem?.heap_mb)}</span> MB heap / <span className="text-white font-bold">{n(mem?.rss_mb)}</span> MB RSS — {leak}.</L>
+            <L>Uptime: <span className="text-white font-bold">{uptimeHrs}h {uptimeMin}m</span>. Memory: <span className="text-white font-bold">{n(mem?.heap_mb)}</span> MB heap / <span className="text-white font-bold">{n(mem?.rss_mb)}</span> MB RSS \u2014 {leak}.</L>
             <L>MongoDB: <span className="text-white font-bold">{n(s?.mongodb)}</span> at <span className="text-white font-bold">{n(s?.mongodb_latency_ms)}ms</span>. Redis: <span className="text-white font-bold">{n(s?.redis)}</span> {s?.redis_memory_pct !== null && s?.redis_memory_pct !== undefined ? `at ${n(s?.redis_memory_pct)}% memory (${n(s?.redis_memory_mb)} MB)` : ''}. Elasticsearch: <span className="text-white font-bold">{n(s?.elasticsearch)}</span>.</L>
             <L>Cron Health:</L>
-            {crons && Object.entries(crons).map(([k,v]) => { const hb = v as Record<string, string>; const status = hb.last_success ? <Icon name="Check" size={14} color="#2e7d32" /> : hb.last_error ? <Icon name="X" size={14} color="#c62828" /> : <Icon name="Hourglass" size={14} />; const last = hb.last_success ? ` (${formatTime(hb.last_success)})` : ''; return <L key={k}>  {status} <span className="text-white font-bold">{k}</span>{last}{hb.last_error ? ` — ${hb.last_error}` : ''}</L>; })}
+            {crons && Object.entries(crons).map(([k,v]) => { const hb = v as Record<string, string>; const status = hb.last_success ? <Icon name="Check" size={14} color="#2e7d32" /> : hb.last_error ? <Icon name="X" size={14} color="#c62828" /> : <Icon name="Hourglass" size={14} />; const last = hb.last_success ? ` (${formatTime(hb.last_success)})` : ''; return <L key={k}>  {status} <span className="text-white font-bold">{k}</span>{last}{hb.last_error ? ` \u2014 ${hb.last_error}` : ''}</L>; })}
+            {d.affected_features && (d.affected_features as unknown[]).length > 0 && <>
               <L><Icon name="Circle" size={14} color="#d32f2f" fill="#d32f2f" /> <span className="text-white font-bold">{n(d.affected_features_count)}</span> features degraded due to service outages:</L>
-              {(arr(d.affected_features) as Array<{ feature: string; degradation: string; depends_on: string[] }>).map(f => <L key={f.feature}>  — <span className="text-white font-bold">{f.feature}</span>: {f.degradation} (needs {f.depends_on.join(', ')})</L>)}
-            </>;
+              {(arr(d.affected_features) as Array<{ feature: string; degradation: string; depends_on: string[] }>).map(f => <L key={f.feature}>  \u2014 <span className="text-white font-bold">{f.feature}</span>: {f.degradation} (needs {f.depends_on.join(', ')})</L>)}
+            </>}
+          </>;
         })() : null}
       </Panel>
 
@@ -166,11 +190,11 @@ export default function StatisticsDashboard() {
       <Panel scope="moderation" titleIcon="Clock" title="Moderation + Velocity">
         {panels.moderation.data ? ((): React.ReactNode => { const d = panels.moderation.data as Record<string, unknown>; const pq = d.pending_queue as Record<string, number>; const qv = d.queue_velocity as Record<string, number>; const wv = d.weekend_vs_weekday as Record<string, number>; const rbd = arr(d.reviews_by_day_of_week) as Array<{ day: number; count: number }>;
           const dayNames: Record<string, string> = { '1': 'Sun', '2': 'Mon', '3': 'Tue', '4': 'Wed', '5': 'Thu', '6': 'Fri', '7': 'Sat' };
-          const vContext = qv?.days_to_clear ? (qv.days_to_clear <= 1 ? 'Queue will clear within a day.' : qv.days_to_clear <= 3 ? 'Manageable — clears within 3 days.' : 'Backlog — may take over 3 days.') : '';
+          const vContext = qv?.days_to_clear ? (qv.days_to_clear <= 1 ? 'Queue will clear within a day.' : qv.days_to_clear <= 3 ? 'Manageable \u2014 clears within 3 days.' : 'Backlog \u2014 may take over 3 days.') : '';
           const flipContext = (d.decision_flips as number) > 0 ? <><Icon name="TriangleAlert" size={14} color="#e65100" /> {n(d.decision_flips)} posts changed from approved to rejected. Review these.</> : <><Icon name="Check" size={14} color="#2e7d32" /> No approval reversals.</>;
           return <>
             <L>Pending: <span className="text-white font-bold">{n(pq?.total)}</span> posts. Oldest: <span className="text-white font-bold">{n(pq?.oldest_age_hours)}h</span> old.</L>
-            <L>Today: <span className="text-white font-bold">{n(d.reviews_today)}</span> reviews — <span className="text-white font-bold">{n(d.approved_today)}</span> approved, <span className="text-white font-bold">{n(d.rejected_today)}</span> rejected, <span className="text-white font-bold">{n(d.retry_today)}</span> revision requests sent.</L>
+            <L>Today: <span className="text-white font-bold">{n(d.reviews_today)}</span> reviews \u2014 <span className="text-white font-bold">{n(d.approved_today)}</span> approved, <span className="text-white font-bold">{n(d.rejected_today)}</span> rejected, <span className="text-white font-bold">{n(d.retry_today)}</span> revision requests sent.</L>
             <L>Velocity: avg <span className="text-white font-bold">{n(qv?.avg_reviews_per_day)}</span> reviews per day. {vContext}</L>
             <L>Peak moderation hour: <span className="text-white font-bold">{d.peak_moderation_hour !== null && d.peak_moderation_hour !== undefined ? `${d.peak_moderation_hour}:00 UTC` : 'N/A'}</span>.</L>
             {rbd.length > 0 && <><H3>Reviews by Day of Week</H3>{rbd.map(d => <L key={d.day}><span className="text-white font-bold">{dayNames[String(d.day)] || d.day}</span>: {d.count} reviews</L>)}</>}
@@ -217,7 +241,7 @@ export default function StatisticsDashboard() {
         {panels.quality.data ? ((): React.ReactNode => { const d = panels.quality.data as Record<string, unknown>; const corr = arr(d.intro_length_correlation) as Array<{ bucket: string; count: number; avg_comments: number; avg_fire: number }>;
           return <>
             <L>Revision rate: <span className="text-white font-bold">{n(d.revision_rate)}%</span> of submissions requested revision.</L>
-            <H3>Intro Length → Comments/Fire</H3>
+            <H3>Intro Length \u2192 Comments/Fire</H3>
             {corr.map(c => <L key={c.bucket}><span className="text-white font-bold">{c.bucket}</span>: {c.count} posts, avg {c.avg_comments} comments, avg {c.avg_fire} fire</L>)}
           </>;
         })() : null}
@@ -254,7 +278,7 @@ export default function StatisticsDashboard() {
             {hr.length > 0 && <><H3>By Hour (7d)</H3>{hr.map(h => <L key={h.hour}><span className="text-white font-bold">{h.hour}:00</span>: {h.count} submissions</L>)}</>}
             {tm && <><H3>Type Migration</H3>
               <L>Multi-type users: <span className="text-white font-bold">{n(tm.multi_type_users)}</span>. Switched types: <span className="text-white font-bold">{n(tm.switched_types)}</span>.</L>
-              {(arr(tm.paths) as Array<{ from: string; to: string; count: number }>).map(p => <L key={`${p.from}-${p.to}`}><span className="text-white font-bold">{p.from}</span> → <span className="text-white font-bold">{p.to}</span>: {p.count} users</L>)}
+              {(arr(tm.paths) as Array<{ from: string; to: string; count: number }>).map(p => <L key={`${p.from}-${p.to}`}><span className="text-white font-bold">{p.from}</span> \u2192 <span className="text-white font-bold">{p.to}</span>: {p.count} users</L>)}
             </>}
           </>;
         })() : null}
@@ -264,7 +288,7 @@ export default function StatisticsDashboard() {
         {panels.lifecycle.data ? ((): React.ReactNode => { const d = panels.lifecycle.data as Record<string, unknown>; const lc = arr(d.lifecycle) as Array<{ bucket: string; count: number }>; const drop = arr(d.drop_off_distribution) as Array<{ posts_made: number; users: number }>;
           return <>
             <L>Total posters: <span className="text-white font-bold">{n(d.total_posters)}</span>. Avg lifetime posts: <span className="text-white font-bold">{n(d.avg_lifetime_posts)}</span>.</L>
-            <L>Activation gap (creation → first post): <span className="text-white font-bold">{n(d.activation_gap_hours)}h</span>. Converted within 24h: <span className="text-white font-bold">{n(d.converted_within_24h)}</span>.</L>
+            <L>Activation gap (creation \u2192 first post): <span className="text-white font-bold">{n(d.activation_gap_hours)}h</span>. Converted within 24h: <span className="text-white font-bold">{n(d.converted_within_24h)}</span>.</L>
             <L>One-and-done rate: <span className="text-white font-bold">{n(d.one_and_done_pct)}%</span> (posted once, never returned).</L>
             {lc.length > 0 && <><H3>Time to Second Post</H3>{lc.map(b => <L key={b.bucket}><span className="text-white font-bold">{b.bucket}</span>: {b.count} users</L>)}</>}
             {drop.length > 0 && <><H3>Drop-off Distribution</H3>{drop.map(b => <L key={b.posts_made}>{b.posts_made} post(s): {b.users} users</L>)}</>}
@@ -284,10 +308,10 @@ export default function StatisticsDashboard() {
         })() : null}
       </Panel>
 
-      <Panel scope="conversion" titleIcon="RefreshCw" title="Lurker → Poster Conversion">
+      <Panel scope="conversion" titleIcon="RefreshCw" title="Lurker \u2192 Poster Conversion">
         {panels.conversion.data ? ((): React.ReactNode => { const d = panels.conversion.data as Record<string, unknown>; const paths = arr(d.converting_paths) as Array<{ path: string; count: number }>;
           return <>
-            {paths.length === 0 ? <L>No conversion data yet — needs page visit traffic and user events.</L>
+            {paths.length === 0 ? <L>No conversion data yet \u2014 needs page visit traffic and user events.</L>
               : paths.map(p => <L key={p.path}><span className="text-white font-bold">{p.path}</span> converted {p.count} lurker(s) into posters</L>)}
           </>;
         })() : null}
@@ -362,7 +386,7 @@ export default function StatisticsDashboard() {
           const ctr = arr(d.ctr_by_position) as number[];
           const avg = d.avg_results as Record<string, number> | undefined;
           return <>
-            <L><span className="text-white font-bold">{n(d.total_clicks)}</span> clicks from <span className="text-white font-bold">{n(d.total_searches)}</span> searches → <span className="text-white font-bold">{n(d.ctr)}%</span> CTR over <span className="text-white font-bold">{n(d.period_days)}</span> days.</L>
+            <L><span className="text-white font-bold">{n(d.total_clicks)}</span> clicks from <span className="text-white font-bold">{n(d.total_searches)}</span> searches \u2192 <span className="text-white font-bold">{n(d.ctr)}%</span> CTR over <span className="text-white font-bold">{n(d.period_days)}</span> days.</L>
             <L>Avg results: <span className="text-white font-bold">{n(avg?.avg_posts)}</span> posts, <span className="text-white font-bold">{n(avg?.avg_comments)}</span> comments per search.</L>
             <H3>CTR by Position</H3>
             {ctr.slice(0, 5).map((c, i) => <L key={i}>Position <span className="text-white font-bold">#{i + 1}</span>: <span className="text-white font-bold">{c}</span> clicks</L>)}

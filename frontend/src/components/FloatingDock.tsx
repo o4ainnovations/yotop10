@@ -18,6 +18,8 @@ const TABS: Array<{
 export function FloatingDock() {
   const pathname = usePathname();
 
+  if (pathname.startsWith('/admin')) return null;
+
   return (
     <nav className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
       <div className="flex items-center gap-0.5 rounded-2xl border border-white/10 bg-zinc-900/70 px-1.5 py-1.5 backdrop-blur-xl">

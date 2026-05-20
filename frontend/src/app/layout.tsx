@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { Anton, Monoton } from "next/font/google";
 import "./globals.css";
 import Eruda from "./Eruda";
 import AuthInitializer from "@/components/AuthInitializer";
@@ -7,9 +8,13 @@ import ToastContainer from "@/components/Toast";
 import AnalyticsBeacon from "@/components/AnalyticsBeacon";
 import { DynamicIsland } from "@/components/DynamicIsland";
 import DesktopTopBar from "@/components/DesktopTopBar";
-import { SlideMenuPanel } from "@/components/SlideMenuPanel";
+import { SlideMenuRouter } from "@/components/SlideMenuRouter";
+import { FloatingDock } from "@/components/FloatingDock";
 import SWRegister from "@/components/SWRegister";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+
+const anton = Anton({ weight: '400', subsets: ['latin'], display: 'swap', variable: '--font-display' });
+const monoton = Monoton({ weight: '400', subsets: ['latin'], display: 'swap', variable: '--font-accent' });
 
 export const metadata: Metadata = {
   title: "YoTop10 — Fact Mine. Debate Ground.",
@@ -27,9 +32,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="h-full antialiased" suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Anton&family=Monoton&display=swap" rel="stylesheet" />
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {
             try {
@@ -41,10 +43,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           })();
         `}} />
       </head>
-      <body className="h-full bg-[var(--color-bg)] text-[#eaeaef]" suppressHydrationWarning>
+      <body className={`${anton.variable} ${monoton.variable} h-full bg-[var(--color-bg)] text-[#eaeaef]`} suppressHydrationWarning>
         {/* Critical: hydrates first — hamburger, search, logo */}
         <DesktopTopBar />
-        <SlideMenuPanel />
+        <SlideMenuRouter />
+        <FloatingDock />
 
         {/* Non-critical: deferred hydration */}
         <Suspense>

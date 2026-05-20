@@ -1,4 +1,3 @@
-import { GlassSlab } from '@/components/GlassSlab';
 import { PostCarouselCard } from '@/components/PostCarouselCard';
 import { ArgumentBar } from '@/components/ArgumentBar';
 import Link from 'next/link';

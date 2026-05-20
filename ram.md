@@ -1,6 +1,12 @@
 # RAM — Runtime Action Manifest
 
 ## Completed
+- **[UI] Mobile-responsive admin pages** — Rewrote 3 admin pages with mobile-first Tailwind CSS (zero inline styles, zero custom CSS):
+  1. `admin/users/page.tsx` (403 lines) — Inline mobile cards replacing UserRow: avatar circle, username, display name, trust score + tier badge, post count, effective rate, restriction indicator; dropdown action menu per row (Edit Trust, Override Rate, Restrict); full-width search bar; filter pills wrap; modals wrapped in full-screen mobile containers; compact pagination with 44px touch targets; glass styling `bg-white/[0.02] border-white/5 rounded-2xl`
+  2. `admin/categories/page.tsx` (385 lines) — Table → stacked cards on mobile (category name, slug, parent, post count, featured badge, status pill, Edit/Archive buttons); tab pills with horizontal scroll on mobile; tree view single-column with indent; create form + bulk panels stack vertically; full-width inputs on mobile; 44px touch targets; glass styling
+  3. `admin/statistics/page.tsx` (435 lines) — Accordion behavior on mobile (only 1 panel open at a time, desktop allows multiple); stat cards stack vertically `flex-col sm:flex-row`; large numbers `text-2xl sm:text-3xl`; 44px touch targets on panel headers; horizontal scroll for overflow content; glass panel wrapping; all 21 panels + data preserved
+  - All checks pass: tsc 0 errors, eslint 0 errors/warnings, next build 32/32 pages generated
+
 - **[M17] Moderator System** — Full multi-admin system with 31 granular permissions, 3-layer enforcement (auto-permission-guard middleware + usePermission hook + sidebar guards), 4 preset roles (Read-Only Auditor, Content Moderator, Full Moderator, Community Manager), 8 mod CRUD endpoints, 4h mod tokens (24h for super admin), permissions_version JWT auto-refresh, double-blind super-admin-only guard, self-disable protection, admin migration on boot, PermissionPreset model + idempotent seeding, 20+ permission guard tests, frontend mods page with Create/Edit/ResetPassword modals. Files: `permissionMap.ts`, `permissionGuard.ts`, `PermissionPreset.ts`, `seedPresets.ts`, `AdminUser.ts` (extended), `adminAuth.ts` (extended), `admin.ts` (mod endpoints + autoPermissionGuard), `server.ts` (migration + seeding), `permissionGuard.test.ts`, `usePermission.ts`, `admin.ts` (frontend API), `stores/admin.ts`, `admin/settings/mods/page.tsx`, `admin/layout.tsx` (sidebar guards), `schemas/admin.ts` (mod schemas), `types/express.d.ts` (admin type), `models/index.ts`, `milestones.md`, `build-status.md`, `plans-mod-system.md`
 - **[M10.8] Hall of Fame backend** — Complete backend Hall of Fame system:
   1. `GET /api/admin/hall-of-fame` — List curated entries with populated post data, sorted by sort_order asc/featured_at desc
@@ -108,6 +114,7 @@
   6. `backend/src/routes/index.ts` — Registered `/api/hall-of-fame` route
 
 ## Current
+- **[Fix] Admin layout hooks order + login redirect + AdminSlideMenu** — Fixed two critical bugs in `admin/layout.tsx`: hoisted all `usePermission` hooks to component top (before conditional returns) to prevent React hooks-order crash, added inverse guard redirecting from `/admin/login` and `/admin/setup` to `/admin` when already authenticated. Created `AdminSlideMenu.tsx`: admin-specific mobile slide menu with permission-guarded nav items (Dashboard, Pending Posts, All Posts, Comments, Users, Categories, Statistics, Alerts, Notifications, Search, Hall of Fame, Audit Logs, Moderators), profile header showing admin username initial + "Admin" label, ThemeToggle footer, logout button, glass styling. Updated `SlideMenuPanel.tsx` to render `<AdminSlideMenu />` when `pathname.startsWith('/admin')`.
 - **[Feature] Share system** — Complete share infrastructure:
   1. `backend/src/models/Post.ts` — Added `share_count` field to Post model
   2. `backend/src/routes/posts.ts` — Added `POST /:idOrSlug/share` endpoint (increments share_count + trackExploreView), added `share_count` to GET `/:idOrSlug` response
@@ -181,6 +188,19 @@
   5. `frontend/src/app/[slug]/page.tsx` — Dynamic robots in generateMetadata: noindex for stale/thin/unpublished, else index/follow
   6. `frontend/src/app/articles/[slug]/page.tsx` — Server page + ArticleDetailClient client component; dynamic robots in generateMetadata (thin <200 chars body + >24h, zero engagement, unpublished)
 
+- **[UI] Admin mobile responsiveness — aggressive testing & flaw detection** — 7 flaws fixed:
+  1. Admin login page Tailwind rewrite (replaced all inline styles)
+  2. Admin profile page Tailwind rewrite (replaced all inline styles)
+  3. AdminSlideMenu wired into root layout via SlideMenuRouter (pathname-based dispatch)
+  4. FloatingDock rendered in root layout (hidden on /admin routes)
+  5. Admin layout sidebar hidden on mobile (`hidden lg:flex`), replaced by AdminSlideMenu
+  6. Audit page date rendering fixed: `toLocaleString()` → `formatDate()`/`formatTime()` + suppressHydrationWarning
+  7. Alerts page date rendering fixed: `toLocaleString()` → `formatDate()`/`formatTime()` + suppressHydrationWarning
+  8. Removed unused `severityDot` function, unused `btnPrimaryClass`/`btnSecondaryClass` variables
+  9. Removed unused `GlassSlab` imports from FeedClient.tsx and page.tsx
+  10. Google Fonts converted to next/font/google (Anton/Monoton with CSS variables)
+- All verification passes: frontend typecheck 0 errors, frontend lint 0 errors 0 warnings, backend lint 0 errors, backend tests 638/638 pass
+
 ## Next
 - Frontend `/search` page (M12)
 - Admin search panel (health badge, reindex button, test search)
@@ -232,3 +252,8 @@
 - **[Test] Permission guard aggressive tests** — 25 tests: super admin passes, mod with correct permission passes, mod without permission gets 403, different category gets 403, unauthenticated gets 401, inactive mod ACCOUNT_DISABLED, DEFAULT_PERMISSION fallback, route mapping verification, case sensitivity, multiple permissions any-match, null permissions → empty array, CI security guard verifying ALL admin routes have permission mappings (0 unguarded)
 - **[Test] Seed presets tests** — 14 tests: idempotent (second call 0 created), exactly 4 presets, correct permission counts (3/11/22/10), correct names, unique names, all have name/description/permissions, guard clause when count > 0
 - **[UI] Mod management page** — `app/admin/settings/mods/page.tsx`: Moderators table with username, role badge (purple super_admin / blue mod), permissions count, preset indicator, status (green active / gray inactive), created date, actions (Edit/Disable/Enable/Reset Password/Delete). CreateModModal with username/password/preset dropdown/categorized permission checklist (fetch from API, fallback to client catalog). EditModModal with permission checklist + live catalog fetch. ResetPasswordModal with 8-char minimum. Delete confirm dialog. Mobile cards (hidden lg:block) and desktop table. All Tailwind CSS, font-mono tabular-nums, min-h-[44px] touch targets, Lucide icons.
+- **[UI] Extreme mobile-responsive admin pages** — Rewrote 3 admin pages with aggressive mobile-first Tailwind-only design:
+  1. `admin/posts/pending/page.tsx` — Mobile dropdown actions (Ellipsis button with shadow-2xl menu: Approve/View/Reject/Request Revision), full-screen modals on mobile (`h-full sm:h-auto`, `sm:rounded-2xl`), bulk bar stacks vertically (`flex-col sm:flex-row`), filter dropdowns full-width on mobile (`w-full sm:w-auto`), glass cards (`bg-white/[0.02] border border-white/5 rounded-2xl`), min-h-[44px] touch targets on all interactive elements, `px-3 sm:px-6` responsive padding
+  2. `admin/posts/page.tsx` — Mobile dropdown actions (Ellipsis button with View/Delete/Bump/Edit/Feature/Unfeature/Lock/Unlock), bulk bar vertical stacking, filters full-width on mobile, dropdownItemClass with `min-h-[44px]` touch targets, glass cards
+  3. `admin/comments/page.tsx` — Mobile dropdown actions (Delete/Restore/Remove/Show/Hide/Pin/Unpin/Flag/Unflag), flag penalty modal full-screen on mobile with `overflow-y-auto`, bulk bar vertical, filters full-width, stat cards with `min-h-[44px]`
+  All three files: Tailwind CSS only, zero inline styles, zero emoji icons, Lucide Icon component throughout, click-outside mousedown listener for dropdown dismissal, all existing functionality preserved

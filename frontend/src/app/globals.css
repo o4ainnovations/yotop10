@@ -15,8 +15,8 @@
 @theme inline {
   --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, monospace;
-  --font-display: 'Anton', sans-serif;
-  --font-accent: 'Monoton', cursive;
+  --font-display: var(--font-display, sans-serif);
+  --font-accent: var(--font-accent, cursive);
 }
 
 :root {
@@ -162,5 +162,5 @@ html.light-mode .bg-white\/\[0\.04\] { background: rgba(0,0,0,0.04); }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
 /* ═══ Logo Font Fallbacks ═══ */
-.font-accent { font-family: 'Monoton', cursive !important; }
-.font-display { font-family: 'Anton', sans-serif !important; }
+.font-accent { font-family: var(--font-accent, cursive) !important; }
+.font-display { font-family: var(--font-display, sans-serif) !important; }

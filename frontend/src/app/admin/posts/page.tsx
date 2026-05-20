@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { Icon } from '@/components/icons/Icon';
@@ -19,6 +19,8 @@ export default function AllPostsPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [filters, setFilters] = useState({ status: '', post_type: '', search: '', sort: 'newest' });
   const [stats, setStats] = useState<Record<string, number>>({});
+  const [mobileDropdownId, setMobileDropdownId] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   const fetchPosts = useCallback(async (p: number) => {
     setLoading(true);
@@ -33,6 +35,16 @@ export default function AllPostsPage() {
   }, [filters]);
 
   useEffect(() => { fetchPosts(page); }, [page, fetchPosts]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setMobileDropdownId(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const toggleSelect = (id: string) => setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   const selectAll = () => selected.size === posts.length ? setSelected(new Set()) : setSelected(new Set(posts.map(p => p._id)));
@@ -50,6 +62,7 @@ export default function AllPostsPage() {
   };
 
   const quickAction = async (id: string, action: string) => {
+    setMobileDropdownId(null);
     try {
       if (action === 'delete') await apiFetch(`/admin/posts/${id}`, { method: 'DELETE' });
       else if (action === 'restore') await apiFetch(`/admin/posts/${id}/restore`, { method: 'POST' });
@@ -70,19 +83,23 @@ export default function AllPostsPage() {
   };
 
   const statCards = ['total', 'pending', 'approved', 'rejected', 'deleted', 'featured', 'locked'];
-  const filterSelectClass = 'bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none min-h-[36px]';
-
+  const filterSelectClass = 'bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none min-h-[44px] w-full sm:w-auto';
   const btnSmClass = 'text-[11px] cursor-pointer px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-white';
+  const dropdownItemClass = 'w-full text-left px-4 py-2.5 text-[13px] text-white hover:bg-white/10 flex items-center gap-2 min-h-[44px]';
 
   return (
-    <div className="space-y-3 sm:space-y-4">
+    <div className="space-y-3 sm:space-y-4 px-3 sm:px-6">
       <h2 className="text-white text-lg font-bold">All Posts ({pagination.total})</h2>
 
       <div className="flex gap-2 flex-wrap">
-        {statCards.map(k => <div key={k} className="bg-white/5 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white/60"><strong className="text-white">{k}</strong>: {stats[k] ?? 0}</div>)}
+        {statCards.map(k => (
+          <div key={k} className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/60 min-h-[36px] flex items-center">
+            <strong className="text-white mr-1">{k}</strong>: {stats[k] ?? 0}
+          </div>
+        ))}
       </div>
 
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex flex-col sm:flex-row gap-2 flex-wrap">
         <select value={filters.status} onChange={e => { setFilters(f => ({ ...f, status: e.target.value })); setPage(1); }} className={filterSelectClass}>
           <option value="" className="bg-zinc-900">All Status</option><option value="pending_review" className="bg-zinc-900">Pending</option><option value="approved" className="bg-zinc-900">Approved</option><option value="rejected" className="bg-zinc-900">Rejected</option><option value="deleted" className="bg-zinc-900">Deleted</option>
         </select>
@@ -92,15 +109,17 @@ export default function AllPostsPage() {
         <select value={filters.sort} onChange={e => { setFilters(f => ({ ...f, sort: e.target.value })); setPage(1); }} className={filterSelectClass}>
           <option value="newest" className="bg-zinc-900">Newest</option><option value="oldest" className="bg-zinc-900">Oldest</option><option value="most_comments" className="bg-zinc-900">Most Comments</option><option value="most_views" className="bg-zinc-900">Most Views</option>
         </select>
-        <input placeholder="Search title/intro" value={filters.search} onChange={e => { setFilters(f => ({ ...f, search: e.target.value })); setPage(1); }} className={`${filterSelectClass} w-[180px]`} />
+        <input placeholder="Search title/intro" value={filters.search} onChange={e => { setFilters(f => ({ ...f, search: e.target.value })); setPage(1); }} className={`${filterSelectClass} sm:w-[180px]`} />
       </div>
 
       {selected.size > 0 && (
-        <div className="bg-white/[0.03] border border-white/10 rounded-lg px-3 py-2 flex gap-2 items-center text-[13px]">
+        <div className="bg-white/[0.03] border border-white/10 rounded-lg px-3 py-2.5 flex flex-col sm:flex-row gap-2 items-start sm:items-center text-[13px]">
           <strong className="text-white">{selected.size} selected</strong>
-          <button onClick={() => bulkAction('delete')} disabled={actionLoading} className={btnSmClass}>Delete</button>
-          <button onClick={() => bulkAction('feature')} disabled={actionLoading} className={btnSmClass}>Feature</button>
-          <button onClick={() => bulkAction('unfeature')} disabled={actionLoading} className={btnSmClass}>Unfeature</button>
+          <div className="flex gap-2 flex-wrap">
+            <button onClick={() => bulkAction('delete')} disabled={actionLoading} className={`${btnSmClass} min-h-[44px] sm:min-h-[28px]`}>Delete</button>
+            <button onClick={() => bulkAction('feature')} disabled={actionLoading} className={`${btnSmClass} min-h-[44px] sm:min-h-[28px]`}>Feature</button>
+            <button onClick={() => bulkAction('unfeature')} disabled={actionLoading} className={`${btnSmClass} min-h-[44px] sm:min-h-[28px]`}>Unfeature</button>
+          </div>
         </div>
       )}
 
@@ -109,14 +128,45 @@ export default function AllPostsPage() {
           {/* Mobile card view */}
           <div className="sm:hidden flex flex-col gap-2">
             {posts.map(p => (
-              <div key={p._id} className={`bg-white/5 border border-white/10 rounded-xl p-3 ${p.deleted ? 'opacity-40' : ''}`}>
+              <div key={p._id} className={`bg-white/[0.02] border border-white/5 rounded-2xl p-3 ${p.deleted ? 'opacity-40' : ''}`}>
                 <div className="flex items-center gap-2 mb-1">
-                  <input type="checkbox" checked={selected.has(p._id)} onChange={() => toggleSelect(p._id)} />
-                  <a href="#" onClick={e => { e.preventDefault(); window.open(`/${p.slug}`, '_blank'); }} className="text-white text-sm font-semibold no-underline truncate">
+                  <input type="checkbox" checked={selected.has(p._id)} onChange={() => toggleSelect(p._id)} className="min-h-[44px] min-w-[44px]" />
+                  <a href="#" onClick={e => { e.preventDefault(); window.open(`/${p.slug}`, '_blank'); }} className="text-white text-sm font-semibold no-underline truncate flex-1 min-h-[44px] flex items-center">
                     {p.title?.substring(0, 50)}{(p.title?.length || 0) > 50 ? '...' : ''}
                   </a>
                   {p.featured && <Icon name="Star" size={12} color="#f57c00" />}
                   {p.comments_locked && <Icon name="Lock" size={12} />}
+                  {/* Mobile dropdown trigger */}
+                  <div className="relative" ref={mobileDropdownId === p._id ? dropdownRef : null}>
+                    <button
+                      onClick={e => { e.stopPropagation(); setMobileDropdownId(prev => prev === p._id ? null : p._id); }}
+                      className="min-h-[44px] min-w-[44px] flex items-center justify-center bg-white/5 border border-white/10 rounded-lg"
+                    >
+                      <Icon name="Ellipsis" size={18} />
+                    </button>
+                    {mobileDropdownId === p._id && (
+                      <div className="absolute right-0 top-full mt-1 z-50 bg-zinc-800 border border-white/10 rounded-xl py-1 min-w-[180px] shadow-2xl">
+                        {p.deleted ? (
+                          <button onClick={e => { e.stopPropagation(); quickAction(p._id, 'restore'); }} className={dropdownItemClass}><Icon name="Undo2" size={14} /> Restore</button>
+                        ) : (
+                          <>
+                            <button onClick={e => { e.stopPropagation(); setMobileDropdownId(null); router.push(`/admin/posts/pending/${p._id}`); }} className={dropdownItemClass}><Icon name="Search" size={14} /> View</button>
+                            <button onClick={e => { e.stopPropagation(); quickAction(p._id, 'delete'); }} className={`${dropdownItemClass} text-red-400`}><Icon name="Trash2" size={14} /> Delete</button>
+                            <button onClick={e => { e.stopPropagation(); quickAction(p._id, 'bump'); }} className={dropdownItemClass}><Icon name="ArrowBigUp" size={14} /> Bump</button>
+                            <button onClick={e => { e.stopPropagation(); setMobileDropdownId(null); router.push(`/admin/posts/${p._id}/edit`); }} className={dropdownItemClass}><Icon name="Pencil" size={14} /> Edit</button>
+                            {p.featured
+                              ? <button onClick={e => { e.stopPropagation(); quickAction(p._id, 'unfeature'); }} className={dropdownItemClass}><Icon name="Star" size={14} /> Unfeature</button>
+                              : <button onClick={e => { e.stopPropagation(); quickAction(p._id, 'feature'); }} className={dropdownItemClass}><Icon name="Star" size={14} /> Feature</button>
+                            }
+                            {p.comments_locked
+                              ? <button onClick={e => { e.stopPropagation(); quickAction(p._id, 'unlock'); }} className={dropdownItemClass}><Icon name="LockOpen" size={14} /> Unlock</button>
+                              : <button onClick={e => { e.stopPropagation(); quickAction(p._id, 'lock'); }} className={dropdownItemClass}><Icon name="Lock" size={14} /> Lock</button>
+                            }
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-white/50">
                   <span>{p.author_username}</span>
@@ -126,17 +176,7 @@ export default function AllPostsPage() {
                   <span><Icon name="Flame" size={12} color="#e65100" /> {p.fire_count || 0}</span>
                   <span><Icon name="MessageCircle" size={12} /> {p.comment_count}</span>
                   <span><Icon name="Eye" size={14} /> {p.view_count}</span>
-                  <span suppressHydrationWarning>{p.published_at ? formatDate(p.published_at) : '—'}</span>
-                </div>
-                <div className="flex gap-1 flex-wrap mt-2">
-                  {p.deleted ? <button onClick={() => quickAction(p._id, 'restore')} className={btnSmClass}>Restore</button> : <>
-                    <button onClick={() => router.push(`/admin/posts/pending/${p._id}`)} className={btnSmClass}>View</button>
-                    <button onClick={() => quickAction(p._id, 'delete')} className={`${btnSmClass} text-red-400`}>Del</button>
-                    <button onClick={() => quickAction(p._id, 'bump')} className={btnSmClass}>Bump</button>
-                    <button onClick={() => router.push(`/admin/posts/${p._id}/edit`)} className={btnSmClass}>Edit</button>
-                  </>}
-                  {p.featured ? <button onClick={() => quickAction(p._id, 'unfeature')} className={btnSmClass}>Unfeat</button> : <button onClick={() => quickAction(p._id, 'feature')} className={btnSmClass}>Feat</button>}
-                  {p.comments_locked ? <button onClick={() => quickAction(p._id, 'unlock')} className={btnSmClass}>Unlock</button> : <button onClick={() => quickAction(p._id, 'lock')} className={btnSmClass}>Lock</button>}
+                  <span suppressHydrationWarning>{p.published_at ? formatDate(p.published_at) : '\u2014'}</span>
                 </div>
               </div>
             ))}
@@ -164,7 +204,7 @@ export default function AllPostsPage() {
                   <td className="p-1 text-white/60">{p.fire_count || 0}</td>
                   <td className="p-1 text-white/60">{p.comment_count}</td>
                   <td className="p-1 text-white/60">{p.view_count}</td>
-                  <td className="p-1 text-[11px] text-white/40" suppressHydrationWarning>{p.published_at ? formatDate(p.published_at) : '—'}</td>
+                  <td className="p-1 text-[11px] text-white/40" suppressHydrationWarning>{p.published_at ? formatDate(p.published_at) : '\u2014'}</td>
                   <td className="p-1">
                     {p.deleted ? <button onClick={() => quickAction(p._id, 'restore')} className={btnSmClass}>Restore</button> : <>
                       <button onClick={() => router.push(`/admin/posts/pending/${p._id}`)} className={btnSmClass}>View</button>
@@ -182,10 +222,10 @@ export default function AllPostsPage() {
         </>
       )}
 
-      <div className="flex gap-2 items-center">
-        <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className={`px-3 py-1.5 rounded-lg border border-white/10 text-white text-sm min-h-[36px] ${page <= 1 ? 'opacity-40 cursor-not-allowed bg-white/5' : 'cursor-pointer bg-white/5 hover:bg-white/10'}`}>Prev</button>
+      <div className="flex gap-2 items-center justify-center sm:justify-start">
+        <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className={`px-3 py-1.5 rounded-lg border border-white/10 text-white text-sm min-h-[44px] ${page <= 1 ? 'opacity-40 cursor-not-allowed bg-white/5' : 'cursor-pointer bg-white/5 hover:bg-white/10'}`}>Prev</button>
         <span className="text-white/60 text-[13px]">Page {page} of {pagination.pages}</span>
-        <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)} className={`px-3 py-1.5 rounded-lg border border-white/10 text-white text-sm min-h-[36px] ${page >= pagination.pages ? 'opacity-40 cursor-not-allowed bg-white/5' : 'cursor-pointer bg-white/5 hover:bg-white/10'}`}>Next</button>
+        <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)} className={`px-3 py-1.5 rounded-lg border border-white/10 text-white text-sm min-h-[44px] ${page >= pagination.pages ? 'opacity-40 cursor-not-allowed bg-white/5' : 'cursor-pointer bg-white/5 hover:bg-white/10'}`}>Next</button>
       </div>
     </div>
   );

@@ -63,7 +63,8 @@
 | 35 | Design system (glassmorphism CSS, spatial shadows, neon borders, wiki badges) | Ghost |
 | 36 | Font system (Geist Sans, Geist Mono, Anton, Monoton) | Ghost |
 | 37 | Dark/light toggle (ThemeToggle, localStorage persistence) | V2.1 |
-| 38 | Mobile-first responsive (DynamicIsland, DesktopTopBar, breakpoints) | Ghost |
+| 38 | Mobile-first responsive (DynamicIsland, DesktopTopBar, breakpoints, AdminSlideMenu, FloatingDock) | Ghost |
+| 60 | Admin mobile responsiveness — 19 admin pages with mobile cards + desktop tables, full-screen modals, 44px touch targets, accordion statistics, AdminSlideMenu wired for admin routes, sidebar hidden on mobile, FloatingDock with /admin guard, login/profile Tailwind rewrite | Ghost |
 | 39 | 12 premium UI components (GlassSlab, DataCard, CommandSearch, etc.) | Ghost |
 | 40 | Trust & identity infrastructure (TrustScoreLog, UsernameHistory, etc.) | Ghost |
 | 41 | Ladder system (temporary boosts for low-trust users) | Ghost |
@@ -140,7 +141,7 @@ M10.8 (admin HoF management) built — UNBLOCKS: M14 (public /hall-of-fame page)
 
 | Status | Count |
 |---|--|
-| **FULLY BUILT** | 59 |
+| **FULLY BUILT** | 60 |
 | **PARTIALLY BUILT** | 4 |
 | **NOT BUILT — no blockers** | 2 |
 | **NOT BUILT — blocked** | 4 |

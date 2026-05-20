@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
-import { GlassSlab } from '@/components/GlassSlab';
 import { PostCarouselCard } from '@/components/PostCarouselCard';
 import { Icon } from '@/components/icons/Icon';
 import type { Post, PostsResponse } from '@/lib/api/types';
