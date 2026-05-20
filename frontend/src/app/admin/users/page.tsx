@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { Icon } from '@/components/icons/Icon';
-import { AdminTableSkeleton } from '@/components/Skeleton';
 import { UserRow } from '@/components/admin/UserRow';
 import { EditTrustModal } from '@/components/admin/EditTrustModal';
 import { OverrideRateModal } from '@/components/admin/OverrideRateModal';
@@ -231,9 +230,7 @@ export default function AdminUsersPage() {
         </button>
       </div>
 
-      {loading ? (
-        <AdminTableSkeleton rows={5} />
-      ) : users.length === 0 ? (
+      {loading ? null : users.length === 0 ? (
         <p className="text-white/40">No users found.</p>
       ) : (
         <>

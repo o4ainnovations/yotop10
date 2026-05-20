@@ -8,8 +8,6 @@ import { relativeTime } from '@/lib/dates';
 import { useAuthStore } from '@/stores/auth';
 import { API } from '@/lib/api';
 import type { SavedPost } from '@/lib/api/types';
-import { FeedSkeleton } from '@/components/Skeleton';
-
 const PER_PAGE = 20;
 
 export default function SavedPage() {
@@ -85,15 +83,7 @@ export default function SavedPage() {
   }, [fetchPage]);
 
   if (!loaded) {
-    return (
-      <div className="mx-auto max-w-2xl px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white">Bookmarks</h1>
-          <p className="text-sm text-zinc-500">@{user?.username ?? '...'}</p>
-        </div>
-        <FeedSkeleton count={2} />
-      </div>
-    );
+    return null;
   }
 
   return (

@@ -8,8 +8,6 @@ import { DataCard } from '@/components/DataCard';
 import NotFound from '@/components/NotFound';
 import { Icon } from '@/components/icons/Icon';
 import type { Post } from '@/lib/api/types';
-import { FeedSkeleton } from '@/components/Skeleton';
-
 interface Category {
   id: string;
   name: string;
@@ -69,11 +67,7 @@ export default function CategoryFeedPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-zinc-950">
-        <FeedSkeleton count={2} />
-      </div>
-    );
+    return <div className="min-h-screen bg-zinc-950" />;
   }
 
   if (!category) return <NotFound message="Category does not exist." />;

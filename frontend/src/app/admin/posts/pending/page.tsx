@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { Icon } from '@/components/icons/Icon';
-import { AdminTableSkeleton } from '@/components/Skeleton';
 import { formatDate, relativeTime } from '@/lib/dates';
 
 interface PendingPost { _id: string; title: string; author_username: string; post_type: string; created_at: string; revision_count: number; category_slug: string; intro?: string; collision?: { title: string; submitted_at: string; first: boolean } }
@@ -163,7 +162,7 @@ export default function PendingPostsPage() {
         </div>
       )}
 
-      {loading ? <AdminTableSkeleton rows={5} /> : posts.length === 0 ? <p className="text-white/40">No pending posts.</p> : (
+      {loading ? null : posts.length === 0 ? <p className="text-white/40">No pending posts.</p> : (
         <div className="space-y-3 sm:space-y-4">
           {/* Desktop header */}
           <div className="hidden sm:flex border-b-2 border-white/10 pb-2 text-xs text-white/40 text-left">

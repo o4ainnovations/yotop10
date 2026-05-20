@@ -7,8 +7,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Icon } from '@/components/icons/Icon';
 import { relativeTime } from '@/lib/dates';
-import { FeedSkeleton } from '@/components/Skeleton';
-
 const PAGE_SIZE = 10;
 
 export default function ArticlesPage() {
@@ -78,10 +76,6 @@ export default function ArticlesPage() {
         <div className="mb-8 rounded-2xl border border-red-500/20 bg-red-500/5 px-5 py-4 text-sm text-red-400">
           {error}
         </div>
-      )}
-
-      {loading && articles.length === 0 && (
-        <FeedSkeleton count={3} />
       )}
 
       {!loading && articles.length === 0 && (
