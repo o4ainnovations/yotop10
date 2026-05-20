@@ -47,7 +47,7 @@ export function PostCarouselCard({ post }: { post: Post }) {
         <div className="px-4 space-y-2 mb-2">
           {topItems.slice(0, 3).map((item) => (
             <div key={item.rank} className="flex items-center gap-3">
-              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-r from-orange-500 to-red-600 text-[11px] font-bold font-mono text-white shrink-0">
+              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-r from-orange-500 to-red-600 text-[11px] font-bold font-mono text-white shrink-0" style={{ color: '#fff' }}>
                 #{item.rank}
               </span>
               <span className="text-sm text-zinc-300 truncate">{item.title}</span>
