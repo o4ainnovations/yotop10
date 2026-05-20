@@ -114,7 +114,8 @@
   6. `backend/src/routes/index.ts` — Registered `/api/hall-of-fame` route
 
 ## Current
-- **[Fix] Admin layout hooks order + login redirect + AdminSlideMenu** — Fixed two critical bugs in `admin/layout.tsx`: hoisted all `usePermission` hooks to component top (before conditional returns) to prevent React hooks-order crash, added inverse guard redirecting from `/admin/login` and `/admin/setup` to `/admin` when already authenticated. Created `AdminSlideMenu.tsx`: admin-specific mobile slide menu with permission-guarded nav items (Dashboard, Pending Posts, All Posts, Comments, Users, Categories, Statistics, Alerts, Notifications, Search, Hall of Fame, Audit Logs, Moderators), profile header showing admin username initial + "Admin" label, ThemeToggle footer, logout button, glass styling. Updated `SlideMenuPanel.tsx` to render `<AdminSlideMenu />` when `pathname.startsWith('/admin')`.
+- **[Feature] Admin SSR** — Admin layout converted to proper Server Component (reads `admin_token` cookie via `next/headers`, pre-fetches admin session via internal API call). Created `client-layout.tsx` Client Component with store hydration from server data, instant login page rendering (no spinner flash), permission-guarded sidebar items, redirect logic preserved. Added `hydrate()` method to `useAdminStore`. Fixed `AdminAuthHydrator` type error.
+
 - **[Feature] Share system** — Complete share infrastructure:
   1. `backend/src/models/Post.ts` — Added `share_count` field to Post model
   2. `backend/src/routes/posts.ts` — Added `POST /:idOrSlug/share` endpoint (increments share_count + trackExploreView), added `share_count` to GET `/:idOrSlug` response
@@ -187,6 +188,8 @@
   4. `backend/src/routes/posts.ts` — GET /:idOrSlug returns computed `robots` field; imports seoGuard; respects `meta_robots` admin override
   5. `frontend/src/app/[slug]/page.tsx` — Dynamic robots in generateMetadata: noindex for stale/thin/unpublished, else index/follow
   6. `frontend/src/app/articles/[slug]/page.tsx` — Server page + ArticleDetailClient client component; dynamic robots in generateMetadata (thin <200 chars body + >24h, zero engagement, unpublished)
+
+- **[Fix] Admin layout hooks order + login redirect + AdminSlideMenu** — Fixed two critical bugs in `admin/layout.tsx`: hoisted all `usePermission` hooks to component top (before conditional returns) to prevent React hooks-order crash, added inverse guard redirecting from `/admin/login` and `/admin/setup` to `/admin` when already authenticated. Created `AdminSlideMenu.tsx`: admin-specific mobile slide menu with permission-guarded nav items (Dashboard, Pending Posts, All Posts, Comments, Users, Categories, Statistics, Alerts, Notifications, Search, Hall of Fame, Audit Logs, Moderators), profile header showing admin username initial + "Admin" label, ThemeToggle footer, logout button, glass styling. Updated `SlideMenuPanel.tsx` to render `<AdminSlideMenu />` when `pathname.startsWith('/admin')`.
 
 - **[UI] Admin mobile responsiveness — aggressive testing & flaw detection** — 7 flaws fixed:
   1. Admin login page Tailwind rewrite (replaced all inline styles)

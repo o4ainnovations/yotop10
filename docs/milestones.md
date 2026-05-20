@@ -748,6 +748,7 @@ Single unified notification system that handles all user feedback across the ent
 - [x] `BulkActionsBar` — Appears when items selected
 - [x] `ReviewCard` — Pending post preview card (inline expand)
 - [x] `RejectionModal` — Reject with reason dropdown + custom reason
+- [x] `Admin SSR` — Server-side rendering for admin: layout reads `admin_token` cookie, pre-fetches session via internal API, hydrates Zustand store, permission-guarded sidebar, login page renders server-side, no spinner flash on login
 - [ ] `StatsChart` — Line/bar charts
 - [ ] `CategoryTree` — Drag-drop tree view
 - [ ] `UserBadge` — Trust score badge (Scholar/Neutral/Troll)
