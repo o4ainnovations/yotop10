@@ -1,44 +1,53 @@
-import { cookies } from 'next/headers';
-import { AdminAuthHydrator } from '@/components/AdminAuthHydrator';
+'use client';
+
+import { useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAdminStore } from '@/stores/admin';
 import AdminClientShell from './AdminClientShell';
 
-interface AdminData {
-  id: string;
-  username: string;
-  role: string;
-  permissions: string[];
-}
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { loading, initialized, authenticated, admin, checkSession } = useAdminStore();
+  const isLoginOrSetup = pathname === '/admin/login' || pathname === '/admin/setup';
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('admin_token')?.value;
+  useEffect(() => { checkSession(); }, [checkSession]);
 
-  let admin = null;
-  if (token) {
-    try {
-      const baseUrl = process.env.INTERNAL_API_URL || 'http://localhost:8000/api';
-      const res = await fetch(`${baseUrl}/admin/me`, {
-        headers: { Cookie: `admin_token=${token}` },
-        cache: 'no-store',
-      });
-      if (res.ok) {
-        const data = await res.json();
-        admin = {
-          id: data.id,
-          username: data.username,
-          role: data.role,
-          permissions: data.permissions,
-        };
-      }
-    } catch {
-      // auth failed — render login
+  useEffect(() => {
+    if (initialized && authenticated && isLoginOrSetup) {
+      router.replace('/admin');
     }
+  }, [initialized, authenticated, isLoginOrSetup, router]);
+
+  if (isLoginOrSetup) {
+    if (loading || !initialized) {
+      return (
+        <div className="flex items-center justify-center min-h-screen bg-zinc-950">
+          <div className="w-6 h-6 border-2 border-white/20 border-t-orange-500 rounded-full animate-spin" />
+        </div>
+      );
+    }
+    if (authenticated) {
+      return null;
+    }
+    return <>{children}</>;
   }
 
-  return (
-    <>
-      <AdminAuthHydrator admin={admin as AdminData | null} />
-      <AdminClientShell admin={admin as AdminData | null}>{children}</AdminClientShell>
-    </>
-  );
+  if (loading || !initialized) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-zinc-950">
+        <div className="w-6 h-6 border-2 border-white/20 border-t-orange-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (authenticated && admin) {
+    return (
+      <AdminClientShell admin={admin}>
+        {children}
+      </AdminClientShell>
+    );
+  }
+
+  return null;
 }

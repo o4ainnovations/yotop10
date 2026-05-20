@@ -113,9 +113,15 @@
   5. `frontend/src/app/hall-of-fame/page.test.tsx` — 29 component tests: public (title, badge, category, note, author, counts, null post, null note, zero counts, missing slug), admin (sort badge, buttons, conditional buttons, note, missing author, relative time, empty title), featured (badge, hero image, no hero, title link, author, missing display name, null note), edge cases
   6. `backend/src/routes/index.ts` — Registered `/api/hall-of-fame` route
 
-## Current
-- **[Feature] Admin SSR** — Admin layout converted to proper Server Component (reads `admin_token` cookie via `next/headers`, pre-fetches admin session via internal API call). Created `client-layout.tsx` Client Component with store hydration from server data, instant login page rendering (no spinner flash), permission-guarded sidebar items, redirect logic preserved. Added `hydrate()` method to `useAdminStore`. Fixed `AdminAuthHydrator` type error.
+## Completed
+- **[Architecture] Admin Middleware Auth (SSR-immune)** — Replaced SSR `fetch()` admin auth with Next.js Edge Middleware. The middleware checks `admin_token` cookie existence at the edge — no API calls, no fetch failures, no SSR dependencies. JWT validation happens in backend API calls (which already have middleware).
+  1. `frontend/src/middleware.ts` — Edge middleware: allows `/admin/login` and `/admin/setup` without auth, redirects authenticated users away from login, blocks all other `/admin/*` routes without `admin_token` cookie
+  2. `frontend/src/app/admin/layout.tsx` — Rewrote as Client Component: `checkSession()` via Zustand store (calls `GET /api/admin/me` to validate JWT), spinner while loading, renders `AdminClientShell` when authenticated, redirects to `/admin` when on login/setup while authenticated
+  3. `frontend/src/app/admin/AdminClientShell.tsx` — Simplified: removed routing logic (now handled by layout), receives non-null `admin`, renders sidebar + main content with permission-guarded nav items + logout
+  - Backend `GET /admin/me` already returns `{ id, username, role, permissions, permissions_version }` — no backend changes needed
+  - Checks: frontend typecheck 0 errors, frontend lint 0 errors 0 warnings, frontend build 32/32 pages, backend typecheck 0 errors, backend lint 0 errors, backend tests 638/638 pass
 
+## Current
 - **[Feature] Share system** — Complete share infrastructure:
   1. `backend/src/models/Post.ts` — Added `share_count` field to Post model
   2. `backend/src/routes/posts.ts` — Added `POST /:idOrSlug/share` endpoint (increments share_count + trackExploreView), added `share_count` to GET `/:idOrSlug` response

@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
 interface AdminData {
@@ -14,31 +13,11 @@ export default function AdminClientShell({
   admin,
   children,
 }: {
-  admin: AdminData | null;
+  admin: AdminData;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const isLoginOrSetup = pathname === '/admin/login' || pathname === '/admin/setup';
-
-  useEffect(() => {
-    if (!admin && !isLoginOrSetup) {
-      router.replace('/admin/login');
-    } else if (admin && isLoginOrSetup) {
-      router.replace('/admin');
-    }
-  }, [admin, isLoginOrSetup, router]);
-
-  if (isLoginOrSetup) {
-    if (admin) {
-      return null;
-    }
-    return <>{children}</>;
-  }
-
-  if (!admin) {
-    return null;
-  }
 
   const linkClass = (active: boolean) =>
     `block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
