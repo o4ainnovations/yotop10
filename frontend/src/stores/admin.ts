@@ -9,11 +9,19 @@ interface AdminUser {
   permissions: string[];
 }
 
+interface AdminSession {
+  id: string;
+  username: string;
+  role: string;
+  permissions: string[];
+}
+
 interface AdminState {
   admin: AdminUser | null;
   loading: boolean;
   authenticated: boolean;
   initialized: boolean;
+  hydrate: (session: AdminSession) => void;
   checkSession: () => Promise<void>;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
@@ -24,6 +32,20 @@ export const useAdminStore = create<AdminState>((set) => ({
   loading: true,
   authenticated: false,
   initialized: false,
+
+  hydrate: (session: AdminSession) => {
+    set({
+      admin: {
+        id: session.id,
+        username: session.username,
+        role: session.role || 'mod',
+        permissions: session.permissions || [],
+      },
+      authenticated: true,
+      loading: false,
+      initialized: true,
+    });
+  },
 
   checkSession: async () => {
     try {

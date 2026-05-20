@@ -207,6 +207,15 @@
 - Per-post "is my post searchable?" button
 
 ## Current
+- **[Architecture] Admin SSR** — Converted admin auth from client-side to server-side:
+  1. `stores/admin.ts` — Added `hydrate` action to Zustand store (sets admin, authenticated, initialized, loading)
+  2. `components/AdminAuthHydrator.tsx` — Client component: receives `admin` prop from server, hydrates Zustand store via `useEffect` + `getState().hydrate()`
+  3. `app/admin/layout.tsx` — Rewrote as Server Component (removed 'use client'): reads `admin_token` cookie via `cookies()`, calls internal `GET /api/admin/me` with cookie header, passes admin data to AdminAuthHydrator + AdminClientShell
+  4. `app/admin/AdminClientShell.tsx` — New client component (replaces old layout's client logic): receives `admin` prop directly, handles routing (redirect to /admin/login if unauthenticated, redirect to /admin if on login/setup while authenticated), renders sidebar with permission guards computed from `admin` prop, handles logout
+  5. `GET /admin/me` on backend already returned `{ id, username, role, permissions }` — no backend changes needed
+  - No spinner, no client-side API auth check, content arrives in HTML
+  - Checks: frontend typecheck 0 errors, frontend lint 0 errors 0 warnings, frontend build 32/32 pages, backend typecheck 0 errors, backend lint 0 errors
+
 - **[Feature] M10.6 + M10.11 — 10 Admin endpoints for Users & Config management** — Backend complete:
    1. `GET /api/admin/users` — Paginated user listing with search, trust/status filters, post/comment aggregation, filter counts
    2. `GET /api/admin/users/:user_id` — Single user detail with post_count, comment_count, posts_approved, posts_rejected
