@@ -6,6 +6,7 @@ import { Icon } from '@/components/icons/Icon';
 import { relativeTime } from '@/lib/dates';
 import type { ExplorePost } from '@/lib/api/types';
 import { API } from '@/lib/api';
+import { FeedSkeleton } from '@/components/Skeleton';
 
 const PER_PAGE = 20;
 
@@ -103,9 +104,7 @@ export default function ExplorePage() {
           <h1 className="font-display text-3xl text-white mb-1">Explore</h1>
           <p className="text-zinc-500 text-sm">Algorithmic feed. What&apos;s rising.</p>
         </div>
-        <div className="flex items-center justify-center py-20">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/10 border-t-orange-500" />
-        </div>
+        <FeedSkeleton />
       </div>
     );
   }

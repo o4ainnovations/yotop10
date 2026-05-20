@@ -8,6 +8,7 @@ import { relativeTime } from '@/lib/dates';
 import { useAuthStore } from '@/stores/auth';
 import { API } from '@/lib/api';
 import type { SavedPost } from '@/lib/api/types';
+import { FeedSkeleton } from '@/components/Skeleton';
 
 const PER_PAGE = 20;
 
@@ -90,9 +91,7 @@ export default function SavedPage() {
           <h1 className="text-2xl font-bold text-white">Bookmarks</h1>
           <p className="text-sm text-zinc-500">@{user?.username ?? '...'}</p>
         </div>
-        <div className="flex items-center justify-center py-20">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/10 border-t-orange-500" />
-        </div>
+        <FeedSkeleton count={2} />
       </div>
     );
   }

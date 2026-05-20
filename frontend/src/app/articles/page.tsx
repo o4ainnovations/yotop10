@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Icon } from '@/components/icons/Icon';
 import { relativeTime } from '@/lib/dates';
+import { FeedSkeleton } from '@/components/Skeleton';
 
 const PAGE_SIZE = 10;
 
@@ -79,10 +80,8 @@ export default function ArticlesPage() {
         </div>
       )}
 
-      {loading && !loadingMore && (
-        <div className="flex items-center justify-center py-20">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/10 border-t-orange-500" />
-        </div>
+      {loading && articles.length === 0 && (
+        <FeedSkeleton count={3} />
       )}
 
       {!loading && articles.length === 0 && (

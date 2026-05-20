@@ -8,6 +8,7 @@ import { DataCard } from '@/components/DataCard';
 import NotFound from '@/components/NotFound';
 import { Icon } from '@/components/icons/Icon';
 import type { Post } from '@/lib/api/types';
+import { FeedSkeleton } from '@/components/Skeleton';
 
 interface Category {
   id: string;
@@ -69,8 +70,8 @@ export default function CategoryFeedPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-950">
-        <p className="text-sm text-zinc-500">Loading...</p>
+      <div className="min-h-screen bg-zinc-950">
+        <FeedSkeleton count={2} />
       </div>
     );
   }

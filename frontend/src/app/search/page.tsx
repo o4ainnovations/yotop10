@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Icon } from '@/components/icons/Icon';
 import { formatDate } from '@/lib/dates';
+import { FeedSkeleton } from '@/components/Skeleton';
 
 interface SearchResult {
   id: string; title: string; intro?: string; content?: string;
@@ -352,10 +353,8 @@ export default function SearchPage() {
 
             {error && <p className="py-8 text-center text-sm text-red-400">{error}</p>}
 
-            {loading && (
-              <div className="py-16 text-center">
-                <p className="text-sm text-zinc-500">Searching...</p>
-              </div>
+            {loading && !results && (
+              <FeedSkeleton count={2} />
             )}
 
             {!loading && results && activeResults.length === 0 && (

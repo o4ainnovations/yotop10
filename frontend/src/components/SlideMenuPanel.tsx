@@ -6,17 +6,12 @@ import { useAuthStore } from '@/stores/auth';
 import { useSlideMenu } from '@/stores/slideMenu';
 import { Icon } from './icons/Icon';
 import { ThemeToggle } from './ThemeToggle';
-import { AdminSlideMenu } from './AdminSlideMenu';
 
 export function SlideMenuPanel() {
   const open = useSlideMenu((s) => s.open);
   const setOpen = useSlideMenu((s) => s.setOpen);
   const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
-
-  if (pathname.startsWith('/admin')) {
-    return <AdminSlideMenu />;
-  }
 
   const displayName = user?.custom_display_name || user?.username || 'User';
   const username = user?.username || 'unknown';

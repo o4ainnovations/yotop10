@@ -210,6 +210,12 @@
 - Per-post "is my post searchable?" button
 
 ## Current
+- **[Fix] Admin hamburger slide menu** — Fixed SlideMenuTrigger not opening AdminSlideMenu on admin routes:
+  1. `SlideMenu.tsx` — Changed `sm:hidden` → `lg:hidden` on the trigger button to match the admin sidebar's `hidden lg:flex` breakpoint; previously the hamburger was hidden at ≥640px while sidebar only appeared at ≥1024px, leaving tablet users with no menu trigger
+  2. `AdminSlideMenu.tsx` — Replaced `const perm = usePermission` anti-pattern with direct `usePermission()` hook calls; calling a hook via a variable reference breaks React's Rules of Hooks
+  3. `SlideMenuPanel.tsx` — Removed dead `AdminSlideMenu` import and redundant admin pathname check (routing is handled by `SlideMenuRouter`)
+  - Checks: frontend typecheck 0 errors, frontend lint 0 errors 0 warnings
+
 - **[Architecture] Admin SSR** — Converted admin auth from client-side to server-side:
   1. `stores/admin.ts` — Added `hydrate` action to Zustand store (sets admin, authenticated, initialized, loading)
   2. `components/AdminAuthHydrator.tsx` — Client component: receives `admin` prop from server, hydrates Zustand store via `useEffect` + `getState().hydrate()`

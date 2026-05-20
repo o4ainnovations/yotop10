@@ -14,19 +14,17 @@ export function AdminSlideMenu() {
   const setOpen = useSlideMenu((s) => s.setOpen);
   const admin = useAdminStore((s) => s.admin);
 
-  const perm = usePermission;
-
-  const showPosts = perm('posts:read').allowed;
-  const showComments = perm('comments:read').allowed;
-  const showUsers = perm('users:read').allowed;
-  const showCategories = perm('categories:read').allowed;
-  const showStats = perm('statistics:read').allowed;
-  const showAlerts = perm('alerts:read').allowed;
-  const showNotifications = perm('notifications:read').allowed;
-  const showSearch = perm('search:read').allowed;
-  const showHof = perm('hof:read').allowed;
-  const showAudit = perm('audit:read').allowed;
-  const showMods = perm('mods:manage').allowed;
+  const showPosts = usePermission('posts:read').allowed;
+  const showComments = usePermission('comments:read').allowed;
+  const showUsers = usePermission('users:read').allowed;
+  const showCategories = usePermission('categories:read').allowed;
+  const showStats = usePermission('statistics:read').allowed;
+  const showAlerts = usePermission('alerts:read').allowed;
+  const showNotifications = usePermission('notifications:read').allowed;
+  const showSearch = usePermission('search:read').allowed;
+  const showHof = usePermission('hof:read').allowed;
+  const showAudit = usePermission('audit:read').allowed;
+  const showMods = usePermission('mods:manage').allowed;
 
   const adminUsername = admin?.username || 'Admin';
   const adminInitial = adminUsername[0].toUpperCase();

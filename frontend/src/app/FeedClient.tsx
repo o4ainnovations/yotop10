@@ -6,6 +6,7 @@ import { apiFetch } from '@/lib/api';
 import { PostCarouselCard } from '@/components/PostCarouselCard';
 import { Icon } from '@/components/icons/Icon';
 import type { Post, PostsResponse } from '@/lib/api/types';
+import { FeedSkeleton } from '@/components/Skeleton';
 
 const PER_PAGE = 20;
 
@@ -103,6 +104,10 @@ export function FeedClient({ initialPosts, initialHasMore, category }: FeedClien
     observer.observe(sentinel);
     return () => observer.disconnect();
   }, [hasMore, fetching, page, fetchPosts, sort]);
+
+  if (fetching && posts.length === 0) {
+    return <FeedSkeleton count={3} />;
+  }
 
   // Empty state
   if (posts.length === 0) {
