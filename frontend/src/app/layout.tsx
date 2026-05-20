@@ -2,14 +2,12 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Anton, Monoton } from "next/font/google";
 import "./globals.css";
-import Eruda from "./Eruda";
 import AuthInitializer from "@/components/AuthInitializer";
 import ToastContainer from "@/components/Toast";
 import AnalyticsBeacon from "@/components/AnalyticsBeacon";
 import { DynamicIsland } from "@/components/DynamicIsland";
 import DesktopTopBar from "@/components/DesktopTopBar";
 import { SlideMenuRouter } from "@/components/SlideMenuRouter";
-import { FloatingDock } from "@/components/FloatingDock";
 import SWRegister from "@/components/SWRegister";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 
@@ -47,7 +45,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Critical: hydrates first — hamburger, search, logo */}
         <DesktopTopBar />
         <SlideMenuRouter />
-        <FloatingDock />
 
         {/* Non-critical: deferred hydration */}
         <Suspense>
@@ -56,9 +53,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         <main className="flex-1 pt-14">{children}</main>
 
-        <Suspense>
-          <Eruda />
-        </Suspense>
         <Suspense>
           <ToastContainer />
         </Suspense>

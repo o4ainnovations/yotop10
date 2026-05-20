@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import HeaderBells from './HeaderBells';
 import Link from 'next/link';
-import { SlideMenuTrigger } from './SlideMenu';
+import { Icon } from './icons/Icon';
 
 export default function DesktopTopBar() {
   const router = useRouter();
@@ -19,13 +19,11 @@ export default function DesktopTopBar() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-[var(--color-bg)]/80 backdrop-blur-2xl border-b border-white/5">
       <div className="mx-auto flex h-full max-w-6xl items-center justify-between px-3 sm:px-6">
-        {/* Logo — left */}
         <Link href="/" className="flex items-baseline gap-0 shrink-0">
           <span className="font-accent gradient-text text-lg sm:text-xl tracking-normal">YO</span>
           <span className="font-display text-lg sm:text-xl tracking-tight text-white">Top10</span>
         </Link>
 
-        {/* Desktop search */}
         <div className="hidden sm:flex flex-1 mx-4 justify-center">
           <input
             type="text"
@@ -38,13 +36,17 @@ export default function DesktopTopBar() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {/* Notification bell */}
           <div className="hidden sm:block">
             <HeaderBells />
           </div>
 
-          {/* Mobile: slide menu */}
-          <SlideMenuTrigger />
+          <Link
+            href="/a"
+            className="flex items-center justify-center w-9 h-9 rounded-full bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10 transition focus:outline-none"
+            aria-label="Profile"
+          >
+            <Icon name="User" size={18} />
+          </Link>
         </div>
       </div>
     </header>
