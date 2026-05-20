@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 import { GlassSlab } from '@/components/GlassSlab';
+import { PostCarouselCard } from '@/components/PostCarouselCard';
 import { Icon } from '@/components/icons/Icon';
 import type { Post, PostsResponse } from '@/lib/api/types';
 
@@ -146,14 +147,14 @@ export function FeedClient({ initialPosts, initialHasMore, category }: FeedClien
         ))}
       </div>
 
-      {/* Card deck — vertical stacking, infinite scroll */}
-      <div className="space-y-3 pb-20">
-        {posts.map((post, i) => (
-          <Link key={post.id} href={`/${post.slug}`} className="block group">
-            <GlassSlab post={post} variant="compact" observe={i >= 1} />
-          </Link>
+      {/* Horizontal carousel — snap scrolling */}
+      <div
+        className="flex flex-row overflow-x-auto overflow-y-hidden gap-3 pl-4 pb-4 -webkit-overflow-scrolling-touch snap-x snap-mandatory scroll-smooth"
+      >
+        {posts.map((post) => (
+          <PostCarouselCard key={post.id} post={post} />
         ))}
-        <div ref={sentinelRef} className="h-px" />
+        <div ref={sentinelRef} className="h-px w-px flex-shrink-0" />
       </div>
     </div>
   );

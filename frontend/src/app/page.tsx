@@ -1,4 +1,5 @@
 import { GlassSlab } from '@/components/GlassSlab';
+import { PostCarouselCard } from '@/components/PostCarouselCard';
 import { ArgumentBar } from '@/components/ArgumentBar';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -76,8 +77,8 @@ export default async function Home() {
 
   return (
     <>
-      {/* ── MOBILE CARD DECK ── */}
-      <div className="lg:hidden space-y-3 px-3 py-4 pb-24">
+      {/* ── MOBILE HORIZONTAL CAROUSEL ── */}
+      <div className="lg:hidden pb-24">
         {posts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5">
@@ -93,14 +94,11 @@ export default async function Home() {
             </Link>
           </div>
         ) : (
-          posts.map((post, i) => (
-            <GlassSlab
-              key={post.id}
-              post={post}
-              variant={i < 3 ? 'featured' : 'compact'}
-              observe={i >= 2}
-            />
-          ))
+          <div className="flex flex-row overflow-x-auto overflow-y-hidden gap-3 pl-4 py-4 -webkit-overflow-scrolling-touch snap-x snap-mandatory scroll-smooth">
+            {posts.map((post) => (
+              <PostCarouselCard key={post.id} post={post} />
+            ))}
+          </div>
         )}
       </div>
 
