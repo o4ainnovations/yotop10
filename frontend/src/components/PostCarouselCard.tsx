@@ -22,8 +22,8 @@ function getCategoryIcon(slug: string): string {
 export function PostCarouselCard({ post }: { post: Post }) {
   const topItems = post.topItems || [];
   const displayName = post.author_display_name || post.author_username;
-  const totalItems = (post as any).totalItems || topItems.length;
-  const remaining = Math.max(0, totalItems - 3 || topItems.length - 3);
+  const totalItems = post.totalItems || topItems.length;
+  const remaining = Math.max(0, totalItems - 3);
 
   return (
     <Link
@@ -54,7 +54,7 @@ export function PostCarouselCard({ post }: { post: Post }) {
             </div>
           ))}
           {remaining > 0 && (
-            <p className="text-right text-[11px] text-zinc-600">
+            <p className="text-right text-[10px] text-zinc-600 mt-1 mb-1">
               ... and {remaining} more items
             </p>
           )}

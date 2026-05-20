@@ -42,6 +42,7 @@ export interface Post {
   format?: 'list_only' | 'hero_list' | 'full_list';
   hero_image_url?: string | null;
   topItems?: Array<{ rank: number; title: string }>;
+  totalItems?: number;
   created_at: string;
 }
 
@@ -157,6 +158,7 @@ export interface ExplorePost {
   format?: string;
   hero_image_url?: string | null;
   topItems?: Array<{ rank: number; title: string }>;
+  totalItems?: number;
   explore_score: number;
   created_at: string;
 }

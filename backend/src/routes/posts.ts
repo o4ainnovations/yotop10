@@ -185,8 +185,10 @@ router.get('/', async (req, res) => {
       .lean();
 
     const itemsByPost: Record<string, Array<{ rank: number; title: string }>> = {};
+    const countByPost: Record<string, number> = {};
     for (const item of allItems) {
       const pid = (item as Record<string, unknown>).post_id?.toString() || '';
+      countByPost[pid] = (countByPost[pid] || 0) + 1;
       if (!itemsByPost[pid]) itemsByPost[pid] = [];
       if (itemsByPost[pid].length < 3) {
         itemsByPost[pid].push({ rank: item.rank, title: item.title });
@@ -206,6 +208,7 @@ router.get('/', async (req, res) => {
       format: (post as Record<string, unknown>).format || 'list_only',
       hero_image_url: (post as Record<string, unknown>).hero_image_url || null,
       topItems: itemsByPost[post._id.toString()] || [],
+      totalItems: countByPost[post._id.toString()] || 0,
       created_at: post.created_at,
       published_at: post.published_at,
       category_slug: post.category_slug,
