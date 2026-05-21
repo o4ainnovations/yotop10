@@ -258,16 +258,100 @@ Every user can view their exact rate limit status in real-time on their profile 
 ## 10. Admin Dashboard
 
 ### Admin Authentication
-- Simple username + password login
-- Only ONE admin (you)
-- JWT token for session
+- Username + password login with bcrypt password hashing
+- JWT token stored in httpOnly secure cookie
+- Token expiry: 24 hours (super_admin) / 12 hours (other roles)
+- Brute-force protection: 10 attempts per 15 minutes per IP, account lock after threshold
+- One-time setup token generated via server shell command, expires in 15 minutes
+- Maximum ONE active admin user enforced
+- Automatic session invalidation when new admin is created
+- Fine-grained RBAC with 31 permissions across 4 role presets
 
-### Features
-- **Review Queue**: Approve/Reject pending posts
-- **Post Management**: Edit or delete any post
-- **Comment Management**: Delete inappropriate comments
-- **Category Management**: Create/Edit/Delete/Archive categories
-- **Analytics**: View counts, pending posts count
+### Admin Features (All Fully Implemented)
+
+**Review Queue:**
+- List pending posts (filterable by category, post type, author, date range)
+- Approve (triggers trust score update, ES indexing, boost grant)
+- Reject with required reason (triggers trust score penalty)
+- Request revision with admin guidance feedback to author
+- Bulk approve/reject (max 50 at a time)
+- Keyboard shortcuts: A=Approve, R=Reject, E=Request Revision
+- Double-blind review (moderator never sees username/trust score during review)
+- Collision detection (similar pending titles highlighted)
+
+**Posts Management:**
+- Table view with search, filter, sort, pagination
+- View, edit, soft delete, hard delete, restore
+- Feature/unfeature from Hall of Fame
+- Lock/unlock comments
+- Bump to top of feed
+- Bulk operations: delete, recategorize
+- Individual list item CRUD
+- Post duplication
+- Activity log viewer
+- Quality checker
+- CSV export
+
+**Comments Management:**
+- Table view with search, filter, sort
+- Edit, delete, hide, highlight
+- Flag and dismiss flags
+- Apply trust score penalties
+- Bulk operations
+- CSV export
+
+**Users Management:**
+- Table view with search, filter by trust score, post count, ban status
+- View profile (all posts/comments)
+- Ban (prevent all write operations)
+- Whitelist (bypass rate limits)
+- Shadow ban (user can post but only they see it)
+- Manual trust level lock (scholar/neutral/troll/automatic)
+- Per-user rate limit overrides
+- Trust score history audit trail
+
+**Statistics Dashboard:**
+- 17 API endpoints across 15 collapsible panels
+- Overview, content stats, community health, moderation metrics
+- Category analytics, trend data, quality scores, traffic
+- Hardware health (MongoDB, Redis, Elasticsearch)
+- Alert summary, comparison metrics, notification stats
+
+**Alert System:**
+- 12 metrics evaluated every 60 seconds
+- Configurable thresholds (create, update, delete, enable/disable)
+- Breach detection with cooldown periods
+- Admin bell badge with unread count
+- Severity-colored notifications (critical/warning/info)
+- Alert detail page with live status and resolution guide
+- Resolution tracking and history
+
+**Audit Logs:**
+- All admin actions logged (login, approve, reject, delete, etc.)
+- 90-day retention with TTL index
+- Filterable by action type, admin user, date range
+- CSV export
+- IP-based throttling (300/minute)
+
+**Outbound Messaging:**
+- Individual messages to specific users
+- Broadcast messages to all users
+- Reusable message templates
+- Delivery statistics (sent, seen, dismissed)
+- Message retraction
+
+**Search Management:**
+- Elasticsearch cluster health status
+- Reindex by scope (all, posts, comments, categories, users)
+- Index recreation
+- Mappings viewer
+- Test search query tool
+
+**Other:**
+- System configuration (runtime config store, admin-editable)
+- Hall of Fame management (add, remove, reorder, editorial notes, candidate suggestions)
+- Moderator management (create, edit, delete mod users with role assignment)
+- Category CRUD with tree management (backend complete, frontend tree UI pending)
 
 ---
 
@@ -276,20 +360,39 @@ Every user can view their exact rate limit status in real-time on their profile 
 ```
 /                          → Public feed (newest first)
 /arguments                 → Arguments Page (Hot Debates)
+/explore                   → Algorithmic Explore feed
 /hall-of-fame             → Hall of Fame (Best Lists)
+/saved                    → Bookmarked posts
+/articles                 → Long-form articles feed
+/articles/[slug]          → Article reader
 /submit                    → Anonymous post submission
-/[slug]                → Post detail + comments
-/[slug]/history        → Post changelog/revisions
-/[slug]/counter       → Counter-lists for post
+/submit-article            → Article submission
+/search                    → Full-text search
 /categories               → Browse all categories
 /c/[slug]                 → Category feed
-/a/[username]             → User profile (e.g., /a/9Gh7)
-/admin                    → Admin login
-/admin/dashboard           → Review queue
-/admin/posts              → All posts management
-/admin/comments           → Comment management
-/admin/categories         → Category management
-/admin/hall-of-fame       → Manage Hall of Fame
+/[slug]                    → Post detail + comments
+/[slug]/history            → Post changelog/revisions
+/a/[username]              → User profile (e.g., /a/9Gh7)
+/username-history          → Username change history
+/claim                     → Identity claim (seed phrase)
+/notifications            → Notification feed
+/notifications/[id]       → Single notification
+/admin                     → Admin dashboard
+/admin/login               → Admin login
+/admin/setup               → One-time admin setup
+/admin/profile             → Admin profile
+/admin/posts               → All posts management
+/admin/posts/pending       → Review queue
+/admin/comments            → Comments management
+/admin/categories          → Categories management
+/admin/statistics          → Dashboard statistics
+/admin/alerts              → Alert system management
+/admin/audit               → Audit logs
+/admin/notifications       → Outbound messaging
+/admin/hall-of-fame        → Hall of Fame management
+/admin/search              → Search management
+/admin/settings            → Rate limits & trust scores
+/admin/users               → Users management
 ```
 
 ---
@@ -341,32 +444,74 @@ Every user can view their exact rate limit status in real-time on their profile 
 - Multi-account
 - NextAuth.js
 
-### Now Implemented (Originally Planned as Disabled)
-- Reactions (Fire) — implemented on comments
-- Trust scores — full Shadow Trust Score system V2
-- User profiles — anonymous `/a/[username]` profiles
-- Anonymous posting (`a_XXXX` usernames)
-- Device fingerprinting — 18-signal Tier 1+2 system
+### Now Implemented (Originally Planned as Disabled or Post-MVP)
+
+**Core Platform:**
+- Anonymous posting (`a_XXXX` usernames via device fingerprint)
+- User profiles — anonymous `/a/[username]` with Posts/Comments/Stats tabs
+- Device fingerprinting — 3-tier system (Tier 0 machine-stable, Tier 1 browser, Tier 2 minor) via custom implementation
 - Advanced comment system — nested 10-level, item-anchored, SparkScore-ranked
-- Categories — 10 parents, 300 children, full API
-- Admin dashboard — login, setup, review queue
-- Post review queue — approve/reject with trust score updates
-- Smart rate limiting — 2D soft gradient with guaranteed minimums
-- Ladder Boost system — temporary rate limit boosts
-- Zustand state management
-- Zod environment validation
-- Monolithic API split into domain modules
+- Categories — 10 parents, 300 children, full public + admin API
+- Post submission form — 903-line page with draft recovery, title similarity check, dynamic items
+- Articles — separate long-form content model with Markdown body
+- Hall of Fame — admin-curated featured posts with candidate suggestions
+- Arguments page — hot debates feed (this_vs_that + counter_list) with Redis velocity tracking
+- Explore page — algorithmic trending feed with 5-factor scoring (recency, engagement, authority, velocity, diversity)
+- Bookmarks/saved posts — Redis-cached, optimistic toggle
+- Search — Elasticsearch 4-index full-text search with facets, autocomplete, "did you mean?" suggestions
+- Notifications — user-facing feed (system + admin messages)
+- Post history/changelog — version listing with status tracking
+- Share system — clipboard copy with UTM tracking
+
+**Admin Dashboard:**
+- Admin login — JWT + bcrypt with brute-force protection, account lock, IP-based rate limiting
+- One-time setup token — shell-generated, 15-minute expiry, single-admin enforcement
+- Review queue — approve/reject with trust score updates, request revision, bulk operations
+- All posts management — table with search, filter, export, individual item CRUD, soft delete, restore
+- Comments management — edit, delete, hide, highlight, flag, trust penalty, bulk operations
+- Users management — ban, whitelist, shadow ban, trust level lock, per-user rate limit overrides
+- Statistics dashboard — 17 endpoints across 15 collapsible panels (overview, content, community, moderation, trends, traffic)
+- Alert system — 12 metrics evaluated every 60s, threshold CRUD, breach notifications, resolution tracking, history
+- Audit logs — 90-day retention, fire-and-forget writes, CSV export, IP-based throttling
+- Outbound messaging — individual + broadcast messages to users, reusable templates, delivery stats
+- Search management — ES cluster health, reindex (all/posts/comments/categories/users), index recreation, mappings viewer
+- Hall of Fame management — add, remove, reorder, editorial notes, auto-candidate suggestions
+- Moderator system — 31 permissions, 4 presets (Super Admin, Content Moderator, Analyst, Moderator), RBAC enforcement
+- System configuration — runtime config store (MongoDB + Redis-cached, 60s refresh), admin-configurable via UI
+
+**Identity & Reputation:**
+- Trust Score Engine V2 — rolling 50-review window, logarithmic scaling, asymmetric penalties, hysteresis thresholds (enter 1.85, exit 1.70), optimistic concurrency control
+- Smart rate limiting — 2D soft gradient with guaranteed minimums, atomic Lua script in Redis
+- Ladder Boost system — temporary rate limit boosts (4 types: post approved, comment fires, comment replies, counter list submitted)
+- Identity portability (M15) — 12-word BIP39 seed phrases, Ed25519 challenge-response, multi-device linking
+- SparkScore comment ranking — time-decay with gravity + floor, percentile thresholds, parent propagation
+- Automated flag detection — spam repetition, link-first detection, brigading detection (60s cron)
+- Double-blind moderation — reviewers never see username/trust score during review
+
+**Infrastructure:**
+- Zustand state management — 4 stores (auth, admin, rateLimit, slideMenu)
+- Zod environment validation — all env vars validated at startup, crash-early pattern
+- API client domain split — 11 endpoint modules (posts, comments, admin, users, reactions, categories, identity, articles, explore, bookmarks, arguments)
+- 40+ reusable UI components — GlassSlab, DataCard, ArgumentBar, PostCarouselCard, DynamicIsland, CommandSearch, etc.
+- Singleton Redis + Elasticsearch clients — shared connections, no per-request create/destroy
+- Route barrel export — static imports with `RouteDefinition[]` metadata, TypeScript-enforced
+- Clean architecture — pure functions in lib/, business logic extracted from route handlers
 
 ### What Stays Active
-- Anonymous posting (any_XXXX)
+- Anonymous posting (a_XXXX format)
 - Device fingerprinting
-- Advanced comment system
-- Categories (full implementation)
-- Admin dashboard
+- Advanced comment system with nesting
+- Categories (full public + admin implementation)
+- Admin dashboard with all management features
 - Post review queue
 - Trust Score Engine V2
-- Rate Limiting (trust-aware)
+- Rate Limiting (trust-aware, atomic)
 - SparkScore comment ranking
+- Identity portability (seed phrases)
+- Elasticsearch search
+- Explore algorithmic feed
+- Bookmarks/saved posts
+- Notifications
 
 ---
 
@@ -637,28 +782,59 @@ When you're ready, you can re-enable:
 - Communities
 - Badge system
 - Custom profiles (HTML/CSS)
-- **M15 Identity Portability / Seed Phrases**
+- Strikes/report system
+- Ephemeral threads
+- Multi-account support
 - And more...
 
 ---
 
-## ⚠️ UNCONFIRMED / SILENT IMPLEMENTATION CHANGES
-These features are implemented and working in production but not yet formally documented:
+## 21. Feature Status Reference (Audit 2026-05-21)
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Counter List Post Type | ✅ Confirmed | Core platform feature |
-| Post Edit Window | ✅ Confirmed | 2 hour window to edit own posts |
-| Trust Score Hysteresis | ✅ Confirmed | Prevents trust level flickering |
-| Optimistic Concurrency Control | ✅ Confirmed | Prevents double counting trust score changes |
-| Trust Score Audit Log | ✅ Confirmed | Permanent immutable log of all trust score changes |
-| Redis Sliding Window Rate Limiting | ✅ Confirmed | Atomic Lua script, full production ready |
-| Zod Environment Validation | ✅ Confirmed | All env vars validated at startup |
-| API Client Domain Split | ✅ Confirmed | Monolith split into 5 endpoint modules |
-| SparkScore Pure Functions | ✅ Confirmed | Single canonical formula in lib/sparkScore.ts |
-| Zustand State Management | ✅ Confirmed | Auth, admin, and rate limit stores |
-| Component Library | ✅ Confirmed | 6 reusable UI components |
-| Static Route Barrel | ✅ Confirmed | Metadata-based route mounting |
-| Redis Sliding Window Rate Limiting | ✅ Implemented | Full production ready rate limiting |
+### Fully Implemented (108 features)
+All core platform features, admin dashboard, backend infrastructure, and frontend UI are fully implemented and verified in code. See §14 "Now Implemented" for the comprehensive list.
 
-These features are fully functional but have not yet been added to formal API documentation.
+### Partially Implemented (6 features)
+
+| Feature | Implemented | Missing |
+|---------|------------|---------|
+| Post edit history | Status change tracking (approvals/rejections) | No content revision diffs, no versioned edits, no compare across versions |
+| Counter-list Arena (M5.6) | `counter_list` post type, unlimited rate limit, included in arguments feed | No rebuttal endpoint (POST /:slug/counter), no battle view, no comparison engine, no SEO independence logic |
+| Admin category tree (frontend) | Full backend CRUD, stats, analytics, health, bulk operations | Frontend tree view, drag-drop reorder, status workflow (draft/published/hidden), templates, RSS feeds, slug redirects |
+| Admin UI components | 17 of 24 planned components built | Missing: StatsChart, CategoryTree (drag-drop), UserBadge, SearchInput (global admin), DateRangePicker, ExportButton, ConfirmDialog |
+| V2 design themes | Dark/light toggle, 4-font system, glass morphism | Futuristic theme and Retro (Myspace) theme as distinct theme systems |
+| V2 post changelog | History page exists | No versioned content diffs, no side-by-side comparison |
+
+### Stub Routes (Not Implemented by Design)
+- `/api/auth/*` — login, register, logout (all return 501)
+- `/api/listings/*` — all 5 endpoints return 501
+- `/api/reviews/*` — all 5 endpoints return 501
+- `/api/users` (GET /, PUT /:id, DELETE /:id) — partial stubs return 501
+
+### Not Yet Built (Documented in milestones)
+
+**M5.6 — Counter-List Arena System:**
+- POST /api/posts/:slug/counter — create rebuttal post
+- GET /api/posts/:slug/counters — fetch all challenges
+- GET /api/posts/compare/:original/:counter — get diff data
+- POST /api/posts/compare/:original/:counter/vote — community vote
+- SEO independence threshold logic
+- Authority flip signal
+- Spark-to-index ratio quality gate
+
+**M10.7 — Admin Category Tree (Frontend):**
+- Collapsible tree structure with drag-drop reorder
+- View toggle (Tree/Table/Flat List)
+- Inline edit modal with auto-slug
+- Status workflow (draft/published/hidden)
+- Scheduled activation/archival (publish_at/archive_at)
+- Category templates
+- Slug history tracking with redirects
+- Category RSS feeds
+
+**V2 Features:**
+- Futuristic theme system
+- Retro (Myspace) theme system
+- Email notifications (post approval/rejection)
+- JSON identity file download
+- "This is your only key" warning UI
