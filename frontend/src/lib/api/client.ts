@@ -43,7 +43,13 @@ export async function apiFetch<T>(
     } catch {}
   }
 
-  const response = await fetch(url, { ...options, headers, credentials: 'include' });
+  let response: Response;
+  try {
+    response = await fetch(url, { ...options, headers, credentials: 'include' });
+  } catch (err) {
+    // Network error (ECONNREFUSED, DNS failure, etc.) — backend unreachable
+    throw new Error(`API Network Error: ${url} - ${(err as Error).message}`);
+  }
 
   if (response.status === 425) {
     if (retryCount >= MAX_RETRIES) {
@@ -59,9 +65,12 @@ export async function apiFetch<T>(
   }
 
   const text = await response.text();
+  if (!text || text.trim() === '') {
+    throw new Error(`API Error: Empty response body from ${url}`);
+  }
   try {
     return JSON.parse(text) as T;
   } catch {
-    throw new Error(`API Error: ${response.status} ${response.statusText} - Invalid JSON response`);
+    throw new Error(`API Error: Invalid JSON response from ${url}`);
   }
 }

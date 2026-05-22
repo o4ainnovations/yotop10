@@ -13,28 +13,13 @@ services:
     environment:
       - PORT=3000
       - BACKEND_PORT=8000
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-      - NEXTAUTH_URL=${NEXTAUTH_URL}
-      - AUTH_SECRET=${NEXTAUTH_SECRET}
-      - AUTH_URL=https://yotop10.fun/nextauth
-      - AUTH_TRUST_HOST=1
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
       - INTERNAL_API_URL=http://localhost:8000/api
-      - NEXT_PUBLIC_CDN_URL=${NEXT_PUBLIC_CDN_URL}
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - MONGODB_URI=mongodb://mongodb:27017/yotop10
       - REDIS_URL=redis://redis:6379
       - ELASTICSEARCH_URL=http://elasticsearch:9200
       - JWT_SECRET=${JWT_SECRET}
       - CORS_ORIGINS=${CORS_ORIGINS}
-      - BREVO_API_KEY=${BREVO_API_KEY}
-      - EMAIL_FROM=${EMAIL_FROM}
-      - MINIO_ENDPOINT=minio:9000
-      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
-      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
-      - MINIO_BUCKET=${MINIO_BUCKET}
-      - MINIO_SECURE=false
     networks:
       - yotop10_net
       - traefik-public

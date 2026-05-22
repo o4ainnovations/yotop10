@@ -95,7 +95,7 @@ All limits use 2D soft gradient floor algorithm:
 - [x] `GET /api/posts/:id` — Single post with items + comments
 
 ### M5 — Post Detail Page
-- [x] Frontend: `/post/[id]`
+- [x] Frontend: `/[slug]`
 - [x] Full post display with ranked list items
 - [x] Item-anchored comments (highlight specific item)
 - [x] Nested comments (max 10 levels)
@@ -157,10 +157,10 @@ All limits use 2D soft gradient floor algorithm:
 - [x] Migration script to populate slug for all existing posts
 
 [x] **Part B: The "Flat" Wikipedia Route (Next.js)**
-- [x] Restructure: `app/post/[id]/page.tsx` → `app/[slug]/page.tsx`
+- [x] Route: `app/[slug]/page.tsx` (flat Wikipedia-style)
 - [x] Update page to fetch via slug instead of ID
 - [x] **Route Guard**:
-  - Define `RESERVED_ROUTES = ['admin', 'api', 'login', 'search', 'settings', 'profile', 'categories', 'c', 'auth']`
+  - Define `RESERVED_ROUTES = ['admin', 'api', 'login', 'search', 'settings', 'profile', 'categories', 'c', 'auth', 'submit', 'explore', 'articles', 'saved', 'arguments', 'hall-of-fame', 'claim', 'notifications', 'username-history', 'submit-article', 'post', 'posts']`
   - If params.slug is in reserved list → trigger notFound()
 - ❌ **Legacy Support REMOVED**:
   - No `/post/[id]` route exists permanently. Only `/[slug]` is supported.
@@ -168,10 +168,11 @@ All limits use 2D soft gradient floor algorithm:
 [x] **Part C: Content Governance & Quality Control**
 - [x] Title Similarity Engine: `GET /api/posts/check-title?q=...`
 - [x] Frontend: "Similar list already exists" warning in Create Post UI if match > 80%
-- [ ] **SEO Indexing Guard**:
+- [x] **SEO Indexing Guard**:
   - Set `robots: "noindex"` if:
-    - `post.spark_score === 0` AND `post.age > 48h`
-    - Post description < 100 characters
+    - `comment_count === 0` AND `view_count === 0` AND `age > 48h` (stale)
+    - Post content_length < 100 characters AND `age > 24h` (thin content)
+    - Post status !== `approved`
 
 [x] **Part D: Schema.org "Rich Results" Integration**
 - [x] Post detail page injects ItemList JSON-LD with ListItem schema (position, name, description)
@@ -1029,7 +1030,7 @@ All 5 parts are implemented, tested, and merged. No open TODOs. No stubs. When M
 - [x] `/saved` page — User's bookmarked posts
 - [x] `/arguments` page — Hot debates (this_vs_that + counter posts)
 - [x] Bookmark/save system
-- [ ] Share system (OG tags, UTM, copy link)
+- [x] Share system (OG tags, UTM, copy link)
 - [x] Article content type (separate model)
 - [x] Hall of Fame
 - [ ] Deployed and verified
