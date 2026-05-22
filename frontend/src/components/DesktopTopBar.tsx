@@ -21,7 +21,6 @@ export default function DesktopTopBar() {
     <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-[var(--color-bg)]/80 backdrop-blur-2xl border-b border-white/5">
       <div className="mx-auto flex h-full max-w-6xl items-center justify-between px-3 sm:px-6">
         <div className="flex items-center gap-2">
-          <SlideMenuTrigger />
           <Link href="/" className="flex items-baseline gap-0 shrink-0">
             <span className="font-accent gradient-text text-lg sm:text-xl tracking-normal">YO</span>
             <span className="font-display text-lg sm:text-xl tracking-tight text-white">Top10</span>
@@ -40,6 +39,7 @@ export default function DesktopTopBar() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <SlideMenuTrigger />
           <div className="hidden sm:block">
             <HeaderBells />
           </div>
