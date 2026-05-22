@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import HeaderBells from './HeaderBells';
 import Link from 'next/link';
 import { Icon } from './icons/Icon';
+import { SlideMenuTrigger } from './SlideMenu';
 
 export default function DesktopTopBar() {
   const router = useRouter();
@@ -19,10 +20,13 @@ export default function DesktopTopBar() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-[var(--color-bg)]/80 backdrop-blur-2xl border-b border-white/5">
       <div className="mx-auto flex h-full max-w-6xl items-center justify-between px-3 sm:px-6">
-        <Link href="/" className="flex items-baseline gap-0 shrink-0">
-          <span className="font-accent gradient-text text-lg sm:text-xl tracking-normal">YO</span>
-          <span className="font-display text-lg sm:text-xl tracking-tight text-white">Top10</span>
-        </Link>
+        <div className="flex items-center gap-2">
+          <SlideMenuTrigger />
+          <Link href="/" className="flex items-baseline gap-0 shrink-0">
+            <span className="font-accent gradient-text text-lg sm:text-xl tracking-normal">YO</span>
+            <span className="font-display text-lg sm:text-xl tracking-tight text-white">Top10</span>
+          </Link>
+        </div>
 
         <div className="hidden sm:flex flex-1 mx-4 justify-center">
           <input
@@ -42,7 +46,7 @@ export default function DesktopTopBar() {
 
           <Link
             href="/a"
-            className="flex items-center justify-center w-9 h-9 rounded-full bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10 transition focus:outline-none"
+            className="hidden lg:flex items-center justify-center w-9 h-9 rounded-full bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10 transition focus:outline-none"
             aria-label="Profile"
           >
             <Icon name="User" size={18} />
