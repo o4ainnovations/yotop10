@@ -76,3 +76,25 @@ Hardcoded JWT, orphaned setInterval, $regex injection, stub 200s, health check o
 3. **Build the Arena** — M5.6 Counter-List System (major feature)
 4. **Deploy & verify** — Production deployment
 5. **Post-MVP** — V2 features, theming, notifications
+
+---
+
+## Recent Patches
+
+### Enterprise Service Worker (2026-05-22)
+- Added a production-ready service worker with the following features:
+  - Versioned cache name per build (BUILD_ID injected); runtime cache separation
+  - Network-first strategy for fingerprinted static assets (/_next/static, .js, .css)
+  - Stale-while-revalidate for navigation pages to reduce TTFB while keeping assets fresh
+  - Cache-first for images with trimming to limit storage
+  - Offline fallback page (/offline.html) precached
+  - Messaging protocol for SKIP_WAITING and NEW_VERSION_AVAILABLE notifications
+  - Client registration UI updated to prompt users and trigger update via skipWaiting
+
+Files changed:
+- frontend/public/sw.js (new enterprise SW)
+- frontend/public/offline.html (added)
+- frontend/src/app/sw-register.ts (enhanced SW registration)
+- frontend/src/components/SWRegister.tsx (UI prompt for updates)
+
+Status: implemented in working tree. Recommend deploying and validating with a test cohort; additional step: inject BUILD_ID at build time for guaranteed cache-busting across deploys.
