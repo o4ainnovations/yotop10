@@ -10,6 +10,11 @@ COPY backend/package.json backend/pnpm-lock.yaml ./backend/
 RUN cd frontend && pnpm install --frozen-lockfile
 RUN cd backend && pnpm install --frozen-lockfile
 
+# Config files needed at dev runtime (PostCSS for Tailwind CSS v4 utility generation)
+COPY frontend/postcss.config.mjs ./frontend/postcss.config.mjs
+COPY frontend/tsconfig.json ./frontend/tsconfig.json
+COPY frontend/next.config.ts ./frontend/next.config.ts
+
 COPY scripts/dev-* /app/scripts/
 COPY ecosystem.config.dev.json /app/
 

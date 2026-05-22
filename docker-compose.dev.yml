@@ -23,6 +23,7 @@ services:
       - ./backend/tsconfig.json:/app/backend/tsconfig.json
       - ./frontend/tsconfig.json:/app/frontend/tsconfig.json
       - ./frontend/next.config.ts:/app/frontend/next.config.ts
+      - ./frontend/postcss.config.mjs:/app/frontend/postcss.config.mjs
       - next_cache:/app/frontend/.next/cache
     networks:
       - yotop10_net
