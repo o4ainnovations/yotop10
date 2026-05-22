@@ -35,7 +35,7 @@ export function SeedDisplayModal({ words, onClose }: SeedDisplayModalProps) {
           Your Seed Phrase
         </h2>
 
-        <div className="bg-orange-500/10 border-2 border-orange-500 rounded-xl p-3.5 mb-4 text-[13px] text-orange-500 leading-relaxed">
+        <div className="bg-orange-500/10 border-2 border-orange-500 rounded-xl p-3.5 mb-4 text-sm2 text-orange-500 leading-relaxed">
           <strong>Write this down and store it securely.</strong> Anyone with this phrase can take over your identity. We do not store it and cannot recover it.
         </div>
 
@@ -43,9 +43,9 @@ export function SeedDisplayModal({ words, onClose }: SeedDisplayModalProps) {
           {words.map((word, i) => (
             <div
               key={i}
-              className="flex items-center gap-1.5 px-2.5 py-2 bg-white/[0.03] rounded-lg text-sm font-mono text-white border border-white/10"
+              className="flex items-center gap-1.5 px-2.5 py-2 bg-white/5 rounded-lg text-sm font-mono text-white border border-white/10"
             >
-              <span className="text-white/40 text-[11px]">{i + 1}</span>
+              <span className="text-white/40 text-3xs">{i + 1}</span>
               <span>{word}</span>
             </div>
           ))}
@@ -54,7 +54,7 @@ export function SeedDisplayModal({ words, onClose }: SeedDisplayModalProps) {
         <div className="flex gap-2 mb-4">
           <button
             onClick={handleCopy}
-            className={`px-4 py-2 rounded-xl cursor-pointer text-[13px] flex items-center gap-1.5 min-h-[40px] ${copied ? 'bg-green-500/10 border border-green-500 text-green-400' : 'bg-white/5 border border-white/10 text-white'}`}
+            className={`px-4 py-2 rounded-xl cursor-pointer text-sm2 flex items-center gap-1.5 min-h-10 ${copied ? 'bg-green-500/10 border border-green-500 text-green-400' : 'bg-white/5 border border-white/10 text-white'}`}
           >
             {copied ? <><Icon name="Check" size={14} color="#2e7d32" /> Copied!</> : <><Icon name="Clipboard" size={14} /> Copy to Clipboard</>}
           </button>
@@ -68,7 +68,7 @@ export function SeedDisplayModal({ words, onClose }: SeedDisplayModalProps) {
             onChange={(e) => setConfirmed(e.target.checked)}
             className="w-4.5 h-4.5 accent-orange-500"
           />
-          <label htmlFor="seed-confirm" className="text-[13px] cursor-pointer text-white/60">
+          <label htmlFor="seed-confirm" className="text-sm2 cursor-pointer text-white/60">
             I have saved my seed phrase securely
           </label>
         </div>
@@ -76,7 +76,7 @@ export function SeedDisplayModal({ words, onClose }: SeedDisplayModalProps) {
         <button
           onClick={onClose}
           disabled={!confirmed}
-          className={`w-full py-3 text-white border-none rounded-xl cursor-pointer text-[15px] font-bold min-h-[44px] ${confirmed ? 'bg-gradient-to-r from-orange-500 to-pink-500 cursor-pointer' : 'bg-white/10 cursor-not-allowed'}`}
+          className={`w-full py-3 text-white border-none rounded-xl cursor-pointer text-base2 font-bold min-h-11 ${confirmed ? 'bg-gradient-to-r from-orange-500 to-pink-500 cursor-pointer' : 'bg-white/10 cursor-not-allowed'}`}
         >
           I Understand, Close
         </button>

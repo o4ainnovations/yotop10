@@ -248,28 +248,28 @@ export default function PostDetailClient({ slug }: { slug: string }) {
 
     return (
       <div key={comment.id} className={`mt-3 border-l-2 border-white/10 pl-3 ${indentClass}`}>
-        <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3.5 sm:p-4">
+        <div className="rounded-lg border border-white/5 bg-white/5 p-3.5 sm:p-4">
           <div className="mb-2 flex flex-wrap items-center gap-x-2.5 gap-y-1">
             <span className="flex items-center justify-center rounded-full bg-white/10 text-xs font-mono text-zinc-400 w-7 h-7 shrink-0">
               {(comment.author_username || '?')[0].toUpperCase()}
             </span>
-            <strong className="text-[13px] font-mono text-white sm:text-sm">
+            <strong className="text-sm2 font-mono text-white sm:text-sm">
               {comment.author_display_name}
             </strong>
-            <span className="inline-flex items-center gap-1 text-[11px] text-zinc-500">
+            <span className="inline-flex items-center gap-1 text-3xs text-zinc-500">
               <Icon name="Sparkles" size={12} color="#f97316" /> {comment.spark_score.toFixed(2)}
             </span>
             {comment.list_item_id && itemRank && (
-              <span className="inline-flex items-center gap-1 rounded-lg bg-orange-500/10 px-2 py-0.5 text-[11px] font-medium text-orange-400">
+              <span className="inline-flex items-center gap-1 rounded-lg bg-orange-500/10 px-2 py-0.5 text-3xs font-medium text-orange-400">
                 <Icon name="Pin" size={11} /> On item #{itemRank}
               </span>
             )}
             {comment.parent_comment_id && (
-              <span className="inline-flex items-center gap-1 text-[11px] text-zinc-500">
+              <span className="inline-flex items-center gap-1 text-3xs text-zinc-500">
                 <Icon name="Reply" size={11} /> Reply
               </span>
             )}
-            <span className="text-[11px] text-zinc-500" suppressHydrationWarning>
+            <span className="text-3xs text-zinc-500" suppressHydrationWarning>
               {formatDate(comment.created_at)}
             </span>
           </div>
@@ -304,7 +304,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
                 value={replyForm.content}
                 onChange={(e) => handleReplyContentChange(comment.id, e.target.value)}
                 placeholder={`Reply to ${comment.author_display_name}...`}
-                className="mb-2.5 w-full resize-y rounded-xl border border-white/10 bg-white/[0.02] px-3.5 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none"
+                className="mb-2.5 w-full resize-y rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none"
                 maxLength={2000}
               />
               <button
@@ -337,7 +337,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
       {/* Navigation Header */}
-      <header className="border-b border-white/5 bg-white/[0.02]">
+      <header className="border-b border-white/5 bg-white/5">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-3 py-3.5 sm:px-6 sm:py-4">
           <Link
             href="/"
@@ -366,10 +366,10 @@ export default function PostDetailClient({ slug }: { slug: string }) {
 
       <main className="mx-auto max-w-4xl px-3 py-6 sm:px-6 sm:py-10 sm:pb-16">
         {/* Article Header */}
-        <article className="mb-8 rounded-2xl border border-white/5 bg-white/[0.02] p-5 backdrop-blur-sm sm:p-10">
+        <article className="mb-8 rounded-2xl border border-white/5 bg-white/5 p-5 backdrop-blur-sm sm:p-10">
           {/* Post metadata */}
           <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-zinc-500 sm:text-sm">
-            <span className="rounded-lg border border-white/10 bg-white/[0.02] px-2 py-0.5 text-[11px] font-medium capitalize">
+            <span className="rounded-lg border border-white/10 bg-white/5 px-2 py-0.5 text-3xs font-medium capitalize">
               {post.post_type}
             </span>
             <Link
@@ -435,7 +435,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
             return (
               <div
                 key={item.id}
-                className="mb-4 flex gap-4 rounded-xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur-sm transition-all duration-300 hover:border-orange-500/30 hover:bg-white/[0.04] hover:shadow-lg hover:shadow-orange-500/5 sm:p-5"
+                className="mb-4 flex gap-4 rounded-xl border border-white/5 bg-white/5 p-4 backdrop-blur-sm transition-all duration-300 hover:border-orange-500/30 hover:bg-white/5 hover:shadow-lg hover:shadow-orange-500/5 sm:p-5"
               >
                 {hasImage && (
                   <div className="w-24 flex-shrink-0 overflow-hidden rounded-lg border border-white/5 sm:w-48">
@@ -512,7 +512,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
           </div>
 
           {/* Comment Form */}
-          <form onSubmit={handleSubmitComment} className="mb-7 rounded-xl border border-white/5 bg-white/[0.02] p-4 sm:p-6">
+          <form onSubmit={handleSubmitComment} className="mb-7 rounded-xl border border-white/5 bg-white/5 p-4 sm:p-6">
             {commentError && (
               <div role="alert" className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
                 {commentError}
@@ -546,7 +546,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-white/5 bg-white/[0.02] px-3 py-6 text-center sm:px-6">
+      <footer className="border-t border-white/5 bg-white/5 px-3 py-6 text-center sm:px-6">
         <p className="text-sm text-zinc-500">
           YoTop10 — Open Platform for Top 10 Lists
         </p>

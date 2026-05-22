@@ -20,7 +20,7 @@ export function ArgumentBar({ supportPct, contradictPct, className }: ArgumentBa
   return (
     <div className={className}>
       {isZero ? (
-        <div className="text-[10px] text-zinc-600">No arguments yet</div>
+        <div className="text-2xs text-zinc-600">No arguments yet</div>
       ) : (
         <>
           <div className="h-2 lg:h-3 rounded-full overflow-hidden bg-white/5 flex">
@@ -33,7 +33,7 @@ export function ArgumentBar({ supportPct, contradictPct, className }: ArgumentBa
               style={{ width: mounted ? `${contradictPct}%` : '0%' }}
             />
           </div>
-          <div className="text-[10px] font-mono text-zinc-600 flex justify-between mt-1">
+          <div className="text-2xs font-mono text-zinc-600 flex justify-between mt-1">
             <span>{supportPct}% support</span>
             <span>{contradictPct}% contradict</span>
           </div>

@@ -20,7 +20,9 @@
     "react-dom": "^19.0.0",
     "zustand": "^5.0.12"
   },
+  "browserslist": ["> 1%", "last 2 versions", "not dead"],
   "devDependencies": {
+    "autoprefixer": "^10",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

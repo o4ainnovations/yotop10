@@ -131,19 +131,19 @@ export function GlobalConfigModal({ config, onClose, onSave, onPreviewImpact }: 
               </div>
             </div>
 
-            <div className="bg-white/[0.03] border border-white/10 rounded-xl p-4 mb-4">
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-4">
               <h4 className="text-white/60 text-xs uppercase tracking-wider mb-2 font-semibold">Tier Effective Rates</h4>
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2">
-                  <span className="text-red-400 text-[10px] uppercase tracking-wider font-semibold block mb-0.5">Troll</span>
+                  <span className="text-red-400 text-2xs uppercase tracking-wider font-semibold block mb-0.5">Troll</span>
                   <span className="text-white font-mono text-xs">{rates.troll.posts}p / {rates.troll.comments}c</span>
                 </div>
                 <div className="bg-white/5 border border-white/10 rounded-lg p-2">
-                  <span className="text-zinc-500 text-[10px] uppercase tracking-wider font-semibold block mb-0.5">Neutral</span>
+                  <span className="text-zinc-500 text-2xs uppercase tracking-wider font-semibold block mb-0.5">Neutral</span>
                   <span className="text-white font-mono text-xs">{rates.neutral.posts}p / {rates.neutral.comments}c</span>
                 </div>
                 <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-2">
-                  <span className="text-green-400 text-[10px] uppercase tracking-wider font-semibold block mb-0.5">Scholar</span>
+                  <span className="text-green-400 text-2xs uppercase tracking-wider font-semibold block mb-0.5">Scholar</span>
                   <span className="text-white font-mono text-xs">{rates.scholar.posts}p / {rates.scholar.comments}c</span>
                 </div>
               </div>
@@ -190,10 +190,10 @@ export function GlobalConfigModal({ config, onClose, onSave, onPreviewImpact }: 
               </div>
             </div>
 
-            <div className="bg-white/[0.03] border border-white/10 rounded-xl p-3 mb-4">
+            <div className="bg-white/5 border border-white/10 rounded-xl p-3 mb-4">
               <span className="text-zinc-500 text-xs">Hysteresis:</span>
               <span className="ml-2 text-white font-mono text-sm">{hysteresis.toFixed(2)}</span>
-              <p className="text-zinc-600 text-[11px] mt-1">
+              <p className="text-zinc-600 text-3xs mt-1">
                 Buffer zone to prevent rapid tier oscillation
               </p>
             </div>
@@ -211,39 +211,39 @@ export function GlobalConfigModal({ config, onClose, onSave, onPreviewImpact }: 
                 <input type="checkbox" checked={doubleBlind} onChange={e => setDoubleBlind(e.target.checked)} className="w-4 h-4 rounded bg-white/10 border-white/20 cursor-pointer accent-orange-500" />
                 <span className="text-white text-sm">Double-blind review</span>
               </label>
-              <p className="text-zinc-600 text-[11px] mt-1 ml-6">Hide author identity in review queue</p>
+              <p className="text-zinc-600 text-3xs mt-1 ml-6">Hide author identity in review queue</p>
             </div>
           </div>
         )}
 
         {impact && (
-          <div className="bg-white/[0.03] border border-white/10 rounded-xl p-4 mb-4">
+          <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-4">
             <h4 className="text-white/60 text-xs uppercase tracking-wider mb-2 font-semibold">Impact Preview</h4>
             <div className="grid grid-cols-3 gap-2 text-center">
               <div>
-                <span className="text-zinc-500 text-[10px] block">Affected</span>
+                <span className="text-zinc-500 text-2xs block">Affected</span>
                 <span className="text-white font-mono font-bold">{impact.users_affected}</span>
               </div>
               <div>
-                <span className="text-zinc-500 text-[10px] block">Tier Up</span>
+                <span className="text-zinc-500 text-2xs block">Tier Up</span>
                 <span className="text-green-400 font-mono font-bold">{impact.tier_changes.to_scholar}</span>
               </div>
               <div>
-                <span className="text-zinc-500 text-[10px] block">Tier Down</span>
+                <span className="text-zinc-500 text-2xs block">Tier Down</span>
                 <span className="text-red-400 font-mono font-bold">{impact.tier_changes.to_troll}</span>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-2 text-center mt-2">
               <div>
-                <span className="text-zinc-600 text-[10px] block">Rate Up</span>
+                <span className="text-zinc-600 text-2xs block">Rate Up</span>
                 <span className="text-green-400 font-mono text-xs">{impact.rate_changes.increased}</span>
               </div>
               <div>
-                <span className="text-zinc-600 text-[10px] block">Rate Down</span>
+                <span className="text-zinc-600 text-2xs block">Rate Down</span>
                 <span className="text-red-400 font-mono text-xs">{impact.rate_changes.decreased}</span>
               </div>
               <div>
-                <span className="text-zinc-600 text-[10px] block">Unchanged</span>
+                <span className="text-zinc-600 text-2xs block">Unchanged</span>
                 <span className="text-white/60 font-mono text-xs">{impact.rate_changes.unchanged}</span>
               </div>
             </div>

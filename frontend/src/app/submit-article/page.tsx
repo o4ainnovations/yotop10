@@ -121,7 +121,7 @@ export default function SubmitArticlePage() {
   if (submitted) {
     return (
       <main className="mx-auto min-h-screen max-w-2xl px-4 py-12 sm:px-6 lg:py-16">
-        <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-8 text-center backdrop-blur-xl sm:p-12">
+        <div className="rounded-2xl border border-white/5 bg-white/5 p-8 text-center backdrop-blur-xl sm:p-12">
           <Icon name="Check" size={48} className="mx-auto mb-4 text-emerald-400" />
           <h1 className="font-display text-2xl text-white">Article Submitted</h1>
           <p className="mt-3 text-zinc-400">
@@ -145,7 +145,7 @@ export default function SubmitArticlePage() {
                 setErrors({});
                 setError(null);
               }}
-              className="rounded-xl border border-white/10 bg-white/[0.02] px-6 py-3 text-sm text-zinc-400 backdrop-blur-xl transition hover:border-white/20 hover:text-white"
+              className="rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-sm text-zinc-400 backdrop-blur-xl transition hover:border-white/20 hover:text-white"
             >
               Submit another
             </button>
@@ -260,7 +260,7 @@ export default function SubmitArticlePage() {
             <button
               type="button"
               onClick={addSource}
-              className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-xs text-zinc-400 backdrop-blur-xl transition hover:border-white/20 hover:text-white"
+              className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-zinc-400 backdrop-blur-xl transition hover:border-white/20 hover:text-white"
             >
               <Icon name="Plus" size={12} />
               Add Source
@@ -268,7 +268,7 @@ export default function SubmitArticlePage() {
           </div>
 
           {sources.length === 0 && (
-            <p className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-6 text-center text-sm text-zinc-600 backdrop-blur-xl">
+            <p className="rounded-xl border border-dashed border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-zinc-600 backdrop-blur-xl">
               No sources added yet. Sources strengthen fact-checking.
             </p>
           )}
@@ -277,7 +277,7 @@ export default function SubmitArticlePage() {
             {sources.map((source) => (
               <div
                 key={source.id}
-                className="flex flex-col gap-2 rounded-xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur-xl sm:flex-row sm:items-center"
+                className="flex flex-col gap-2 rounded-xl border border-white/5 bg-white/5 p-4 backdrop-blur-xl sm:flex-row sm:items-center"
               >
                 <input
                   type="text"
@@ -307,7 +307,7 @@ export default function SubmitArticlePage() {
         </div>
 
         {/* Reading Time Preview */}
-        <div className="rounded-xl border border-white/5 bg-white/[0.02] px-5 py-4 backdrop-blur-xl">
+        <div className="rounded-xl border border-white/5 bg-white/5 px-5 py-4 backdrop-blur-xl">
           <div className="flex items-center justify-between">
             <span className="text-sm text-zinc-400">Estimated reading time</span>
             <span className="font-mono text-sm text-white">{readingTime} min</span>

@@ -26,7 +26,7 @@ export function HallOfFameCard({
 
   if (variant === 'featured') {
     return (
-      <div className="relative rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden">
+      <div className="relative rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden">
         {post?.hero_image_url && (
           <div className="relative w-full h-48 lg:h-64 overflow-hidden">
             <Image
@@ -42,11 +42,11 @@ export function HallOfFameCard({
 
         <div className="p-5 lg:p-6">
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase tracking-wider">
+            <span className="text-2xs font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase tracking-wider">
               FEATURED
             </span>
             {post?.category_slug && (
-              <span className="text-[10px] font-mono text-zinc-500 uppercase">
+              <span className="text-2xs font-mono text-zinc-500 uppercase">
                 {post.category_slug}
               </span>
             )}
@@ -69,7 +69,7 @@ export function HallOfFameCard({
           )}
 
           {hasPost && (
-            <div className="flex items-center gap-4 mt-3 font-mono tabular-nums text-[11px] text-zinc-500">
+            <div className="flex items-center gap-4 mt-3 font-mono tabular-nums text-3xs text-zinc-500">
               {post.author_username && (
                 <span className="flex items-center gap-1">
                   <Icon name="User" size={11} />
@@ -93,19 +93,19 @@ export function HallOfFameCard({
 
   if (variant === 'admin') {
     return (
-      <div className="rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-xl p-4 transition hover:border-white/10">
+      <div className="rounded-xl border border-white/5 bg-white/5 backdrop-blur-xl p-4 transition hover:border-white/10">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <span className="text-[10px] font-mono text-zinc-600 tabular-nums">
+              <span className="text-2xs font-mono text-zinc-600 tabular-nums">
                 #{entry.sort_order}
               </span>
               {post?.category_slug && (
-                <span className="text-[10px] font-mono text-zinc-600 uppercase">
+                <span className="text-2xs font-mono text-zinc-600 uppercase">
                   {post.category_slug}
                 </span>
               )}
-              <span className="text-[10px] text-zinc-600" suppressHydrationWarning>
+              <span className="text-2xs text-zinc-600" suppressHydrationWarning>
                 {entry.featured_at ? relativeTime(entry.featured_at) : ''}
               </span>
             </div>
@@ -121,7 +121,7 @@ export function HallOfFameCard({
             )}
 
             {hasPost && (
-              <span className="text-[11px] text-zinc-500">
+              <span className="text-3xs text-zinc-500">
                 @{post.author_username}
               </span>
             )}
@@ -165,7 +165,7 @@ export function HallOfFameCard({
         )}
 
         {hasPost && (
-          <div className="flex items-center gap-3 mt-2 font-mono tabular-nums text-[10px] text-zinc-600">
+          <div className="flex items-center gap-3 mt-2 font-mono tabular-nums text-2xs text-zinc-600">
             <span className="flex items-center gap-1">
               <Icon name="MessageCircle" size={10} />
               {(post.comment_count ?? 0).toLocaleString()}
@@ -182,13 +182,13 @@ export function HallOfFameCard({
 
   // variant === 'public'
   return (
-    <div className="rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-xl p-4 transition hover:border-white/10">
+    <div className="rounded-xl border border-white/5 bg-white/5 backdrop-blur-xl p-4 transition hover:border-white/10">
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">
+        <span className="text-2xs font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">
           FEATURED
         </span>
         {post?.category_slug && (
-          <span className="text-[10px] font-mono text-zinc-500 uppercase">
+          <span className="text-2xs font-mono text-zinc-500 uppercase">
             {post.category_slug}
           </span>
         )}
@@ -212,14 +212,14 @@ export function HallOfFameCard({
 
       {hasPost && (
         <div className="flex items-center gap-3 mt-2">
-          <span className="text-[11px] text-zinc-500">
+          <span className="text-3xs text-zinc-500">
             @{post.author_username}
           </span>
-          <span className="flex items-center gap-1 font-mono tabular-nums text-[10px] text-zinc-600">
+          <span className="flex items-center gap-1 font-mono tabular-nums text-2xs text-zinc-600">
             <Icon name="MessageCircle" size={10} />
             {(post.comment_count ?? 0).toLocaleString()}
           </span>
-          <span className="flex items-center gap-1 font-mono tabular-nums text-[10px] text-zinc-600">
+          <span className="flex items-center gap-1 font-mono tabular-nums text-2xs text-zinc-600">
             <Icon name="Eye" size={10} />
             {(post.view_count ?? 0).toLocaleString()}
           </span>

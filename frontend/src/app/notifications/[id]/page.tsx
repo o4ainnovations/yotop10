@@ -65,10 +65,10 @@ export default function NotificationDetailPage() {
   if (!n) return (
     <div className="max-w-[700px] mx-auto px-3 sm:px-5 py-10 text-center">
       <h2 className="text-white/40 text-lg">Notification not found</h2>
-      <p className="text-white/30 text-[13px] mt-1">
+      <p className="text-white/30 text-sm2 mt-1">
         It may have been deleted, expired, or you don&rsquo;t have access to it.
       </p>
-      <button onClick={() => router.push('/notifications')} className="mt-3 px-4 py-2 bg-blue-700 text-white border-none rounded-xl cursor-pointer text-sm font-bold min-h-[40px]">
+      <button onClick={() => router.push('/notifications')} className="mt-3 px-4 py-2 bg-blue-700 text-white border-none rounded-xl cursor-pointer text-sm font-bold min-h-10">
         ← Back to notifications
       </button>
     </div>
@@ -81,7 +81,7 @@ export default function NotificationDetailPage() {
 
   return (
     <div className="max-w-[700px] mx-auto px-3 sm:px-5 py-5">
-      <button onClick={() => router.push('/notifications')} className="bg-transparent border-none text-white/50 cursor-pointer text-[13px] mb-5 hover:text-white/80">
+      <button onClick={() => router.push('/notifications')} className="bg-transparent border-none text-white/50 cursor-pointer text-sm2 mb-5 hover:text-white/80">
         ← Back to notifications
       </button>
 
@@ -96,22 +96,22 @@ export default function NotificationDetailPage() {
                   <span>From: {n.created_by}</span>
                   <span>· {n.message_type === 'broadcast' ? <><Icon name="Megaphone" size={12} /> Broadcast to all users</> : <><Icon name="User" size={12} /> Private message</>}</span>
                   {n.priority && n.priority !== 'info' && (
-                    <span className={`ml-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${priorityBg} ${priorityTextColor}`}>
+                    <span className={`ml-0 rounded-full px-2 py-0.5 text-2xs font-bold uppercase tracking-wider ${priorityBg} ${priorityTextColor}`}>
                       {n.priority.toUpperCase()}
                     </span>
                   )}
                   {n.dismissed && (
-                    <span className="text-green-400 text-[11px]"><Icon name="Check" size={12} color="#2e7d32" /> Dismissed</span>
+                    <span className="text-green-400 text-3xs"><Icon name="Check" size={12} color="#2e7d32" /> Dismissed</span>
                   )}
                 </div>
               </div>
             </div>
-            <p className="text-[15px] text-white/70 leading-relaxed whitespace-pre-wrap">{n.body}</p>
+            <p className="text-base2 text-white/70 leading-relaxed whitespace-pre-wrap">{n.body}</p>
             <div className="mt-5 pt-4 border-t border-white/10 flex justify-between items-center">
               <span className="text-xs text-white/30" suppressHydrationWarning>{formatDate(n.created_at)} {formatTime(n.created_at)}</span>
               {!n.dismissed && (
                 <button onClick={handleDismiss} disabled={actionLoading}
-                  className={`px-4 py-2 border border-white/10 rounded-xl cursor-pointer text-[13px] min-h-[40px] ${actionLoading ? 'bg-white/5 cursor-not-allowed text-white/30' : 'bg-white/5 text-white hover:bg-white/10'}`}>
+                  className={`px-4 py-2 border border-white/10 rounded-xl cursor-pointer text-sm2 min-h-10 ${actionLoading ? 'bg-white/5 cursor-not-allowed text-white/30' : 'bg-white/5 text-white hover:bg-white/10'}`}>
                   {actionLoading ? '...' : 'Dismiss'}
                 </button>
               )}
@@ -125,14 +125,14 @@ export default function NotificationDetailPage() {
             <h1 className="text-lg font-bold text-white mb-1">
               {n.post_title}
             </h1>
-            <div className="text-[13px] text-white/40 mb-4">
+            <div className="text-sm2 text-white/40 mb-4">
               {n.type === 'post_approved' ? 'Your post was approved' : n.type === 'post_rejected' ? 'Your post was rejected' : 'Revision requested'}
             </div>
-            <p className="text-[15px] text-white/70 leading-relaxed">{n.message}</p>
+            <p className="text-base2 text-white/70 leading-relaxed">{n.message}</p>
             <div className="mt-5 pt-4 border-t border-white/10 flex justify-between items-center">
               <span className="text-xs text-white/30" suppressHydrationWarning>{formatDate(n.created_at)} {formatTime(n.created_at)}</span>
               {n.post_id && (
-                <a href={`/${n.post_id}`} className="text-orange-400 text-[13px] no-underline hover:text-orange-300">
+                <a href={`/${n.post_id}`} className="text-orange-400 text-sm2 no-underline hover:text-orange-300">
                   View post →
                 </a>
               )}

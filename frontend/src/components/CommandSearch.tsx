@@ -102,7 +102,7 @@ export function CommandSearch({ open, onClose }: CommandSearchProps) {
 
         {trending.length > 0 && (
           <div className="border-t border-white/5 px-4 py-3">
-            <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-zinc-600">
+            <p className="mb-2 text-2xs font-semibold uppercase tracking-widest text-zinc-600">
               Trending
             </p>
             <div className="flex flex-wrap gap-x-3 gap-y-1.5">
@@ -110,7 +110,7 @@ export function CommandSearch({ open, onClose }: CommandSearchProps) {
                 <button
                   key={q}
                   onClick={() => doSearch(q)}
-                  className="text-[11px] font-mono text-zinc-500 hover:text-orange-400 transition"
+                  className="text-3xs font-mono text-zinc-500 hover:text-orange-400 transition"
                 >
                   {(i + 1).toString().padStart(2, '0')}{' '}
                   #{q.toUpperCase().replace(/\s/g, '_')}

@@ -79,13 +79,13 @@ export default function AllPostsPage() {
   const statusBadge = (s: string) => {
     const map: Record<string, string> = { pending_review: 'bg-orange-500/15 text-orange-400', approved: 'bg-green-500/15 text-green-400', rejected: 'bg-red-500/15 text-red-400' };
     const cls = map[s] || 'bg-white/10 text-white/60';
-    return <span className={`${cls} rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider`}>{s}</span>;
+    return <span className={`${cls} rounded-full px-2.5 py-0.5 text-3xs font-semibold uppercase tracking-wider`}>{s}</span>;
   };
 
   const statCards = ['total', 'pending', 'approved', 'rejected', 'deleted', 'featured', 'locked'];
-  const filterSelectClass = 'bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none min-h-[44px] w-full sm:w-auto';
-  const btnSmClass = 'text-[11px] cursor-pointer px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-white';
-  const dropdownItemClass = 'w-full text-left px-4 py-2.5 text-[13px] text-white hover:bg-white/10 flex items-center gap-2 min-h-[44px]';
+  const filterSelectClass = 'bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none min-h-11 w-full sm:w-auto';
+  const btnSmClass = 'text-3xs cursor-pointer px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-white';
+  const dropdownItemClass = 'w-full text-left px-4 py-2.5 text-sm2 text-white hover:bg-white/10 flex items-center gap-2 min-h-11';
 
   return (
     <div className="space-y-3 sm:space-y-4 px-3 sm:px-6">
@@ -93,7 +93,7 @@ export default function AllPostsPage() {
 
       <div className="flex gap-2 flex-wrap">
         {statCards.map(k => (
-          <div key={k} className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/60 min-h-[36px] flex items-center">
+          <div key={k} className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/60 min-h-9 flex items-center">
             <strong className="text-white mr-1">{k}</strong>: {stats[k] ?? 0}
           </div>
         ))}
@@ -113,12 +113,12 @@ export default function AllPostsPage() {
       </div>
 
       {selected.size > 0 && (
-        <div className="bg-white/[0.03] border border-white/10 rounded-lg px-3 py-2.5 flex flex-col sm:flex-row gap-2 items-start sm:items-center text-[13px]">
+        <div className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 flex flex-col sm:flex-row gap-2 items-start sm:items-center text-sm2">
           <strong className="text-white">{selected.size} selected</strong>
           <div className="flex gap-2 flex-wrap">
-            <button onClick={() => bulkAction('delete')} disabled={actionLoading} className={`${btnSmClass} min-h-[44px] sm:min-h-[28px]`}>Delete</button>
-            <button onClick={() => bulkAction('feature')} disabled={actionLoading} className={`${btnSmClass} min-h-[44px] sm:min-h-[28px]`}>Feature</button>
-            <button onClick={() => bulkAction('unfeature')} disabled={actionLoading} className={`${btnSmClass} min-h-[44px] sm:min-h-[28px]`}>Unfeature</button>
+            <button onClick={() => bulkAction('delete')} disabled={actionLoading} className={`${btnSmClass} min-h-11 sm:min-h-7`}>Delete</button>
+            <button onClick={() => bulkAction('feature')} disabled={actionLoading} className={`${btnSmClass} min-h-11 sm:min-h-7`}>Feature</button>
+            <button onClick={() => bulkAction('unfeature')} disabled={actionLoading} className={`${btnSmClass} min-h-11 sm:min-h-7`}>Unfeature</button>
           </div>
         </div>
       )}
@@ -128,10 +128,10 @@ export default function AllPostsPage() {
           {/* Mobile card view */}
           <div className="sm:hidden flex flex-col gap-2">
             {posts.map(p => (
-              <div key={p._id} className={`bg-white/[0.02] border border-white/5 rounded-2xl p-3 ${p.deleted ? 'opacity-40' : ''}`}>
+              <div key={p._id} className={`bg-white/5 border border-white/5 rounded-2xl p-3 ${p.deleted ? 'opacity-40' : ''}`}>
                 <div className="flex items-center gap-2 mb-1">
-                  <input type="checkbox" checked={selected.has(p._id)} onChange={() => toggleSelect(p._id)} className="min-h-[44px] min-w-[44px]" />
-                  <a href="#" onClick={e => { e.preventDefault(); window.open(`/${p.slug}`, '_blank'); }} className="text-white text-sm font-semibold no-underline truncate flex-1 min-h-[44px] flex items-center">
+                  <input type="checkbox" checked={selected.has(p._id)} onChange={() => toggleSelect(p._id)} className="min-h-11 min-w-11" />
+                  <a href="#" onClick={e => { e.preventDefault(); window.open(`/${p.slug}`, '_blank'); }} className="text-white text-sm font-semibold no-underline truncate flex-1 min-h-11 flex items-center">
                     {p.title?.substring(0, 50)}{(p.title?.length || 0) > 50 ? '...' : ''}
                   </a>
                   {p.featured && <Icon name="Star" size={12} color="#f57c00" />}
@@ -140,7 +140,7 @@ export default function AllPostsPage() {
                   <div className="relative" ref={mobileDropdownId === p._id ? dropdownRef : null}>
                     <button
                       onClick={e => { e.stopPropagation(); setMobileDropdownId(prev => prev === p._id ? null : p._id); }}
-                      className="min-h-[44px] min-w-[44px] flex items-center justify-center bg-white/5 border border-white/10 rounded-lg"
+                      className="min-h-11 min-w-11 flex items-center justify-center bg-white/5 border border-white/10 rounded-lg"
                     >
                       <Icon name="Ellipsis" size={18} />
                     </button>
@@ -168,7 +168,7 @@ export default function AllPostsPage() {
                     )}
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-white/50">
+                <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-3xs text-white/50">
                   <span>{p.author_username}</span>
                   <span>{p.category_slug}</span>
                   <span>{p.post_type}</span>
@@ -198,13 +198,13 @@ export default function AllPostsPage() {
                     {p.comments_locked && <span className="ml-1"><Icon name="Lock" size={12} /></span>}
                   </td>
                   <td className="p-1 text-white/60">{p.author_username}</td>
-                  <td className="p-1 text-[11px] text-white/40">{p.category_slug}</td>
-                  <td className="p-1 text-[11px] text-white/50">{p.post_type}</td>
+                  <td className="p-1 text-3xs text-white/40">{p.category_slug}</td>
+                  <td className="p-1 text-3xs text-white/50">{p.post_type}</td>
                   <td className="p-1">{statusBadge(p.status)}</td>
                   <td className="p-1 text-white/60">{p.fire_count || 0}</td>
                   <td className="p-1 text-white/60">{p.comment_count}</td>
                   <td className="p-1 text-white/60">{p.view_count}</td>
-                  <td className="p-1 text-[11px] text-white/40" suppressHydrationWarning>{p.published_at ? formatDate(p.published_at) : '\u2014'}</td>
+                  <td className="p-1 text-3xs text-white/40" suppressHydrationWarning>{p.published_at ? formatDate(p.published_at) : '\u2014'}</td>
                   <td className="p-1">
                     {p.deleted ? <button onClick={() => quickAction(p._id, 'restore')} className={btnSmClass}>Restore</button> : <>
                       <button onClick={() => router.push(`/admin/posts/pending/${p._id}`)} className={btnSmClass}>View</button>
@@ -223,9 +223,9 @@ export default function AllPostsPage() {
       )}
 
       <div className="flex gap-2 items-center justify-center sm:justify-start">
-        <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className={`px-3 py-1.5 rounded-lg border border-white/10 text-white text-sm min-h-[44px] ${page <= 1 ? 'opacity-40 cursor-not-allowed bg-white/5' : 'cursor-pointer bg-white/5 hover:bg-white/10'}`}>Prev</button>
-        <span className="text-white/60 text-[13px]">Page {page} of {pagination.pages}</span>
-        <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)} className={`px-3 py-1.5 rounded-lg border border-white/10 text-white text-sm min-h-[44px] ${page >= pagination.pages ? 'opacity-40 cursor-not-allowed bg-white/5' : 'cursor-pointer bg-white/5 hover:bg-white/10'}`}>Next</button>
+        <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className={`px-3 py-1.5 rounded-lg border border-white/10 text-white text-sm min-h-11 ${page <= 1 ? 'opacity-40 cursor-not-allowed bg-white/5' : 'cursor-pointer bg-white/5 hover:bg-white/10'}`}>Prev</button>
+        <span className="text-white/60 text-sm2">Page {page} of {pagination.pages}</span>
+        <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)} className={`px-3 py-1.5 rounded-lg border border-white/10 text-white text-sm min-h-11 ${page >= pagination.pages ? 'opacity-40 cursor-not-allowed bg-white/5' : 'cursor-pointer bg-white/5 hover:bg-white/10'}`}>Next</button>
       </div>
     </div>
   );

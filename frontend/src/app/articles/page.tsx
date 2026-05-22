@@ -79,7 +79,7 @@ export default function ArticlesPage() {
       )}
 
       {!loading && articles.length === 0 && (
-        <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-12 text-center backdrop-blur-xl">
+        <div className="rounded-2xl border border-white/5 bg-white/5 p-12 text-center backdrop-blur-xl">
           <Icon name="FileText" size={40} className="mx-auto mb-4 text-zinc-500" />
           <p className="text-zinc-500">No articles yet. Be the first to publish.</p>
         </div>
@@ -90,7 +90,7 @@ export default function ArticlesPage() {
           <Link
             key={article.id}
             href={`/articles/${article.slug}`}
-            className="block rounded-2xl border border-white/5 bg-white/[0.02] p-6 backdrop-blur-xl transition hover:border-white/10"
+            className="block rounded-2xl border border-white/5 bg-white/5 p-6 backdrop-blur-xl transition hover:border-white/10"
           >
             {article.cover_image && (
               <div className="relative mb-5 w-full overflow-hidden rounded-xl">
@@ -105,17 +105,17 @@ export default function ArticlesPage() {
             )}
 
             <div className="flex flex-wrap items-center gap-2 mb-3">
-              <span className="rounded-full border border-white/10 bg-white/[0.02] px-2.5 py-0.5 text-[11px] font-mono text-zinc-500">
+              <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-3xs font-mono text-zinc-500">
                 {article.reading_time} min read
               </span>
               {article.category_slug && (
-                <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-[11px] text-zinc-500">
+                <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-3xs text-zinc-500">
                   {article.category_slug}
                 </span>
               )}
               {article.fact_check_status && (
                 <span
-                  className={`rounded-full border px-2.5 py-0.5 text-[11px] font-mono ${factCheckStyles[article.fact_check_status] || factCheckStyles.unverified}`}
+                  className={`rounded-full border px-2.5 py-0.5 text-3xs font-mono ${factCheckStyles[article.fact_check_status] || factCheckStyles.unverified}`}
                 >
                   {factCheckLabels[article.fact_check_status] || 'Unverified'}
                 </span>
@@ -155,7 +155,7 @@ export default function ArticlesPage() {
           <button
             onClick={handleLoadMore}
             disabled={loadingMore}
-            className="rounded-xl border border-white/10 bg-white/[0.02] px-8 py-3 text-sm text-zinc-400 backdrop-blur-xl transition hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-xl border border-white/10 bg-white/5 px-8 py-3 text-sm text-zinc-400 backdrop-blur-xl transition hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loadingMore ? 'Loading...' : 'Load more articles'}
           </button>

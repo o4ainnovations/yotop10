@@ -9,7 +9,7 @@ export default function HeaderBells() {
   const isAdmin = pathname.startsWith('/admin');
 
   return (
-    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+    <div className="flex items-center gap-2">
       {!isAdmin && <NotificationBell />}
       {isAdmin && <AdminAlertBell />}
     </div>

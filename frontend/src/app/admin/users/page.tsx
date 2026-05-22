@@ -147,12 +147,12 @@ export default function AdminUsersPage() {
     }
   };
 
-  const filterSelectClass = 'bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none min-h-[36px]';
+  const filterSelectClass = 'bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none min-h-9';
 
   const tierBadge = (tier: string) => {
-    if (tier === 'scholar') return <span className="bg-green-500/15 text-green-400 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap">Scholar</span>;
-    if (tier === 'troll') return <span className="bg-red-500/15 text-red-400 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap">Troll</span>;
-    return <span className="bg-white/10 text-white/50 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap">Neutral</span>;
+    if (tier === 'scholar') return <span className="bg-green-500/15 text-green-400 rounded-full px-2 py-0.5 text-2xs font-semibold uppercase tracking-wider whitespace-nowrap">Scholar</span>;
+    if (tier === 'troll') return <span className="bg-red-500/15 text-red-400 rounded-full px-2 py-0.5 text-2xs font-semibold uppercase tracking-wider whitespace-nowrap">Troll</span>;
+    return <span className="bg-white/10 text-white/50 rounded-full px-2 py-0.5 text-2xs font-semibold uppercase tracking-wider whitespace-nowrap">Neutral</span>;
   };
 
   return (
@@ -161,7 +161,7 @@ export default function AdminUsersPage() {
         <h2 className="text-white text-lg font-bold">Users ({pagination.total})</h2>
         <button
           onClick={() => setModal('config')}
-          className="px-3 py-1.5 cursor-pointer bg-white/5 border border-white/10 rounded-lg text-white text-xs hover:bg-white/10 transition-colors flex items-center gap-1.5 min-h-[36px]"
+          className="px-3 py-1.5 cursor-pointer bg-white/5 border border-white/10 rounded-lg text-white text-xs hover:bg-white/10 transition-colors flex items-center gap-1.5 min-h-9"
         >
           <Icon name="Settings" size={13} />
           Global Config
@@ -172,7 +172,7 @@ export default function AdminUsersPage() {
         {Object.entries(stats).filter(([k]) => k !== 'total').map(([k, v]) => (
           <div
             key={k}
-            className="bg-white/[0.02] border border-white/5 rounded-2xl px-3 py-1.5 text-xs text-white/60 min-h-[36px] flex items-center"
+            className="bg-white/5 border border-white/5 rounded-2xl px-3 py-1.5 text-xs text-white/60 min-h-9 flex items-center"
           >
             <strong className="text-white mr-1">{k.replace(/_/g, ' ')}</strong>: {v}
           </div>
@@ -242,15 +242,15 @@ export default function AdminUsersPage() {
               return (
                 <div
                   key={u._id}
-                  className={`bg-white/[0.02] border rounded-2xl p-3 transition-colors ${u.restricted ? 'border-red-500/30' : 'border-white/5'}`}
+                  className={`bg-white/5 border rounded-2xl p-3 transition-colors ${u.restricted ? 'border-red-500/30' : 'border-white/5'}`}
                 >
                   <div className="flex items-center gap-2.5 mb-2.5">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 min-w-[36px] min-h-[36px]">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 min-w-[36px] min-h-9">
                       {initial}
                     </div>
                     <div className="min-w-0 flex-1">
                       <span className="text-white text-sm font-semibold block truncate">{u.display_name}</span>
-                      <span className="text-zinc-500 text-[11px] font-mono">{u.username}</span>
+                      <span className="text-zinc-500 text-3xs font-mono">{u.username}</span>
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       {u.restricted && <Icon name="TriangleAlert" size={14} color="#f87171" />}
@@ -258,7 +258,7 @@ export default function AdminUsersPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-white/50 mb-2.5">
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-3xs text-white/50 mb-2.5">
                     <span className="flex items-center gap-1.5">
                       <span className="text-white/80 font-semibold font-mono tabular-nums">{u.trust_score.toFixed(2)}</span>
                       {tierBadge(u.trust_tier)}
@@ -275,7 +275,7 @@ export default function AdminUsersPage() {
                   <div className="relative">
                     <button
                       onClick={(e) => toggleDropdown(u._id, e)}
-                      className="w-full flex items-center justify-between px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-xs min-h-[44px] hover:bg-white/10 transition-colors"
+                      className="w-full flex items-center justify-between px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-xs min-h-11 hover:bg-white/10 transition-colors"
                     >
                       <span>Actions</span>
                       <Icon name={isDropdownOpen ? 'ChevronUp' : 'ChevronDown'} size={14} />
@@ -284,19 +284,19 @@ export default function AdminUsersPage() {
                       <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-900 border border-white/10 rounded-xl overflow-hidden z-30 shadow-lg shadow-black/50">
                         <button
                           onClick={(e) => { e.stopPropagation(); handleMobileAction(u, 'trust'); }}
-                          className="w-full text-left px-3 py-2.5 text-xs text-white hover:bg-white/5 flex items-center gap-2 min-h-[44px] transition-colors"
+                          className="w-full text-left px-3 py-2.5 text-xs text-white hover:bg-white/5 flex items-center gap-2 min-h-11 transition-colors"
                         >
                           <Icon name="Shield" size={13} /> Edit Trust
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleMobileAction(u, 'rate'); }}
-                          className="w-full text-left px-3 py-2.5 text-xs text-white hover:bg-white/5 flex items-center gap-2 min-h-[44px] transition-colors"
+                          className="w-full text-left px-3 py-2.5 text-xs text-white hover:bg-white/5 flex items-center gap-2 min-h-11 transition-colors"
                         >
                           <Icon name="Gauge" size={13} /> Override Rate
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleMobileAction(u, 'restrict'); }}
-                          className="w-full text-left px-3 py-2.5 text-xs text-orange-400 hover:bg-white/5 flex items-center gap-2 min-h-[44px] transition-colors"
+                          className="w-full text-left px-3 py-2.5 text-xs text-orange-400 hover:bg-white/5 flex items-center gap-2 min-h-11 transition-colors"
                         >
                           <Icon name="TriangleAlert" size={13} /> Restrict
                         </button>
@@ -341,15 +341,15 @@ export default function AdminUsersPage() {
           <button
             disabled={page <= 1}
             onClick={() => setPage(p => p - 1)}
-            className={`px-3 py-1.5 rounded-lg border border-white/10 text-white text-sm min-h-[44px] min-w-[44px] ${page <= 1 ? 'opacity-40 bg-white/5' : 'cursor-pointer bg-white/5 hover:bg-white/10'}`}
+            className={`px-3 py-1.5 rounded-lg border border-white/10 text-white text-sm min-h-11 min-w-11 ${page <= 1 ? 'opacity-40 bg-white/5' : 'cursor-pointer bg-white/5 hover:bg-white/10'}`}
           >
             Prev
           </button>
-          <span className="text-white/60 text-[13px] whitespace-nowrap">Page {page} of {pagination.totalPages}</span>
+          <span className="text-white/60 text-sm2 whitespace-nowrap">Page {page} of {pagination.totalPages}</span>
           <button
             disabled={page >= pagination.totalPages}
             onClick={() => setPage(p => p + 1)}
-            className={`px-3 py-1.5 rounded-lg border border-white/10 text-white text-sm min-h-[44px] min-w-[44px] ${page >= pagination.totalPages ? 'opacity-40 bg-white/5' : 'cursor-pointer bg-white/5 hover:bg-white/10'}`}
+            className={`px-3 py-1.5 rounded-lg border border-white/10 text-white text-sm min-h-11 min-w-11 ${page >= pagination.totalPages ? 'opacity-40 bg-white/5' : 'cursor-pointer bg-white/5 hover:bg-white/10'}`}
           >
             Next
           </button>

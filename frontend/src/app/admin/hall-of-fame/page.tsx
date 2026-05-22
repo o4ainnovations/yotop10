@@ -90,9 +90,9 @@ export default function AdminHallOfFamePage() {
     } catch { toast.error('Failed to update note.'); }
   };
 
-  const btnSmClass = 'text-[11px] cursor-pointer px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-white min-h-[28px] min-w-[28px] flex items-center justify-center';
+  const btnSmClass = 'text-3xs cursor-pointer px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-white min-h-7 min-w-[28px] flex items-center justify-center';
   const btnDangerSm = `${btnSmClass} text-red-400`;
-  const tabClass = (mode: ViewMode) => `px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer min-h-[44px] flex items-center gap-1.5 ${
+  const tabClass = (mode: ViewMode) => `px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer min-h-11 flex items-center gap-1.5 ${
     viewMode === mode ? 'bg-white/10 text-white border border-white/20' : 'text-zinc-500 hover:text-white hover:bg-white/5 border border-transparent'
   }`;
 
@@ -115,7 +115,7 @@ export default function AdminHallOfFamePage() {
           {loading ? (
             <p className="text-zinc-500 text-sm">Loading...</p>
           ) : featured.length === 0 ? (
-            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-10 text-center">
+            <div className="bg-white/5 border border-white/5 rounded-2xl p-10 text-center">
               <Icon name="Star" size={40} className="text-zinc-600 mx-auto mb-3" />
               <p className="text-zinc-500">No featured posts yet.</p>
               <p className="text-zinc-600 text-sm">Switch to the Candidates tab to feature posts.</p>
@@ -128,11 +128,11 @@ export default function AdminHallOfFamePage() {
                   const post = entry.post;
                   const warning = entry.status_warning;
                   return (
-                    <div key={entry.id} className={`bg-white/[0.02] border rounded-2xl p-3.5 ${warning ? 'border-red-500/30' : 'border-white/5'}`}>
+                    <div key={entry.id} className={`bg-white/5 border rounded-2xl p-3.5 ${warning ? 'border-red-500/30' : 'border-white/5'}`}>
                       {warning && (
                         <div className="flex items-center gap-1.5 mb-2 bg-red-500/10 border border-red-500/20 rounded-lg px-2 py-1">
                           <Icon name="TriangleAlert" size={12} className="text-red-400" />
-                          <span className="text-red-400 text-[11px] font-medium">
+                          <span className="text-red-400 text-3xs font-medium">
                             {warning === 'deleted' ? 'Post deleted after featuring' : `Post status: ${warning}`}
                           </span>
                         </div>
@@ -147,7 +147,7 @@ export default function AdminHallOfFamePage() {
                           <span className="text-zinc-600 text-sm italic">Post unavailable</span>
                         )}
                       </div>
-                      <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-zinc-500 mb-2">
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 text-3xs text-zinc-500 mb-2">
                         {post ? (
                           <>
                             <span>{post.author_username}</span>
@@ -165,7 +165,7 @@ export default function AdminHallOfFamePage() {
                           <textarea
                             value={editNote}
                             onChange={e => setEditNote(e.target.value)}
-                            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-white text-xs min-h-[60px] resize-y outline-none"
+                            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-white text-xs min-h-15 resize-y outline-none"
                             placeholder="Editorial note..."
                           />
                           <div className="flex flex-col gap-1">
@@ -177,7 +177,7 @@ export default function AdminHallOfFamePage() {
                         <div className="flex items-start gap-1 mb-2">
                           <p
                             onClick={() => startEditNote(entry)}
-                            className={`flex-1 text-xs cursor-pointer min-h-[24px] leading-relaxed rounded px-1.5 py-0.5 border border-transparent hover:bg-white/5 hover:border-white/10 ${entry.editorial_note ? 'text-zinc-400 italic' : 'text-zinc-600'}`}
+                            className={`flex-1 text-xs cursor-pointer min-h-6 leading-relaxed rounded px-1.5 py-0.5 border border-transparent hover:bg-white/5 hover:border-white/10 ${entry.editorial_note ? 'text-zinc-400 italic' : 'text-zinc-600'}`}
                           >
                             {entry.editorial_note || 'Click to add editorial note...'}
                           </p>
@@ -233,12 +233,12 @@ export default function AdminHallOfFamePage() {
                       const post = entry.post;
                       const warning = entry.status_warning;
                       return (
-                        <tr key={entry.id} className={`border-b border-white/5 hover:bg-white/[0.02] ${warning ? 'bg-red-500/5' : ''}`}>
+                        <tr key={entry.id} className={`border-b border-white/5 hover:bg-white/5 ${warning ? 'bg-red-500/5' : ''}`}>
                           <td className="p-2 text-zinc-500 font-mono">{i + 1}</td>
                           <td className="p-2">
                             <div className="flex items-center gap-2">
                               {warning && (
-                                <span className="shrink-0 bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] px-1.5 py-0.5 rounded font-medium flex items-center gap-1">
+                                <span className="shrink-0 bg-red-500/10 border border-red-500/20 text-red-400 text-2xs px-1.5 py-0.5 rounded font-medium flex items-center gap-1">
                                   <Icon name="TriangleAlert" size={10} />
                                   {warning === 'deleted' ? 'Deleted' : warning}
                                 </span>
@@ -270,7 +270,7 @@ export default function AdminHallOfFamePage() {
                             ) : (
                               <p
                                 onClick={() => startEditNote(entry)}
-                                className={`text-xs cursor-pointer min-h-[20px] leading-relaxed rounded px-1 py-0.5 border border-transparent hover:bg-white/5 hover:border-white/10 ${entry.editorial_note ? 'text-zinc-400 italic' : 'text-zinc-600'}`}
+                                className={`text-xs cursor-pointer min-h-5 leading-relaxed rounded px-1 py-0.5 border border-transparent hover:bg-white/5 hover:border-white/10 ${entry.editorial_note ? 'text-zinc-400 italic' : 'text-zinc-600'}`}
                               >
                                 {entry.editorial_note || 'Click to add'}
                               </p>
@@ -327,7 +327,7 @@ export default function AdminHallOfFamePage() {
       {viewMode === 'candidates' && (
         <div className="space-y-3">
           {candidates.length === 0 ? (
-            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-10 text-center">
+            <div className="bg-white/5 border border-white/5 rounded-2xl p-10 text-center">
               <Icon name="Users" size={40} className="text-zinc-600 mx-auto mb-3" />
               <p className="text-zinc-500 font-medium">No candidates found.</p>
               <p className="text-zinc-600 text-sm max-w-md mx-auto">Posts need 10+ comments or 500+ views from last 90 days.</p>
@@ -337,14 +337,14 @@ export default function AdminHallOfFamePage() {
               {/* Mobile: single column cards */}
               <div className="lg:hidden flex flex-col gap-2">
                 {candidates.map(c => (
-                  <div key={c.id} className="bg-white/[0.02] border border-white/5 rounded-2xl p-3.5">
+                  <div key={c.id} className="bg-white/5 border border-white/5 rounded-2xl p-3.5">
                     <p className="text-white text-sm font-semibold mb-1">{c.title}</p>
-                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-zinc-500 mb-2">
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-3xs text-zinc-500 mb-2">
                       <span>{c.author_username}</span>
                       <span className="flex items-center gap-1"><Icon name="MessageCircle" size={12} /> {c.comment_count}</span>
                       <span className="flex items-center gap-1"><Icon name="Eye" size={14} /> {c.view_count}</span>
                     </div>
-                    <button onClick={() => handleFeature(c.id)} className="bg-gradient-to-r from-orange-500 to-pink-500 text-white text-xs px-3 py-1.5 rounded-lg font-medium hover:from-orange-600 hover:to-pink-600 transition-all min-h-[36px]">
+                    <button onClick={() => handleFeature(c.id)} className="bg-gradient-to-r from-orange-500 to-pink-500 text-white text-xs px-3 py-1.5 rounded-lg font-medium hover:from-orange-600 hover:to-pink-600 transition-all min-h-9">
                       Feature
                     </button>
                   </div>
@@ -354,14 +354,14 @@ export default function AdminHallOfFamePage() {
               {/* Desktop: grid, multiple columns */}
               <div className="hidden lg:grid lg:grid-cols-2 xl:grid-cols-3 gap-3">
                 {candidates.map(c => (
-                  <div key={c.id} className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex flex-col">
+                  <div key={c.id} className="bg-white/5 border border-white/5 rounded-2xl p-4 flex flex-col">
                     <p className="text-white font-medium text-sm mb-1 line-clamp-2">{c.title}</p>
                     <p className="text-zinc-500 text-xs mb-1">{c.author_username}</p>
-                    <div className="flex gap-3 text-[11px] text-zinc-500 mb-3">
+                    <div className="flex gap-3 text-3xs text-zinc-500 mb-3">
                       <span className="flex items-center gap-1"><Icon name="MessageCircle" size={12} /> {c.comment_count}</span>
                       <span className="flex items-center gap-1"><Icon name="Eye" size={14} /> {c.view_count}</span>
                     </div>
-                    <button onClick={() => handleFeature(c.id)} className="mt-auto bg-gradient-to-r from-orange-500 to-pink-500 text-white text-xs px-3 py-1.5 rounded-lg font-medium hover:from-orange-600 hover:to-pink-600 transition-all min-h-[36px]">
+                    <button onClick={() => handleFeature(c.id)} className="mt-auto bg-gradient-to-r from-orange-500 to-pink-500 text-white text-xs px-3 py-1.5 rounded-lg font-medium hover:from-orange-600 hover:to-pink-600 transition-all min-h-9">
                       Feature
                     </button>
                   </div>

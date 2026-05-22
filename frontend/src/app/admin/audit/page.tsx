@@ -55,7 +55,7 @@ export default function AdminAuditPage() {
         <select
           value={filterAction}
           onChange={(e) => { setFilterAction(e.target.value); setPage(1); }}
-          className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-xs outline-none focus:border-orange-500/50 min-h-[36px]"
+          className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-xs outline-none focus:border-orange-500/50 min-h-9"
         >
           <option value="" className="bg-zinc-900">All Actions</option>
           <option value="login_success" className="bg-zinc-900">Login Success</option>
@@ -66,7 +66,7 @@ export default function AdminAuditPage() {
         </select>
         <button
           onClick={() => window.open('/api/admin/audit-logs/export', '_blank')}
-          className="px-4 py-1.5 rounded-lg text-white text-xs font-semibold cursor-pointer bg-green-700 hover:bg-green-600 transition-colors min-h-[36px] flex items-center gap-1.5"
+          className="px-4 py-1.5 rounded-lg text-white text-xs font-semibold cursor-pointer bg-green-700 hover:bg-green-600 transition-colors min-h-9 flex items-center gap-1.5"
         >
           <Icon name="Download" size={13} /> Export CSV
         </button>
@@ -87,12 +87,12 @@ export default function AdminAuditPage() {
                 || '--';
               const stage = (log.metadata as Record<string, string>)?.stage || '';
               return (
-                <div key={log._id} className="bg-white/[0.02] border border-white/5 rounded-2xl p-3.5 space-y-2">
+                <div key={log._id} className="bg-white/5 border border-white/5 rounded-2xl p-3.5 space-y-2">
                   <div className="flex items-center justify-between gap-2">
-                    <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold border ${badge.className}`}>
+                    <span className={`inline-flex px-2 py-0.5 rounded text-2xs font-bold border ${badge.className}`}>
                       {badge.label}
                     </span>
-                    <span className="text-[11px] text-white/30 font-mono">{log.ip}</span>
+                    <span className="text-3xs text-white/30 font-mono">{log.ip}</span>
                   </div>
                   <div className="text-xs text-white/50" suppressHydrationWarning>
                     {formatDate(log.created_at)} {formatTime(log.created_at)}
@@ -101,13 +101,13 @@ export default function AdminAuditPage() {
                     {username}
                   </div>
                   {stage && (
-                    <div className="text-[11px] text-white/30">{stage}</div>
+                    <div className="text-3xs text-white/30">{stage}</div>
                   )}
                 </div>
               );
             })}
             {logs.length === 0 && !loading && (
-              <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-10 text-center">
+              <div className="bg-white/5 border border-white/5 rounded-2xl p-10 text-center">
                 <p className="text-white/40 text-sm">No audit logs found.</p>
               </div>
             )}
@@ -115,7 +115,7 @@ export default function AdminAuditPage() {
 
           {/* Desktop: table */}
           <div className="hidden lg:block overflow-x-auto">
-            <table className="w-full border-collapse text-[13px]">
+            <table className="w-full border-collapse text-sm2">
               <thead>
                 <tr className="border-b-2 border-white/10 text-left text-white/40">
                   <th className="p-2.5">Time</th>
@@ -132,7 +132,7 @@ export default function AdminAuditPage() {
                     <tr key={log._id} className="border-b border-white/5">
                       <td className="p-2.5 text-white/40 text-xs" suppressHydrationWarning>{formatDate(log.created_at)} {formatTime(log.created_at)}</td>
                       <td className="p-2.5">
-                        <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold border ${badge.className}`}>
+                        <span className={`inline-flex px-2 py-0.5 rounded text-2xs font-bold border ${badge.className}`}>
                           {badge.label}
                         </span>
                       </td>
@@ -140,7 +140,7 @@ export default function AdminAuditPage() {
                         {(log.metadata as Record<string, string>)?.username ||
                          (log.metadata as Record<string, string>)?.username_attempted || '--'}
                       </td>
-                      <td className="p-2.5 text-white/30 text-[12px] font-mono">{log.ip}</td>
+                      <td className="p-2.5 text-white/30 text-xs font-mono">{log.ip}</td>
                       <td className="p-2.5 text-white/30 text-xs">
                         {(log.metadata as Record<string, string>)?.stage || ''}
                       </td>
@@ -159,7 +159,7 @@ export default function AdminAuditPage() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className={`px-3 py-1.5 rounded-lg text-xs border cursor-pointer min-h-[36px] transition-colors ${
+            className={`px-3 py-1.5 rounded-lg text-xs border cursor-pointer min-h-9 transition-colors ${
               page === 1
                 ? 'bg-white/5 border-white/10 text-white/30 cursor-not-allowed'
                 : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
@@ -171,7 +171,7 @@ export default function AdminAuditPage() {
           <button
             onClick={() => setPage((p) => Math.min(pagination.pages, p + 1))}
             disabled={page >= pagination.pages}
-            className={`px-3 py-1.5 rounded-lg text-xs border cursor-pointer min-h-[36px] transition-colors ${
+            className={`px-3 py-1.5 rounded-lg text-xs border cursor-pointer min-h-9 transition-colors ${
               page >= pagination.pages
                 ? 'bg-white/5 border-white/10 text-white/30 cursor-not-allowed'
                 : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
@@ -182,7 +182,7 @@ export default function AdminAuditPage() {
         </div>
       )}
 
-      <p className="text-[11px] text-white/30 pt-2">Logs retained for 90 days. Read-only.</p>
+      <p className="text-3xs text-white/30 pt-2">Logs retained for 90 days. Read-only.</p>
     </div>
   );
 }

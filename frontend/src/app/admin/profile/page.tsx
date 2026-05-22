@@ -73,7 +73,7 @@ export default function AdminProfilePage() {
 
       <button
         onClick={handleLogout}
-        className="w-full px-4 py-2.5 rounded-lg text-sm font-semibold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer flex items-center justify-center gap-2 min-h-[44px]"
+        className="w-full px-4 py-2.5 rounded-lg text-sm font-semibold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer flex items-center justify-center gap-2 min-h-11"
       >
         <Icon name="LogOut" size={16} />
         Logout

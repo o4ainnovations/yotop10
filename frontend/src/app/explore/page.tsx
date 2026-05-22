@@ -112,7 +112,7 @@ export default function ExplorePage() {
             key={t.value}
             type="button"
             onClick={() => setTab(t.value)}
-            className={`relative px-4 py-2 text-sm font-medium transition-colors min-h-[44px] ${
+            className={`relative px-4 py-2 text-sm font-medium transition-colors min-h-11 ${
               tab === t.value
                 ? 'text-white'
                 : 'text-zinc-500 hover:text-zinc-300'
@@ -128,7 +128,7 @@ export default function ExplorePage() {
 
       {filteredPosts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.02] backdrop-blur-xl border border-white/5">
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 backdrop-blur-xl border border-white/5">
             <Icon name="Compass" size={24} className="text-zinc-600" />
           </div>
           <p className="text-zinc-500 text-sm">No trending content yet.</p>
@@ -142,13 +142,13 @@ export default function ExplorePage() {
                 href={`/${post.slug}`}
                 className="block group"
               >
-                <div className="bg-white/[0.02] backdrop-blur-xl border border-white/5 rounded-2xl p-4 transition hover:border-white/10">
+                <div className="bg-white/5 backdrop-blur-xl border border-white/5 rounded-2xl p-4 transition hover:border-white/10">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-mono text-orange-400 tabular-nums">
+                    <span className="text-2xs font-mono text-orange-400 tabular-nums">
                       Score: {post.explore_score ?? 0}
                     </span>
                     {post.category_slug && (
-                      <span className="text-[11px] text-zinc-500 font-mono uppercase">
+                      <span className="text-3xs text-zinc-500 font-mono uppercase">
                         {post.category_slug}
                       </span>
                     )}
@@ -162,7 +162,7 @@ export default function ExplorePage() {
                     <div className="mb-3 space-y-0.5">
                       {post.topItems.slice(0, 3).map((item) => (
                         <div key={item.rank} className="flex items-center gap-2">
-                          <span className="text-[10px] font-mono text-zinc-600 w-4 text-right tabular-nums">
+                          <span className="text-2xs font-mono text-zinc-600 w-4 text-right tabular-nums">
                             {item.rank}
                           </span>
                           <span className="text-sm text-zinc-400 truncate">

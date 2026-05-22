@@ -225,7 +225,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   return (
     <div className="mx-auto min-h-screen max-w-3xl bg-zinc-950 px-3 py-6 text-white sm:px-6 sm:py-10 sm:pb-16">
       {/* Profile Header Card */}
-      <div className="mb-6 rounded-2xl border border-white/5 bg-white/[0.02] p-5 sm:p-8">
+      <div className="mb-6 rounded-2xl border border-white/5 bg-white/5 p-5 sm:p-8">
         <div className="flex items-start gap-5">
           {/* Profile image */}
           <div className="shrink-0">
@@ -307,7 +307,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
 
       {/* Own Profile Actions */}
       {profile.is_own_profile && (
-        <div className="mb-6 rounded-2xl border border-white/5 bg-white/[0.02] p-5 sm:p-8">
+        <div className="mb-6 rounded-2xl border border-white/5 bg-white/5 p-5 sm:p-8">
           <div className="flex flex-wrap gap-2.5">
             <button
               onClick={() => setEditingName(true)}
@@ -324,7 +324,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
           </div>
 
           {editingName && (
-            <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.02] p-4">
+            <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4">
               {nameError && (
                 <div role="alert" className="mb-2.5 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
                   {nameError}
@@ -389,7 +389,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
             profile.posts.map((post) => (
               <div
                 key={post.id}
-                className="rounded-xl border border-white/5 bg-white/[0.02] p-5 transition-all duration-300 hover:border-orange-500/30 hover:bg-white/[0.04] sm:p-6"
+                className="rounded-xl border border-white/5 bg-white/5 p-5 transition-all duration-300 hover:border-orange-500/30 hover:bg-white/5 sm:p-6"
               >
                 <h3 className="mb-2.5 text-base font-semibold leading-snug sm:text-lg">
                   <Link
@@ -441,7 +441,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
             </p>
           ) : (
             profile.comments.map((comment) => (
-              <div key={comment.id} className="rounded-xl border border-white/5 bg-white/[0.02] p-5 sm:p-6">
+              <div key={comment.id} className="rounded-xl border border-white/5 bg-white/5 p-5 sm:p-6">
                 <p className="mb-2.5 text-sm leading-relaxed text-white sm:text-base">
                   {comment.content}
                 </p>
@@ -462,16 +462,16 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
 
       {/* Stats Tab */}
       {activeTab === 'stats' && profile.is_own_profile && rateLimitStatus && (
-        <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-6 sm:p-8">
+        <div className="rounded-2xl border border-white/5 bg-white/5 p-6 sm:p-8">
           <div className="flex flex-col gap-3.5">
-            <div className="flex items-center gap-3 rounded-xl bg-white/[0.02] p-4">
+            <div className="flex items-center gap-3 rounded-xl bg-white/5 p-4">
               <span className="text-sm text-zinc-400 sm:text-base">Trust Score:</span>
               <span className="text-xl font-bold text-white">
                 {rateLimitStatus.trust_score.toFixed(2)} / 2.0
               </span>
             </div>
 
-            <div className="flex items-center gap-3 rounded-xl bg-white/[0.02] p-4">
+            <div className="flex items-center gap-3 rounded-xl bg-white/5 p-4">
               <span className="text-sm text-zinc-400 sm:text-base">Tier:</span>
               <span className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-0.5 text-sm font-semibold capitalize text-white">
                 {rateLimitStatus.current_tier}

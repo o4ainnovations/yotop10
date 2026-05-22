@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import Link from 'next/link';
+import CtaButton from '@/components/CtaButton';
 import { apiFetch } from '@/lib/api';
 import { PostCarouselCard } from '@/components/PostCarouselCard';
 import { Icon } from '@/components/icons/Icon';
@@ -114,13 +114,10 @@ export function FeedClient({ initialPosts, initialHasMore, category }: FeedClien
         <p className="mb-6 text-sm text-zinc-600 max-w-xs">
           Be the first to rank your top 10. Share your picks and spark the debate.
         </p>
-        <Link
-          href="/submit"
-          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:shadow-xl hover:shadow-orange-500/40 active:scale-[0.98]"
-        >
+        <CtaButton href="/submit">
           <Icon name="Plus" size={16} />
           Submit a List
-        </Link>
+        </CtaButton>
       </div>
     );
   }
@@ -134,10 +131,10 @@ export function FeedClient({ initialPosts, initialHasMore, category }: FeedClien
             key={opt.value}
             type="button"
             onClick={() => setSort(opt.value)}
-            className={`text-[11px] font-mono px-3 py-1.5 rounded-full transition-colors min-h-[32px] ${
+            className={`text-3xs font-mono px-3 py-1.5 rounded-full transition-colors min-h-8 ${
               sort === opt.value
                 ? 'bg-orange-500/15 text-orange-400'
-                : 'text-zinc-600 hover:text-zinc-400 hover:bg-white/[0.03]'
+                : 'text-zinc-600 hover:text-zinc-400 hover:bg-white/5'
             }`}
           >
             {opt.label}

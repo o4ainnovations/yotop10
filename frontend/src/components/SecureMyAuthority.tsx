@@ -116,7 +116,7 @@ export function SecureMyAuthority() {
       </h3>
 
       {error && (
-        <div className="text-red-500 text-[13px] mb-3 bg-red-500/8 px-3 py-2.5 rounded-lg border border-red-500/20">
+        <div className="text-red-500 text-sm2 mb-3 bg-red-500/8 px-3 py-2.5 rounded-lg border border-red-500/20">
           {error}
         </div>
       )}
@@ -126,13 +126,13 @@ export function SecureMyAuthority() {
           <p className="text-sm text-white/60 mb-4 leading-relaxed">
             Your identity is currently tied to this browser. Generate a 12-word seed phrase to own your reputation permanently. You can use it to recover your account on any device.
           </p>
-          <p className="text-[13px] text-red-400 font-bold mb-4">
+          <p className="text-sm2 text-red-400 font-bold mb-4">
             This is your only key. We do not store it. If you lose it, your reputation is lost forever.
           </p>
           <button
             onClick={handleGenerate}
             disabled={generating}
-            className={`px-5 py-2.5 text-white border-none rounded-xl cursor-pointer text-sm font-bold min-h-[44px] ${generating ? 'bg-white/10 cursor-not-allowed' : 'bg-gradient-to-r from-orange-500 to-pink-500 cursor-pointer'}`}
+            className={`px-5 py-2.5 text-white border-none rounded-xl cursor-pointer text-sm font-bold min-h-11 ${generating ? 'bg-white/10 cursor-not-allowed' : 'bg-gradient-to-r from-orange-500 to-pink-500 cursor-pointer'}`}
           >
             {generating ? 'Generating...' : 'Generate Seed Phrase'}
           </button>
@@ -149,13 +149,13 @@ export function SecureMyAuthority() {
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={fetchDevices}
-              className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl cursor-pointer text-[13px] text-white min-h-[40px] hover:bg-white/10"
+              className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl cursor-pointer text-sm2 text-white min-h-10 hover:bg-white/10"
             >
               Manage Devices ({status.devices_linked})
             </button>
             <button
               onClick={() => window.location.href = '/claim'}
-              className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl cursor-pointer text-[13px] text-white min-h-[40px] hover:bg-white/10"
+              className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl cursor-pointer text-sm2 text-white min-h-10 hover:bg-white/10"
             >
               Claim on Another Device
             </button>
@@ -167,13 +167,13 @@ export function SecureMyAuthority() {
         <div className="mt-4 border-t border-white/10 pt-3.5">
           <h4 className="mt-0 mb-2.5 text-sm text-white font-bold">Linked Devices</h4>
           {devices.length === 0 ? (
-            <p className="text-[13px] text-white/40">No devices linked.</p>
+            <p className="text-sm2 text-white/40">No devices linked.</p>
           ) : (
             <div>
               {devices.map((d) => (
                 <div
                   key={d.device_fingerprint}
-                  className="flex justify-between items-center py-2.5 border-b border-white/5 text-[13px]"
+                  className="flex justify-between items-center py-2.5 border-b border-white/5 text-sm2"
                 >
                   <div>
                     <span className="font-mono text-xs text-white/60">
@@ -185,14 +185,14 @@ export function SecureMyAuthority() {
                       </span>
                     )}
                     <br />
-                    <span className="text-white/40 text-[11px]" suppressHydrationWarning>
+                    <span className="text-white/40 text-3xs" suppressHydrationWarning>
                       Linked {formatDate(d.linked_at)}
                     </span>
                   </div>
                   {!d.is_current && (
                     <button
                       onClick={() => handleUnlink(d.device_fingerprint)}
-                      className="px-3 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg cursor-pointer text-xs min-h-[32px] hover:bg-red-500/20"
+                      className="px-3 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg cursor-pointer text-xs min-h-8 hover:bg-red-500/20"
                     >
                       Unlink
                     </button>
@@ -203,7 +203,7 @@ export function SecureMyAuthority() {
           )}
           <button
             onClick={() => setShowDevices(false)}
-            className="mt-2.5 px-3 py-1.5 bg-transparent border-none text-orange-400 cursor-pointer text-[13px] hover:text-orange-300"
+            className="mt-2.5 px-3 py-1.5 bg-transparent border-none text-orange-400 cursor-pointer text-sm2 hover:text-orange-300"
           >
             Close
           </button>

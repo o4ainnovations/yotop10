@@ -28,7 +28,7 @@ export function PostCarouselCard({ post }: { post: Post }) {
   return (
     <Link
       href={`/${post.slug}`}
-      className="flex-shrink-0 w-[calc(76vw-12px)] scroll-snap-align-start rounded-2xl border border-white/5 bg-white/[0.02] backdrop-blur-sm overflow-hidden transition hover:border-white/10 focus:outline-none flex flex-col"
+      className="flex-shrink-0 w-[calc(76vw-12px)] scroll-snap-align-start rounded-2xl border border-white/5 bg-white/5 backdrop-blur-sm overflow-hidden transition hover:border-white/10 focus:outline-none flex flex-col"
     >
       {/* Section A: Title + Description */}
       <div className="px-4 pt-4 pb-3">
@@ -36,7 +36,7 @@ export function PostCarouselCard({ post }: { post: Post }) {
           {post.title}
         </h3>
         {post.intro && (
-          <p className="mt-1.5 text-[12px] text-zinc-500 leading-relaxed line-clamp-2">
+          <p className="mt-1.5 text-xs text-zinc-500 leading-relaxed line-clamp-2">
             {post.intro}
           </p>
         )}
@@ -47,14 +47,14 @@ export function PostCarouselCard({ post }: { post: Post }) {
         <div className="px-4 space-y-2 mb-2">
           {topItems.slice(0, 3).map((item) => (
             <div key={item.rank} className="flex items-center gap-3">
-              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-r from-orange-500 to-red-600 text-[11px] font-bold font-mono text-white shrink-0" style={{ color: '#fff' }}>
+              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-r from-orange-500 to-red-600 text-3xs font-bold font-mono text-white shrink-0" style={{ color: '#fff' }}>
                 #{item.rank}
               </span>
               <span className="text-sm text-zinc-300 truncate">{item.title}</span>
             </div>
           ))}
           {remaining > 0 && (
-            <p className="text-right text-[10px] text-zinc-600 mt-1 mb-1">
+            <p className="text-right text-2xs text-zinc-600 mt-1 mb-1">
               ... and {remaining} more items
             </p>
           )}
@@ -62,7 +62,7 @@ export function PostCarouselCard({ post }: { post: Post }) {
       )}
 
       {/* Section C: Media — Image or Category Fallback */}
-      <div className="mx-4 rounded-xl overflow-hidden h-44 bg-white/[0.03] flex items-center justify-center">
+      <div className="mx-4 rounded-xl overflow-hidden h-44 bg-white/5 flex items-center justify-center">
         {post.hero_image_url ? (
           <Image
             src={post.hero_image_url}
@@ -75,7 +75,7 @@ export function PostCarouselCard({ post }: { post: Post }) {
         ) : (
           <div className="flex flex-col items-center gap-2 text-zinc-700">
             <Icon name={getCategoryIcon(post.category_slug) as LucideIconName} size={36} />
-            <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-600">
+            <span className="text-2xs font-mono uppercase tracking-widest text-zinc-600">
               {post.category_slug}
             </span>
           </div>
@@ -83,7 +83,7 @@ export function PostCarouselCard({ post }: { post: Post }) {
       </div>
 
       {/* Section D: Author Byline — below media */}
-      <div className="px-4 pt-3 pb-1 flex items-center gap-1.5 text-[12px] text-zinc-500">
+      <div className="px-4 pt-3 pb-1 flex items-center gap-1.5 text-xs text-zinc-500">
         <span>By</span>
         <span className="font-mono text-zinc-400">@{displayName}</span>
         <Icon name="BadgeCheck" size={12} className="text-orange-400" />
@@ -93,11 +93,11 @@ export function PostCarouselCard({ post }: { post: Post }) {
 
       {/* Section E: Engagement Footer */}
       <div className="flex items-center justify-between px-4 py-3 mt-auto border-t border-white/5">
-        <span className="flex items-center gap-1.5 text-[11px] text-zinc-500">
+        <span className="flex items-center gap-1.5 text-3xs text-zinc-500">
           <Icon name="MessageCircle" size={13} />
           <span>{post.comment_count} comments</span>
         </span>
-        <span className="flex items-center gap-1.5 text-[11px] text-zinc-500">
+        <span className="flex items-center gap-1.5 text-3xs text-zinc-500">
           <span>{post.view_count} views</span>
         </span>
       </div>

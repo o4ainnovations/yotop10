@@ -95,7 +95,7 @@ export default function SavedPage() {
 
       {empty ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.02] backdrop-blur-xl border border-white/5">
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 backdrop-blur-xl border border-white/5">
             <Icon name="Bookmark" size={24} className="text-zinc-600" />
           </div>
           <h2 className="text-lg font-bold text-white mb-1">Save posts for later</h2>
@@ -114,20 +114,20 @@ export default function SavedPage() {
               return (
                 <div
                   key={`${post.id}-${post.saved_at}`}
-                  className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 transition hover:border-white/10"
+                  className="rounded-2xl border border-white/5 bg-white/5 p-4 transition hover:border-white/10"
                 >
                   <div className="mb-2 flex items-center gap-2">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/10 text-[10px] font-mono text-zinc-400">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/10 text-2xs font-mono text-zinc-400">
                       {authorInitial}
                     </span>
                     <Link
                       href={`/a/${post.author_username.replace(/^a_/, '')}`}
-                      className="text-[13px] font-mono text-zinc-400 hover:text-orange-400 transition-colors"
+                      className="text-sm2 font-mono text-zinc-400 hover:text-orange-400 transition-colors"
                     >
                       @{post.author_username}
                     </Link>
-                    <span className="text-[11px] text-zinc-600">&middot;</span>
-                    <span className="text-[11px] text-zinc-600 font-mono" suppressHydrationWarning>
+                    <span className="text-3xs text-zinc-600">&middot;</span>
+                    <span className="text-3xs text-zinc-600 font-mono" suppressHydrationWarning>
                       {relativeTime(post.saved_at)}
                     </span>
                   </div>
@@ -145,7 +145,7 @@ export default function SavedPage() {
                       <div className="mb-2 space-y-0.5">
                         {post.topItems.slice(0, 3).map((item) => (
                           <div key={item.rank} className="flex items-center gap-2">
-                            <span className="text-[10px] font-mono text-zinc-600 w-4 text-right tabular-nums">
+                            <span className="text-2xs font-mono text-zinc-600 w-4 text-right tabular-nums">
                               {item.rank}
                             </span>
                             <span className="text-sm text-zinc-400 truncate">
@@ -161,7 +161,7 @@ export default function SavedPage() {
                     )}
 
                     {post.category_slug && (
-                      <span className="inline-block text-[11px] text-zinc-500 font-mono uppercase mr-2">
+                      <span className="inline-block text-3xs text-zinc-500 font-mono uppercase mr-2">
                         {post.category_slug}
                       </span>
                     )}

@@ -54,13 +54,13 @@ export function RestrictUserModal({ user, onClose, onSave }: RestrictUserModalPr
           <p className="text-white font-mono text-sm">{user.username}</p>
         </div>
 
-        <div className="bg-white/[0.03] border border-white/10 rounded-xl p-3 mb-4">
+        <div className="bg-white/5 border border-white/10 rounded-xl p-3 mb-4">
           <span className="text-zinc-500 text-xs">Current Status:</span>
           <span className={`ml-2 text-sm font-semibold ${user.restricted ? 'text-red-400' : 'text-green-400'}`}>
             {user.restricted ? 'Restricted' : 'Active'}
           </span>
           {user.restricted && user.restricted_until && (
-            <p className="text-zinc-500 text-[11px] mt-1">
+            <p className="text-zinc-500 text-3xs mt-1">
               Until: <span className="text-white/70 font-mono">{new Date(user.restricted_until).toLocaleString()}</span>
             </p>
           )}

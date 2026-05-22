@@ -1,6 +1,7 @@
 import { PostCarouselCard } from '@/components/PostCarouselCard';
 import { ArgumentBar } from '@/components/ArgumentBar';
 import Link from 'next/link';
+import CtaButton from '@/components/CtaButton';
 import Image from 'next/image';
 import { Icon } from '@/components/icons/Icon';
 import { relativeTime } from '@/lib/dates';
@@ -84,13 +85,10 @@ export default async function Home() {
               <Icon name="FileText" size={24} className="text-zinc-600" />
             </div>
             <h3 className="mb-2 text-base font-semibold text-zinc-300">No ranked lists yet.</h3>
-            <Link
-              href="/submit"
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:shadow-xl hover:shadow-orange-500/40 active:scale-[0.98]"
-            >
+            <CtaButton href="/submit">
               <Icon name="Plus" size={16} />
               Submit a List
-            </Link>
+            </CtaButton>
           </div>
         ) : (
           <div className="flex flex-row overflow-x-auto overflow-y-hidden gap-3 pl-4 py-4 -webkit-overflow-scrolling-touch snap-x snap-mandatory scroll-smooth">
@@ -121,7 +119,7 @@ export default async function Home() {
             ))}
           </nav>
           <div className="mt-auto pt-8 border-t border-white/5">
-            <div className="text-[10px] font-mono text-zinc-600 space-y-1">
+            <div className="text-2xs font-mono text-zinc-600 space-y-1">
               <div>TOTAL FACT-MINES <span className="text-white/60 font-bold">{totalPosts}</span></div>
               <div>ACTIVE ARGUMENTS <span className="text-white/60 font-bold">{totalComments}</span></div>
             </div>
@@ -154,7 +152,7 @@ export default async function Home() {
                     <article className="glass-slab spatial-depth rounded-2xl p-6">
                       <div className="flex items-center justify-between mb-4">
                         <span className="wiki-badge">{generateSerial(post)}</span>
-                        <span className="text-[10px] font-mono text-zinc-600" suppressHydrationWarning>
+                        <span className="text-2xs font-mono text-zinc-600" suppressHydrationWarning>
                           {relativeTime(post.created_at)}
                         </span>
                       </div>
@@ -172,11 +170,11 @@ export default async function Home() {
                           <h3 className="text-xl font-display text-white mb-2">{post.title}</h3>
                           <div className="flex items-center gap-4 mb-3">
                             <span className="font-mono text-xs text-zinc-600">@{post.author_username}</span>
-                            <span className="flex items-center gap-1 font-mono text-[10px] text-zinc-600">
+                            <span className="flex items-center gap-1 font-mono text-2xs text-zinc-600">
                               <Icon name="Eye" size={11} />
                               {post.view_count}
                             </span>
-                            <span className="flex items-center gap-1 font-mono text-[10px] text-zinc-600">
+                            <span className="flex items-center gap-1 font-mono text-2xs text-zinc-600">
                               <Icon name="MessageCircle" size={11} />
                               {post.comment_count}
                             </span>
@@ -193,18 +191,18 @@ export default async function Home() {
               {stripLogic.length > 0 && (
                 <>
                   <div className="pt-2">
-                    <h2 className="text-[11px] font-mono tracking-widest text-zinc-600 uppercase">
+                    <h2 className="text-3xs font-mono tracking-widest text-zinc-600 uppercase">
                       Strip Logic
                     </h2>
                   </div>
                   {stripLogic.map((post) => (
                     <Link key={post.id} href={`/${post.slug}`} className="block">
                       <article className="glass-slab rounded-2xl py-2 px-4 overflow-hidden max-h-[40px] transition-all duration-500 ease-out hover:max-h-[150px] group/strip">
-                        <div className="flex items-center justify-between min-h-[24px]">
+                        <div className="flex items-center justify-between min-h-6">
                           <h3 className="font-bold text-white text-sm truncate mr-4">{post.title}</h3>
                           <div className="flex items-center gap-2 shrink-0">
                             <span className="wiki-badge">{post.category_slug}</span>
-                            <span className="text-[10px] font-mono text-zinc-600" suppressHydrationWarning>
+                            <span className="text-2xs font-mono text-zinc-600" suppressHydrationWarning>
                               {relativeTime(post.created_at)}
                             </span>
                           </div>

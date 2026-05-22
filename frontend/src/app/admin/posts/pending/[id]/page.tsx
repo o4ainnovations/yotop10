@@ -106,8 +106,8 @@ export default function AdminPendingPostPreviewPage() {
     }
   };
 
-  const btnPrimaryClass = 'inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 sm:py-3 text-sm font-bold text-white rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]';
-  const btnSecondaryClass = 'inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 sm:py-3 text-sm font-bold text-white rounded-xl bg-white/5 border border-white/10 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]';
+  const btnPrimaryClass = 'inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 sm:py-3 text-sm font-bold text-white rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed min-h-11';
+  const btnSecondaryClass = 'inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 sm:py-3 text-sm font-bold text-white rounded-xl bg-white/5 border border-white/10 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed min-h-11';
 
   if (loading) return <div className="p-5 text-white/40">Loading post...</div>;
   if (!postId) return <div className="p-5 text-white/40">Invalid post ID</div>;
@@ -119,14 +119,14 @@ export default function AdminPendingPostPreviewPage() {
         Back to pending posts
       </button>
 
-      <div className="text-[10px] font-mono text-zinc-600">
+      <div className="text-2xs font-mono text-zinc-600">
         DOUBLE-BLIND REVIEW — Decisions based on content, not author reputation
       </div>
 
       <div className="space-y-4 sm:space-y-6 mt-5">
         <div>
           <h1 className="text-white text-xl sm:text-2xl font-bold">{post.title}</h1>
-          <p className="text-white/50 text-[13px] mt-1">
+          <p className="text-white/50 text-sm2 mt-1">
             By {post.author_username} | {new Date(post.created_at).toLocaleString()} | {post.post_type}
           </p>
         </div>
@@ -150,7 +150,7 @@ export default function AdminPendingPostPreviewPage() {
           <button onClick={handleApprove} disabled={actionLoading} className={btnPrimaryClass}>
             <Icon name="Check" size={16} color="#fff" /> Approve Post
           </button>
-          <button onClick={() => setShowRetryModal(true)} disabled={actionLoading} className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 sm:py-3 text-sm font-bold text-white rounded-xl bg-orange-600 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] hover:bg-orange-500">
+          <button onClick={() => setShowRetryModal(true)} disabled={actionLoading} className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 sm:py-3 text-sm font-bold text-white rounded-xl bg-orange-600 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed min-h-11 hover:bg-orange-500">
             <Icon name="RefreshCw" size={16} color="#fff" /> Request Revision
           </button>
           <button onClick={() => setShowRejectModal(true)} disabled={actionLoading} className={btnSecondaryClass}>
@@ -163,20 +163,20 @@ export default function AdminPendingPostPreviewPage() {
           <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4" onClick={() => { setShowRetryModal(false); setRetryGuidance(''); }}>
             <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-xl" onClick={e => e.stopPropagation()}>
               <h3 className="text-white font-semibold mb-1">Request Revision</h3>
-              <p className="text-white/50 text-[13px] mb-3">Send guidance to the author. No trust score penalty.</p>
+              <p className="text-white/50 text-sm2 mb-3">Send guidance to the author. No trust score penalty.</p>
               <textarea
                 value={retryGuidance}
                 onChange={(e) => setRetryGuidance(e.target.value)}
                 placeholder="Enter guidance for the author (e.g., 'Add more detail to item #3' or 'Fix spelling in the intro')"
                 rows={5}
                 maxLength={2000}
-                className="w-full mb-2.5 px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-[13px] resize-y outline-none placeholder:text-white/30"
+                className="w-full mb-2.5 px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm2 resize-y outline-none placeholder:text-white/30"
               />
               <div className="flex gap-2.5 justify-between items-center">
                 <span className="text-xs text-white/30">{retryGuidance.length}/2000</span>
                 <div className="flex gap-2.5">
-                  <button onClick={() => { setShowRetryModal(false); setRetryGuidance(''); }} className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-[13px] cursor-pointer">Cancel</button>
-                  <button onClick={handleRetry} disabled={!retryGuidance.trim() || actionLoading} className={`px-5 py-2 text-white rounded-xl text-[13px] font-bold ${!retryGuidance.trim() || actionLoading ? 'bg-white/10 cursor-not-allowed' : 'bg-orange-600 cursor-pointer hover:bg-orange-500'}`}>
+                  <button onClick={() => { setShowRetryModal(false); setRetryGuidance(''); }} className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-sm2 cursor-pointer">Cancel</button>
+                  <button onClick={handleRetry} disabled={!retryGuidance.trim() || actionLoading} className={`px-5 py-2 text-white rounded-xl text-sm2 font-bold ${!retryGuidance.trim() || actionLoading ? 'bg-white/10 cursor-not-allowed' : 'bg-orange-600 cursor-pointer hover:bg-orange-500'}`}>
                     Send Guidance
                   </button>
                 </div>
@@ -195,11 +195,11 @@ export default function AdminPendingPostPreviewPage() {
                 onChange={(e) => setRejectionReason(e.target.value)}
                 placeholder="Enter rejection reason..."
                 rows={4}
-                className="w-full my-3 px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-[13px] resize-y outline-none placeholder:text-white/30"
+                className="w-full my-3 px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm2 resize-y outline-none placeholder:text-white/30"
               />
               <div className="flex gap-2.5 justify-end">
-                <button onClick={() => setShowRejectModal(false)} className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-[13px] cursor-pointer">Cancel</button>
-                <button onClick={handleReject} disabled={!rejectionReason.trim() || actionLoading} className={`px-5 py-2 text-white rounded-xl text-[13px] font-bold ${!rejectionReason.trim() || actionLoading ? 'bg-white/10 cursor-not-allowed' : 'bg-red-700 cursor-pointer hover:bg-red-600'}`}>
+                <button onClick={() => setShowRejectModal(false)} className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-sm2 cursor-pointer">Cancel</button>
+                <button onClick={handleReject} disabled={!rejectionReason.trim() || actionLoading} className={`px-5 py-2 text-white rounded-xl text-sm2 font-bold ${!rejectionReason.trim() || actionLoading ? 'bg-white/10 cursor-not-allowed' : 'bg-red-700 cursor-pointer hover:bg-red-600'}`}>
                   Confirm Reject
                 </button>
               </div>

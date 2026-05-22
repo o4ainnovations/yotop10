@@ -94,7 +94,7 @@ export default function AdminCommentsPage() {
   const flagBadge = (type: string) => {
     const map: Record<string, { label: string; icon: LucideIconName; colorClass: string }> = { spam_repetition: { label: 'Spam', icon: 'TriangleAlert', colorClass: 'bg-orange-600' }, spam_link_first: { label: 'Spam', icon: 'Link', colorClass: 'bg-orange-600' }, brigade_referrer: { label: 'Brigade', icon: 'BellDot', colorClass: 'bg-red-700' }, brigade_fresh: { label: 'Brigade', icon: 'BellDot', colorClass: 'bg-red-700' } };
     const m = map[type] || { label: '', icon: 'TriangleAlert' as LucideIconName, colorClass: 'bg-white/20' };
-    return <span className={`${m.colorClass} text-white rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider cursor-pointer`}><Icon name={m.icon} size={10} color="#fff" /> {m.label}</span>;
+    return <span className={`${m.colorClass} text-white rounded-full px-2.5 py-0.5 text-3xs font-semibold uppercase tracking-wider cursor-pointer`}><Icon name={m.icon} size={10} color="#fff" /> {m.label}</span>;
   };
 
   function getRecommended(comment: Comment): { minutes: number; trust_penalty: number } {
@@ -131,21 +131,21 @@ export default function AdminCommentsPage() {
     setPage(1);
   };
 
-  const filterSelectClass = 'bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none min-h-[44px] w-full sm:w-auto';
-  const btnSmClass = 'text-[11px] cursor-pointer px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-white';
-  const dropdownItemClass = 'w-full text-left px-4 py-2.5 text-[13px] text-white hover:bg-white/10 flex items-center gap-2 min-h-[44px]';
+  const filterSelectClass = 'bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none min-h-11 w-full sm:w-auto';
+  const btnSmClass = 'text-3xs cursor-pointer px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-white';
+  const dropdownItemClass = 'w-full text-left px-4 py-2.5 text-sm2 text-white hover:bg-white/10 flex items-center gap-2 min-h-11';
 
   return (
     <div className="space-y-3 sm:space-y-4 px-3 sm:px-6">
       <h2 className="text-white text-lg font-bold">All Comments ({pagination.total})</h2>
 
-      <div className="text-[10px] font-mono text-zinc-600">
+      <div className="text-2xs font-mono text-zinc-600">
         DOUBLE-BLIND REVIEW — Decisions based on content, not author reputation
       </div>
 
       <div className="flex gap-2 flex-wrap">
         {statCards.map(k => (
-          <div key={k} onClick={() => applyStatFilter(k)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/60 cursor-pointer hover:border-orange-500/30 min-h-[44px] flex items-center">
+          <div key={k} onClick={() => applyStatFilter(k)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/60 cursor-pointer hover:border-orange-500/30 min-h-11 flex items-center">
             <strong className="text-white mr-1">{k}</strong>: {stats[k] ?? 0}
           </div>
         ))}
@@ -165,13 +165,13 @@ export default function AdminCommentsPage() {
       </div>
 
       {selected.size > 0 && (
-        <div className="bg-white/[0.03] border border-white/10 rounded-lg px-3 py-2.5 flex flex-col sm:flex-row gap-2 items-start sm:items-center text-[13px]">
+        <div className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 flex flex-col sm:flex-row gap-2 items-start sm:items-center text-sm2">
           <strong className="text-white">{selected.size} selected</strong>
           <div className="flex gap-2 flex-wrap">
-            <button onClick={() => bulkAction('delete')} disabled={actionLoading} className={`${btnSmClass} min-h-[44px] sm:min-h-[28px]`}>Delete</button>
-            <button onClick={() => bulkAction('hide')} disabled={actionLoading} className={`${btnSmClass} min-h-[44px] sm:min-h-[28px]`}>Hide</button>
-            <button onClick={() => bulkAction('flag')} disabled={actionLoading} className={`${btnSmClass} min-h-[44px] sm:min-h-[28px]`}>Flag</button>
-            <button onClick={() => bulkAction('unflag')} disabled={actionLoading} className={`${btnSmClass} min-h-[44px] sm:min-h-[28px]`}>Unflag</button>
+            <button onClick={() => bulkAction('delete')} disabled={actionLoading} className={`${btnSmClass} min-h-11 sm:min-h-7`}>Delete</button>
+            <button onClick={() => bulkAction('hide')} disabled={actionLoading} className={`${btnSmClass} min-h-11 sm:min-h-7`}>Hide</button>
+            <button onClick={() => bulkAction('flag')} disabled={actionLoading} className={`${btnSmClass} min-h-11 sm:min-h-7`}>Flag</button>
+            <button onClick={() => bulkAction('unflag')} disabled={actionLoading} className={`${btnSmClass} min-h-11 sm:min-h-7`}>Unflag</button>
           </div>
         </div>
       )}
@@ -181,16 +181,16 @@ export default function AdminCommentsPage() {
           {/* Mobile card view */}
           <div className="sm:hidden flex flex-col gap-2">
             {comments.map(c => (
-              <div key={c._id} className={`bg-white/[0.02] border border-white/5 rounded-2xl p-3 ${c.deleted ? 'opacity-40' : ''} ${c.highlighted ? 'bg-orange-500/10' : ''} ${c.hidden ? 'bg-white/[0.02]' : ''}`}>
+              <div key={c._id} className={`bg-white/5 border border-white/5 rounded-2xl p-3 ${c.deleted ? 'opacity-40' : ''} ${c.highlighted ? 'bg-orange-500/10' : ''} ${c.hidden ? 'bg-white/5' : ''}`}>
                 <div className="flex items-center gap-2 mb-1">
-                  <input type="checkbox" checked={selected.has(c._id)} onChange={() => toggleSelect(c._id)} className="min-h-[44px] min-w-[44px]" />
-                  <span className="text-[10px] text-white/40 font-mono">{String(c._id).slice(-6)}</span>
+                  <input type="checkbox" checked={selected.has(c._id)} onChange={() => toggleSelect(c._id)} className="min-h-11 min-w-11" />
+                  <span className="text-2xs text-white/40 font-mono">{String(c._id).slice(-6)}</span>
                   <span className="text-white/60 text-sm font-semibold flex-1">{c.author_username}</span>
                   {/* Mobile dropdown trigger */}
                   <div className="relative" ref={mobileDropdownId === c._id ? dropdownRef : null}>
                     <button
                       onClick={e => { e.stopPropagation(); setMobileDropdownId(prev => prev === c._id ? null : c._id); }}
-                      className="min-h-[44px] min-w-[44px] flex items-center justify-center bg-white/5 border border-white/10 rounded-lg"
+                      className="min-h-11 min-w-11 flex items-center justify-center bg-white/5 border border-white/10 rounded-lg"
                     >
                       <Icon name="Ellipsis" size={18} />
                     </button>
@@ -222,14 +222,14 @@ export default function AdminCommentsPage() {
                     )}
                   </div>
                 </div>
-                <a href={`/${c.post_slug || '#'}`} target="_blank" className="text-orange-400 text-[11px] no-underline hover:text-orange-300 block truncate">
+                <a href={`/${c.post_slug || '#'}`} target="_blank" className="text-orange-400 text-3xs no-underline hover:text-orange-300 block truncate">
                   {(c.post_title || c.post_slug || '\u2014').substring(0, 30)}
                 </a>
                 <p className="text-white/60 text-xs my-1.5">
-                  {c.depth_badge ? <span className="bg-white/5 px-1 py-px rounded text-[10px] mr-1 text-white/40">{c.depth_badge}</span> : null}
+                  {c.depth_badge ? <span className="bg-white/5 px-1 py-px rounded text-2xs mr-1 text-white/40">{c.depth_badge}</span> : null}
                   {c.content?.substring(0, 80)}{(c.content?.length || 0) > 80 ? '...' : ''}
                 </p>
-                <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-white/50">
+                <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-3xs text-white/50">
                   <span>{c.is_item_anchored ? <><Icon name="Target" size={11} /> Item</> : <><Icon name="MessageCircle" size={11} /> Post</>}</span>
                   <span><Icon name="Flame" size={12} color="#e65100" /> {c.fire_count}</span>
                   <span><Icon name="MessageCircle" size={12} /> {c.reply_count}</span>
@@ -252,26 +252,26 @@ export default function AdminCommentsPage() {
                 <th className="p-2">Created</th><th className="p-2">Actions</th>
               </tr></thead>
               <tbody>
-                {comments.map(c => (<tr key={c._id} className={`border-b border-white/5 ${c.deleted ? 'opacity-40' : ''} ${c.highlighted ? 'bg-orange-500/10' : ''} ${c.hidden ? 'bg-white/[0.02]' : ''}`}>
+                {comments.map(c => (<tr key={c._id} className={`border-b border-white/5 ${c.deleted ? 'opacity-40' : ''} ${c.highlighted ? 'bg-orange-500/10' : ''} ${c.hidden ? 'bg-white/5' : ''}`}>
                   <td className="p-1.5"><input type="checkbox" checked={selected.has(c._id)} onChange={() => toggleSelect(c._id)} /></td>
-                  <td className="p-1.5 text-[10px] text-white/30 font-mono">{String(c._id).slice(-6)}</td>
-                  <td className="p-1.5 text-[11px]">
+                  <td className="p-1.5 text-2xs text-white/30 font-mono">{String(c._id).slice(-6)}</td>
+                  <td className="p-1.5 text-3xs">
                     <a href={`/${c.post_slug || '#'}`} target="_blank" className="text-orange-400 no-underline hover:text-orange-300" title={c.post_title || ''}>
                       {(c.post_title || c.post_slug || '\u2014').substring(0, 30)}
                     </a>
                   </td>
                   <td className="p-1.5">
-                    {c.depth_badge ? <span className="bg-white/5 px-1 py-px rounded text-[10px] mr-1 text-white/40">{c.depth_badge}</span> : null}
+                    {c.depth_badge ? <span className="bg-white/5 px-1 py-px rounded text-2xs mr-1 text-white/40">{c.depth_badge}</span> : null}
                     <a href={`/${c.post_slug || '#'}`} target="_blank" onClick={e => { if (!c.post_slug) e.preventDefault(); }} className="no-underline text-white/60 hover:text-white/80">
                       {c.content?.substring(0, 80)}{(c.content?.length || 0) > 80 ? '...' : ''}
                     </a>
                   </td>
                   <td className="p-1.5 text-white/60">{c.author_username}</td>
-                  <td className="p-1.5 text-[11px]">{c.is_item_anchored ? <><Icon name="Target" size={11} /> Item</> : <><Icon name="MessageCircle" size={11} /> Post</>} {c.flag_type && isAutoFlag(c.flag_type) && <span onClick={e => { e.stopPropagation(); dismissFlag(c._id); }} className="cursor-pointer">{flagBadge(c.flag_type)}</span>}{c.flag_type === 'manual' && <span>{flagBadge(c.flag_type)}</span>}</td>
+                  <td className="p-1.5 text-3xs">{c.is_item_anchored ? <><Icon name="Target" size={11} /> Item</> : <><Icon name="MessageCircle" size={11} /> Post</>} {c.flag_type && isAutoFlag(c.flag_type) && <span onClick={e => { e.stopPropagation(); dismissFlag(c._id); }} className="cursor-pointer">{flagBadge(c.flag_type)}</span>}{c.flag_type === 'manual' && <span>{flagBadge(c.flag_type)}</span>}</td>
                   <td className="p-1.5 text-white/60">{c.fire_count}</td>
                   <td className="p-1.5 text-white/60">{c.reply_count}</td>
-                  <td className="p-1.5 text-[11px] text-white/60">{Number(c.spark_score).toFixed(2)}</td>
-                  <td className="p-1.5 text-[11px] text-white/40" suppressHydrationWarning>{formatDate(c.created_at)}</td>
+                  <td className="p-1.5 text-3xs text-white/60">{Number(c.spark_score).toFixed(2)}</td>
+                  <td className="p-1.5 text-3xs text-white/40" suppressHydrationWarning>{formatDate(c.created_at)}</td>
                   <td className="p-1.5">
                     {c.deleted ? <><button onClick={() => quickAction(c._id, 'restore')} className={btnSmClass}>Restore</button><button onClick={() => { if (confirm('Permanently delete this comment?')) quickAction(c._id, 'remove'); }} className={`${btnSmClass} text-red-400`}>Rem</button></> : <>
                       <button onClick={() => quickAction(c._id, 'delete')} className={`${btnSmClass} text-red-400`}>Del</button>
@@ -288,9 +288,9 @@ export default function AdminCommentsPage() {
       )}
 
       <div className="flex gap-2 items-center justify-center sm:justify-start">
-        <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className={`px-3 py-1.5 rounded-lg border border-white/10 text-white text-sm min-h-[44px] ${page <= 1 ? 'opacity-40 cursor-not-allowed bg-white/5' : 'cursor-pointer bg-white/5 hover:bg-white/10'}`}>Prev</button>
-        <span className="text-white/60 text-[13px]">Page {page} of {pagination.pages}</span>
-        <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)} className={`px-3 py-1.5 rounded-lg border border-white/10 text-white text-sm min-h-[44px] ${page >= pagination.pages ? 'opacity-40 cursor-not-allowed bg-white/5' : 'cursor-pointer bg-white/5 hover:bg-white/10'}`}>Next</button>
+        <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className={`px-3 py-1.5 rounded-lg border border-white/10 text-white text-sm min-h-11 ${page <= 1 ? 'opacity-40 cursor-not-allowed bg-white/5' : 'cursor-pointer bg-white/5 hover:bg-white/10'}`}>Prev</button>
+        <span className="text-white/60 text-sm2">Page {page} of {pagination.pages}</span>
+        <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)} className={`px-3 py-1.5 rounded-lg border border-white/10 text-white text-sm min-h-11 ${page >= pagination.pages ? 'opacity-40 cursor-not-allowed bg-white/5' : 'cursor-pointer bg-white/5 hover:bg-white/10'}`}>Next</button>
       </div>
 
       {/* Flag Modal — full-screen on mobile */}
@@ -299,26 +299,26 @@ export default function AdminCommentsPage() {
           <div className="fixed inset-0 z-[200] flex sm:items-center sm:justify-center bg-black/40 p-0 sm:p-4" onClick={() => setFlagModal(null)}>
             <div className="bg-zinc-900 border border-white/10 sm:rounded-2xl p-6 w-full sm:max-w-md shadow-xl h-full sm:h-auto flex flex-col overflow-y-auto" onClick={e => e.stopPropagation()}>
               <h3 className="text-white font-semibold mb-3">Flag: {flagModal.comment.flag_type?.replace(/_/g, ' ')}</h3>
-              <div className="bg-white/[0.03] rounded-xl p-3 mb-3 text-xs text-white/60">
+              <div className="bg-white/5 rounded-xl p-3 mb-3 text-xs text-white/60">
                 <p className="mb-1"><strong className="text-white">Comment:</strong> &ldquo;{flagModal.comment.content?.substring(0, 100)}&rdquo;</p>
                 <p className="mb-1"><strong className="text-white">Author:</strong> {flagModal.comment.author_username}</p>
                 <p><strong className="text-white">Evidence:</strong> {JSON.stringify(ev)}</p>
               </div>
-              <p className="text-[13px] text-white/60 mb-3">Recommended: <strong className="text-white">{rec.minutes}min pause, {rec.trust_penalty} trust</strong></p>
+              <p className="text-sm2 text-white/60 mb-3">Recommended: <strong className="text-white">{rec.minutes}min pause, {rec.trust_penalty} trust</strong></p>
               <div className="flex flex-col sm:flex-row gap-2 mb-3">
-                <button onClick={() => applyPenalty(flagModal.comment._id, rec.minutes, rec.trust_penalty)} className="px-4 py-2.5 cursor-pointer bg-orange-600 text-white border-none rounded-xl text-[13px] font-bold hover:bg-orange-500 min-h-[44px]">Apply Recommended</button>
-                {isAutoFlag(flagModal.comment.flag_type) && <button onClick={() => dismissFlag(flagModal.comment._id)} className="px-4 py-2.5 cursor-pointer bg-white/5 border border-white/10 rounded-xl text-[13px] text-white min-h-[44px]">Dismiss Warning</button>}
+                <button onClick={() => applyPenalty(flagModal.comment._id, rec.minutes, rec.trust_penalty)} className="px-4 py-2.5 cursor-pointer bg-orange-600 text-white border-none rounded-xl text-sm2 font-bold hover:bg-orange-500 min-h-11">Apply Recommended</button>
+                {isAutoFlag(flagModal.comment.flag_type) && <button onClick={() => dismissFlag(flagModal.comment._id)} className="px-4 py-2.5 cursor-pointer bg-white/5 border border-white/10 rounded-xl text-sm2 text-white min-h-11">Dismiss Warning</button>}
               </div>
               <div className="border-t border-white/10 pt-3 mt-auto sm:mt-0">
                 <p className="text-xs font-bold mb-2 text-white">Custom:</p>
                 <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
                   <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <input value={customMin} onChange={e => setCustomMin(e.target.value)} placeholder={`${rec.minutes} min`} className="w-full sm:w-[70px] px-2 py-2 text-xs bg-white/5 border border-white/10 rounded-xl text-white outline-none min-h-[44px]" />
+                    <input value={customMin} onChange={e => setCustomMin(e.target.value)} placeholder={`${rec.minutes} min`} className="w-full sm:w-[70px] px-2 py-2 text-xs bg-white/5 border border-white/10 rounded-xl text-white outline-none min-h-11" />
                     <span className="text-white/40 text-xs">min</span>
-                    <input value={customTrust} onChange={e => setCustomTrust(e.target.value)} placeholder={`${rec.trust_penalty} trust`} className="w-full sm:w-[90px] px-2 py-2 text-xs bg-white/5 border border-white/10 rounded-xl text-white outline-none min-h-[44px]" />
+                    <input value={customTrust} onChange={e => setCustomTrust(e.target.value)} placeholder={`${rec.trust_penalty} trust`} className="w-full sm:w-[90px] px-2 py-2 text-xs bg-white/5 border border-white/10 rounded-xl text-white outline-none min-h-11" />
                     <span className="text-white/40 text-xs">trust</span>
                   </div>
-                  <button onClick={() => { const m = parseInt(customMin) || rec.minutes; const t = parseFloat(customTrust) || rec.trust_penalty; applyPenalty(flagModal.comment._id, m, t); }} className="px-4 py-2.5 cursor-pointer text-xs bg-white/5 border border-white/10 rounded-xl text-white min-h-[44px] w-full sm:w-auto">Apply</button>
+                  <button onClick={() => { const m = parseInt(customMin) || rec.minutes; const t = parseFloat(customTrust) || rec.trust_penalty; applyPenalty(flagModal.comment._id, m, t); }} className="px-4 py-2.5 cursor-pointer text-xs bg-white/5 border border-white/10 rounded-xl text-white min-h-11 w-full sm:w-auto">Apply</button>
                 </div>
               </div>
             </div>

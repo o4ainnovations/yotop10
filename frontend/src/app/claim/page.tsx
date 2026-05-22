@@ -88,14 +88,14 @@ export default function ClaimPage() {
         </div>
 
         {error && (
-          <div role="alert" className="mb-4 flex items-start gap-2 rounded-xl border border-orange-500/20 bg-orange-500/5 p-3 text-[13px] text-orange-400 sm:p-4">
+          <div role="alert" className="mb-4 flex items-start gap-2 rounded-xl border border-orange-500/20 bg-orange-500/5 p-3 text-sm2 text-orange-400 sm:p-4">
             <Icon name="TriangleAlert" size={16} className="mt-0.5 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {step === 'done' ? (
-          <div className="rounded-2xl border border-orange-500/30 bg-white/[0.02] p-6 text-center backdrop-blur-sm sm:p-8">
+          <div className="rounded-2xl border border-orange-500/30 bg-white/5 p-6 text-center backdrop-blur-sm sm:p-8">
             <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-500/10 sm:h-16 sm:w-16">
               <Icon name="Check" size={28} className="text-orange-400 sm:size-8" />
             </div>
@@ -127,7 +127,7 @@ export default function ClaimPage() {
             <div className="mb-4 grid grid-cols-4 gap-2">
               {words.map((word, i) => (
                 <div key={i}>
-                  <label className="mb-1 block text-[11px] font-semibold text-zinc-600">
+                  <label className="mb-1 block text-3xs font-semibold text-zinc-600">
                     {i + 1}
                   </label>
                   <input
@@ -191,7 +191,7 @@ export default function ClaimPage() {
               </button>
             </div>
 
-            <details className="text-[13px]">
+            <details className="text-sm2">
               <summary className="cursor-pointer font-medium text-zinc-400 transition hover:text-zinc-300">
                 Where do I find my seed phrase?
               </summary>

@@ -118,7 +118,7 @@ export default function SearchPage() {
   const allResults = [...(results?.posts || []).map(p => ({ ...p, _type: 'post' as const })), ...(results?.comments || []).map(c => ({ ...c, _type: 'comment' as const }))].sort((a, b) => b._score - a._score);
   const activeResults = activeTab === 'all' ? allResults : activeTab === 'posts' ? (results?.posts || []) : (results?.comments || []);
 
-  const selectClasses = "w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-[13px] text-white outline-none transition focus:border-orange-500/50";
+  const selectClasses = "w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm2 text-white outline-none transition focus:border-orange-500/50";
 
   return (
     <div className="min-h-screen bg-zinc-950 px-3 py-6 sm:px-6 sm:py-10">
@@ -163,7 +163,7 @@ export default function SearchPage() {
             >
               {suggestions.titles.length > 0 && (
                 <div>
-                  <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-600 sm:px-4">
+                  <div className="px-3 py-2 text-3xs font-semibold uppercase tracking-wider text-zinc-600 sm:px-4">
                     Posts
                   </div>
                   {suggestions.titles.map(t => (
@@ -178,7 +178,7 @@ export default function SearchPage() {
               )}
               {suggestions.categories.length > 0 && (
                 <div>
-                  <div className="border-t border-white/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-600 sm:px-4">
+                  <div className="border-t border-white/10 px-3 py-2 text-3xs font-semibold uppercase tracking-wider text-zinc-600 sm:px-4">
                     Categories
                   </div>
                   {suggestions.categories.map(c => (
@@ -224,28 +224,28 @@ export default function SearchPage() {
             </button>
 
             {filtersOpen && (
-              <div ref={filtersRef} className="mt-2 rounded-2xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur-sm">
+              <div ref={filtersRef} className="mt-2 rounded-2xl border border-white/5 bg-white/5 p-4 backdrop-blur-sm">
                 <div className="space-y-3">
                   <div>
-                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-zinc-600">Category</label>
+                    <label className="mb-1 block text-3xs font-semibold uppercase tracking-wider text-zinc-600">Category</label>
                     <select value={categorySlug} onChange={e => { setCategorySlug(e.target.value); setPage(1); }} className={selectClasses}>
                       <option value="">All</option>
                       {(results?.facets.categories || []).map(f => <option key={f.key} value={f.key}>{f.key} ({f.count})</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-zinc-600">Post Type</label>
+                    <label className="mb-1 block text-3xs font-semibold uppercase tracking-wider text-zinc-600">Post Type</label>
                     <select value={postType} onChange={e => { setPostType(e.target.value); setPage(1); }} className={selectClasses}>
                       <option value="">All</option>
                       {(results?.facets.post_types || []).map(f => <option key={f.key} value={f.key}>{f.key} ({f.count})</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-zinc-600">Author</label>
+                    <label className="mb-1 block text-3xs font-semibold uppercase tracking-wider text-zinc-600">Author</label>
                     <input value={author} onChange={e => { setAuthor(e.target.value); setPage(1); }} placeholder="username..." className={selectClasses} />
                   </div>
                   <div>
-                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-zinc-600">Sort</label>
+                    <label className="mb-1 block text-3xs font-semibold uppercase tracking-wider text-zinc-600">Sort</label>
                     <select value={sort} onChange={e => { setSort(e.target.value); setPage(1); }} className={selectClasses}>
                       <option value="_score">Relevance</option>
                       <option value="newest">Newest</option>
@@ -269,25 +269,25 @@ export default function SearchPage() {
             <h3 className="mb-3 text-sm font-semibold text-white">Filters</h3>
             <div className="space-y-3">
               <div>
-                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-zinc-600">Category</label>
+                <label className="mb-1 block text-3xs font-semibold uppercase tracking-wider text-zinc-600">Category</label>
                 <select value={categorySlug} onChange={e => { setCategorySlug(e.target.value); setPage(1); }} className={selectClasses}>
                   <option value="">All</option>
                   {(results?.facets.categories || []).map(f => <option key={f.key} value={f.key}>{f.key} ({f.count})</option>)}
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-zinc-600">Post Type</label>
+                <label className="mb-1 block text-3xs font-semibold uppercase tracking-wider text-zinc-600">Post Type</label>
                 <select value={postType} onChange={e => { setPostType(e.target.value); setPage(1); }} className={selectClasses}>
                   <option value="">All</option>
                   {(results?.facets.post_types || []).map(f => <option key={f.key} value={f.key}>{f.key} ({f.count})</option>)}
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-zinc-600">Author</label>
+                <label className="mb-1 block text-3xs font-semibold uppercase tracking-wider text-zinc-600">Author</label>
                 <input value={author} onChange={e => { setAuthor(e.target.value); setPage(1); }} placeholder="username..." className={selectClasses} />
               </div>
               <div>
-                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-zinc-600">Sort</label>
+                <label className="mb-1 block text-3xs font-semibold uppercase tracking-wider text-zinc-600">Sort</label>
                 <select value={sort} onChange={e => { setSort(e.target.value); setPage(1); }} className={selectClasses}>
                   <option value="_score">Relevance</option>
                   <option value="newest">Newest</option>
@@ -307,7 +307,7 @@ export default function SearchPage() {
           {/* Results */}
           <div className="min-w-0 flex-1">
             {results && (
-              <div className="mb-3 text-[13px] text-zinc-500">
+              <div className="mb-3 text-sm2 text-zinc-500">
                 Found{' '}
                 <strong className="text-white">{results.total.posts + results.total.comments}</strong>{' '}
                 results ({results.total.posts} posts, {results.total.comments} comments)
@@ -318,7 +318,7 @@ export default function SearchPage() {
               <div className="mb-4 flex border-b border-white/5">
                 <button
                   onClick={() => setActiveTab('all')}
-                  className={`px-3 py-2 text-[13px] font-semibold transition sm:px-4 ${
+                  className={`px-3 py-2 text-sm2 font-semibold transition sm:px-4 ${
                     activeTab === 'all'
                       ? 'border-b-2 border-orange-500 text-orange-400'
                       : 'border-b-2 border-transparent text-zinc-500 hover:text-zinc-300'
@@ -328,7 +328,7 @@ export default function SearchPage() {
                 </button>
                 <button
                   onClick={() => setActiveTab('posts')}
-                  className={`px-3 py-2 text-[13px] font-semibold transition sm:px-4 ${
+                  className={`px-3 py-2 text-sm2 font-semibold transition sm:px-4 ${
                     activeTab === 'posts'
                       ? 'border-b-2 border-orange-500 text-orange-400'
                       : 'border-b-2 border-transparent text-zinc-500 hover:text-zinc-300'
@@ -338,7 +338,7 @@ export default function SearchPage() {
                 </button>
                 <button
                   onClick={() => setActiveTab('comments')}
-                  className={`px-3 py-2 text-[13px] font-semibold transition sm:px-4 ${
+                  className={`px-3 py-2 text-sm2 font-semibold transition sm:px-4 ${
                     activeTab === 'comments'
                       ? 'border-b-2 border-orange-500 text-orange-400'
                       : 'border-b-2 border-transparent text-zinc-500 hover:text-zinc-300'
@@ -370,7 +370,7 @@ export default function SearchPage() {
                       dangerouslySetInnerHTML={{ __html: r.highlight?.title?.[0] || r.title }}
                     />
                     <div
-                      className="mb-2 text-[13px] leading-relaxed text-zinc-400 line-clamp-2"
+                      className="mb-2 text-sm2 leading-relaxed text-zinc-400 line-clamp-2"
                       dangerouslySetInnerHTML={{ __html: r.highlight?.intro?.[0] || (r.intro || '').substring(0, 200) }}
                     />
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-600">
@@ -421,7 +421,7 @@ export default function SearchPage() {
                 <button
                   disabled={page <= 1}
                   onClick={() => setPage(p => p - 1)}
-                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[13px] text-zinc-400 transition hover:border-white/20 disabled:opacity-30"
+                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm2 text-zinc-400 transition hover:border-white/20 disabled:opacity-30"
                 >
                   Prev
                 </button>
@@ -433,10 +433,10 @@ export default function SearchPage() {
                     <button
                       key={pn}
                       onClick={() => setPage(pn)}
-                      className={`rounded-lg px-3 py-2 text-[13px] font-medium transition ${
+                      className={`rounded-lg px-3 py-2 text-sm2 font-medium transition ${
                         pn === page
                           ? 'border border-orange-500/30 bg-orange-500/10 text-orange-400'
-                          : 'border border-white/5 bg-white/[0.02] text-zinc-500 hover:text-zinc-300'
+                          : 'border border-white/5 bg-white/5 text-zinc-500 hover:text-zinc-300'
                       }`}
                     >
                       {pn}
@@ -446,7 +446,7 @@ export default function SearchPage() {
                 <button
                   disabled={page >= results.pagination.pages}
                   onClick={() => setPage(p => p + 1)}
-                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[13px] text-zinc-400 transition hover:border-white/20 disabled:opacity-30"
+                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm2 text-zinc-400 transition hover:border-white/20 disabled:opacity-30"
                 >
                   Next
                 </button>

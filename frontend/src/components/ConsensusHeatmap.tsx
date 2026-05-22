@@ -13,7 +13,7 @@ const HEAT_CELLS: { color: string; opacity: string }[] = [
 export function ConsensusHeatmap() {
   return (
     <div className="rounded-xl glass-slab p-4">
-      <h3 className="text-[10px] font-mono tracking-widest text-zinc-600 mb-3">
+      <h3 className="text-2xs font-mono tracking-widest text-zinc-600 mb-3">
         CONSENSUS HEATMAP
       </h3>
       <div className="grid grid-cols-3 gap-1 mb-3">
@@ -27,11 +27,11 @@ export function ConsensusHeatmap() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-sm bg-orange-500/60" />
-          <span className="text-[10px] font-mono text-zinc-500">SUPPORT</span>
+          <span className="text-2xs font-mono text-zinc-500">SUPPORT</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-sm bg-red-500/60" />
-          <span className="text-[10px] font-mono text-zinc-500">DISPUTE</span>
+          <span className="text-2xs font-mono text-zinc-500">DISPUTE</span>
         </div>
       </div>
     </div>

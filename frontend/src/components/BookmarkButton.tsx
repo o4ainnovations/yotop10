@@ -47,7 +47,7 @@ export function BookmarkButton({ postId, initialBookmarked = false }: BookmarkBu
       type="button"
       onClick={toggle}
       disabled={pending}
-      className={`inline-flex items-center justify-center rounded-lg transition-all duration-200 min-w-[44px] min-h-[44px] ${
+      className={`inline-flex items-center justify-center rounded-lg transition-all duration-200 min-w-11 min-h-11 ${
         bookmarked
           ? 'text-orange-400 hover:text-orange-300'
           : 'text-zinc-500 hover:text-zinc-300'

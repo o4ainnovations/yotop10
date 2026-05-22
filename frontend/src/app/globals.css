@@ -12,15 +12,23 @@
   font-display: swap;
 }
 
-@theme inline {
+@theme {
   --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, monospace;
   --font-display: var(--font-display, sans-serif);
   --font-accent: var(--font-accent, cursive);
-}
-
-:root {
   --color-bg: #05050f;
+  --text-2xs: 10px;
+  --text-2xs--line-height: 1;
+  --text-3xs: 11px;
+  --text-3xs--line-height: 1.2;
+  --text-sm2: 13px;
+  --text-sm2--line-height: 1.25;
+  --text-base2: 15px;
+  --text-base2--line-height: 1.5;
+  --radius-card: 1rem;
+  --radius-button: 0.75rem;
+  --spacing-nav: 3.5rem;
 }
 
 html.light-mode {
@@ -143,7 +151,7 @@ html.light-mode .bg-white\/\[0\.04\] { background: rgba(0,0,0,0.04); }
 /* ═══ Wiki-Serial Badge ═══ */
 .wiki-badge {
   font-family: 'Geist Mono', monospace;
-  font-size: 10px;
+  font-size: var(--text-2xs);
   letter-spacing: 0.05em;
   color: rgba(255, 255, 255, 0.3);
   text-transform: uppercase;
@@ -162,5 +170,5 @@ html.light-mode .bg-white\/\[0\.04\] { background: rgba(0,0,0,0.04); }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
 /* ═══ Logo Font Fallbacks ═══ */
-.font-accent { font-family: var(--font-accent, cursive) !important; }
-.font-display { font-family: var(--font-display, sans-serif) !important; }
+.font-accent { font-family: var(--font-accent, cursive); }
+.font-display { font-family: var(--font-display, sans-serif); }

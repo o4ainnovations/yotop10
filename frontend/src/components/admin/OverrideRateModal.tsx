@@ -51,11 +51,11 @@ export function OverrideRateModal({ user, onClose, onSave }: OverrideRateModalPr
           <p className="text-white font-mono text-sm">{user.username}</p>
         </div>
 
-        <div className="bg-white/[0.03] border border-white/10 rounded-xl p-3 mb-4">
+        <div className="bg-white/5 border border-white/10 rounded-xl p-3 mb-4">
           <div className="flex items-center justify-between mb-1">
             <span className="text-zinc-500 text-xs">Current Effective Rate</span>
           </div>
-          <div className="flex gap-4 text-[13px]">
+          <div className="flex gap-4 text-sm2">
             <span className="text-white/70">Posts: <span className="text-white font-mono">{user.effective_rate_limit_posts}/h</span></span>
             <span className="text-white/70">Comments: <span className="text-white font-mono">{user.effective_rate_limit_comments}/h</span></span>
           </div>

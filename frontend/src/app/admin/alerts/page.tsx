@@ -66,7 +66,7 @@ function severityBadgeClass(severity: 'warning' | 'critical'): string {
 }
 
 function tabClass(active: boolean): string {
-  return `px-4 py-2.5 border-none bg-transparent cursor-pointer text-sm min-h-[44px] transition-colors ${
+  return `px-4 py-2.5 border-none bg-transparent cursor-pointer text-sm min-h-11 transition-colors ${
     active
       ? 'font-bold text-orange-400 border-b-2 border-orange-400'
       : 'text-white/40 border-b-2 border-transparent hover:text-white/60'
@@ -74,11 +74,11 @@ function tabClass(active: boolean): string {
 }
 
 function inputClass(): string {
-  return 'w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-white/30 outline-none focus:border-orange-500/50 min-h-[36px]';
+  return 'w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-white/30 outline-none focus:border-orange-500/50 min-h-9';
 }
 
 function selectClass(): string {
-  return 'w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm outline-none focus:border-orange-500/50 min-h-[36px]';
+  return 'w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm outline-none focus:border-orange-500/50 min-h-9';
 }
 
 export default function AdminAlertsPage() {
@@ -198,7 +198,7 @@ export default function AdminAlertsPage() {
             <span className="text-sm text-white/40">{thresholds.length} thresholds configured</span>
             <button
               onClick={() => setShowForm(!showForm)}
-              className={`px-4 py-1.5 rounded-lg text-white text-xs font-semibold cursor-pointer min-h-[36px] transition-colors ${
+              className={`px-4 py-1.5 rounded-lg text-white text-xs font-semibold cursor-pointer min-h-9 transition-colors ${
                 showForm ? 'bg-white/10 border border-white/20' : 'bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600'
               }`}
             >
@@ -207,7 +207,7 @@ export default function AdminAlertsPage() {
           </div>
 
           {showForm && (
-            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 mb-4">
+            <div className="bg-white/5 border border-white/5 rounded-2xl p-4 mb-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
                 <div>
                   <label className="block text-xs text-white/40 mb-1">Metric</label>
@@ -238,7 +238,7 @@ export default function AdminAlertsPage() {
                   <input type="number" value={form.cooldown_minutes} onChange={(e) => setForm({ ...form, cooldown_minutes: parseInt(e.target.value) || 5 })} className={inputClass()} />
                 </div>
                 <div className="flex items-end">
-                  <button onClick={handleCreate} className="px-5 py-1.5 rounded-lg text-white text-xs font-bold cursor-pointer bg-green-700 hover:bg-green-600 transition-colors min-h-[36px]">
+                  <button onClick={handleCreate} className="px-5 py-1.5 rounded-lg text-white text-xs font-bold cursor-pointer bg-green-700 hover:bg-green-600 transition-colors min-h-9">
                     Create
                   </button>
                 </div>
@@ -251,10 +251,10 @@ export default function AdminAlertsPage() {
             {thresholds.map((t) => {
               const active = activeAlerts.get(t.metric);
               return (
-                <div key={t._id} className="bg-white/[0.02] border border-white/5 rounded-2xl p-3.5 space-y-2.5">
+                <div key={t._id} className="bg-white/5 border border-white/5 rounded-2xl p-3.5 space-y-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-white font-bold text-sm">{METRIC_LABELS[t.metric] || t.metric}</span>
-                    <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase ${severityBadgeClass(t.severity)}`}>
+                    <span className={`inline-flex px-2 py-0.5 rounded text-2xs font-bold uppercase ${severityBadgeClass(t.severity)}`}>
                       {t.severity}
                     </span>
                   </div>
@@ -274,13 +274,13 @@ export default function AdminAlertsPage() {
                       <Icon name="Circle" size={14} color="#2e7d32" fill="#2e7d32" />
                     )}
                   </div>
-                  <div className="text-[11px] text-white/30" suppressHydrationWarning>
+                  <div className="text-3xs text-white/30" suppressHydrationWarning>
                     {t.last_triggered_at ? `Last: ${formatDate(t.last_triggered_at)} ${formatTime(t.last_triggered_at)}` : 'Never triggered'}
                   </div>
                   <div className="flex items-center gap-2 pt-1">
                     <button
                       onClick={() => handleToggle(t._id)}
-                      className="px-2.5 py-1 rounded-md text-[11px] bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer min-h-[32px] text-white/60 flex items-center gap-1"
+                      className="px-2.5 py-1 rounded-md text-3xs bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer min-h-8 text-white/60 flex items-center gap-1"
                     >
                       {t.enabled ? (
                         <><Icon name="Circle" size={11} color="#2e7d32" fill="#2e7d32" /> Enabled</>
@@ -290,7 +290,7 @@ export default function AdminAlertsPage() {
                     </button>
                     <button
                       onClick={() => handleDelete(t._id)}
-                      className="px-2.5 py-1 rounded-md text-[11px] text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer min-h-[32px]"
+                      className="px-2.5 py-1 rounded-md text-3xs text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer min-h-8"
                     >
                       Delete
                     </button>
@@ -299,7 +299,7 @@ export default function AdminAlertsPage() {
               );
             })}
             {thresholds.length === 0 && (
-              <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-10 text-center">
+              <div className="bg-white/5 border border-white/5 rounded-2xl p-10 text-center">
                 <p className="text-white/40 text-sm">No thresholds configured. Add one to start monitoring.</p>
               </div>
             )}
@@ -307,7 +307,7 @@ export default function AdminAlertsPage() {
 
           {/* Desktop: table */}
           <div className="hidden lg:block overflow-x-auto">
-            <table className="w-full border-collapse text-[13px]">
+            <table className="w-full border-collapse text-sm2">
               <thead>
                 <tr className="border-b-2 border-white/10 text-left text-white/40">
                   <th className="p-2.5">Metric</th>
@@ -330,7 +330,7 @@ export default function AdminAlertsPage() {
                         <code className="text-white/60">{t.operator} {t.threshold}</code>
                       </td>
                       <td className="p-2.5">
-                        <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase ${severityBadgeClass(t.severity)}`}>{t.severity}</span>
+                        <span className={`inline-flex px-2 py-0.5 rounded text-2xs font-bold uppercase ${severityBadgeClass(t.severity)}`}>{t.severity}</span>
                       </td>
                       <td className="p-2.5">
                         {!t.enabled ? (
@@ -345,15 +345,15 @@ export default function AdminAlertsPage() {
                       </td>
                       <td className="p-2.5 text-white/40">{t.cooldown_minutes}m</td>
                       <td className="p-2.5">
-                        <button onClick={() => handleToggle(t._id)} className="bg-transparent border-none cursor-pointer min-h-[32px] min-w-[32px]">
+                        <button onClick={() => handleToggle(t._id)} className="bg-transparent border-none cursor-pointer min-h-8 min-w-[32px]">
                           {t.enabled ? <Icon name="Circle" size={16} color="#2e7d32" fill="#2e7d32" /> : <Icon name="Circle" size={16} color="#999" />}
                         </button>
                       </td>
-                      <td className="p-2.5 text-white/30 text-[11px]">
+                      <td className="p-2.5 text-white/30 text-3xs">
                         <span suppressHydrationWarning>{t.last_triggered_at ? `${formatDate(t.last_triggered_at)} ${formatTime(t.last_triggered_at)}` : 'Never'}</span>
                       </td>
                       <td className="p-2.5 text-right">
-                        <button onClick={() => handleDelete(t._id)} className="bg-transparent border-none text-red-400 cursor-pointer text-xs hover:text-red-300 min-h-[32px]">Delete</button>
+                        <button onClick={() => handleDelete(t._id)} className="bg-transparent border-none text-red-400 cursor-pointer text-xs hover:text-red-300 min-h-8">Delete</button>
                       </td>
                     </tr>
                   );
@@ -373,14 +373,14 @@ export default function AdminAlertsPage() {
           <div className="flex justify-between items-center mb-3 gap-2 flex-wrap">
             <span className="text-sm text-white/40">{notifications.length} unread notifications</span>
             {notifications.length > 0 && (
-              <button onClick={handleMarkAllRead} className="px-4 py-1.5 rounded-lg text-white text-xs font-semibold cursor-pointer bg-orange-600 hover:bg-orange-500 transition-colors min-h-[36px]">
+              <button onClick={handleMarkAllRead} className="px-4 py-1.5 rounded-lg text-white text-xs font-semibold cursor-pointer bg-orange-600 hover:bg-orange-500 transition-colors min-h-9">
                 Mark All Read
               </button>
             )}
           </div>
 
           {notifications.length === 0 ? (
-            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-10 text-center">
+            <div className="bg-white/5 border border-white/5 rounded-2xl p-10 text-center">
               <p className="text-green-400/60 text-sm flex items-center justify-center gap-1.5">
                 <Icon name="Check" size={14} color="#2e7d32" /> No unread alert notifications
               </p>
@@ -388,18 +388,18 @@ export default function AdminAlertsPage() {
           ) : (
             <div className="space-y-2">
               {notifications.map((n) => (
-                <div key={n._id} className="bg-white/[0.02] border border-white/5 rounded-2xl p-3.5 flex justify-between items-start gap-3">
+                <div key={n._id} className="bg-white/5 border border-white/5 rounded-2xl p-3.5 flex justify-between items-start gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex gap-2 items-center mb-1 flex-wrap">
-                      <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase ${severityBadgeClass(n.severity)}`}>{n.severity}</span>
+                      <span className={`inline-flex px-2 py-0.5 rounded text-2xs font-bold uppercase ${severityBadgeClass(n.severity)}`}>{n.severity}</span>
                       <strong className="text-sm text-white">{METRIC_LABELS[n.alert_type] || n.alert_type}</strong>
                     </div>
                     <p className="text-xs text-white/50 mb-1">{n.message}</p>
-                    <span className="text-[11px] text-white/30" suppressHydrationWarning>{formatDate(n.created_at)} {formatTime(n.created_at)}</span>
+                    <span className="text-3xs text-white/30" suppressHydrationWarning>{formatDate(n.created_at)} {formatTime(n.created_at)}</span>
                   </div>
                   <button
                     onClick={() => handleDismiss(n._id)}
-                    className="px-3 py-1 rounded-md text-[11px] text-white/50 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer min-h-[32px] shrink-0"
+                    className="px-3 py-1 rounded-md text-3xs text-white/50 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer min-h-8 shrink-0"
                   >
                     Dismiss
                   </button>
@@ -416,12 +416,12 @@ export default function AdminAlertsPage() {
           <div className="mb-3 text-sm text-white/40 flex items-center gap-3 flex-wrap">
             <span>{historyTotal} total records &middot; Page {historyPage} of {Math.ceil(historyTotal / 20) || 1}</span>
             {historyPage > 1 && (
-              <button onClick={() => setHistoryPage((p) => p - 1)} className="px-2.5 py-1 rounded-md text-xs bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 cursor-pointer min-h-[32px]">
+              <button onClick={() => setHistoryPage((p) => p - 1)} className="px-2.5 py-1 rounded-md text-xs bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 cursor-pointer min-h-8">
                 Prev
               </button>
             )}
             {historyTotal > historyPage * 20 && (
-              <button onClick={() => setHistoryPage((p) => p + 1)} className="px-2.5 py-1 rounded-md text-xs bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 cursor-pointer min-h-[32px]">
+              <button onClick={() => setHistoryPage((p) => p + 1)} className="px-2.5 py-1 rounded-md text-xs bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 cursor-pointer min-h-8">
                 Next
               </button>
             )}
@@ -430,15 +430,15 @@ export default function AdminAlertsPage() {
           {/* Mobile: card stack */}
           <div className="lg:hidden space-y-2">
             {history.map((h) => (
-              <div key={h._id} className="bg-white/[0.02] border border-white/5 rounded-2xl p-3.5">
+              <div key={h._id} className="bg-white/5 border border-white/5 rounded-2xl p-3.5">
                 <div className="flex items-center gap-2 mb-1.5">
-                  <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase ${severityBadgeClass(h.severity)}`}>{h.severity}</span>
+                  <span className={`inline-flex px-2 py-0.5 rounded text-2xs font-bold uppercase ${severityBadgeClass(h.severity)}`}>{h.severity}</span>
                   <strong className="text-sm text-white">{METRIC_LABELS[h.metric] || h.metric}</strong>
                 </div>
                 <div className="text-xs text-white/40 mb-1">
                   {h.operator} {h.threshold} (got <code className="text-white/60">{h.value}</code>)
                 </div>
-                <div className="text-[11px] text-white/30 mb-2" suppressHydrationWarning>{formatDate(h.triggered_at)} {formatTime(h.triggered_at)}</div>
+                <div className="text-3xs text-white/30 mb-2" suppressHydrationWarning>{formatDate(h.triggered_at)} {formatTime(h.triggered_at)}</div>
                 <div className="text-xs">
                   {h.resolved_at ? (
                     <span className="text-green-400 flex items-center gap-1">
@@ -453,7 +453,7 @@ export default function AdminAlertsPage() {
               </div>
             ))}
             {history.length === 0 && (
-              <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-10 text-center">
+              <div className="bg-white/5 border border-white/5 rounded-2xl p-10 text-center">
                 <p className="text-white/40 text-sm">No alert history yet</p>
               </div>
             )}
@@ -461,7 +461,7 @@ export default function AdminAlertsPage() {
 
           {/* Desktop: table */}
           <div className="hidden lg:block overflow-x-auto">
-            <table className="w-full border-collapse text-[13px]">
+            <table className="w-full border-collapse text-sm2">
               <thead>
                 <tr className="border-b-2 border-white/10 text-left text-white/40">
                   <th className="p-2.5">Metric</th>
@@ -474,9 +474,9 @@ export default function AdminAlertsPage() {
                 {history.map((h) => (
                   <tr key={h._id} className="border-b border-white/5">
                     <td className="p-2.5">
-                      <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase mr-1.5 ${severityBadgeClass(h.severity)}`}>{h.severity}</span>
+                      <span className={`inline-flex px-2 py-0.5 rounded text-2xs font-bold uppercase mr-1.5 ${severityBadgeClass(h.severity)}`}>{h.severity}</span>
                       <strong className="text-white">{METRIC_LABELS[h.metric] || h.metric}</strong>
-                      <div className="text-[11px] text-white/30">{h.operator} {h.threshold} (got {h.value})</div>
+                      <div className="text-3xs text-white/30">{h.operator} {h.threshold} (got {h.value})</div>
                     </td>
                     <td className="p-2.5"><code className="text-white/60">{h.value}</code></td>
                     <td className="p-2.5 text-white/40" suppressHydrationWarning>{formatDate(h.triggered_at)} {formatTime(h.triggered_at)}</td>

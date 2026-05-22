@@ -75,7 +75,7 @@ export default function ArticleDetailClient() {
   if (!article) {
     return (
       <main className="mx-auto min-h-screen max-w-3xl px-4 py-20 sm:px-6">
-        <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-12 text-center backdrop-blur-xl">
+        <div className="rounded-2xl border border-white/5 bg-white/5 p-12 text-center backdrop-blur-xl">
           <p className="text-zinc-500">Article not found.</p>
         </div>
         <Link
@@ -123,7 +123,7 @@ export default function ArticleDetailClient() {
 
             {article.fact_check_status && (
               <span
-                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-mono ${factCheckStyles[article.fact_check_status] || factCheckStyles.unverified}`}
+                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-3xs font-mono ${factCheckStyles[article.fact_check_status] || factCheckStyles.unverified}`}
               >
                 <Icon
                   name={article.fact_check_status === 'verified' ? 'ShieldCheck' : article.fact_check_status === 'disputed' ? 'TriangleAlert' : 'Info'}
@@ -157,7 +157,7 @@ export default function ArticleDetailClient() {
         </div>
 
         {article.sources && article.sources.length > 0 && (
-          <section className="mt-12 rounded-2xl border border-white/5 bg-white/[0.02] p-6 backdrop-blur-xl">
+          <section className="mt-12 rounded-2xl border border-white/5 bg-white/5 p-6 backdrop-blur-xl">
             <h2 className="mb-4 font-display text-lg text-white">Sources</h2>
             <ul className="space-y-2">
               {article.sources.map((source, idx) => (
@@ -185,7 +185,7 @@ export default function ArticleDetailClient() {
                 <Link
                   key={idx}
                   href={`/${slug}`}
-                  className="flex-shrink-0 rounded-xl border border-white/5 bg-white/[0.02] px-4 py-3 text-sm text-zinc-400 backdrop-blur-xl transition hover:border-white/10 hover:text-white"
+                  className="flex-shrink-0 rounded-xl border border-white/5 bg-white/5 px-4 py-3 text-sm text-zinc-400 backdrop-blur-xl transition hover:border-white/10 hover:text-white"
                 >
                   {slug}
                 </Link>

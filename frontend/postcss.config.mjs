@@ -3,6 +3,7 @@ const config = {
     "@tailwindcss/postcss": {
       optimize: { minify: false },
     },
+    "autoprefixer": {},
   },
 };
 

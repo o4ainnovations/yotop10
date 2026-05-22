@@ -79,7 +79,7 @@ export default function NotificationsPage() {
             <div
               key={n._id}
               onClick={() => handleClick(n)}
-              className={`px-4 py-3.5 cursor-pointer border-b border-white/5 border-l-4 min-h-[44px] transition-colors ${isAdmin ? `${pc}` : n.read ? 'bg-transparent border-l-transparent' : 'bg-white/[0.02] border-l-transparent'}`}
+              className={`px-4 py-3.5 cursor-pointer border-b border-white/5 border-l-4 min-h-11 transition-colors ${isAdmin ? `${pc}` : n.read ? 'bg-transparent border-l-transparent' : 'bg-white/5 border-l-transparent'}`}
             >
               <div className="flex justify-between items-start">
                 <div className="flex-1">
@@ -89,7 +89,7 @@ export default function NotificationsPage() {
                       {isAdmin ? n.title : n.post_title || n.type}
                     </strong>
                     {isAdmin && n.priority && n.priority !== 'info' && (
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${pc} border`}>
+                      <span className={`rounded-full px-2 py-0.5 text-2xs font-bold uppercase tracking-wider ${pc} border`}>
                         {n.priority.toUpperCase()}
                       </span>
                     )}
@@ -97,10 +97,10 @@ export default function NotificationsPage() {
                       <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
                     )}
                   </div>
-                  <p className="text-[13px] text-white/60 leading-relaxed mt-0">
+                  <p className="text-sm2 text-white/60 leading-relaxed mt-0">
                     {isAdmin ? n.body?.substring(0, 200) : n.message}
                   </p>
-                  <div className="text-[11px] text-white/30 mt-1">
+                  <div className="text-3xs text-white/30 mt-1">
                     {new Date(n.created_at).toLocaleString()}
                     {isAdmin && (
                       <span className="ml-2">

@@ -102,12 +102,12 @@ export default function NotificationBell() {
     <div className="relative inline-block">
       <button
         onClick={handleBellClick}
-        className={`relative text-lg cursor-pointer px-3 py-1.5 rounded-lg border min-h-[40px] ${unreadCount > 0 ? 'bg-blue-500/10 border-blue-500/30' : 'bg-transparent border-white/10'}`}
+        className={`relative text-lg cursor-pointer px-3 py-1.5 rounded-lg border min-h-10 ${unreadCount > 0 ? 'bg-blue-500/10 border-blue-500/30' : 'bg-transparent border-white/10'}`}
         aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
       >
         <Icon name="Bell" size={20} color={unreadCount > 0 ? '#90caf9' : '#888'} strokeWidth={2.5} />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white rounded-full w-[18px] h-[18px] text-[11px] font-bold flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white rounded-full w-[18px] h-[18px] text-3xs font-bold flex items-center justify-center">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -125,7 +125,7 @@ export default function NotificationBell() {
               {notifications.length > 0 && (
                 <button
                   onClick={handleMarkAllRead}
-                  className="bg-transparent border-none text-orange-400 cursor-pointer text-[13px] font-medium"
+                  className="bg-transparent border-none text-orange-400 cursor-pointer text-sm2 font-medium"
                 >
                   Mark all as read
                 </button>
@@ -142,8 +142,8 @@ export default function NotificationBell() {
                   <div
                     key={n._id}
                     onClick={() => handleClick(n)}
-                    className={`px-4 py-2.5 cursor-pointer border-b border-white/5 border-l-[3px] text-[13px] leading-relaxed ${
-                      isAdmin ? pc : n.read ? 'bg-transparent border-l-transparent text-white/40' : 'bg-white/[0.02] border-l-transparent text-white'
+                    className={`px-4 py-2.5 cursor-pointer border-b border-white/5 border-l-[3px] text-sm2 leading-relaxed ${
+                      isAdmin ? pc : n.read ? 'bg-transparent border-l-transparent text-white/40' : 'bg-white/5 border-l-transparent text-white'
                     }`}
                   >
                     <div className="flex justify-between items-start">
@@ -151,16 +151,16 @@ export default function NotificationBell() {
                         <span className="mr-1.5"><Icon name={(TYPE_ICON[n.type] || 'Pin') as LucideIconName} size={14} /></span>
                         {isAdmin ? (
                           <>
-                            <strong className="text-[13px] text-white">{n.title}</strong>
+                            <strong className="text-sm2 text-white">{n.title}</strong>
                             {n.priority && n.priority !== 'info' && (
-                              <span className="ml-1.5 rounded-full px-1.5 py-px text-[10px] font-bold uppercase tracking-wider text-white bg-orange-500 border border-orange-500/30">
+                              <span className="ml-1.5 rounded-full px-1.5 py-px text-2xs font-bold uppercase tracking-wider text-white bg-orange-500 border border-orange-500/30">
                                 {n.priority.toUpperCase()}
                               </span>
                             )}
                             <div className="text-white/50 mt-1 text-xs">
                               {n.body?.substring(0, 100)}{(n.body?.length || 0) > 100 ? '...' : ''}
                             </div>
-                            <div className="text-[11px] text-white/30 mt-0.5">
+                            <div className="text-3xs text-white/30 mt-0.5">
                               From: {n.created_by} · {n.message_type === 'broadcast' ? <><Icon name="Megaphone" size={11} /> Broadcast</> : <><Icon name="User" size={11} /> Private</>}
                             </div>
                           </>
@@ -184,7 +184,7 @@ export default function NotificationBell() {
             )}
 
             <div className="px-4 py-2 border-t border-white/5 text-center">
-              <Link href="/notifications" className="text-[13px] text-orange-400 no-underline hover:text-orange-300" onClick={() => setOpen(false)}>
+              <Link href="/notifications" className="text-sm2 text-orange-400 no-underline hover:text-orange-300" onClick={() => setOpen(false)}>
                 See all notifications →
               </Link>
             </div>

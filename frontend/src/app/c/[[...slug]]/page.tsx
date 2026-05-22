@@ -75,15 +75,15 @@ export default function CategoryFeedPage() {
   return (
     <div className="min-h-screen bg-zinc-950">
       <div className="flex items-center gap-2 px-3 pt-6 sm:px-6">
-        <Link href="/" className="text-[13px] font-bold text-orange-400 transition hover:text-orange-300">
+        <Link href="/" className="text-sm2 font-bold text-orange-400 transition hover:text-orange-300">
           YOTOP10
         </Link>
-        <span className="text-[13px] text-zinc-600">/</span>
-        <Link href="/categories" className="text-[13px] text-zinc-500 transition hover:text-zinc-300">
+        <span className="text-sm2 text-zinc-600">/</span>
+        <Link href="/categories" className="text-sm2 text-zinc-500 transition hover:text-zinc-300">
           Categories
         </Link>
-        <span className="text-[13px] text-zinc-600">/</span>
-        <span className="text-[13px] font-bold text-orange-400">
+        <span className="text-sm2 text-zinc-600">/</span>
+        <span className="text-sm2 font-bold text-orange-400">
           {category.name}
         </span>
       </div>
@@ -110,7 +110,7 @@ export default function CategoryFeedPage() {
                 className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs capitalize text-zinc-400 transition hover:border-orange-500/30 hover:text-orange-400"
               >
                 {child.name}
-                <span className="text-[11px] text-zinc-600">({child.post_count})</span>
+                <span className="text-3xs text-zinc-600">({child.post_count})</span>
               </Link>
             ))}
           </div>
@@ -156,7 +156,7 @@ export default function CategoryFeedPage() {
       </main>
 
       <footer className="border-t border-white/5 px-4 py-6 text-center sm:px-6 sm:py-8">
-        <p className="text-[11px] text-zinc-600 sm:text-xs">
+        <p className="text-3xs text-zinc-600 sm:text-xs">
           <Link href="/" className="text-orange-400 transition hover:text-orange-300">Home</Link>
           <span className="mx-2">&middot;</span>
           <Link href="/categories" className="text-orange-400 transition hover:text-orange-300">All Categories</Link>

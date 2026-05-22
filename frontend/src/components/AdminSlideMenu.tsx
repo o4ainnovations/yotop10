@@ -75,7 +75,7 @@ export function AdminSlideMenu() {
               <div className="flex items-center gap-1.5">
                 <span className="text-base font-bold text-white truncate">{adminUsername}</span>
               </div>
-              <p className="text-[13px] text-orange-400 font-medium">Admin</p>
+              <p className="text-sm2 text-orange-400 font-medium">Admin</p>
             </div>
           </div>
           <button
@@ -100,7 +100,7 @@ export function AdminSlideMenu() {
                   router.push(item.href);
                   setOpen(false);
                 }}
-                className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition text-[15px] text-left ${
+                className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition text-base2 text-left ${
                   isActive
                     ? 'text-white bg-white/10 font-semibold'
                     : 'text-zinc-400 hover:text-white hover:bg-white/5'
@@ -119,7 +119,7 @@ export function AdminSlideMenu() {
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-6 py-3.5 text-[15px] text-red-400 hover:text-red-300 hover:bg-red-500/10 transition border-t border-white/10"
+            className="w-full flex items-center gap-3 px-6 py-3.5 text-base2 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition border-t border-white/10"
           >
             <Icon name="LogOut" size={20} />
             <span>Logout</span>

@@ -74,12 +74,12 @@ export function EditTrustModal({ user, onClose, onSave }: EditTrustModalProps) {
             onChange={e => setScore(parseFloat(e.target.value))}
             className="w-full h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gradient-to-r [&::-webkit-slider-thumb]:from-orange-500 [&::-webkit-slider-thumb]:to-red-600 [&::-webkit-slider-thumb]:cursor-pointer"
           />
-          <div className="flex justify-between text-[10px] text-zinc-600 mt-1">
+          <div className="flex justify-between text-2xs text-zinc-600 mt-1">
             <span>0.10</span><span>1.00</span><span>2.00</span>
           </div>
         </div>
 
-        <div className="bg-white/[0.03] border border-white/10 rounded-xl p-3 mb-4">
+        <div className="bg-white/5 border border-white/10 rounded-xl p-3 mb-4">
           <span className="text-xs text-zinc-500">Preview:</span>
           <span className={`ml-2 text-sm font-semibold ${tp.color}`}>
             This will make them a {tp.label}
@@ -96,7 +96,7 @@ export function EditTrustModal({ user, onClose, onSave }: EditTrustModalProps) {
             />
             <span className="text-white text-sm">Lock trust score</span>
           </label>
-          <p className="text-zinc-600 text-[11px] mt-1 ml-6">Prevents automated trust adjustments</p>
+          <p className="text-zinc-600 text-3xs mt-1 ml-6">Prevents automated trust adjustments</p>
         </div>
 
         <div className="mb-5">

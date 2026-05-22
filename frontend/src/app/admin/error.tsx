@@ -7,9 +7,9 @@ export default function ErrorPage({
   reset: () => void;
 }) {
   return (
-    <div style={{ maxWidth: '600px', margin: '100px auto', padding: '40px', textAlign: 'center' }}>
+    <div className="mx-auto my-[100px] max-w-[600px] p-10 text-center">
       <h1>Something went wrong</h1>
-      <p style={{ color: '#666', margin: '20px 0' }}>
+      <p className="text-zinc-500 my-5">
         An unexpected error occurred. Please try again.
       </p>
       <button

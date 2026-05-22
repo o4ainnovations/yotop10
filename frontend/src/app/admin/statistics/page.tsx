@@ -10,7 +10,7 @@ interface PanelState { loading: boolean; data: unknown; error?: string; open: bo
 function n(v: unknown): string { if (v === null || v === undefined) return 'N/A'; return String(v); }
 function arr(v: unknown): unknown[] { return Array.isArray(v) ? v : []; }
 
-const H3 = ({ children }: { children: React.ReactNode }) => <h3 className="mb-2 text-[15px] border-b border-white/10 pb-1.5 text-white">{children}</h3>;
+const H3 = ({ children }: { children: React.ReactNode }) => <h3 className="mb-2 text-base2 border-b border-white/10 pb-1.5 text-white">{children}</h3>;
 
 export default function StatisticsDashboard() {
   const [panels, setPanels] = useState<Record<string, PanelState>>({
@@ -95,8 +95,8 @@ export default function StatisticsDashboard() {
       else if (scope === 'moderation') hint = ` ▸ ${n(ov.pending)} pending`;
     }
     return (
-      <div className="bg-white/[0.02] border border-white/5 rounded-2xl mb-3 overflow-hidden">
-        <button onClick={() => toggle(scope)} className="w-full text-left px-4 py-3.5 bg-transparent border-none cursor-pointer text-[15px] font-bold flex justify-between items-center text-white min-h-[44px] hover:bg-white/[0.04] transition-colors">
+      <div className="bg-white/5 border border-white/5 rounded-2xl mb-3 overflow-hidden">
+        <button onClick={() => toggle(scope)} className="w-full text-left px-4 py-3.5 bg-transparent border-none cursor-pointer text-base2 font-bold flex justify-between items-center text-white min-h-11 hover:bg-white/5 transition-colors">
           <span className="truncate">{titleIcon && <><Icon name={titleIcon} size={16} color="var(--color-orange-400)" />{' '}</>}{title}{hint}</span>
           <span className="text-white/40 flex-shrink-0 ml-2">{p.open ? '\u25BE' : '\u25B8'}</span>
         </button>
@@ -106,13 +106,13 @@ export default function StatisticsDashboard() {
   };
 
   const statCard = (label: string, value: unknown) => (
-    <div className="bg-white/[0.03] border border-white/5 rounded-xl p-3 sm:p-4 text-center flex-1 min-w-[90px]">
+    <div className="bg-white/5 border border-white/5 rounded-xl p-3 sm:p-4 text-center flex-1 min-w-[90px]">
       <div className="text-2xl sm:text-3xl font-bold text-white tabular-nums">{String(value ?? '\u2014')}</div>
-      <div className="text-[11px] text-white/40 mt-1">{label}</div>
+      <div className="text-3xs text-white/40 mt-1">{label}</div>
     </div>
   );
 
-  const L = ({ children }: { children: React.ReactNode }) => <div className="mb-1 text-[13px] leading-relaxed text-white/60">{children}</div>;
+  const L = ({ children }: { children: React.ReactNode }) => <div className="mb-1 text-sm2 leading-relaxed text-white/60">{children}</div>;
 
   const overview = panels.overview.data as Record<string, unknown> | null;
   const op = overview?.posts as Record<string, number> | undefined;

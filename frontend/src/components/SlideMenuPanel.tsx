@@ -50,7 +50,7 @@ export function SlideMenuPanel() {
                 <span className="text-base font-bold text-white truncate">{displayName}</span>
                 <Icon name="BadgeCheck" size={15} className="text-orange-400 shrink-0" />
               </div>
-              <p className="text-[13px] text-zinc-500 font-mono">@{username}</p>
+              <p className="text-sm2 text-zinc-500 font-mono">@{username}</p>
             </div>
           </div>
         </div>
@@ -65,7 +65,7 @@ export function SlideMenuPanel() {
                 key={item.label}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition text-[15px] ${
+                className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition text-base2 ${
                   isActive
                     ? 'text-white bg-white/10 font-semibold'
                     : 'text-zinc-400 hover:text-white hover:bg-white/5'
@@ -74,7 +74,7 @@ export function SlideMenuPanel() {
                 <Icon name={item.icon} size={20} />
                 <span>{item.label}</span>
                 {item.badge && (
-                  <span className="ml-auto text-[10px] font-semibold uppercase text-orange-400 bg-orange-500/10 border border-orange-500/20 rounded-full px-2 py-0.5">
+                  <span className="ml-auto text-2xs font-semibold uppercase text-orange-400 bg-orange-500/10 border border-orange-500/20 rounded-full px-2 py-0.5">
                     {item.badge}
                   </span>
                 )}
@@ -87,7 +87,7 @@ export function SlideMenuPanel() {
           <div className="pt-8 pb-3">
             <hr className="border-white/5 mx-6" />
           </div>
-          <button className="w-full flex items-center justify-between px-6 py-3 text-[15px] text-zinc-400 hover:text-white hover:bg-white/5 transition">
+          <button className="w-full flex items-center justify-between px-6 py-3 text-base2 text-zinc-400 hover:text-white hover:bg-white/5 transition">
             <span>Settings &amp; Doc</span>
             <Icon name="ChevronDown" size={16} />
           </button>

@@ -439,7 +439,7 @@ export default function SubmitPage() {
           </h1>
           <p className="mb-4 text-base text-white sm:text-lg">Your list is now pending review by our admin team.</p>
 
-          <div className="my-6 rounded-xl bg-white/[0.02] p-5 text-left">
+          <div className="my-6 rounded-xl bg-white/5 p-5 text-left">
             <p className="text-white"><strong className="text-white">Title:</strong> {submitted.title}</p>
             <p className="text-white"><strong className="text-white">Status:</strong>{' '}
               <span className="inline-block rounded-lg bg-orange-500/10 px-2 py-0.5 text-sm text-orange-400">Pending Review</span>

@@ -110,7 +110,7 @@ export default function AdminModsPage() {
         </h2>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="px-3.5 py-1.5 cursor-pointer rounded-lg text-white text-xs font-semibold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all flex items-center gap-1.5 min-h-[36px]"
+          className="px-3.5 py-1.5 cursor-pointer rounded-lg text-white text-xs font-semibold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all flex items-center gap-1.5 min-h-9"
         >
           <Icon name="Plus" size={13} />
           Create Moderator
@@ -131,19 +131,19 @@ export default function AdminModsPage() {
             {mods.map((mod) => (
               <div
                 key={mod._id}
-                className="bg-white/[0.02] border border-white/5 rounded-2xl p-3.5 space-y-2.5"
+                className="bg-white/5 border border-white/5 rounded-2xl p-3.5 space-y-2.5"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-white font-semibold text-sm">
                     {mod.username}
                   </span>
                   <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${roleBadgeClasses(mod.role)}`}
+                    className={`inline-flex items-center px-2 py-0.5 rounded text-2xs font-semibold uppercase tracking-wide ${roleBadgeClasses(mod.role)}`}
                   >
                     {roleLabel(mod.role)}
                   </span>
                 </div>
-                <div className="flex items-center gap-3 text-[11px] text-white/40 flex-wrap">
+                <div className="flex items-center gap-3 text-3xs text-white/40 flex-wrap">
                   <span>
                     <span className="text-white/60">
                       {mod.permissions?.length || 0}
@@ -159,20 +159,20 @@ export default function AdminModsPage() {
                     {mod.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </div>
-                <div className="text-[10px] text-white/30">
+                <div className="text-2xs text-white/30">
                   Created {formatDate(mod.created_at)}
                 </div>
                 <div className="flex items-center gap-1.5 pt-1 flex-wrap">
                   <button
                     onClick={() => setEditMod(mod)}
-                    className="px-2.5 py-1 rounded-md text-[11px] text-white/70 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex items-center gap-1 cursor-pointer min-h-[32px]"
+                    className="px-2.5 py-1 rounded-md text-3xs text-white/70 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex items-center gap-1 cursor-pointer min-h-8"
                   >
                     <Icon name="Pencil" size={11} />
                     Edit
                   </button>
                   <button
                     onClick={() => handleToggleActive(mod)}
-                    className={`px-2.5 py-1 rounded-md text-[11px] flex items-center gap-1 cursor-pointer min-h-[32px] transition-colors ${
+                    className={`px-2.5 py-1 rounded-md text-3xs flex items-center gap-1 cursor-pointer min-h-8 transition-colors ${
                       mod.is_active
                         ? 'text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/20'
                         : 'text-green-400 bg-green-500/10 border border-green-500/20 hover:bg-green-500/20'
@@ -186,14 +186,14 @@ export default function AdminModsPage() {
                   </button>
                   <button
                     onClick={() => setResetPasswordMod(mod)}
-                    className="px-2.5 py-1 rounded-md text-[11px] text-white/70 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex items-center gap-1 cursor-pointer min-h-[32px]"
+                    className="px-2.5 py-1 rounded-md text-3xs text-white/70 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex items-center gap-1 cursor-pointer min-h-8"
                   >
                     <Icon name="Key" size={11} />
                     Reset
                   </button>
                   <button
                     onClick={() => setShowDeleteConfirm(mod._id)}
-                    className="px-2.5 py-1 rounded-md text-[11px] text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors flex items-center gap-1 cursor-pointer min-h-[32px]"
+                    className="px-2.5 py-1 rounded-md text-3xs text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors flex items-center gap-1 cursor-pointer min-h-8"
                   >
                     <Icon name="Trash2" size={11} />
                     Del
@@ -207,7 +207,7 @@ export default function AdminModsPage() {
           <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-white/10 text-left text-white/40 text-[11px] font-semibold uppercase tracking-wider">
+                <tr className="border-b border-white/10 text-left text-white/40 text-3xs font-semibold uppercase tracking-wider">
                   <th className="pb-2.5 pr-3 font-medium">Username</th>
                   <th className="pb-2.5 pr-3 font-medium">Role</th>
                   <th className="pb-2.5 pr-3 font-medium">Permissions</th>
@@ -220,14 +220,14 @@ export default function AdminModsPage() {
                 {mods.map((mod) => (
                   <tr
                     key={mod._id}
-                    className="border-b border-white/5 hover:bg-white/[0.03] transition-colors"
+                    className="border-b border-white/5 hover:bg-white/5 transition-colors"
                   >
                     <td className="py-3 pr-3 text-white font-medium">
                       {mod.username}
                     </td>
                     <td className="py-3 pr-3">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${roleBadgeClasses(mod.role)}`}
+                        className={`inline-flex items-center px-2 py-0.5 rounded text-2xs font-semibold uppercase tracking-wide ${roleBadgeClasses(mod.role)}`}
                       >
                         {roleLabel(mod.role)}
                       </span>
@@ -237,7 +237,7 @@ export default function AdminModsPage() {
                     </td>
                     <td className="py-3 pr-3">
                       <span
-                        className={`inline-flex items-center gap-1.5 text-[11px] ${mod.is_active ? 'text-green-400' : 'text-zinc-500'}`}
+                        className={`inline-flex items-center gap-1.5 text-3xs ${mod.is_active ? 'text-green-400' : 'text-zinc-500'}`}
                       >
                         <span
                           className={`w-1.5 h-1.5 rounded-full inline-block ${mod.is_active ? 'bg-green-400' : 'bg-zinc-500'}`}
@@ -245,21 +245,21 @@ export default function AdminModsPage() {
                         {mod.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td className="py-3 pr-3 text-white/40 text-[12px]">
+                    <td className="py-3 pr-3 text-white/40 text-xs">
                       {formatDate(mod.created_at)}
                     </td>
                     <td className="py-3">
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => setEditMod(mod)}
-                          className="px-2.5 py-1 rounded-md text-[10px] text-white/70 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex items-center gap-1 cursor-pointer min-h-[32px]"
+                          className="px-2.5 py-1 rounded-md text-2xs text-white/70 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex items-center gap-1 cursor-pointer min-h-8"
                         >
                           <Icon name="Pencil" size={11} />
                           Edit
                         </button>
                         <button
                           onClick={() => handleToggleActive(mod)}
-                          className={`px-2.5 py-1 rounded-md text-[10px] flex items-center gap-1 cursor-pointer min-h-[32px] transition-colors ${
+                          className={`px-2.5 py-1 rounded-md text-2xs flex items-center gap-1 cursor-pointer min-h-8 transition-colors ${
                             mod.is_active
                               ? 'text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/20'
                               : 'text-green-400 bg-green-500/10 border border-green-500/20 hover:bg-green-500/20'
@@ -273,14 +273,14 @@ export default function AdminModsPage() {
                         </button>
                         <button
                           onClick={() => setResetPasswordMod(mod)}
-                          className="px-2.5 py-1 rounded-md text-[10px] text-white/70 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex items-center gap-1 cursor-pointer min-h-[32px]"
+                          className="px-2.5 py-1 rounded-md text-2xs text-white/70 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex items-center gap-1 cursor-pointer min-h-8"
                         >
                           <Icon name="Key" size={11} />
                           Reset
                         </button>
                         <button
                           onClick={() => setShowDeleteConfirm(mod._id)}
-                          className="px-2.5 py-1 rounded-md text-[10px] text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors flex items-center gap-1 cursor-pointer min-h-[32px]"
+                          className="px-2.5 py-1 rounded-md text-2xs text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors flex items-center gap-1 cursor-pointer min-h-8"
                         >
                           <Icon name="Trash2" size={11} />
                           Del
@@ -350,13 +350,13 @@ export default function AdminModsPage() {
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setShowDeleteConfirm(null)}
-                className="px-3.5 py-1.5 rounded-lg text-xs text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer min-h-[44px]"
+                className="px-3.5 py-1.5 rounded-lg text-xs text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer min-h-11"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleDelete(showDeleteConfirm)}
-                className="px-3.5 py-1.5 rounded-lg text-xs text-white bg-red-500 hover:bg-red-600 transition-colors cursor-pointer min-h-[44px]"
+                className="px-3.5 py-1.5 rounded-lg text-xs text-white bg-red-500 hover:bg-red-600 transition-colors cursor-pointer min-h-11"
               >
                 Remove
               </button>
@@ -496,7 +496,7 @@ function CreateModModal({
   };
 
   const inputClass =
-    'w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-white/30 outline-none focus:border-orange-500/50 transition-colors min-h-[36px]';
+    'w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-white/30 outline-none focus:border-orange-500/50 transition-colors min-h-9';
 
   return (
     <ModalShell onClose={onClose} title="Create Moderator">
@@ -508,7 +508,7 @@ function CreateModModal({
 
       <div className="space-y-3">
         <div>
-          <label className="block text-white/60 text-[11px] font-semibold mb-1">
+          <label className="block text-white/60 text-3xs font-semibold mb-1">
             Username
           </label>
           <input
@@ -519,7 +519,7 @@ function CreateModModal({
           />
         </div>
         <div>
-          <label className="block text-white/60 text-[11px] font-semibold mb-1">
+          <label className="block text-white/60 text-3xs font-semibold mb-1">
             Password
           </label>
           <input
@@ -533,7 +533,7 @@ function CreateModModal({
       </div>
 
       <div>
-        <label className="block text-white/60 text-[11px] font-semibold mb-1.5">
+        <label className="block text-white/60 text-3xs font-semibold mb-1.5">
           Preset
         </label>
         <select
@@ -551,13 +551,13 @@ function CreateModModal({
       </div>
 
       <div>
-        <label className="block text-white/60 text-[11px] font-semibold mb-1.5">
+        <label className="block text-white/60 text-3xs font-semibold mb-1.5">
           Permissions ({selectedPerms.length} selected)
         </label>
         <div className="border border-white/10 rounded-lg divide-y divide-white/5 max-h-48 overflow-y-auto">
           {Object.entries(groupedPerms).map(([cat, perms]) => (
             <div key={cat} className="px-3 py-1.5">
-              <div className="text-[10px] text-white/40 uppercase tracking-wider mb-1">
+              <div className="text-2xs text-white/40 uppercase tracking-wider mb-1">
                 {cat}
               </div>
               <div className="flex flex-wrap gap-1">
@@ -568,7 +568,7 @@ function CreateModModal({
                       key={perm}
                       type="button"
                       onClick={() => togglePerm(perm)}
-                      className={`px-1.5 py-0.5 rounded text-[10px] cursor-pointer transition-colors ${
+                      className={`px-1.5 py-0.5 rounded text-2xs cursor-pointer transition-colors ${
                         isSelected
                           ? 'bg-orange-500/20 text-orange-300 border border-orange-500/30'
                           : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10'
@@ -587,14 +587,14 @@ function CreateModModal({
       <div className="flex justify-end gap-2 pt-2">
         <button
           onClick={onClose}
-          className="px-3.5 py-1.5 rounded-lg text-xs text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer min-h-[44px]"
+          className="px-3.5 py-1.5 rounded-lg text-xs text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer min-h-11"
         >
           Cancel
         </button>
         <button
           onClick={handleSubmit}
           disabled={submitting}
-          className="px-3.5 py-1.5 rounded-lg text-xs text-white font-semibold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all cursor-pointer disabled:opacity-50 min-h-[44px]"
+          className="px-3.5 py-1.5 rounded-lg text-xs text-white font-semibold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all cursor-pointer disabled:opacity-50 min-h-11"
         >
           {submitting ? 'Creating...' : 'Create'}
         </button>
@@ -681,13 +681,13 @@ function EditModModal({
       )}
 
       <div>
-        <label className="block text-white/60 text-[11px] font-semibold mb-1.5">
+        <label className="block text-white/60 text-3xs font-semibold mb-1.5">
           Permissions ({selectedPerms.length} selected)
         </label>
         <div className="border border-white/10 rounded-lg divide-y divide-white/5 max-h-48 overflow-y-auto">
           {Object.entries(groupedPerms).map(([cat, perms]) => (
             <div key={cat} className="px-3 py-1.5">
-              <div className="text-[10px] text-white/40 uppercase tracking-wider mb-1">
+              <div className="text-2xs text-white/40 uppercase tracking-wider mb-1">
                 {cat}
               </div>
               <div className="flex flex-wrap gap-1">
@@ -698,7 +698,7 @@ function EditModModal({
                       key={perm}
                       type="button"
                       onClick={() => togglePerm(perm)}
-                      className={`px-1.5 py-0.5 rounded text-[10px] cursor-pointer transition-colors ${
+                      className={`px-1.5 py-0.5 rounded text-2xs cursor-pointer transition-colors ${
                         isSelected
                           ? 'bg-orange-500/20 text-orange-300 border border-orange-500/30'
                           : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10'
@@ -717,14 +717,14 @@ function EditModModal({
       <div className="flex justify-end gap-2 pt-2">
         <button
           onClick={onClose}
-          className="px-3.5 py-1.5 rounded-lg text-xs text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer min-h-[44px]"
+          className="px-3.5 py-1.5 rounded-lg text-xs text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer min-h-11"
         >
           Cancel
         </button>
         <button
           onClick={handleSubmit}
           disabled={submitting}
-          className="px-3.5 py-1.5 rounded-lg text-xs text-white font-semibold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all cursor-pointer disabled:opacity-50 min-h-[44px]"
+          className="px-3.5 py-1.5 rounded-lg text-xs text-white font-semibold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all cursor-pointer disabled:opacity-50 min-h-11"
         >
           {submitting ? 'Saving...' : 'Save'}
         </button>
@@ -747,7 +747,7 @@ function ResetPasswordModal({
   const [error, setError] = useState('');
 
   const inputClass =
-    'w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-white/30 outline-none focus:border-orange-500/50 transition-colors min-h-[36px]';
+    'w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-white/30 outline-none focus:border-orange-500/50 transition-colors min-h-9';
 
   const handleSubmit = async () => {
     if (password.length < 8) {
@@ -780,7 +780,7 @@ function ResetPasswordModal({
       )}
 
       <div>
-        <label className="block text-white/60 text-[11px] font-semibold mb-1">
+        <label className="block text-white/60 text-3xs font-semibold mb-1">
           New Password
         </label>
         <input
@@ -795,14 +795,14 @@ function ResetPasswordModal({
       <div className="flex justify-end gap-2 pt-2">
         <button
           onClick={onClose}
-          className="px-3.5 py-1.5 rounded-lg text-xs text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer min-h-[44px]"
+          className="px-3.5 py-1.5 rounded-lg text-xs text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer min-h-11"
         >
           Cancel
         </button>
         <button
           onClick={handleSubmit}
           disabled={submitting}
-          className="px-3.5 py-1.5 rounded-lg text-xs text-white font-semibold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all cursor-pointer disabled:opacity-50 min-h-[44px]"
+          className="px-3.5 py-1.5 rounded-lg text-xs text-white font-semibold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all cursor-pointer disabled:opacity-50 min-h-11"
         >
           {submitting ? 'Resetting...' : 'Reset Password'}
         </button>
@@ -830,7 +830,7 @@ function ModalShell({
           <h3 className="text-white font-semibold text-sm">{title}</h3>
           <button
             onClick={onClose}
-            className="p-1 rounded-md text-white/40 hover:text-white/70 hover:bg-white/5 transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="p-1 rounded-md text-white/40 hover:text-white/70 hover:bg-white/5 transition-colors cursor-pointer min-h-11 min-w-11 flex items-center justify-center"
           >
             <Icon name="X" size={16} />
           </button>

@@ -142,7 +142,7 @@ export default function ArgumentsPage() {
         <select
           value={time}
           onChange={(e) => setTime(e.target.value)}
-          className="bg-white/[0.02] backdrop-blur-xl border border-white/5 rounded-lg px-3 py-2 text-sm text-zinc-400 outline-none focus:border-white/10 transition-colors appearance-none min-h-[44px]"
+          className="bg-white/5 backdrop-blur-xl border border-white/5 rounded-lg px-3 py-2 text-sm text-zinc-400 outline-none focus:border-white/10 transition-colors appearance-none min-h-11"
         >
           {TIME_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value} className="bg-zinc-900 text-zinc-300">
@@ -154,7 +154,7 @@ export default function ArgumentsPage() {
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="bg-white/[0.02] backdrop-blur-xl border border-white/5 rounded-lg px-3 py-2 text-sm text-zinc-400 outline-none focus:border-white/10 transition-colors appearance-none min-h-[44px]"
+          className="bg-white/5 backdrop-blur-xl border border-white/5 rounded-lg px-3 py-2 text-sm text-zinc-400 outline-none focus:border-white/10 transition-colors appearance-none min-h-11"
         >
           <option value="" className="bg-zinc-900 text-zinc-300">
             All Categories
@@ -169,7 +169,7 @@ export default function ArgumentsPage() {
 
       {posts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.02] backdrop-blur-xl border border-white/5">
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 backdrop-blur-xl border border-white/5">
             <Icon name="MessageSquare" size={24} className="text-zinc-600" />
           </div>
           <p className="text-zinc-500 text-sm max-w-sm">

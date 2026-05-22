@@ -44,7 +44,7 @@ export default function AdminLoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="block text-white/60 text-[11px] font-semibold mb-1">
+            <label className="block text-white/60 text-3xs font-semibold mb-1">
               Username
             </label>
             <input
@@ -59,7 +59,7 @@ export default function AdminLoginPage() {
           </div>
 
           <div>
-            <label className="block text-white/60 text-[11px] font-semibold mb-1">
+            <label className="block text-white/60 text-3xs font-semibold mb-1">
               Password
             </label>
             <input
@@ -76,7 +76,7 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 rounded-lg text-white text-sm font-semibold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all cursor-pointer disabled:opacity-50 min-h-[44px]"
+            className="w-full py-2.5 rounded-lg text-white text-sm font-semibold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all cursor-pointer disabled:opacity-50 min-h-11"
           >
             {loading ? 'Logging in...' : 'Login'}
           </button>

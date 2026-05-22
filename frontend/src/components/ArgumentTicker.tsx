@@ -126,7 +126,7 @@ export function ArgumentTicker() {
 
   return (
     <div className="flex-1 overflow-hidden p-4">
-      <h2 className="text-[10px] font-mono tracking-[0.2em] text-zinc-600 mb-4">
+      <h2 className="text-2xs font-mono tracking-[0.2em] text-zinc-600 mb-4">
         LIVE PULSE
       </h2>
       <div className="h-full overflow-hidden">
@@ -140,7 +140,7 @@ export function ArgumentTicker() {
                 <span className="font-mono text-xs text-zinc-300 truncate">
                   {item.username}
                 </span>
-                <span className="text-[10px] text-zinc-600 ml-auto shrink-0">
+                <span className="text-2xs text-zinc-600 ml-auto shrink-0">
                   {item.time}
                 </span>
               </div>
@@ -156,7 +156,7 @@ export function ArgumentTicker() {
                     />
                   ))}
                 </div>
-                <span className="text-[10px] font-mono text-orange-400 ml-auto shrink-0">
+                <span className="text-2xs font-mono text-orange-400 ml-auto shrink-0">
                   {item.velocity}
                 </span>
               </div>

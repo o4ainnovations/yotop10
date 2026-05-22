@@ -63,9 +63,9 @@ export function GlassSlab({ post, variant = 'compact', observe = false, rank, ac
           <span className="wiki-badge">CAT/{post.category_slug}</span>
           <div className="flex items-center gap-2">
             {rank !== undefined && (
-              <span className="text-[10px] font-mono text-zinc-600">#{rank}</span>
+              <span className="text-2xs font-mono text-zinc-600">#{rank}</span>
             )}
-            <span className="text-[10px] text-zinc-600" suppressHydrationWarning>
+            <span className="text-2xs text-zinc-600" suppressHydrationWarning>
               {relativeTime(post.created_at)}
             </span>
           </div>
@@ -100,7 +100,7 @@ export function GlassSlab({ post, variant = 'compact', observe = false, rank, ac
               <div key={item.rank} className="flex items-center gap-2 text-zinc-400">
                 <span
                   className={`font-mono text-zinc-600 shrink-0 ${
-                    variant === 'featured' ? 'text-xs w-6' : 'text-[10px] w-5'
+                    variant === 'featured' ? 'text-xs w-6' : 'text-2xs w-5'
                   }`}
                 >
                   {item.rank.toString().padStart(2, '0')}
@@ -122,7 +122,7 @@ export function GlassSlab({ post, variant = 'compact', observe = false, rank, ac
                     handleToggle(e);
                   }
                 }}
-                className="inline-flex items-center gap-1 text-[10px] font-mono text-zinc-500 hover:text-orange-400 transition-colors mt-1 py-2 min-h-[44px] cursor-pointer select-none focus:outline-none"
+                className="inline-flex items-center gap-1 text-2xs font-mono text-zinc-500 hover:text-orange-400 transition-colors mt-1 py-2 min-h-11 cursor-pointer select-none focus:outline-none"
               >
                 {expanded ? (
                   <>
@@ -148,13 +148,13 @@ export function GlassSlab({ post, variant = 'compact', observe = false, rank, ac
             </span>
             <span
               className={
-                variant === 'featured' ? 'text-xs text-zinc-500' : 'text-[11px] text-zinc-600'
+                variant === 'featured' ? 'text-xs text-zinc-500' : 'text-3xs text-zinc-600'
               }
             >
               @{post.author_username}
             </span>
           </div>
-          <div className="flex items-center gap-3 font-mono tabular-nums text-[10px] text-zinc-600">
+          <div className="flex items-center gap-3 font-mono tabular-nums text-2xs text-zinc-600">
             <span className="flex items-center gap-1">
               <Icon name="Eye" size={11} />
               {post.view_count}

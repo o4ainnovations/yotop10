@@ -93,7 +93,7 @@ export default function CategoriesPage() {
               <div
                 key={cat.id}
                 onClick={() => router.push(`/c/${cat.slug}`)}
-                className="group block cursor-pointer rounded-2xl border border-white/5 bg-white/[0.02] p-5 backdrop-blur-sm transition-all duration-300 hover:border-orange-500/30 hover:bg-white/[0.04] hover:shadow-lg hover:shadow-orange-500/5 sm:p-6"
+                className="group block cursor-pointer rounded-2xl border border-white/5 bg-white/5 p-5 backdrop-blur-sm transition-all duration-300 hover:border-orange-500/30 hover:bg-white/5 hover:shadow-lg hover:shadow-orange-500/5 sm:p-6"
               >
                 <h2 className="mb-2 flex items-center gap-2 text-lg font-bold text-white">
                   {cat.icon && <span>{cat.icon}</span>}
@@ -109,7 +109,7 @@ export default function CategoriesPage() {
                 </span>
                 {cat.children.length > 0 && (
                   <div className="mt-4 border-t border-white/5 pt-4">
-                    <h3 className="mb-2.5 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+                    <h3 className="mb-2.5 text-3xs font-bold uppercase tracking-wider text-zinc-500">
                       Subcategories
                     </h3>
                     <ul className="flex flex-col gap-1.5">
@@ -118,7 +118,7 @@ export default function CategoriesPage() {
                           <Link
                             href={`/c/${child.slug}`}
                             onClick={(e) => e.stopPropagation()}
-                            className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2 text-[13px] text-zinc-400 transition hover:bg-orange-500/10 hover:text-orange-400"
+                            className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2 text-sm2 text-zinc-400 transition hover:bg-orange-500/10 hover:text-orange-400"
                           >
                             <span>{child.name}</span>
                             <span className="text-xs text-zinc-600">{child.post_count}</span>

@@ -41,7 +41,7 @@ export default function AdminDashboard() {
           <button
             key={card.href}
             onClick={() => router.push(card.href)}
-            className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 sm:p-5 text-left transition-all duration-200 hover:border-orange-500/50 hover:bg-white/[0.07] cursor-pointer w-full"
+            className="bg-white/5 border border-white/5 rounded-2xl p-4 sm:p-5 text-left transition-all duration-200 hover:border-orange-500/50 hover:bg-white/5 cursor-pointer w-full"
           >
             <div className="flex items-center gap-2.5 mb-1.5">
               <Icon name={card.icon as LucideIconName} size={18} color="var(--color-orange-400)" />
@@ -60,7 +60,7 @@ export default function AdminDashboard() {
             <button
               key={link.href}
               onClick={() => router.push(link.href)}
-              className="bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-left transition-all duration-200 hover:border-orange-500/50 hover:bg-white/[0.07] cursor-pointer flex items-center gap-2 min-h-[44px] w-full"
+              className="bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-left transition-all duration-200 hover:border-orange-500/50 hover:bg-white/5 cursor-pointer flex items-center gap-2 min-h-11 w-full"
             >
               <Icon name={link.icon as LucideIconName} size={14} color="var(--color-orange-400)" />
               <span className="text-white/60 text-xs">{link.title}</span>

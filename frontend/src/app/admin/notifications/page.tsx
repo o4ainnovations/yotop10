@@ -25,16 +25,16 @@ function priorityBadgeClass(priority: string): string {
 }
 
 function tabClass(active: boolean): string {
-  if (active) return 'px-4 py-2.5 border-none bg-transparent cursor-pointer text-sm min-h-[44px] transition-colors font-bold text-orange-400 border-b-2 border-orange-400';
-  return 'px-4 py-2.5 border-none bg-transparent cursor-pointer text-sm min-h-[44px] transition-colors text-white/40 border-b-2 border-transparent hover:text-white/60';
+  if (active) return 'px-4 py-2.5 border-none bg-transparent cursor-pointer text-sm min-h-11 transition-colors font-bold text-orange-400 border-b-2 border-orange-400';
+  return 'px-4 py-2.5 border-none bg-transparent cursor-pointer text-sm min-h-11 transition-colors text-white/40 border-b-2 border-transparent hover:text-white/60';
 }
 
 function inputClass(): string {
-  return 'w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-white/30 outline-none focus:border-orange-500/50 min-h-[36px]';
+  return 'w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-white/30 outline-none focus:border-orange-500/50 min-h-9';
 }
 
 function selectClass(): string {
-  return 'px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm outline-none focus:border-orange-500/50 min-h-[36px]';
+  return 'px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm outline-none focus:border-orange-500/50 min-h-9';
 }
 
 export default function AdminNotificationsPage() {
@@ -157,13 +157,13 @@ export default function AdminNotificationsPage() {
           <div className="flex gap-3 flex-wrap">
             <button
               onClick={() => { setMsgType('broadcast'); setRecipient(null); }}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer min-h-[36px] flex items-center gap-1.5 transition-colors ${msgType === 'broadcast' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10'}`}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer min-h-9 flex items-center gap-1.5 transition-colors ${msgType === 'broadcast' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10'}`}
             >
               <Icon name="Megaphone" size={14} /> Broadcast to All
             </button>
             <button
               onClick={() => setMsgType('individual')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer min-h-[36px] flex items-center gap-1.5 transition-colors ${msgType === 'individual' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10'}`}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer min-h-9 flex items-center gap-1.5 transition-colors ${msgType === 'individual' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10'}`}
             >
               <Icon name="User" size={14} /> Individual User
             </button>
@@ -184,7 +184,7 @@ export default function AdminNotificationsPage() {
           <div>
             <label className="block text-xs text-white/40 mb-1">Message</label>
             <textarea value={body} onChange={e => setBody(e.target.value)} maxLength={2000} rows={5} placeholder="Write your message..." className={`${inputClass()} font-inherit`} />
-            <span className="text-[11px] text-white/30">{body.length}/2000</span>
+            <span className="text-3xs text-white/30">{body.length}/2000</span>
           </div>
 
           <div className="flex gap-4 flex-wrap">
@@ -198,12 +198,12 @@ export default function AdminNotificationsPage() {
             </div>
             <div>
               <label className="block text-xs text-white/40 mb-1">Expires in (days)</label>
-              <input type="number" value={expiresIn} onChange={e => setExpiresIn(parseInt(e.target.value) || 1)} min={1} max={365} className="w-[80px] px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm outline-none focus:border-orange-500/50 min-h-[36px]" />
+              <input type="number" value={expiresIn} onChange={e => setExpiresIn(parseInt(e.target.value) || 1)} min={1} max={365} className="w-[80px] px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm outline-none focus:border-orange-500/50 min-h-9" />
             </div>
           </div>
 
           <button onClick={handleSend} disabled={sending}
-            className={`px-5 py-2.5 rounded-xl text-white font-bold cursor-pointer min-h-[44px] flex items-center gap-2 transition-colors ${sending ? 'bg-white/10 cursor-not-allowed' : 'bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600'}`}
+            className={`px-5 py-2.5 rounded-xl text-white font-bold cursor-pointer min-h-11 flex items-center gap-2 transition-colors ${sending ? 'bg-white/10 cursor-not-allowed' : 'bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600'}`}
           >
             {sending ? 'Sending...' : msgType === 'broadcast' ? <><Icon name="Megaphone" size={14} /> Send to All Users</> : <><Icon name="User" size={14} /> Send Message</>}
           </button>
@@ -215,32 +215,32 @@ export default function AdminNotificationsPage() {
         <div>
           <div className="mb-3 text-sm text-white/40 flex items-center gap-3 flex-wrap">
             <span>{sentTotal} messages sent</span>
-            {sentPage > 1 && <button onClick={() => setSentPage(p => p - 1)} className="px-2.5 py-1 rounded-md text-xs bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 cursor-pointer min-h-[32px]">Prev</button>}
-            {sentTotal > sentPage * 20 && <button onClick={() => setSentPage(p => p + 1)} className="px-2.5 py-1 rounded-md text-xs bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 cursor-pointer min-h-[32px]">Next</button>}
+            {sentPage > 1 && <button onClick={() => setSentPage(p => p - 1)} className="px-2.5 py-1 rounded-md text-xs bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 cursor-pointer min-h-8">Prev</button>}
+            {sentTotal > sentPage * 20 && <button onClick={() => setSentPage(p => p + 1)} className="px-2.5 py-1 rounded-md text-xs bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 cursor-pointer min-h-8">Next</button>}
           </div>
 
           <div className="space-y-2">
             {sentMessages.map(m => (
-              <div key={m._id} className="bg-white/[0.02] border border-white/5 rounded-2xl p-3.5">
+              <div key={m._id} className="bg-white/5 border border-white/5 rounded-2xl p-3.5">
                 <div className="flex justify-between items-center mb-1.5 flex-wrap gap-2">
                   <div className="flex items-center gap-2">
-                    <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase ${priorityBadgeClass(m.priority)}`}>
+                    <span className={`inline-flex px-2 py-0.5 rounded text-2xs font-bold uppercase ${priorityBadgeClass(m.priority)}`}>
                       {m.priority.toUpperCase()}
                     </span>
-                    <span className="text-[11px] text-white/40 flex items-center gap-1">
+                    <span className="text-3xs text-white/40 flex items-center gap-1">
                       {m.type === 'broadcast' ? <><Icon name="Megaphone" size={11} /> Broadcast</> : <><Icon name="User" size={11} /> Individual</>}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] text-white/30" suppressHydrationWarning>{formatDate(m.created_at)}</span>
-                    <button onClick={() => handleRetract(m._id)} className="px-2.5 py-1 rounded-md text-[11px] text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer min-h-[32px]">
+                    <span className="text-3xs text-white/30" suppressHydrationWarning>{formatDate(m.created_at)}</span>
+                    <button onClick={() => handleRetract(m._id)} className="px-2.5 py-1 rounded-md text-3xs text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer min-h-8">
                       Retract
                     </button>
                   </div>
                 </div>
                 <strong className="text-sm text-white block mb-1">{m.title}</strong>
                 <p className="text-xs text-white/50 mb-1">{m.body.substring(0, 150)}{m.body.length > 150 ? '...' : ''}</p>
-                <div className="text-[11px] text-white/30">
+                <div className="text-3xs text-white/30">
                   {m.type === 'broadcast' ? `${m.dismissed_by.length} dismissed` : `To: ${m.recipient_id}`}
                   {' · '}Expires: <span suppressHydrationWarning>{formatDate(m.expires_at)}</span>
                 </div>
@@ -248,7 +248,7 @@ export default function AdminNotificationsPage() {
             ))}
           </div>
           {sentMessages.length === 0 && (
-            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-10 text-center">
+            <div className="bg-white/5 border border-white/5 rounded-2xl p-10 text-center">
               <p className="text-white/40 text-sm">No messages sent yet</p>
             </div>
           )}
@@ -260,13 +260,13 @@ export default function AdminNotificationsPage() {
         <div>
           <div className="flex justify-between items-center mb-3 flex-wrap gap-2">
             <span className="text-sm text-white/40">{templates.length} templates</span>
-            <button onClick={() => setShowTemplateForm(!showTemplateForm)} className="px-4 py-1.5 rounded-lg text-white text-xs font-semibold cursor-pointer min-h-[36px] bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all">
+            <button onClick={() => setShowTemplateForm(!showTemplateForm)} className="px-4 py-1.5 rounded-lg text-white text-xs font-semibold cursor-pointer min-h-9 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all">
               {showTemplateForm ? 'Cancel' : '+ New Template'}
             </button>
           </div>
 
           {showTemplateForm && (
-            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 mb-4 space-y-3">
+            <div className="bg-white/5 border border-white/5 rounded-2xl p-4 mb-4 space-y-3">
               <input value={templateName} onChange={e => setTemplateName(e.target.value)} placeholder="Template name (e.g. 'Revision needed')" className={inputClass()} />
               <input value={templateTitle} onChange={e => setTemplateTitle(e.target.value)} placeholder="Default title" className={inputClass()} />
               <textarea value={templateBody} onChange={e => setTemplateBody(e.target.value)} placeholder="Default body" rows={3} className={`${inputClass()} font-inherit`} />
@@ -276,7 +276,7 @@ export default function AdminNotificationsPage() {
                   <option value="important" className="bg-zinc-900">Important</option>
                   <option value="urgent" className="bg-zinc-900">Urgent</option>
                 </select>
-                <button onClick={handleSaveTemplate} className="px-4 py-1.5 rounded-lg text-white text-xs font-semibold cursor-pointer bg-green-700 hover:bg-green-600 transition-colors min-h-[36px]">
+                <button onClick={handleSaveTemplate} className="px-4 py-1.5 rounded-lg text-white text-xs font-semibold cursor-pointer bg-green-700 hover:bg-green-600 transition-colors min-h-9">
                   Save
                 </button>
               </div>
@@ -285,23 +285,23 @@ export default function AdminNotificationsPage() {
 
           <div className="space-y-2">
             {templates.map(t => (
-              <div key={t._id} className="bg-white/[0.02] border border-white/5 rounded-2xl p-3.5 flex justify-between items-center gap-3 flex-wrap">
+              <div key={t._id} className="bg-white/5 border border-white/5 rounded-2xl p-3.5 flex justify-between items-center gap-3 flex-wrap">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <strong className="text-sm text-white">{t.name}</strong>
-                    <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase ${priorityBadgeClass(t.priority)}`}>{t.priority}</span>
+                    <span className={`inline-flex px-2 py-0.5 rounded text-2xs font-bold uppercase ${priorityBadgeClass(t.priority)}`}>{t.priority}</span>
                   </div>
                   <p className="text-xs text-white/50">{t.title}: {t.body.substring(0, 80)}</p>
                 </div>
                 <div className="flex gap-2 items-center shrink-0">
-                  <button onClick={() => applyTemplate(t)} className="px-3 py-1 rounded-md text-[11px] text-blue-400 bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 transition-colors cursor-pointer min-h-[32px]">Use</button>
-                  <button onClick={() => handleDeleteTemplate(t._id)} className="px-3 py-1 rounded-md text-[11px] text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer min-h-[32px]">Delete</button>
+                  <button onClick={() => applyTemplate(t)} className="px-3 py-1 rounded-md text-3xs text-blue-400 bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 transition-colors cursor-pointer min-h-8">Use</button>
+                  <button onClick={() => handleDeleteTemplate(t._id)} className="px-3 py-1 rounded-md text-3xs text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors cursor-pointer min-h-8">Delete</button>
                 </div>
               </div>
             ))}
           </div>
           {templates.length === 0 && (
-            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-10 text-center">
+            <div className="bg-white/5 border border-white/5 rounded-2xl p-10 text-center">
               <p className="text-white/40 text-sm">No templates yet. Create reusable message templates for common notifications.</p>
             </div>
           )}

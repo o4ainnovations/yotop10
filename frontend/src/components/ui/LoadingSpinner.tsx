@@ -9,7 +9,7 @@ export default function LoadingSpinner({ size = 'md', label = 'Loading...' }: Lo
   const px = sizeMap[size];
 
   return (
-    <div style={{ padding: '40px', textAlign: 'center' }}>
+    <div className="p-10 text-center">
       <div
         style={{
           display: 'inline-block',
@@ -23,7 +23,7 @@ export default function LoadingSpinner({ size = 'md', label = 'Loading...' }: Lo
         role="status"
         aria-label={label}
       />
-      <p style={{ marginTop: '8px', color: '#666' }}>{label}</p>
+      <p className="mt-2 text-zinc-500">{label}</p>
     </div>
   );
 }

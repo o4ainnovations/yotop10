@@ -7,18 +7,9 @@ export default function ErrorAlert({ message, onRetry }: ErrorAlertProps) {
   return (
     <div
       role="alert"
-      style={{
-        backgroundColor: '#ffebee',
-        border: '1px solid #d32f2f',
-        borderRadius: '5px',
-        padding: '15px 20px',
-        margin: '20px 0',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}
+      className="bg-red-50 border border-red-600 rounded px-5 py-4 my-5 flex items-center justify-between"
     >
-      <span style={{ color: '#b71c1c' }}>{message}</span>
+      <span className="text-red-800">{message}</span>
       {onRetry && (
         <button
           onClick={onRetry}

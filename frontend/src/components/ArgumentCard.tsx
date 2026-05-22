@@ -29,18 +29,18 @@ export function ArgumentCard({ argument }: ArgumentCardProps) {
     : null;
 
   return (
-    <div className="rounded-2xl border border-white/5 bg-white/[0.02] backdrop-blur-xl p-5 transition hover:border-white/10">
+    <div className="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-xl p-5 transition hover:border-white/10">
       <div className="flex items-center gap-2 mb-3 flex-wrap">
-        <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${config.borderClass}`}>
+        <span className={`text-2xs font-mono px-2 py-0.5 rounded ${config.borderClass}`}>
           {config.label}
         </span>
 
-        <span className="text-[10px] font-mono text-zinc-600 uppercase">
+        <span className="text-2xs font-mono text-zinc-600 uppercase">
           {argument.category_slug}
         </span>
 
         {argument.velocity > 0 && (
-          <span className="text-[10px] font-mono text-orange-400">
+          <span className="text-2xs font-mono text-orange-400">
             {argument.velocity} replies/hour
           </span>
         )}
@@ -53,9 +53,9 @@ export function ArgumentCard({ argument }: ArgumentCardProps) {
       </Link>
 
       {topComment && (
-        <div className="mb-3 rounded-xl bg-white/[0.03] border border-white/5 p-3">
+        <div className="mb-3 rounded-xl bg-white/5 border border-white/5 p-3">
           <div className="flex items-center gap-2 mb-1">
-            <span className="flex items-center justify-center w-5 h-5 rounded bg-orange-500/20 text-[10px] font-mono text-orange-400 tabular-nums">
+            <span className="flex items-center justify-center w-5 h-5 rounded bg-orange-500/20 text-2xs font-mono text-orange-400 tabular-nums">
               {topComment.rank}
             </span>
             <span className="text-xs text-zinc-400">
@@ -66,10 +66,10 @@ export function ArgumentCard({ argument }: ArgumentCardProps) {
             {contentPreview}
           </p>
           <div className="flex items-center gap-3">
-            <span className="text-[11px] font-mono text-zinc-500">
+            <span className="text-3xs font-mono text-zinc-500">
               @{topComment.author_username}
             </span>
-            <span className="flex items-center gap-1 text-[11px] text-zinc-600">
+            <span className="flex items-center gap-1 text-3xs text-zinc-600">
               <Icon name="Flame" size={11} />
               <span className="font-mono tabular-nums">{topComment.fire_count}</span>
             </span>
@@ -90,8 +90,8 @@ export function ArgumentCard({ argument }: ArgumentCardProps) {
             @{argument.author_username}
           </span>
         </div>
-        <div className="flex items-center gap-3 font-mono tabular-nums text-[10px] text-zinc-600">
-          <span className="text-[11px] text-zinc-600" suppressHydrationWarning>
+        <div className="flex items-center gap-3 font-mono tabular-nums text-2xs text-zinc-600">
+          <span className="text-3xs text-zinc-600" suppressHydrationWarning>
             {relativeTime(argument.last_active)}
           </span>
           <span className="flex items-center gap-1">

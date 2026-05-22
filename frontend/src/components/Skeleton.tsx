@@ -3,7 +3,7 @@
 export function Skeleton({ className = '' }: { className?: string }) {
   return (
     <div
-      className={`animate-pulse rounded-xl bg-white/[0.03] ${className}`}
+      className={`animate-pulse rounded-xl bg-white/5 ${className}`}
       aria-hidden="true"
     />
   );
@@ -11,7 +11,7 @@ export function Skeleton({ className = '' }: { className?: string }) {
 
 export function PostCardSkeleton() {
   return (
-    <div className="flex-shrink-0 w-[calc(76vw-12px)] rounded-2xl border border-white/5 bg-white/[0.02] p-4 space-y-3">
+    <div className="flex-shrink-0 w-[calc(76vw-12px)] rounded-2xl border border-white/5 bg-white/5 p-4 space-y-3">
       <Skeleton className="h-5 w-3/4" />
       <Skeleton className="h-3 w-full" />
       <div className="space-y-2 pt-2">

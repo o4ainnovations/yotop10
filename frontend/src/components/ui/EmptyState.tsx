@@ -6,8 +6,8 @@ interface EmptyStateProps {
 
 export default function EmptyState({ message, action, onAction }: EmptyStateProps) {
   return (
-    <div style={{ padding: '40px 20px', textAlign: 'center', color: '#666' }}>
-      <p style={{ fontSize: '16px', marginBottom: '12px' }}>{message}</p>
+    <div className="px-5 py-10 text-center text-zinc-500">
+      <p className="text-base mb-3">{message}</p>
       {action && onAction && (
         <button
           onClick={onAction}

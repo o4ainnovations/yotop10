@@ -12,7 +12,7 @@ export function NavUserAvatar() {
   return (
     <Link
       href={user ? `/a/${profileSlug}` : '/profile'}
-      className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/5 text-[11px] font-semibold text-zinc-400 transition hover:border-orange-500/30 hover:text-orange-400"
+      className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/5 text-3xs font-semibold text-zinc-400 transition hover:border-orange-500/30 hover:text-orange-400"
     >
       {user?.profile_image_url ? (
         <Image

@@ -35,7 +35,7 @@ export default function DesktopTopBar() {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleSearch}
             placeholder="Fact mine. Debate ground. Search rankings..."
-            className="w-full max-w-xl bg-white/[0.03] border border-white/10 rounded-xl px-4 py-2 text-sm text-white placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none backdrop-blur-md transition"
+            className="w-full max-w-xl bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none backdrop-blur-md transition"
           />
         </div>
 
