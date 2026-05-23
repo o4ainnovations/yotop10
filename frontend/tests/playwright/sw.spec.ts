@@ -55,7 +55,7 @@ test.describe('Service Worker smoke tests', () => {
     await page.goto('/some-nonexistent-route');
     // Verify that the offline fallback page is present (best-effort). This test
     // does not require active SW registration in this environment.
-    await page.goto('/offline.html');
+    await page.goto('/static/offline.html');
     const text = await page.content();
     expect(text.toLowerCase()).toContain('offline');
   });

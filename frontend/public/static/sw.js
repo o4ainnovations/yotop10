@@ -13,7 +13,7 @@ let BUILD_ID = '5d20e631-2026-05-23T09-02-00-890Z';
 let CACHE_NAME = `${CACHE_PREFIX}-${BUILD_ID}`;
 let RUNTIME_CACHE = `${CACHE_PREFIX}-runtime-${BUILD_ID}`;
 
-const DEFAULT_PRECACHE = ['/offline.html', '/'];
+const DEFAULT_PRECACHE = ['/static/offline.html', '/'];
 let PRECACHE_URLS = [...DEFAULT_PRECACHE];
 
 // Helper to initialize BUILD_ID and PRECACHE_URLS based on sw-manifest.json / __build_info.json

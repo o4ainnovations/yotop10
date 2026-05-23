@@ -161,10 +161,10 @@ function relativeUrlForPublic(filePath, publicDir) {
   console.log('Wrote build info:', outBuildInfo);
   console.log('Assets counted:', manifest.assets.length, 'precache:', manifest.groups.precache.length);
 
-  // Optional: inject BUILD_ID into public/sw.js so the service-worker has a build-time deterministic cache name
+  // Optional: inject BUILD_ID into static/sw.js so the service-worker has a build-time deterministic cache name
   try {
     if (opts['inject-sw'] === 'true' || opts['inject-sw'] === true || opts['inject-sw'] === '1') {
-      const swPath = path.join(outDir, 'sw.js');
+      const swPath = path.join(outDir, 'static', 'sw.js');
       if (fs.existsSync(swPath)) {
         let swText = await fs.promises.readFile(swPath, 'utf8');
         const pattern = /let\s+BUILD_ID\s*=\s*['"][^'"]*['"];?/;

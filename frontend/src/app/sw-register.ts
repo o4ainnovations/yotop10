@@ -38,7 +38,7 @@ export function registerSW(
 
   window.addEventListener('load', async () => {
     try {
-      const reg = await navigator.serviceWorker.register('/sw.js');
+      const reg = await navigator.serviceWorker.register('/static/sw.js');
       // If there's an active, waiting SW it means a new version is already installed
       if (reg.waiting) {
         onUpdate?.(reg);
