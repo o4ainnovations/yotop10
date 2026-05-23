@@ -77,10 +77,11 @@ export function registerSW(
       });
 
       // Expose helpers on window to allow manual actions via QA or automation
+      // Use typed window properties declared in src/types/sw.d.ts
       // eslint-disable-next-line no-param-reassign
-      (window as any).__yotop10_sendSkipWaiting = sendSkipWaitingMessage;
-      // eslint-disable-next-line no-param-reassign
-      (window as any).__yotop10_replayQueue = sendReplayQueueMessage;
+      // Assign typed globals declared in src/types/sw.d.ts
+      window.__yotop10_sendSkipWaiting = sendSkipWaitingMessage;
+      window.__yotop10_replayQueue = sendReplayQueueMessage;
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('SW registration failed:', err);

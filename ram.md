@@ -102,9 +102,11 @@ Status: implemented in working tree. Recommend deploying and validating with a t
 ### Build-time SW manifest generation (2026-05-23)
 - Added postbuild invocation to generate the SW manifest and optionally inject the BUILD_ID into frontend/public/sw.js at build time.
 - Updated scripts/generate-sw-manifest.js to accept a `--inject-sw` flag; when enabled the script will replace the BUILD_ID declaration in `frontend/public/sw.js` so the service worker uses a deterministic, build-specific cache name.
+- Added GitHub Actions workflow `.github/workflows/frontend-sw.yml` to run frontend lint, typecheck, build, and verify the generated SW artifacts are present and valid.
 
 Files changed for this patch:
 - scripts/generate-sw-manifest.js
 - frontend/package.json (added postbuild script)
+- .github/workflows/frontend-sw.yml (new)
 
-Status: implemented in working tree. CI: add `pnpm build` step for frontend which will run the postbuild script; verify `frontend/public/sw-manifest.json` and `frontend/public/__build_info.json` are included in artifacts.
+Status: implemented in working tree. CI: the new workflow runs `pnpm build` in the frontend workspace; it verifies `frontend/public/sw-manifest.json`, `frontend/public/__build_info.json`, and that `frontend/public/sw.js` contains a BUILD_ID or buildId string.

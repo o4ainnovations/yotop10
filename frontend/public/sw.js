@@ -9,7 +9,7 @@
 
 // BUILD_ID will be read from public/__build_info.json if available, otherwise fallback.
 const CACHE_PREFIX = 'yotop10';
-let BUILD_ID = 'fa17e3b9';
+let BUILD_ID = '5d20e631-2026-05-23T09-02-00-890Z';
 let CACHE_NAME = `${CACHE_PREFIX}-${BUILD_ID}`;
 let RUNTIME_CACHE = `${CACHE_PREFIX}-runtime-${BUILD_ID}`;
 

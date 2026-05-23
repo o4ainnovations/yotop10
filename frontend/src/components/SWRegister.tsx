@@ -15,10 +15,11 @@ export default function SWRegister() {
     });
 
     // Listen for broadcast messages from service worker
-    navigator.serviceWorker?.addEventListener('message', (ev) => {
-      if (ev.data?.type === 'NEW_VERSION_AVAILABLE') {
-        setUpdateAvailable(true);
-      }
+    navigator.serviceWorker?.addEventListener('message', (ev: MessageEvent) => {
+      const data = ev.data;
+      if (!data || typeof data !== 'object') return;
+      // narrow to known shape
+      if ((data as { type?: string }).type === 'NEW_VERSION_AVAILABLE') setUpdateAvailable(true);
     });
   }, []);
 
@@ -26,7 +27,9 @@ export default function SWRegister() {
 
   const triggerReplay = () => {
     try {
-      (window as any).__yotop10_replayQueue?.();
+      // typed global from src/types/sw.d.ts - access via narrowed unknown to avoid 'as any'
+      const w = window as unknown as { __yotop10_replayQueue?: () => void };
+      w.__yotop10_replayQueue?.();
     } catch {}
   };
 
