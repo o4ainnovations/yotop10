@@ -98,3 +98,13 @@ Files changed:
 - frontend/src/components/SWRegister.tsx (UI prompt for updates)
 
 Status: implemented in working tree. Recommend deploying and validating with a test cohort; additional step: inject BUILD_ID at build time for guaranteed cache-busting across deploys.
+
+### Build-time SW manifest generation (2026-05-23)
+- Added postbuild invocation to generate the SW manifest and optionally inject the BUILD_ID into frontend/public/sw.js at build time.
+- Updated scripts/generate-sw-manifest.js to accept a `--inject-sw` flag; when enabled the script will replace the BUILD_ID declaration in `frontend/public/sw.js` so the service worker uses a deterministic, build-specific cache name.
+
+Files changed for this patch:
+- scripts/generate-sw-manifest.js
+- frontend/package.json (added postbuild script)
+
+Status: implemented in working tree. CI: add `pnpm build` step for frontend which will run the postbuild script; verify `frontend/public/sw-manifest.json` and `frontend/public/__build_info.json` are included in artifacts.

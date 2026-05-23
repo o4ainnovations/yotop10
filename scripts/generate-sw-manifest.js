@@ -27,8 +27,16 @@ const args = process.argv.slice(2);
 const opts = {};
 for (const a of args) {
   if (a === '--help' || a === '-h') usageAndExit();
+  // support --name=value and --flag (boolean)
   const m = a.match(/^--([a-zA-Z0-9_-]+)=(.*)$/);
-  if (m) opts[m[1]] = m[2];
+  if (m) {
+    opts[m[1]] = m[2];
+    continue;
+  }
+  const m2 = a.match(/^--([a-zA-Z0-9_-]+)$/);
+  if (m2) {
+    opts[m2[1]] = 'true';
+  }
 }
 
 const repoRoot = process.cwd();
@@ -152,4 +160,26 @@ function relativeUrlForPublic(filePath, publicDir) {
   console.log('Wrote manifest:', outManifest);
   console.log('Wrote build info:', outBuildInfo);
   console.log('Assets counted:', manifest.assets.length, 'precache:', manifest.groups.precache.length);
+
+  // Optional: inject BUILD_ID into public/sw.js so the service-worker has a build-time deterministic cache name
+  try {
+    if (opts['inject-sw'] === 'true' || opts['inject-sw'] === true || opts['inject-sw'] === '1') {
+      const swPath = path.join(outDir, 'sw.js');
+      if (fs.existsSync(swPath)) {
+        let swText = await fs.promises.readFile(swPath, 'utf8');
+        const pattern = /let\s+BUILD_ID\s*=\s*['"][^'"]*['"];?/;
+        if (pattern.test(swText)) {
+          swText = swText.replace(pattern, `let BUILD_ID = '${BUILD_ID}';`);
+          await fs.promises.writeFile(swPath, swText, 'utf8');
+          console.log('Injected BUILD_ID into', swPath);
+        } else {
+          console.warn('Could not locate BUILD_ID declaration in sw.js for injection:', swPath);
+        }
+      } else {
+        console.warn('sw.js not found for injection at', swPath);
+      }
+    }
+  } catch (e) {
+    console.warn('BUILD_ID injection failed:', e && e.message ? e.message : e);
+  }
 })();
