@@ -24,6 +24,18 @@ export function registerSW(
     }
   }
 
+  async function sendReplayQueueMessage() {
+    try {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for (const reg of regs) {
+        if (reg.active) reg.active.postMessage({ type: 'REPLAY_QUEUE' });
+      }
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to send REPLAY_QUEUE message', e);
+    }
+  }
+
   window.addEventListener('load', async () => {
     try {
       const reg = await navigator.serviceWorker.register('/sw.js');
@@ -64,10 +76,11 @@ export function registerSW(
         window.location.reload();
       });
 
-      // Expose a helper on window to allow manual skipWaiting via UI flows
-      // (useful for QA and programmatic flows)
+      // Expose helpers on window to allow manual actions via QA or automation
       // eslint-disable-next-line no-param-reassign
       (window as any).__yotop10_sendSkipWaiting = sendSkipWaitingMessage;
+      // eslint-disable-next-line no-param-reassign
+      (window as any).__yotop10_replayQueue = sendReplayQueueMessage;
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('SW registration failed:', err);

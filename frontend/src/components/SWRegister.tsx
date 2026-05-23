@@ -24,11 +24,18 @@ export default function SWRegister() {
 
   if (!updateAvailable) return null;
 
+  const triggerReplay = () => {
+    try {
+      (window as any).__yotop10_replayQueue?.();
+    } catch {}
+  };
+
   return (
     <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999 }}>
       <div style={{ background: 'rgba(0,0,0,0.6)', color: '#fff', padding: '10px 12px', borderRadius: 8, display: 'flex', gap: 8, alignItems: 'center' }}>
         <span style={{ fontSize: 13 }}>A new version is available</span>
         <button onClick={() => sendSkipWaiting()} style={{ padding: '6px 10px', background: '#f97316', color: '#fff', border: 'none', borderRadius: 6 }}>Update</button>
+        <button onClick={triggerReplay} style={{ padding: '6px 10px', background: '#222', color: '#fff', border: 'none', borderRadius: 6 }}>Flush queue</button>
       </div>
     </div>
   );
