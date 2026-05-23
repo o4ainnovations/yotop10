@@ -1,9 +1,9 @@
 # RAM.md — Random Access Memory: Current Task State
 
-> **Last updated**: 2026-05-22
-> **Working tree**: Clean — nothing to commit
-> **Branch**: main → up to date with origin/main
-> **Latest commit**: `08d9fa04 [M00.0] Clean up stale docs, dead env vars, and AI artifacts`
+> **Last updated**: 2026-05-23
+> **Working tree**: Clean — changes committed and branch pushed
+> **Branch**: feat/sw-manifest-inject → up to date with origin/feat/sw-manifest-inject
+> **Latest commit**: `14a61254 [M00.5] Regenerate SW manifest with BUILD_ID from completed build`
 
 ---
 
@@ -16,7 +16,7 @@
 | Backend lint | ✅ 0 errors, 0 warnings |
 | Frontend lint | ✅ 0 errors, 0 warnings |
 | Backend build (`tsc`) | ✅ 0 errors |
-| Frontend build (`next build`) | ⏳ Times out after 120s (check manually) |
+| Frontend build (`next build`) | ✅ Completed (build + postbuild manifest generation injected BUILD_ID) |
 | Backend tests (vitest) | ✅ 38 files, 638 tests passed |
 
 ---
@@ -109,4 +109,10 @@ Files changed for this patch:
 - frontend/package.json (added postbuild script)
 - .github/workflows/frontend-sw.yml (new)
 
-Status: implemented in working tree. CI: the new workflow runs `pnpm build` in the frontend workspace; it verifies `frontend/public/sw-manifest.json`, `frontend/public/__build_info.json`, and that `frontend/public/sw.js` contains a BUILD_ID or buildId string.
+  Status: implemented in working tree. CI: the new workflow runs `pnpm build` in the frontend workspace; it verifies `frontend/public/sw-manifest.json`, `frontend/public/__build_info.json`, and that `frontend/public/sw.js` contains a BUILD_ID or buildId string.
+
+## Latest Verification
+
+- Frontend `next build` completed successfully and postbuild manifest generator injected BUILD_ID into `frontend/public/static/sw.js`.
+- Playwright SW smoke tests (frontend/tests/playwright/sw.spec.ts) passed when run against a static server serving `frontend/public`.
+- Branch `feat/sw-manifest-inject` pushed to origin (commit 14a61254).
