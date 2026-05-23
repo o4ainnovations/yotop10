@@ -19,9 +19,11 @@ export default defineConfig({
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   ],
   webServer: {
-    // For Next.js standalone output, use the standalone server entrypoint
-    // `next start` is incompatible with `output: 'standalone'` builds.
-    command: 'node .next/standalone/server.js',
+    // For Next.js standalone output, use a small helper that patches the
+    // runtime to correctly serve /sw.js and /offline.html from the
+    // standalone public directory. We keep this helper in the repo rather
+    // than modifying .next/standalone files directly (they are gitignored).
+    command: 'node frontend/scripts/start-standalone-with-sw-shim.js',
     url: 'http://127.0.0.1:3000',
     reuseExistingServer: process.env.CI ? false : true,
     timeout: 120_000,
