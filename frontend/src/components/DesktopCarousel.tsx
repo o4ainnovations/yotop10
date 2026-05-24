@@ -53,7 +53,7 @@ export function DesktopCarousel({ posts }: DesktopCarouselProps) {
           <h3 className="mb-2 text-base font-semibold text-zinc-300">No ranked lists yet.</h3>
         </div>
       ) : (
-        <div className="relative">
+        <div className="relative flex justify-end">
           {/* Left Arrow */}
           {canScrollLeft && (
             <button
@@ -68,7 +68,7 @@ export function DesktopCarousel({ posts }: DesktopCarouselProps) {
           {/* Carousel Container */}
           <div
             ref={scrollContainerRef}
-            className="flex flex-row overflow-x-auto overflow-y-hidden gap-3 py-6 px-14 -webkit-overflow-scrolling-touch snap-x snap-mandatory scroll-smooth scrollbar-hide"
+            className="flex flex-row overflow-x-auto overflow-y-hidden gap-3 py-6 px-8 -webkit-overflow-scrolling-touch snap-x snap-mandatory scroll-smooth scrollbar-hide"
             style={{ scrollBehavior: 'smooth' }}
           >
             {posts.map((post) => (
