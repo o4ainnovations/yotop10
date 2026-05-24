@@ -62,9 +62,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <PWAInstallPrompt />
         </Suspense>
 
-        {/* <Suspense>
-          <DynamicIsland />
-        </Suspense> */}
+        <DynamicIsland />
       </body>
     </html>
   );

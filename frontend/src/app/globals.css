@@ -175,10 +175,10 @@ html.light-mode .bg-white\/\[0\.04\] { background: rgba(0,0,0,0.04); }
 
 /* ═══ Responsive Visibility (plain CSS — no Tailwind utilities) ═══ */
 .hide-desktop { display: flex; }
-@media (min-width: 1024px) { .hide-desktop { display: none; } }
+@media (min-width: 980px) { .hide-desktop { display: none; } }
 
 .show-desktop { display: none; }
-@media (min-width: 1024px) { .show-desktop { display: flex; } }
+@media (min-width: 980px) { .show-desktop { display: flex; } }
 
 .show-from-sm { display: none; }
 @media (min-width: 640px) { .show-from-sm { display: flex; } }
