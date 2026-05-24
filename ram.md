@@ -1,9 +1,9 @@
 # RAM.md — Random Access Memory: Current Task State
 
-> **Last updated**: 2026-05-23
-> **Working tree**: Clean — changes committed and branch pushed
-> **Branch**: feat/sw-manifest-inject → up to date with origin/feat/sw-manifest-inject
-> **Latest commit**: `14a61254 [M00.5] Regenerate SW manifest with BUILD_ID from completed build`
+> **Last updated**: 2026-05-24
+> **Working tree**: Clean — changes committed and pushed
+> **Branch**: main → up to date with origin/main
+> **Latest commit**: `7958e402 [M00.8] Lower nav hide breakpoint to 980px, uncomment DynamicIsland hydration fix`
 
 ---
 
@@ -24,18 +24,20 @@
 ## What Has Been Done
 
 ### Recent commits (top of main):
-1. **Clean up** stale docs, dead env vars, and AI artifacts
-2. **Update** product_spec.md to reflect current state
-3. **Disable** Next.js dev indicators
-4. **Remove** Eruda + FloatingDock + hamburger; add User icon in top bar
-5. **Add** loading skeletons (FeedSkeleton on 5 CSR pages, AdminTableSkeleton)
-6. **Fix** ghost posts — filter deleted posts from public feed + post detail
-7. **Fix** admin auth immunity — Next.js middleware.ts (Edge, cookie only, zero API calls)
-8. **Admin SSR** — convert admin auth from client-side to server-side rendering
-9. **Admin mobile responsiveness** — 12 admin pages mobile-audit, AdminSlideMenu
-10. **Moderator System (M17)** — 31 permissions, 4 presets, 8 CRUD endpoints, 3-layer enforcement
-11. **Post cards v2/v3** — UI polish (numbered circles, author byline, carousel)
-12. **Various fixes** — theme flash, hydration, fonts, bottom nav, slide menu
+1. **[M00.8]** Lower nav hide breakpoint to 980px, uncomment DynamicIsland hydration fix
+2. **[M00.7]** Remove faulty SW, fix responsive nav with plain CSS, comment out bottom nav
+3. **Clean up** stale docs, dead env vars, and AI artifacts
+4. **Update** product_spec.md to reflect current state
+5. **Disable** Next.js dev indicators
+6. **Remove** Eruda + FloatingDock + hamburger; add User icon in top bar
+7. **Add** loading skeletons (FeedSkeleton on 5 CSR pages, AdminTableSkeleton)
+8. **Fix** ghost posts — filter deleted posts from public feed + post detail
+9. **Fix** admin auth immunity — Next.js middleware.ts (Edge, cookie only, zero API calls)
+10. **Admin SSR** — convert admin auth from client-side to server-side rendering
+11. **Admin mobile responsiveness** — 12 admin pages mobile-audit, AdminSlideMenu
+12. **Moderator System (M17)** — 31 permissions, 4 presets, 8 CRUD endpoints, 3-layer enforcement
+13. **Post cards v2/v3** — UI polish (numbered circles, author byline, carousel)
+14. **Various fixes** — theme flash, hydration, fonts, bottom nav, slide menu
 
 ### Milestones completed (all checked ✅):
 M1 (Foundation), M2 (Schema), M3 (Submit), M4 (Feed), M5 (Post Detail), M6 (Categories), M7 (Comments), M9 (Admin Auth), M10 (Admin Dashboard), M11 (User System), M12 (Search), M13 (Arguments), M14 (Hall of Fame), M15 (Identity), M17 (Moderator System)
@@ -79,40 +81,11 @@ Hardcoded JWT, orphaned setInterval, $regex injection, stub 200s, health check o
 
 ---
 
-## Recent Patches
-
-### Enterprise Service Worker (2026-05-22)
-- Added a production-ready service worker with the following features:
-  - Versioned cache name per build (BUILD_ID injected); runtime cache separation
-  - Network-first strategy for fingerprinted static assets (/_next/static, .js, .css)
-  - Stale-while-revalidate for navigation pages to reduce TTFB while keeping assets fresh
-  - Cache-first for images with trimming to limit storage
-  - Offline fallback page (/offline.html) precached
-  - Messaging protocol for SKIP_WAITING and NEW_VERSION_AVAILABLE notifications
-  - Client registration UI updated to prompt users and trigger update via skipWaiting
-
-Files changed:
-- frontend/public/sw.js (new enterprise SW)
-- frontend/public/offline.html (added)
-- frontend/src/app/sw-register.ts (enhanced SW registration)
-- frontend/src/components/SWRegister.tsx (UI prompt for updates)
-
-Status: implemented in working tree. Recommend deploying and validating with a test cohort; additional step: inject BUILD_ID at build time for guaranteed cache-busting across deploys.
-
-### Build-time SW manifest generation (2026-05-23)
-- Added postbuild invocation to generate the SW manifest and optionally inject the BUILD_ID into frontend/public/sw.js at build time.
-- Updated scripts/generate-sw-manifest.js to accept a `--inject-sw` flag; when enabled the script will replace the BUILD_ID declaration in `frontend/public/sw.js` so the service worker uses a deterministic, build-specific cache name.
-- Added GitHub Actions workflow `.github/workflows/frontend-sw.yml` to run frontend lint, typecheck, build, and verify the generated SW artifacts are present and valid.
-
-Files changed for this patch:
-- scripts/generate-sw-manifest.js
-- frontend/package.json (added postbuild script)
-- .github/workflows/frontend-sw.yml (new)
-
-  Status: implemented in working tree. CI: the new workflow runs `pnpm build` in the frontend workspace; it verifies `frontend/public/sw-manifest.json`, `frontend/public/__build_info.json`, and that `frontend/public/sw.js` contains a BUILD_ID or buildId string.
-
 ## Latest Verification
 
-- Frontend `next build` completed successfully and postbuild manifest generator injected BUILD_ID into `frontend/public/static/sw.js`.
-- Playwright SW smoke tests (frontend/tests/playwright/sw.spec.ts) passed when run against a static server serving `frontend/public`.
-- Branch `feat/sw-manifest-inject` pushed to origin (commit 14a61254).
+- **Removed** faulty service worker entirely (13 files deleted) — SW was serving stale cached HTML, no CSS fix could overcome it
+- **Replaced** all Tailwind responsive display utilities with plain CSS classes (`.hide-desktop`, `.show-desktop`, `.show-from-sm`, `.show-from-sm-block`) outside Tailwind's `@layer` to guarantee cascade wins
+- **Fixed** hydration instability: removed empty `<Suspense>` wrapper around `<DynamicIsland>` that caused React to remount and strip className attributes
+- **Lowered** `.hide-desktop`/`.show-desktop` breakpoint from 1024px to 980px to match Chrome Android "Request Desktop Site" viewport behavior
+- **Committed and pushed** to `origin/main` — commits `7aa16346 [M00.7]` and `7958e402 [M00.8]`
+- Frontend typecheck ✅, lint ✅ (0 errors), build compiled ✅, 32/32 static pages generated ✅

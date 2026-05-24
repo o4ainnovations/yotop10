@@ -28,7 +28,7 @@ export function PostCarouselCard({ post }: { post: Post }) {
   return (
     <Link
       href={`/${post.slug}`}
-      className="flex-shrink-0 w-[calc(76vw-12px)] scroll-snap-align-start rounded-2xl border border-white/5 bg-white/5 backdrop-blur-sm overflow-hidden transition hover:border-white/10 focus:outline-none flex flex-col"
+      className="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-sm overflow-hidden transition hover:border-white/10 focus:outline-none flex flex-col"
     >
       {/* Section A: Title + Description */}
       <div className="px-4 pt-4 pb-3">
