@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { Suspense } from 'react';
 import PostDetailClient from './client';
 import { API } from '@/lib/api';
 import { RESERVED_ROUTES } from '@/lib/reservedRoutes';
@@ -71,43 +70,49 @@ export default async function PostDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  let items: Array<{ id: string; rank: number; title: string; justification: string; image_url?: string; source_url?: string }> = [];
-  
   try {
-    const data = await API.getPost(slug);
-    items = data.items || [];
+    const [postData, commentsData] = await Promise.all([
+      API.getPost(slug),
+      API.getComments(slug),
+    ]);
+
+    const { post, items } = postData;
+    const { comments } = commentsData;
+
+    interface ListItemSchema {
+      rank: number;
+      title: string;
+      justification: string;
+    }
+
+    const itemListSchema = items.length > 0 ? {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "itemListElement": items.map((item: ListItemSchema) => ({
+        "@type": "ListItem",
+        "position": item.rank,
+        "name": item.title,
+        "description": item.justification,
+      }))
+    } : null;
+
+    return (
+      <>
+        {itemListSchema && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema).replace(/<\//gi, '<\\/') }}
+          />
+        )}
+        <PostDetailClient
+          slug={slug}
+          initialPost={post}
+          initialItems={items}
+          initialComments={comments}
+        />
+      </>
+    );
   } catch {
     notFound();
   }
-  
-  interface ListItemSchema {
-    rank: number;
-    title: string;
-    justification: string;
-  }
-  
-  const itemListSchema = items.length > 0 ? {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    "itemListElement": items.map((item: ListItemSchema) => ({
-      "@type": "ListItem",
-      "position": item.rank,
-      "name": item.title,
-      "description": item.justification,
-    }))
-  } : null;
-  
-  return (
-    <>
-      {itemListSchema && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema).replace(/<\//gi, '<\\/') }}
-        />
-      )}
-      <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center' }}>Loading...</div>}>
-        <PostDetailClient slug={slug} />
-      </Suspense>
-    </>
-  );
 }

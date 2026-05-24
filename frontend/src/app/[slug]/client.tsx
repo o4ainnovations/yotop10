@@ -61,16 +61,26 @@ interface ReplyFormState {
   };
 }
 
-export default function PostDetailClient({ slug }: { slug: string }) {
+export default function PostDetailClient({
+  slug,
+  initialPost,
+  initialItems,
+  initialComments,
+}: {
+  slug: string;
+  initialPost: Post;
+  initialItems: ListItem[];
+  initialComments: Comment[];
+}) {
   const searchParams = useSearchParams();
   const itemParam = searchParams?.get('item');
   const commentsSectionRef = useRef<HTMLDivElement>(null);
   const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const [post, setPost] = useState<Post | null>(null);
-  const [items, setItems] = useState<ListItem[]>([]);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [post, setPost] = useState<Post>(initialPost);
+  const [items] = useState<ListItem[]>(initialItems);
+  const [comments, setComments] = useState<Comment[]>(initialComments);
+  const [loading] = useState(false);
   const [refreshingComments, setRefreshingComments] = useState(false);
 
   const [commentContent, setCommentContent] = useState('');
@@ -86,11 +96,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
   const fetchComments = useCallback(async () => {
     if (!slug || slug === 'undefined') return;
 
-    if (comments.length === 0) {
-      setLoading(true);
-    } else {
-      setRefreshingComments(true);
-    }
+    setRefreshingComments(true);
 
     try {
       const [postData, commentsData] = await Promise.all([
@@ -101,7 +107,6 @@ export default function PostDetailClient({ slug }: { slug: string }) {
       if (!mountedRef.current) return;
 
       setPost(postData.post);
-      setItems(postData.items as ListItem[]);
       setComments(commentsData.comments);
 
       const allTargets = commentsData.comments.map((c: Comment) => ({ type: 'comment', id: c.id }));
@@ -120,19 +125,27 @@ export default function PostDetailClient({ slug }: { slug: string }) {
       setCommentError('Failed to react. Please try again.');
     } finally {
       if (mountedRef.current) {
-        setLoading(false);
         setRefreshingComments(false);
       }
     }
-  }, [slug, comments.length]);
+  }, [slug]);
 
   useEffect(() => {
     mountedRef.current = true;
-    if (!slug || slug === 'undefined') return;
 
-    fetchComments();
+    // Only fetch reaction state on mount; post/comments already rendered server-side
+    const allTargets = initialComments.map((c) => ({ type: 'comment' as const, id: c.id }));
+    if (allTargets.length > 0) {
+      API.getReactionState(allTargets).then((reactionState) => {
+        if (!mountedRef.current) return;
+        const data = reactionState as { targets: Array<{ type: string; id: string; user_reacted: boolean }> };
+        const reactedIds = new Set<string>(data.targets.filter(t => t.user_reacted).map(t => String(t.id)));
+        setUserReactions(reactedIds);
+      }).catch(() => {});
+    }
+
     return () => { mountedRef.current = false; };
-  }, [slug, fetchComments]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (RESERVED_ROUTES.includes(slug)) {
     return <NotFound />;
@@ -148,7 +161,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
       await API.addComment(slug, commentContent, undefined, selectedItemId || undefined);
       setCommentContent('');
       setSelectedItemId(null);
-      setPost(prev => prev ? { ...prev, comment_count: prev.comment_count + 1 } : null);
+      setPost(prev => ({ ...prev, comment_count: prev.comment_count + 1 }));
       fetchComments();
       commentsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch {
@@ -181,7 +194,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
         [parentCommentId]: { content: '', submitting: false }
       }));
       setReplyTo(null);
-      setPost(prev => prev ? { ...prev, comment_count: prev.comment_count + 1 } : null);
+      setPost(prev => ({ ...prev, comment_count: prev.comment_count + 1 }));
       fetchComments();
     } catch {
       setReplyForms(prev => ({
