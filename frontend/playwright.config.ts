@@ -10,10 +10,8 @@ export default defineConfig({
   use: {
     baseURL: 'http://127.0.0.1:3000',
     trace: 'on-first-retry',
-    // Allow service workers in the test browser context so SW registration and
-    // offline behaviors can be tested. Playwright defaults to blocking SW in
-    // some environments.
-    serviceWorkers: 'allow',
+    // Block service workers in test browser context to avoid stale cache issues
+    serviceWorkers: 'block',
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },

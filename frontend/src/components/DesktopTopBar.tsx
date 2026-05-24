@@ -27,7 +27,7 @@ export default function DesktopTopBar() {
           </Link>
         </div>
 
-        <div className="hidden sm:flex flex-1 mx-4 justify-center">
+        <div className="show-from-sm flex-1 mx-4 justify-center">
           <input
             type="text"
             value={query}
@@ -40,13 +40,13 @@ export default function DesktopTopBar() {
 
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <SlideMenuTrigger />
-          <div className="hidden sm:block">
+          <div className="show-from-sm-block">
             <HeaderBells />
           </div>
 
           <Link
             href="/a"
-            className="hidden lg:flex items-center justify-center w-9 h-9 rounded-full bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10 transition focus:outline-none"
+            className="show-desktop items-center justify-center w-9 h-9 rounded-full bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10 transition focus:outline-none"
             aria-label="Profile"
           >
             <Icon name="User" size={18} />

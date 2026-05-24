@@ -8,7 +8,6 @@ import AnalyticsBeacon from "@/components/AnalyticsBeacon";
 import { DynamicIsland } from "@/components/DynamicIsland";
 import DesktopTopBar from "@/components/DesktopTopBar";
 import { SlideMenuRouter } from "@/components/SlideMenuRouter";
-import SWRegister from "@/components/SWRegister";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 
 const anton = Anton({ weight: '400', subsets: ['latin'], display: 'swap', variable: '--font-display' });
@@ -60,17 +59,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AnalyticsBeacon />
         </Suspense>
         <Suspense>
-          <SWRegister />
-        </Suspense>
-        <Suspense>
           <PWAInstallPrompt />
         </Suspense>
 
-        <Suspense>
-          <div className="lg:hidden">
-            <DynamicIsland />
-          </div>
-        </Suspense>
+        {/* <Suspense>
+          <DynamicIsland />
+        </Suspense> */}
       </body>
     </html>
   );

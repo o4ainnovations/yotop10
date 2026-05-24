@@ -10,7 +10,7 @@ export function SlideMenuTrigger() {
     <button
       onClick={() => setOpen(true)}
       onPointerDown={(e) => { e.preventDefault(); setOpen(true); }}
-      className="lg:hidden text-zinc-400 hover:text-white transition min-w-11 min-h-11 flex items-center justify-center focus:outline-none"
+      className="hide-desktop text-zinc-400 hover:text-white transition min-w-11 min-h-11 items-center justify-center focus:outline-none"
       aria-label="Menu"
     >
       <Icon name="Menu" size={22} />

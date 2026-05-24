@@ -5,7 +5,6 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "postbuild": "node ../scripts/generate-sw-manifest.js --nextDir=./.next --publicDir=./public --outDir=./public --inject-sw",
     "start": "next start",
     "lint": "ESLINT_USE_FLAT_CONFIG=false eslint src/",
     "typecheck": "tsc --noEmit",
