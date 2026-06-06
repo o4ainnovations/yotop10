@@ -538,7 +538,7 @@ export default function SubmitClient() {
                 <option value="">Select a category...</option>
                 {categories.map(cat => (
                   <option key={cat.id} value={cat.slug}>
-                    {cat.icon || ''} {cat.name}
+                    {cat.name}
                   </option>
                 ))}
               </select>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { Icon, type LucideIconName } from '@/components/icons/Icon';
 
 interface Category {
   id: string;
@@ -82,7 +83,7 @@ export default function CategoriesClient() {
               className="group block rounded-2xl border border-white/5 bg-white/5 p-5 backdrop-blur-sm transition-all duration-300 hover:border-orange-500/30 hover:bg-white/5 hover:shadow-lg hover:shadow-orange-500/5 sm:p-6"
             >
               <h2 className="mb-2 flex items-center gap-2 text-lg font-bold text-white">
-                {cat.icon && <span>{cat.icon}</span>}
+                {cat.icon && <Icon name={cat.icon as LucideIconName} size={20} />}
                 {cat.name}
               </h2>
               {cat.description && (

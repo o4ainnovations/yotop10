@@ -9,7 +9,7 @@ const parentCategories = [
     name: 'Technology & Digital',
     slug: 'technology',
     description: 'All things tech, software, hardware, and digital innovation',
-    icon: '💻',
+    icon: 'Monitor',
     children: [
       'Artificial Intelligence (AI)', 'Machine Learning', 'Cybersecurity', 'Cloud Computing',
       'Blockchain & Cryptocurrency', 'Software Development', 'Web Development', 'Mobile Apps',
@@ -25,7 +25,7 @@ const parentCategories = [
     name: 'Health & Wellness',
     slug: 'health',
     description: 'Physical health, mental wellness, fitness, and medical topics',
-    icon: '🏥',
+    icon: 'HeartPulse',
     children: [
       'Fitness & Exercise', 'Nutrition & Diet', 'Mental Health', 'Yoga & Meditation',
       'Weight Loss', 'Bodybuilding', 'Cardio & Running', 'Sports Medicine',
@@ -41,7 +41,7 @@ const parentCategories = [
     name: 'Sports & Athletics',
     slug: 'sports',
     description: 'All sports, athletic competitions, and fitness activities',
-    icon: '⚽',
+    icon: 'Trophy',
     children: [
       'Football (Soccer)', 'Cricket', 'Basketball', 'Hockey (Field & Ice)',
       'Tennis', 'Volleyball', 'Table Tennis', 'Badminton',
@@ -57,7 +57,7 @@ const parentCategories = [
     name: 'Business & Finance',
     slug: 'business',
     description: 'Entrepreneurship, investing, markets, and financial topics',
-    icon: '💼',
+    icon: 'Briefcase',
     children: [
       'Entrepreneurship', 'Startups', 'Venture Capital', 'Stock Market',
       'Real Estate Investing', 'Personal Finance', 'Banking', 'Insurance',
@@ -73,7 +73,7 @@ const parentCategories = [
     name: 'Lifestyle & Leisure',
     slug: 'lifestyle',
     description: 'Travel, food, fashion, hobbies, and everyday living',
-    icon: '🌴',
+    icon: 'Palmtree',
     children: [
       'Travel Destinations', 'Hotels & Resorts', 'Airlines & Flights', 'Cruises',
       'Food & Restaurants', 'Cooking & Recipes', 'Wine & Spirits', 'Coffee & Tea',
@@ -89,7 +89,7 @@ const parentCategories = [
     name: 'Creative Arts & Entertainment',
     slug: 'creative',
     description: 'Art, music, film, literature, and creative expression',
-    icon: '🎨',
+    icon: 'Palette',
     children: [
       'Painting & Drawing', 'Sculpture', 'Digital Art', 'Graphic Design',
       'Animation', 'Film Production', 'Music Production', 'Songwriting',
@@ -105,7 +105,7 @@ const parentCategories = [
     name: 'Education & Self-Development',
     slug: 'education',
     description: 'Learning, skills, personal growth, and academic topics',
-    icon: '📚',
+    icon: 'BookOpen',
     children: [
       'Online Learning', 'Universities', 'K-12 Education', 'Language Learning',
       'Professional Certifications', 'Coding Bootcamps', 'Study Tips', 'Career Development',
@@ -121,7 +121,7 @@ const parentCategories = [
     name: 'Home & Family',
     slug: 'home',
     description: 'Home improvement, family life, and domestic topics',
-    icon: '🏠',
+    icon: 'Home',
     children: [
       'Home Improvement', 'DIY Projects', 'Furniture', 'Appliances',
       'Smart Home', 'Home Security', 'Cleaning & Organization', 'Laundry',
@@ -137,7 +137,7 @@ const parentCategories = [
     name: 'Professional & Industrial',
     slug: 'professional',
     description: 'Industry, manufacturing, trades, and professional services',
-    icon: '🏭',
+    icon: 'Factory',
     children: [
       'Manufacturing', 'Construction', 'Engineering', 'Architecture',
       'Automotive', 'Aerospace', 'Energy & Utilities', 'Mining',
@@ -153,7 +153,7 @@ const parentCategories = [
     name: 'Social & Global Issues',
     slug: 'social',
     description: 'Society, politics, environment, and global challenges',
-    icon: '🌍',
+    icon: 'Globe',
     children: [
       'Climate Change', 'Renewable Energy', 'Conservation', 'Pollution',
       'Human Rights', 'Social Justice', 'Equality', 'Immigration',
@@ -169,7 +169,7 @@ const parentCategories = [
     name: 'Niche Hobbies & Collections',
     slug: 'nichehobbies',
     description: 'Specialized interests, collecting, and unique pastimes',
-    icon: '🎯',
+    icon: 'Target',
     children: [
       'Coin Collecting', 'Stamp Collecting', 'Antiques', 'Vintage Items',
       'Trading Cards', 'Action Figures', 'Model Building', 'RC Vehicles',
