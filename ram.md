@@ -1,9 +1,9 @@
 # RAM.md — Random Access Memory: Current Task State
 
-> **Last updated**: 2026-05-24
+> **Last updated**: 2026-06-06
 > **Working tree**: Clean — changes committed and pushed
 > **Branch**: main → up to date with origin/main
-> **Latest commit**: `7958e402 [M00.8] Lower nav hide breakpoint to 980px, uncomment DynamicIsland hydration fix`
+> **Latest commit**: `[DPLOY] Remove preloaders, style admin setup page, production deployment`
 
 ---
 

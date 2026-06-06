@@ -1,42 +1,65 @@
 services:
 
-  # ─── Unified App (Next.js + Express) ──────────────────────────
-  app:
+  frontend:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: yotop10_app
+      dockerfile: Dockerfile.frontend
+    container_name: yotop10_frontend
     restart: unless-stopped
+    mem_limit: 512m
+    cpus: 1.0
     ports:
       - "3100:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.yotop10.com}
+      - INTERNAL_API_URL=http://backend:8000/api
+    tmpfs:
+      - /app/.next/cache:uid=1001,gid=1001
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/', r => { process.exit(r.statusCode !== 200 ? 1 : 0) }).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - yotop10_net
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: yotop10_backend
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: 1.0
+    ports:
       - "8100:8000"
     environment:
-      - PORT=3000
-      - BACKEND_PORT=8000
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-      - INTERNAL_API_URL=http://localhost:8000/api
+      - NODE_ENV=production
+      - PORT=8000
       - MONGODB_URI=mongodb://mongodb:27017/yotop10
       - REDIS_URL=redis://redis:6379
       - ELASTICSEARCH_URL=http://elasticsearch:9200
       - JWT_SECRET=${JWT_SECRET}
-      - CORS_ORIGINS=${CORS_ORIGINS}
+      - CORS_ORIGINS=${CORS_ORIGINS:-https://yotop10.com,https://www.yotop10.com}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.yotop10.com}
+      - INTERNAL_API_URL=http://backend:8000/api
+    tmpfs:
+      - /app/uploads:uid=1001,gid=1001,size=256m
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
     networks:
       - yotop10_net
-      - traefik-public
-    extra_hosts:
-      - "yotop10.fun:host-gateway"
-      - "api.yotop10.fun:host-gateway"
-      - "www.yotop10.fun:host-gateway"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.yotop10-app.rule=Host(`yotop10.fun`)"
-      - "traefik.http.routers.yotop10-app.entrypoints=websecure"
-      - "traefik.http.routers.yotop10-app.tls.certresolver=letsencrypt"
-      - "traefik.http.services.yotop10-app.loadbalancer.server.port=3000"
-      - "traefik.http.routers.yotop10-api.rule=Host(`yotop10.fun`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.yotop10-api.entrypoints=websecure"
-      - "traefik.http.routers.yotop10-api.tls.certresolver=letsencrypt"
-      - "traefik.http.services.yotop10-api.loadbalancer.server.port=8000"
     depends_on:
       mongodb:
         condition: service_started
@@ -45,79 +68,71 @@ services:
       elasticsearch:
         condition: service_healthy
 
-  # ─── MongoDB ─────────────────────────────────────────────────────
   mongodb:
     image: mongo:7
     container_name: yotop10_mongodb
     restart: unless-stopped
+    mem_limit: 1g
+    cpus: 1.0
+    command: ["mongod", "--wiredTigerCacheSizeGB", "0.25"]
     environment:
       - MONGO_INITDB_DATABASE=yotop10
     volumes:
       - mongodb_data:/data/db
     networks:
       - yotop10_net
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
-  # ─── Redis ───────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: yotop10_redis
     restart: unless-stopped
-    command: redis-server --save 60 1 --loglevel warning
+    mem_limit: 256m
+    cpus: 0.5
+    command: redis-server --appendonly yes --save 900 1 --save 300 10 --save 60 10000 --loglevel warning
     volumes:
       - redis_data:/data
     networks:
       - yotop10_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
-  # ─── Elasticsearch ────────────────────────────────────────────────
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
     container_name: yotop10_elasticsearch
     restart: unless-stopped
+    mem_limit: 1g
+    cpus: 1.0
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - cluster.routing.allocation.disk.threshold_enabled=false
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
     networks:
       - yotop10_net
     healthcheck:
       test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -vq 'red'"]
-      interval: 10s
-      timeout: 5s
+      interval: 30s
+      timeout: 10s
       retries: 5
-
-  # ─── MinIO (Image Storage) ─────────────────────
-  minio:
-    image: minio/minio:latest
-    container_name: yotop10_minio
-    restart: unless-stopped
-    command: server /data --console-address ":9001"
-    environment:
-      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY}
-      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY}
-      - MINIO_BROWSER_REDIRECT_URL=https://cdn.yotop10.fun/minio-console
-    volumes:
-      - minio_data:/data
-    networks:
-      - yotop10_net
-      - traefik-public
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.yotop10-cdn.rule=Host(`cdn.yotop10.fun`)"
-      - "traefik.http.routers.yotop10-cdn.entrypoints=websecure"
-      - "traefik.http.routers.yotop10-cdn.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.yotop10-cdn.service=yotop10-cdn-svc"
-      - "traefik.http.services.yotop10-cdn-svc.loadbalancer.server.port=9000"
+      start_period: 30s
 
 volumes:
   mongodb_data:
   redis_data:
   elasticsearch_data:
-  minio_data:
 
 networks:
   yotop10_net:
-    internal: false
-  traefik-public:
-    external: true
+    driver: bridge
