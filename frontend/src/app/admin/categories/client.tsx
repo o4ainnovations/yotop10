@@ -191,7 +191,7 @@ export default function AdminCategoriesClient() {
               return <div key={p.id}>
                 <div onClick={() => { toggleExpanded(p.id); selectCat(p); }}
                   className={`px-2.5 py-2.5 cursor-pointer rounded-lg font-bold text-sm2 flex items-center gap-1.5 text-white min-h-11 ${selected?.id === p.id ? 'bg-orange-500/10' : 'bg-transparent'}`}>
-                  <span className="text-2xs text-white/40 w-3 flex-shrink-0">{isOpen ? '\u25BC' : '\u25B6'}</span>
+                  <span className="text-2xs text-white/40 w-3 flex-shrink-0">{isOpen ? <Icon name="ChevronDown" size={12} /> : <Icon name="ChevronRight" size={12} />}</span>
                   <span><Icon name="Folder" size={14} /></span> <span className="flex-1 truncate">{p.name}</span>
                   <span className="text-3xs text-white/40 font-mono tabular-nums flex-shrink-0">{p.post_count}</span>
                   {p.is_featured && <Icon name="Star" size={10} color="#f57c00" />}
@@ -358,7 +358,7 @@ export default function AdminCategoriesClient() {
             <h3 className="text-sm font-bold mb-2 text-white">Merge Category</h3>
             <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
               <select value={mergeSource} onChange={e => setMergeSource(e.target.value)} className={inputClass}><option value="">Source...</option>{allCats.map(c => <option key={c.id} value={c.id} className="bg-zinc-900">{c.name}</option>)}</select>
-              <span className="text-white/40 text-center py-1">{'\u2192'}</span>
+              <span className="text-white/40 flex items-center justify-center py-1"><Icon name="ArrowRight" size={16} /></span>
               <select value={mergeTarget} onChange={e => setMergeTarget(e.target.value)} className={inputClass}><option value="">Target...</option>{allCats.map(c => <option key={c.id} value={c.id} className="bg-zinc-900">{c.name}</option>)}</select>
               <button onClick={handleMerge} className={primaryBtnClass()}>Merge</button>
             </div>

@@ -98,7 +98,7 @@ export default function StatisticsDashboardClient() {
       <div className="bg-white/5 border border-white/5 rounded-2xl mb-3 overflow-hidden">
         <button onClick={() => toggle(scope)} className="w-full text-left px-4 py-3.5 bg-transparent border-none cursor-pointer text-base2 font-bold flex justify-between items-center text-white min-h-11 hover:bg-white/5 transition-colors">
           <span className="truncate">{titleIcon && <><Icon name={titleIcon} size={16} color="var(--color-orange-400)" />{' '}</>}{title}{hint}</span>
-          <span className="text-white/40 flex-shrink-0 ml-2">{p.open ? '\u25BE' : '\u25B8'}</span>
+          <span className="text-white/40 flex-shrink-0 ml-2">{p.open ? <Icon name="ChevronDown" size={16} /> : <Icon name="ChevronRight" size={16} />}</span>
         </button>
         {p.open && <div className="p-4 sm:p-5">{p.loading ? <p className="text-white/40">Loading...</p> : p.error ? <p className="text-red-500">{p.error}</p> : children}</div>}
       </div>
@@ -219,17 +219,18 @@ export default function StatisticsDashboardClient() {
       <Panel scope="trends" titleIcon="TrendingDown" title="Trends with Deltas">
         {panels.trends.data ? ((): React.ReactNode => { const d = panels.trends.data as Record<string, unknown>; const weeks = arr(d.weeks) as Array<Record<string, unknown>>;
           const arrow = (dir: string) => dir === 'up' ? '\u2191' : dir === 'down' ? '\u2193' : '\u2192';
+          const arrowIcon = (dir: string) => dir === 'up' ? <Icon name="ArrowUp" size={12} className="inline" /> : dir === 'down' ? <Icon name="ArrowDown" size={12} className="inline" /> : <Icon name="ArrowRight" size={12} className="inline" />;
           const c = (col: string) => col === 'green' ? 'text-green-500' : col === 'red' ? 'text-red-500' : 'text-white/40';
           return <>
             {weeks.map(w => { const del = w.deltas as Record<string, { delta_pct: number; direction: string; color: string }> | undefined;
               return <L key={w.date as string}>
                 <span className="text-white font-bold">{w.date as string}</span>
                 {del && <span className="text-xs ml-2.5">
-                  Posts <span className={c(del.posts_total?.color || 'grey')}>{arrow(del.posts_total?.direction || 'flat')}{del.posts_total?.delta_pct || 0}%</span> ·
-                  Submitted <span className={c(del.posts_submitted?.color || 'grey')}>{arrow(del.posts_submitted?.direction || 'flat')}{del.posts_submitted?.delta_pct || 0}%</span> ·
-                  Comments <span className={c(del.comments_total?.color || 'grey')}>{arrow(del.comments_total?.direction || 'flat')}{del.comments_total?.delta_pct || 0}%</span> ·
-                  Users <span className={c(del.users_total?.color || 'grey')}>{arrow(del.users_total?.direction || 'flat')}{del.users_total?.delta_pct || 0}%</span> ·
-                  Pending <span className={c(del.pending?.color || 'grey')}>{arrow(del.pending?.direction || 'flat')}{del.pending?.delta_pct || 0}%</span>
+                  Posts <span className={c(del.posts_total?.color || 'grey')}>{arrowIcon(del.posts_total?.direction || 'flat')}{del.posts_total?.delta_pct || 0}%</span> ·
+                  Submitted <span className={c(del.posts_submitted?.color || 'grey')}>{arrowIcon(del.posts_submitted?.direction || 'flat')}{del.posts_submitted?.delta_pct || 0}%</span> ·
+                  Comments <span className={c(del.comments_total?.color || 'grey')}>{arrowIcon(del.comments_total?.direction || 'flat')}{del.comments_total?.delta_pct || 0}%</span> ·
+                  Users <span className={c(del.users_total?.color || 'grey')}>{arrowIcon(del.users_total?.direction || 'flat')}{del.users_total?.delta_pct || 0}%</span> ·
+                  Pending <span className={c(del.pending?.color || 'grey')}>{arrowIcon(del.pending?.direction || 'flat')}{del.pending?.delta_pct || 0}%</span>
                 </span>}
               </L>;
             })}
@@ -241,7 +242,7 @@ export default function StatisticsDashboardClient() {
         {panels.quality.data ? ((): React.ReactNode => { const d = panels.quality.data as Record<string, unknown>; const corr = arr(d.intro_length_correlation) as Array<{ bucket: string; count: number; avg_comments: number; avg_fire: number }>;
           return <>
             <L>Revision rate: <span className="text-white font-bold">{n(d.revision_rate)}%</span> of submissions requested revision.</L>
-            <H3>Intro Length \u2192 Comments/Fire</H3>
+            <H3>Intro Length <Icon name="ArrowRight" size={14} className="inline" /> Comments/Fire</H3>
             {corr.map(c => <L key={c.bucket}><span className="text-white font-bold">{c.bucket}</span>: {c.count} posts, avg {c.avg_comments} comments, avg {c.avg_fire} fire</L>)}
           </>;
         })() : null}
@@ -278,7 +279,7 @@ export default function StatisticsDashboardClient() {
             {hr.length > 0 && <><H3>By Hour (7d)</H3>{hr.map(h => <L key={h.hour}><span className="text-white font-bold">{h.hour}:00</span>: {h.count} submissions</L>)}</>}
             {tm && <><H3>Type Migration</H3>
               <L>Multi-type users: <span className="text-white font-bold">{n(tm.multi_type_users)}</span>. Switched types: <span className="text-white font-bold">{n(tm.switched_types)}</span>.</L>
-              {(arr(tm.paths) as Array<{ from: string; to: string; count: number }>).map(p => <L key={`${p.from}-${p.to}`}><span className="text-white font-bold">{p.from}</span> \u2192 <span className="text-white font-bold">{p.to}</span>: {p.count} users</L>)}
+              {(arr(tm.paths) as Array<{ from: string; to: string; count: number }>).map(p => <L key={`${p.from}-${p.to}`}><span className="text-white font-bold">{p.from}</span> <Icon name="ArrowRight" size={14} className="inline" /> <span className="text-white font-bold">{p.to}</span>: {p.count} users</L>)}
             </>}
           </>;
         })() : null}
@@ -288,7 +289,7 @@ export default function StatisticsDashboardClient() {
         {panels.lifecycle.data ? ((): React.ReactNode => { const d = panels.lifecycle.data as Record<string, unknown>; const lc = arr(d.lifecycle) as Array<{ bucket: string; count: number }>; const drop = arr(d.drop_off_distribution) as Array<{ posts_made: number; users: number }>;
           return <>
             <L>Total posters: <span className="text-white font-bold">{n(d.total_posters)}</span>. Avg lifetime posts: <span className="text-white font-bold">{n(d.avg_lifetime_posts)}</span>.</L>
-            <L>Activation gap (creation \u2192 first post): <span className="text-white font-bold">{n(d.activation_gap_hours)}h</span>. Converted within 24h: <span className="text-white font-bold">{n(d.converted_within_24h)}</span>.</L>
+            <L>Activation gap (creation <Icon name="ArrowRight" size={14} className="inline" /> first post): <span className="text-white font-bold">{n(d.activation_gap_hours)}h</span>. Converted within 24h: <span className="text-white font-bold">{n(d.converted_within_24h)}</span>.</L>
             <L>One-and-done rate: <span className="text-white font-bold">{n(d.one_and_done_pct)}%</span> (posted once, never returned).</L>
             {lc.length > 0 && <><H3>Time to Second Post</H3>{lc.map(b => <L key={b.bucket}><span className="text-white font-bold">{b.bucket}</span>: {b.count} users</L>)}</>}
             {drop.length > 0 && <><H3>Drop-off Distribution</H3>{drop.map(b => <L key={b.posts_made}>{b.posts_made} post(s): {b.users} users</L>)}</>}

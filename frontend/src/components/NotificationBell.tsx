@@ -174,7 +174,7 @@ export default function NotificationBell() {
                           className="bg-transparent border-none text-white/30 cursor-pointer text-base px-1 py-0 flex-shrink-0 hover:text-white/60"
                           title="Dismiss"
                         >
-                          ×
+                          <Icon name="X" size={14} />
                         </button>
                       )}
                     </div>
@@ -185,7 +185,7 @@ export default function NotificationBell() {
 
             <div className="px-4 py-2 border-t border-white/5 text-center">
               <Link href="/notifications" className="text-sm2 text-orange-400 no-underline hover:text-orange-300" onClick={() => setOpen(false)}>
-                See all notifications →
+                See all notifications <Icon name="ArrowRight" size={14} className="inline" />
               </Link>
             </div>
           </div>

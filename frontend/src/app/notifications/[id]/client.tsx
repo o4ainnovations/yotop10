@@ -69,7 +69,7 @@ export default function NotificationDetailClient() {
         It may have been deleted, expired, or you don&rsquo;t have access to it.
       </p>
       <button onClick={() => router.push('/notifications')} className="mt-3 px-4 py-2 bg-blue-700 text-white border-none rounded-xl cursor-pointer text-sm font-bold min-h-10">
-        ← Back to notifications
+        <Icon name="ArrowLeft" size={16} className="inline mr-1" /> Back to notifications
       </button>
     </div>
   );
@@ -82,7 +82,7 @@ export default function NotificationDetailClient() {
   return (
     <div className="max-w-[700px] mx-auto px-3 sm:px-5 py-5">
       <button onClick={() => router.push('/notifications')} className="bg-transparent border-none text-white/50 cursor-pointer text-sm2 mb-5 hover:text-white/80">
-        ← Back to notifications
+        <Icon name="ArrowLeft" size={16} className="inline mr-1" /> Back to notifications
       </button>
 
       <div className="border border-white/10 rounded-xl p-5 bg-white/5">
@@ -133,7 +133,7 @@ export default function NotificationDetailClient() {
               <span className="text-xs text-white/30" suppressHydrationWarning>{formatDate(n.created_at)} {formatTime(n.created_at)}</span>
               {n.post_id && (
                 <a href={`/${n.post_id}`} className="text-orange-400 text-sm2 no-underline hover:text-orange-300">
-                  View post →
+                  View post <Icon name="ArrowRight" size={14} className="inline" />
                 </a>
               )}
             </div>

@@ -168,7 +168,7 @@ export default function AdminAlertBell() {
                   </button>
                 )}
                 <Link href="/admin/alerts" style={{ color: '#8D6E63', fontSize: '12px', textDecoration: 'none' }} onClick={() => setOpen(false)}>
-                  View all →
+                  View all <Icon name="ArrowRight" size={12} />
                 </Link>
               </div>
             </div>
@@ -205,7 +205,7 @@ export default function AdminAlertBell() {
                         style={{ background: 'none', border: 'none', color: '#8D6E63', cursor: 'pointer', fontSize: '14px', padding: 0, lineHeight: 1 }}
                         title="Dismiss"
                       >
-                        ×
+                        <Icon name="X" size={16} />
                       </button>
                     </div>
                   </div>

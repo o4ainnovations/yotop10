@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Icon } from '@/components/icons/Icon';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,7 +9,7 @@ export default function GlobalNotFound() {
       <h1>404</h1>
       <h2>Page Not Found</h2>
       <p>The page you are looking for does not exist.</p>
-      <p><Link href="/">← Go back home</Link></p>
+      <p><Link href="/"><Icon name="ArrowLeft" size={16} className="inline mr-1" /> Go back home</Link></p>
     </div>
   );
 }

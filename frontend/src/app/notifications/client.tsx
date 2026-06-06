@@ -115,7 +115,7 @@ export default function NotificationsClient() {
                     className="bg-transparent border-none text-white/30 cursor-pointer text-base px-2 py-1 flex-shrink-0 hover:text-white/60"
                     title="Dismiss"
                   >
-                    ×
+                    <Icon name="X" size={16} />
                   </button>
                 )}
               </div>

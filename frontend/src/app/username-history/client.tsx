@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { Icon } from '@/components/icons/Icon';
 import { API } from '@/lib/api';
 
 interface HistoryEntry {
@@ -36,7 +37,7 @@ export default function UsernameHistoryClient() {
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 20px' }}>
       <div>
-        <Link href="/">← Home</Link>
+        <Link href="/"><Icon name="ArrowLeft" size={16} className="inline mr-1" /> Home</Link>
       </div>
 
       <h1>Username History</h1>
