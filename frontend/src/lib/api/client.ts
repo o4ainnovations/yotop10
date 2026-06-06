@@ -1,6 +1,6 @@
 export function getBaseUrl(): string {
   if (typeof window === 'undefined') {
-    return process.env.INTERNAL_API_URL || 'http://localhost:8000/api';
+    return process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_INTERNAL_API_URL || 'http://backend:8000/api';
   }
   return '/api';
 }

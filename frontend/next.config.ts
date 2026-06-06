@@ -19,6 +19,9 @@ const nextConfig: NextConfig = {
   devIndicators: {
     buildActivity: false,
   },
+  env: {
+    INTERNAL_API_URL: process.env.INTERNAL_API_URL || 'http://backend:8000/api',
+  },
 };
 
 export default nextConfig;

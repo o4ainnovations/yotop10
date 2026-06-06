@@ -16,6 +16,7 @@ services:
       - HOSTNAME=0.0.0.0
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.yotop10.com}
       - INTERNAL_API_URL=http://backend:8000/api
+      - NEXT_PUBLIC_INTERNAL_API_URL=http://backend:8000/api
     tmpfs:
       - /app/.next/cache:uid=1001,gid=1001
     healthcheck:
