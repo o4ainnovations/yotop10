@@ -46,6 +46,7 @@ export default function SearchClient() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [suggestions, setSuggestions] = useState<{ titles: AutocompleteItem[]; categories: AutocompleteItem[] }>({ titles: [], categories: [] });
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -108,12 +109,38 @@ export default function SearchClient() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  const allSuggestionItems = [
+    ...(suggestions.titles || []).map(t => ({ ...t, _type: 'title' as const, label: t.title })),
+    ...(suggestions.categories || []).map(c => ({ ...c, _type: 'category' as const, label: c.name })),
+  ];
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') setShowSuggestions(false);
-    if (e.key === 'Enter') { setShowSuggestions(false); search(page); }
+    if (e.key === 'Escape') { setShowSuggestions(false); return; }
+    if (e.key === 'ArrowDown' && showSuggestions && allSuggestionItems.length > 0) {
+      e.preventDefault();
+      setActiveSuggestionIndex(prev => Math.min(prev + 1, allSuggestionItems.length - 1));
+      return;
+    }
+    if (e.key === 'ArrowUp' && showSuggestions && allSuggestionItems.length > 0) {
+      e.preventDefault();
+      setActiveSuggestionIndex(prev => Math.max(prev - 1, -1));
+      return;
+    }
+    if (e.key === 'Enter') {
+      if (showSuggestions && activeSuggestionIndex >= 0 && allSuggestionItems[activeSuggestionIndex]) {
+        const selected = allSuggestionItems[activeSuggestionIndex].label || '';
+        setQ(selected);
+        setShowSuggestions(false);
+        setPage(1);
+        setActiveSuggestionIndex(-1);
+      } else {
+        setShowSuggestions(false);
+        search(page);
+      }
+    }
   };
 
-  const selectSuggestion = (text: string) => { setQ(text); setShowSuggestions(false); setPage(1); };
+  const selectSuggestion = (text: string) => { setQ(text); setShowSuggestions(false); setPage(1); setActiveSuggestionIndex(-1); };
 
   const allResults = [...(results?.posts || []).map(p => ({ ...p, _type: 'post' as const })), ...(results?.comments || []).map(c => ({ ...c, _type: 'comment' as const }))].sort((a, b) => b._score - a._score);
   const activeResults = activeTab === 'all' ? allResults : activeTab === 'posts' ? (results?.posts || []) : (results?.comments || []);
@@ -161,38 +188,55 @@ export default function SearchClient() {
               ref={dropdownRef}
               className="absolute left-0 right-0 top-full z-50 mt-2 max-h-96 overflow-auto rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl"
             >
-              {suggestions.titles.length > 0 && (
-                <div>
-                  <div className="px-3 py-2 text-3xs font-semibold uppercase tracking-wider text-zinc-600 sm:px-4">
-                    Posts
-                  </div>
-                  {suggestions.titles.map(t => (
-                    <div
-                      key={t.slug}
-                      onClick={() => selectSuggestion(t.title || '')}
-                      className="cursor-pointer border-t border-white/5 px-3 py-2.5 text-sm text-zinc-300 transition hover:bg-white/5 sm:px-4"
-                    >
-                      <SafeHTML html={t.highlight || t.title || ''} variant="highlight" />
+              <div role="listbox" aria-label="Search suggestions">
+                {suggestions.titles.length > 0 && (
+                  <div>
+                    <div className="px-3 py-2 text-3xs font-semibold uppercase tracking-wider text-zinc-600 sm:px-4">
+                      Posts
                     </div>
-                  ))}
-                </div>
-              )}
-              {suggestions.categories.length > 0 && (
-                <div>
-                  <div className="border-t border-white/10 px-3 py-2 text-3xs font-semibold uppercase tracking-wider text-zinc-600 sm:px-4">
-                    Categories
+                    {suggestions.titles.map((t, i) => (
+                      <div
+                        key={t.slug}
+                        role="option"
+                        aria-selected={i === activeSuggestionIndex}
+                        tabIndex={-1}
+                        onClick={() => selectSuggestion(t.title || '')}
+                        onMouseEnter={() => setActiveSuggestionIndex(i)}
+                        className={`cursor-pointer border-t border-white/5 px-3 py-2.5 text-sm transition sm:px-4 ${
+                          i === activeSuggestionIndex ? 'bg-white/10 text-white' : 'text-zinc-300 hover:bg-white/5'
+                        }`}
+                      >
+                        <SafeHTML html={t.highlight || t.title || ''} variant="highlight" />
+                      </div>
+                    ))}
                   </div>
-                  {suggestions.categories.map(c => (
-                    <div
-                      key={c.slug}
-                      onClick={() => selectSuggestion(c.name || '')}
-                      className="cursor-pointer border-t border-white/5 px-3 py-2.5 text-sm text-zinc-300 transition hover:bg-white/5 sm:px-4"
-                    >
-                      <SafeHTML html={c.highlight || c.name || ''} variant="highlight" />
+                )}
+                {suggestions.categories.length > 0 && (
+                  <div>
+                    <div className="border-t border-white/10 px-3 py-2 text-3xs font-semibold uppercase tracking-wider text-zinc-600 sm:px-4">
+                      Categories
                     </div>
-                  ))}
-                </div>
-              )}
+                    {suggestions.categories.map((c, i) => {
+                      const idx = (suggestions.titles?.length || 0) + i;
+                      return (
+                        <div
+                          key={c.slug}
+                          role="option"
+                          aria-selected={idx === activeSuggestionIndex}
+                          tabIndex={-1}
+                          onClick={() => selectSuggestion(c.name || '')}
+                          onMouseEnter={() => setActiveSuggestionIndex(idx)}
+                          className={`cursor-pointer border-t border-white/5 px-3 py-2.5 text-sm transition sm:px-4 ${
+                            idx === activeSuggestionIndex ? 'bg-white/10 text-white' : 'text-zinc-300 hover:bg-white/5'
+                          }`}
+                        >
+                          <SafeHTML html={c.highlight || c.name || ''} variant="highlight" />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

@@ -116,27 +116,13 @@ export default function UserProfileClient({ initialProfile }: UserProfileClientP
     setUploadingImage(true);
     setImageError(null);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const uploadRes = await fetch('/api/upload/profile', {
-        method: 'POST', body: formData, credentials: 'include',
-      });
-      if (!uploadRes.ok) {
-        const uploadErr = await uploadRes.text();
-        let msg = 'Upload failed. Please try again.';
-        try { const parsed = JSON.parse(uploadErr); if (parsed.error) msg = parsed.error; } catch {}
-        setImageError(msg);
-        return;
-      }
-      const { url } = await uploadRes.json() as { success: boolean; url: string };
-      await fetch(`/api/users/me`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profile_image_url: url }), credentials: 'include',
-      });
+      const uploadRes = await API.uploadProfileImage(file) as { success: boolean; url: string };
+      await API.updateProfileImage(uploadRes.url);
       await fetchAuthUser();
-      setProfile((prev) => prev ? { ...prev, profile_image_url: url } : prev);
-    } catch {
-      setImageError('Upload failed. Please try again.');
+      setProfile((prev) => prev ? { ...prev, profile_image_url: uploadRes.url } : prev);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Upload failed. Please try again.';
+      setImageError(msg);
     } finally {
       setUploadingImage(false);
     }
