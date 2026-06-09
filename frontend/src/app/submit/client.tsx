@@ -51,10 +51,11 @@ interface FormErrors {
 }
 
 interface DraftData {
+  post_type?: string;
   category_slug?: string;
   title?: string;
   intro?: string;
-  format?: 'list_only' | 'hero_list' | 'full_list';
+  format?: string;
   hero_image_url?: string;
   items?: Array<{ title: string; justification: string; source_url: string; image_url: string }>;
   author_display_name?: string;
@@ -74,6 +75,7 @@ export default function SubmitClient() {
   const generateId = () => `item-${++idCounter.current}`;
 
   // Form state
+  const [postType, setPostType] = useState<'top_list' | 'this_vs_that'>('top_list');
   const [categorySlug, setCategorySlug] = useState('');
   const [title, setTitle] = useState('Top 10 ');
   const [intro, setIntro] = useState('');
@@ -86,8 +88,8 @@ export default function SubmitClient() {
   ]);
   const [authorName, setAuthorName] = useState('');
 
-  const formDataRef = useRef({ categorySlug, title, intro, postFormat, heroImageUrl, items, authorName });
-  formDataRef.current = { categorySlug, title, intro, postFormat, heroImageUrl, items, authorName };
+  const formDataRef = useRef({ postType, categorySlug, title, intro, postFormat, heroImageUrl, items, authorName });
+  formDataRef.current = { postType, categorySlug, title, intro, postFormat, heroImageUrl, items, authorName };
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
@@ -130,10 +132,11 @@ export default function SubmitClient() {
       if (draft) {
         const data: DraftData = JSON.parse(draft);
         if (Date.now() - data.savedAt < DRAFT_EXPIRY_MS) {
+          if (data.post_type === 'this_vs_that') setPostType('this_vs_that');
           if (data.category_slug) setCategorySlug(data.category_slug);
           if (data.title) setTitle(data.title);
           if (data.intro) setIntro(data.intro);
-          if (data.format) setPostFormat(data.format);
+          if (data.format) setPostFormat(data.format as 'list_only' | 'hero_list' | 'full_list');
           if (data.hero_image_url) setHeroImageUrl(data.hero_image_url);
           if (data.items && data.items.length > 0) {
             const restored = data.items.map((item, idx) => ({
@@ -247,10 +250,12 @@ export default function SubmitClient() {
         return !value ? 'Please select a category' : undefined;
       case 'title':
         if (!value) return 'Title is required';
-        if (value.length < 8) return 'Title must be at least 8 characters';
+        if (value.length < 4) return 'Title must be at least 4 characters';
         if (value.length > 300) return 'Title must be less than 300 characters';
-        const format = validateListTitle(value);
-        if (!format.valid) return format.error;
+        if (postType === 'top_list') {
+          const format = validateListTitle(value);
+          if (!format.valid) return format.error;
+        }
         return undefined;
       case 'intro':
         if (!value) return 'Introduction is required';
@@ -265,7 +270,11 @@ export default function SubmitClient() {
   };
 
   const validateItems = (): string | undefined => {
-    if (items.length < MIN_ITEMS) return `At least ${MIN_ITEMS} items are required`;
+    if (postType === 'this_vs_that') {
+      if (items.length !== 2) return 'Exactly 2 items required for head-to-head comparison';
+    } else if (items.length < MIN_ITEMS) {
+      return `At least ${MIN_ITEMS} items are required`;
+    }
 
     for (let i = 0; i < items.length; i++) {
       if (!items[i].title.trim()) return `Item #${i + 1}: Title is required (max 200 chars)`;
@@ -380,7 +389,7 @@ export default function SubmitClient() {
 
     const submission: PostSubmission = {
       title,
-      post_type: 'top_list',
+      post_type: postType,
       intro,
       category_slug: categorySlug,
       items: items.map((item, idx) => ({
@@ -519,6 +528,52 @@ export default function SubmitClient() {
         {/* Step 1: Basic Info */}
         <section className="mb-8">
           <h2 className="mb-5 border-b border-white/5 pb-3 text-lg font-bold text-white">Basic Information</h2>
+
+          {/* Post Type */}
+          <div className="mb-5">
+            <label htmlFor="postType" className="mb-1.5 block text-sm font-medium text-zinc-400">
+              List Type <span className="text-orange-400" aria-label="required">*</span>
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {(['top_list', 'this_vs_that'] as const).map(type => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => {
+                    setPostType(type);
+                    if (type === 'this_vs_that') {
+                      setTitle(title.replace(/^Top\s+\d+\s+/i, ''));
+                      setItems([
+                        { id: generateId(), rank: 1, title: 'Side A', justification: '', source_url: '', image_url: '' },
+                        { id: generateId(), rank: 2, title: 'Side B', justification: '', source_url: '', image_url: '' },
+                      ]);
+                    } else {
+                      if (!title.match(/^Top\s+\d+/i)) setTitle('Top 10 ');
+                      if (items.length < 3) {
+                        const newItems = [...items];
+                        while (newItems.length < 3) {
+                          newItems.push({ id: generateId(), rank: newItems.length + 1, title: '', justification: '', source_url: '', image_url: '' });
+                        }
+                        setItems(newItems);
+                      }
+                    }
+                  }}
+                  className={`rounded-xl border-2 px-4 py-3 text-sm font-semibold text-left transition ${
+                    postType === type
+                      ? 'border-orange-500 bg-orange-500/10 text-white'
+                      : 'border-white/10 bg-white/5 text-zinc-400 hover:border-white/20 hover:text-zinc-200'
+                  }`}
+                >
+                  <span className="block text-xs font-normal uppercase tracking-wider mb-0.5">
+                    {type === 'top_list' ? 'Ranked List' : 'Head to Head'}
+                  </span>
+                  <span className="block text-2xs text-zinc-500 font-normal">
+                    {type === 'top_list' ? 'Classic top 10 format' : 'Compare two sides'}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* Category */}
           <div className="mb-5">

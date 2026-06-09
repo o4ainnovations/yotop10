@@ -10,6 +10,7 @@ import { formatDate } from '@/lib/dates';
 import { Icon } from '@/components/icons/Icon';
 import { BookmarkButton } from '@/components/BookmarkButton';
 import { ShareButton } from '@/components/ShareButton';
+import { ThisVsThatView } from '@/components/ThisVsThatView';
 import { RESERVED_ROUTES } from '@/lib/reservedRoutes';
 
 interface ListItem {
@@ -371,6 +372,10 @@ export default function PostDetailClient({
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-10 sm:pb-16">
+        {post.post_type === 'this_vs_that' ? (
+          <ThisVsThatView slug={slug} post={post} items={items} />
+        ) : (
+        <>
         {/* Post Header — minimal, clean */}
         <header className="mb-6 sm:mb-8">
           <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-500 mb-3">
@@ -406,7 +411,7 @@ export default function PostDetailClient({
             </div>
             <div className="flex items-center gap-3">
               <BookmarkButton postId={post.id} />
-              <ShareButton slug={post.slug} title={post.title} postId={post.id} />
+              <ShareButton slug={slug} title={post.title} postId={post.id} />
               <Link
                 href={`/${slug}/history`}
                 className="text-xs text-zinc-500 hover:text-orange-400 transition"
@@ -541,6 +546,8 @@ export default function PostDetailClient({
             rootComments.map(c => renderComment(c))
           )}
         </section>
+        </>
+      )}
       </main>
 
       {/* Footer */}
