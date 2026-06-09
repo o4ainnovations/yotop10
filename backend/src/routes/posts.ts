@@ -146,13 +146,16 @@ router.get('/', async (req, res) => {
 
     // Filter by category
     if (category) {
-      // Support both category ID and slug (including nested slugs like "business/accounting-tax")
       const categoryDoc = await Category.findOne({ slug: category as string });
       if (categoryDoc) {
-        query.category_id = categoryDoc._id;
+        if (categoryDoc.parent_id) {
+          query.category_slug = categoryDoc.slug;
+        } else {
+          const childSlugs = (await Category.find({ parent_id: categoryDoc._id }).select('slug').lean()).map(c => c.slug);
+          query.category_slug = { $in: [categoryDoc.slug, ...childSlugs] };
+        }
       } else {
-        // Also try by ID if slug doesn't match
-        query.category_id = category;
+        query.category_slug = category;
       }
     }
 
@@ -857,6 +860,67 @@ router.post('/:idOrSlug/share', async (req, res) => {
   } catch (error) {
     console.error('Share tracking error:', error);
     res.status(500).json({ error: 'Failed to track share' });
+  }
+});
+
+// POST /api/posts/:id/vote — Cast a vote on a this_vs_that post
+router.post('/:id/vote', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { side } = req.body;
+
+    if (!side || !['A', 'B'].includes(side)) {
+      res.status(400).json({ error: 'Invalid side. Must be "A" or "B".' });
+      return;
+    }
+
+    const post = await Post.findById(id);
+    if (!post) {
+      res.status(404).json({ error: 'Post not found' });
+      return;
+    }
+    if (post.post_type !== 'this_vs_that') {
+      res.status(400).json({ error: 'Voting is only supported on this_vs_that posts' });
+      return;
+    }
+
+    const fingerprint = (req as any).fingerprint || req.headers['x-device-fingerprint'] as string;
+    if (!fingerprint) {
+      res.status(400).json({ error: 'Device fingerprint required for voting' });
+      return;
+    }
+
+    const voteKey = `vote:post:${id}:fp:${fingerprint}`;
+    const existingVote = await redis.get(voteKey);
+
+    if (existingVote === side) {
+      const field = side === 'A' ? 'votes_a' : 'votes_b';
+      const updated = await Post.findByIdAndUpdate(id, { $inc: { [field]: -1 } }, { new: true }).select('votes_a votes_b');
+      await redis.del(voteKey);
+      res.json({ votes_a: updated?.votes_a || 0, votes_b: updated?.votes_b || 0, voted: null });
+      return;
+    }
+
+    if (existingVote && existingVote !== side) {
+      const oldField = existingVote === 'A' ? 'votes_a' : 'votes_b';
+      const newField = side === 'A' ? 'votes_a' : 'votes_b';
+      const updated = await Post.findByIdAndUpdate(
+        id,
+        { $inc: { [oldField]: -1, [newField]: 1 } },
+        { new: true },
+      ).select('votes_a votes_b');
+      await redis.set(voteKey, side);
+      res.json({ votes_a: updated?.votes_a || 0, votes_b: updated?.votes_b || 0, voted: side });
+      return;
+    }
+
+    const field = side === 'A' ? 'votes_a' : 'votes_b';
+    const updated = await Post.findByIdAndUpdate(id, { $inc: { [field]: 1 } }, { new: true }).select('votes_a votes_b');
+    await redis.set(voteKey, side);
+    res.json({ votes_a: updated?.votes_a || 0, votes_b: updated?.votes_b || 0, voted: side });
+  } catch (error) {
+    console.error('Vote error:', error);
+    res.status(500).json({ error: 'Failed to record vote' });
   }
 });
 

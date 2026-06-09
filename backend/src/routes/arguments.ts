@@ -191,6 +191,8 @@ router.get('/', async (req, res) => {
         contradict_pct: contradictPct,
         item_a_title: itemTitles.item_a_title,
         item_b_title: itemTitles.item_b_title,
+        votes_a: post.votes_a || 0,
+        votes_b: post.votes_b || 0,
       };
     });
 

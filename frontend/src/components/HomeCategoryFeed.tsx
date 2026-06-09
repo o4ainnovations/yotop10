@@ -69,7 +69,7 @@ export function HomeCategoryFeed({ categories }: { categories: CatItem[] }) {
                 : 'bg-white/5 text-zinc-400 border border-white/10 hover:bg-white/10 hover:text-zinc-200'
             }`}
           >
-            {cat.name}
+            {cat.slug}
           </button>
         ))}
       </div>

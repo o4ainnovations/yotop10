@@ -18,6 +18,7 @@ interface CategoryItem {
 }
 
 interface DebateItem {
+  id?: string;
   slug: string;
   title: string;
   comment_count: number;
@@ -27,6 +28,8 @@ interface DebateItem {
   post_type?: string;
   item_a_title?: string;
   item_b_title?: string;
+  votes_a?: number;
+  votes_b?: number;
 }
 
 interface ArticleItem {

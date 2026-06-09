@@ -30,6 +30,8 @@ export interface IPost extends Document {
   featured: boolean;
   featured_at: Date | null;
   editorial_note: string | null;
+  votes_a: number;
+  votes_b: number;
   bookmark_count: number;
   share_count: number;
   comments_locked: boolean;
@@ -164,6 +166,8 @@ const postSchema = new Schema<IPost>(
     featured: { type: Boolean, default: false },
     featured_at: { type: Date, default: null },
     editorial_note: { type: String, default: null },
+    votes_a: { type: Number, default: 0 },
+    votes_b: { type: Number, default: 0 },
     bookmark_count: { type: Number, default: 0 },
     share_count: { type: Number, default: 0 },
     comments_locked: { type: Boolean, default: false },

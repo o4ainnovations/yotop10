@@ -33,4 +33,10 @@ export const postsApi = {
 
   checkTitle: (query: string, categoryId: string): Promise<TitleCheckResponse> =>
     apiFetch(`/posts/check-title?q=${encodeURIComponent(query)}&categoryId=${encodeURIComponent(categoryId)}`),
+
+  vote: (postId: string, side: 'A' | 'B'): Promise<{ votes_a: number; votes_b: number; voted: string | null }> =>
+    apiFetch(`/posts/${postId}/vote`, {
+      method: 'POST',
+      body: JSON.stringify({ side }),
+    }),
 };
