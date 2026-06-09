@@ -140,6 +140,16 @@ export const fingerprintMiddleware = async (req: Request, res: Response, next: N
 
     if (currentCount <= MAX_GRACE_REQUESTS) {
       const newFingerprint = generateFingerprint();
+      const userId = crypto.randomBytes(4).toString('hex');
+      const username = `a_${userId.slice(-4)}`;
+
+      // Pre-create the user record so subsequent requests find it
+      try {
+        await User.create({ user_id: userId, username, device_fingerprint: newFingerprint, trust_score: 1.0, is_admin: false });
+      } catch (createErr) {
+        console.error('[Fingerprint] Failed to pre-create user during grace period:', (createErr as Error).message);
+      }
+
       res.cookie('device_fingerprint', newFingerprint, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -155,9 +165,7 @@ export const fingerprintMiddleware = async (req: Request, res: Response, next: N
       retry_after: 1,
     });
   } catch (error) {
-    console.error('[Grace Period] Error:', error);
-    const newFingerprint = generateFingerprint();
-    req.fingerprint = newFingerprint;
-    return next();
+    console.error('[Fingerprint] Grace period Redis error, failing closed:', error);
+    return res.status(503).json({ error: 'Identity service temporarily unavailable' });
   }
 };
