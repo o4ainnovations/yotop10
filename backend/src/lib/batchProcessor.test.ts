@@ -39,7 +39,7 @@ describe('processBatch', () => {
     let maxConcurrent = 0;
     const { succeeded, failed } = await processBatch(
       [1, 2, 3, 4, 5, 6],
-      async (item) => {
+      async (_item) => {
         concurrent++;
         maxConcurrent = Math.max(maxConcurrent, concurrent);
         await new Promise(r => setTimeout(r, 10));

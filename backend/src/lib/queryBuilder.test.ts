@@ -41,7 +41,7 @@ describe('QueryBuilder', () => {
   });
 
   it('safeRegex escapes special characters', () => {
-    const qb = new QueryBuilder().safeRegex('username', '.*+?^${}()|[\]\\');
+    const qb = new QueryBuilder().safeRegex('username', '.*+?^${}()|[]\\');
     const result = qb.build();
     expect(result.username).toEqual({ $regex: '\\.\\*\\+\\?\\^\\$\\{\\}\\(\\)\\|\\[\\]\\\\', $options: 'i' });
   });

@@ -37,6 +37,10 @@ const PORT = process.env.PORT || 8000;
 // Trust nginx proxy headers for correct client IP, protocol, and host
 app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
 
+import { metricsMiddleware, getMetricsText } from './lib/metrics';
+
+app.use(metricsMiddleware as express.RequestHandler);
+
 app.use(sanitizeQueryParams as express.RequestHandler);
 
 /* Helmet security headers */
@@ -73,6 +77,11 @@ app.get('/api/health', async (_req, res) => {
   } catch {
     res.status(503).json({ status: 'error', timestamp: new Date().toISOString() });
   }
+});
+
+app.get('/api/metrics', (_req, res) => {
+  res.set('Content-Type', 'text/plain; charset=utf-8');
+  res.send(getMetricsText());
 });
 
 import searchRouter from './routes/search';
