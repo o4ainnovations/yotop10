@@ -79,8 +79,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         `}} />
       </head>
       <body className={`${anton.variable} ${monoton.variable} h-full bg-[var(--color-bg)] text-[#eaeaef]`} suppressHydrationWarning>
-        <DesktopTopBar />
-        <SlideMenuRouter />
+        <Suspense fallback={<div className="h-14 bg-zinc-950 animate-pulse" />}>
+          <DesktopTopBar />
+        </Suspense>
+        <Suspense fallback={<div className="fixed inset-0 z-40 bg-zinc-950/50" />}>
+          <SlideMenuRouter />
+        </Suspense>
         <Suspense>
           <AuthInitializer />
         </Suspense>
@@ -94,8 +98,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Suspense>
           <PWAInstallPrompt />
         </Suspense>
-        <FingerprintMergeDetector />
-        <DynamicIsland />
+        <Suspense fallback={<div className="h-0" />}>
+          <FingerprintMergeDetector />
+        </Suspense>
+        <Suspense fallback={null}>
+          <DynamicIsland />
+        </Suspense>
       </body>
     </html>
   );
