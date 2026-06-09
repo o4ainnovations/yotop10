@@ -22,6 +22,11 @@ interface DebateItem {
   title: string;
   comment_count: number;
   velocity?: number;
+  support_pct?: number;
+  contradict_pct?: number;
+  post_type?: string;
+  item_a_title?: string;
+  item_b_title?: string;
 }
 
 interface ArticleItem {
@@ -45,7 +50,7 @@ async function fetchJson<T>(url: string, fallback: T): Promise<T> {
 
 export default async function Home() {
   const [postsData, catsData, argsData, artsData, factsData] = await Promise.all([
-    fetchJson<PostsResponse>(`${API_BASE}/posts?page=1&limit=12`, { posts: [] }),
+    fetchJson<PostsResponse>(`${API_BASE}/posts?page=1&limit=12&post_type=top_list`, { posts: [] }),
     fetchJson<{ categories: CategoryItem[] }>(`${API_BASE}/categories`, { categories: [] }),
     fetchJson<{ arguments: DebateItem[] }>(`${API_BASE}/arguments?limit=4`, { arguments: [] }),
     fetchJson<{ articles: ArticleItem[] }>(`${API_BASE}/articles?limit=3`, { articles: [] }),
@@ -58,7 +63,7 @@ export default async function Home() {
   const articles = artsData.articles || [];
   const facts = factsData.posts || [];
 
-  const hasContent = posts.length > 0 || categories.some(c => c.post_count > 0) || debates.length > 0 || articles.length > 0;
+  const hasContent = posts.length > 0 || debates.length > 0 || categories.some(c => c.post_count > 0) || articles.length > 0;
 
   if (!hasContent) {
     return (
@@ -102,22 +107,20 @@ export default async function Home() {
         </div>
       </div>
 
-      {/* Section 2: Categories — pills + 3-slide post feed */}
+      {/* Section 2: Hot Debates */}
+      <HomeDebates debates={debates} />
+
+      {debates.length > 0 && <hr className="border-white/5 mx-3 sm:mx-6" />}
+
+      {/* Section 3: Categories — pills + 3-slide post feed */}
       <HomeCategoryFeed categories={categories} />
 
       <hr className="border-white/5 mx-3 sm:mx-6" />
 
-      {/* Section 3: Did You Know? (Fact Drop widget) */}
+      {/* Section 4: Did You Know? (Fact Drop widget) */}
       <HomeFactDrop facts={facts} />
 
       {facts.length > 0 && <hr className="border-white/5 mx-3 sm:mx-6" />}
-
-      {/* Section 4: Hot Debates */}
-      <HomeDebates debates={debates} />
-
-      {articles.length > 0 && debates.length > 0 && (
-        <hr className="border-white/5 mx-3 sm:mx-6" />
-      )}
 
       {/* Section 5: Recent Articles */}
       <HomeArticles articles={articles} />
