@@ -80,7 +80,6 @@ export default function PostDetailClient({
   const [post, setPost] = useState<Post>(initialPost);
   const [items] = useState<ListItem[]>(initialItems);
   const [comments, setComments] = useState<Comment[]>(initialComments);
-  const [loading] = useState(false);
   const [refreshingComments, setRefreshingComments] = useState(false);
 
   const [commentContent, setCommentContent] = useState('');
@@ -335,14 +334,6 @@ export default function PostDetailClient({
       </div>
     );
   };
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-500">
-        Loading...
-      </div>
-    );
-  }
 
   if (!post) return <NotFound message="Page does not exist." />;
 
