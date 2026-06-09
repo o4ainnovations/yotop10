@@ -11,6 +11,14 @@
 
 import { getConfig } from './systemConfig';
 
+/**
+ * Calculate the effective post rate limit for a user based on trust score.
+ * Uses a 2D soft gradient floor algorithm — no hard discontinuities.
+ * Counter lists always return 9999 when unlimited is enabled in config.
+ * @param trustScore - User's trust score (0.1-2.0)
+ * @param postType - Optional post type (counter_list returns unlimited)
+ * @returns Effective maximum posts per hour
+ */
 export function calculateEffectivePostLimit(trustScore: number, postType?: string): number {
   const config = getConfig();
 
@@ -33,6 +41,11 @@ export function calculateEffectivePostLimit(trustScore: number, postType?: strin
   return Math.max(minPosts, Math.floor(proportional));
 }
 
+/**
+ * Calculate the effective comment rate limit for a user based on trust score.
+ * @param trustScore - User's trust score (0.1-2.0)
+ * @returns Effective maximum comments per hour
+ */
 export function calculateEffectiveCommentLimit(trustScore: number): number {
   const config = getConfig();
 

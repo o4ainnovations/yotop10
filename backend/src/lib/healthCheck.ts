@@ -40,10 +40,19 @@ function getPackageVersion(): string {
 class HealthCheckRegistry {
   private checks = new Map<string, () => Promise<HealthCheckResult>>();
 
+  /**
+   * Register a health check function.
+   * @param name - Unique check identifier (e.g. 'mongodb-ping')
+   * @param check - Async function returning HealthCheckResult
+   */
   register(name: string, check: () => Promise<HealthCheckResult>): void {
     this.checks.set(name, check);
   }
 
+  /**
+   * Run all registered health checks and aggregate results.
+   * Each check runs independently — one failure doesn't affect others.
+   */
   async runAll(): Promise<{ results: HealthCheckResult[]; componentHealth: Record<string, ComponentHealth> }> {
     const results: HealthCheckResult[] = [];
     const componentHealth: Record<string, ComponentHealth> = {};

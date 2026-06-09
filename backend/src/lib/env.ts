@@ -15,6 +15,11 @@ export type Env = z.infer<typeof envSchema>;
 
 let _env: Env | null = null;
 
+/**
+ * Validate all required environment variables at startup using Zod schema.
+ * Caches the result — subsequent calls return the same validated object.
+ * Throws ValidationError if any required variable is missing or invalid.
+ */
 export function validateEnv(): Env {
   if (_env) return _env;
 

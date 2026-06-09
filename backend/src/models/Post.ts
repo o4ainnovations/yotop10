@@ -1,6 +1,5 @@
 import { Schema, Document } from 'mongoose';
 import { registerModel } from '../lib/modelRegistry';
-// import { updateUserTrustScore } from '../lib/trustScore';
 
 export interface IPost extends Document {
   author_id: string;
