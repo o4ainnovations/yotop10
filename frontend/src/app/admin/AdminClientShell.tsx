@@ -65,6 +65,7 @@ export default function AdminClientShell({
           {hasPermission('hof:read') && nav('/admin/hall-of-fame', 'Hall of Fame')}
           {hasPermission('audit:read') && nav('/admin/audit', 'Audit Logs')}
           {hasPermission('mods:manage') && nav('/admin/settings/mods', 'Moderators')}
+          {admin.role === 'super_admin' && nav('/admin/settings/rate-limits', 'Rate Limits')}
         </nav>
 
         <div className="px-3 py-3 border-t border-white/10 space-y-1">

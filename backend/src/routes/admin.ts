@@ -2742,6 +2742,62 @@ router.get('/config/versions', async (req, res) => {
   }
 });
 
+// 11. GET /api/admin/config/rate-analytics — Rate limit analytics
+router.get('/config/rate-analytics', async (req, res) => {
+  try {
+    const config = getConfig();
+    const { base_posts_per_hour, base_comments_per_hour, tiers } = config.rate_limits;
+    const { troll_max, neutral_min, scholar_min } = config.trust_tiers;
+
+    // Count users per tier
+    const [scholarCount, neutralCount, trollCount, overridden, total] = await Promise.all([
+      User.countDocuments({ trust_score: { $gte: scholar_min } }),
+      User.countDocuments({ trust_score: { $gte: neutral_min, $lt: scholar_min } }),
+      User.countDocuments({ trust_score: { $lte: troll_max } }),
+      User.countDocuments({ rate_limit_override: { $exists: true }, 'rate_limit_override.posts_per_hour': { $ne: null } }),
+      User.countDocuments({}),
+    ]);
+
+    // Calculate effective limits for each tier
+    const tierLimits = [
+      {
+        tier: 'scholar',
+        trust_range: `${scholar_min} - 2.0`,
+        post_limit: Math.floor(base_posts_per_hour * tiers.scholar.multiplier),
+        comment_limit: Math.floor(base_comments_per_hour * tiers.scholar.multiplier),
+        user_count: scholarCount,
+      },
+      {
+        tier: 'neutral',
+        trust_range: `${neutral_min} - ${(scholar_min - 0.01).toFixed(2)}`,
+        post_limit: Math.floor(base_posts_per_hour * tiers.neutral.multiplier),
+        comment_limit: Math.floor(base_comments_per_hour * tiers.neutral.multiplier),
+        user_count: neutralCount,
+      },
+      {
+        tier: 'troll',
+        trust_range: `0.1 - ${troll_max}`,
+        post_limit: Math.max(Math.floor(base_posts_per_hour * tiers.troll.multiplier), tiers.troll.min_posts),
+        comment_limit: Math.max(Math.floor(base_comments_per_hour * tiers.troll.multiplier), tiers.troll.min_posts),
+        user_count: trollCount,
+      },
+    ];
+
+    res.json({
+      total_users: total,
+      users_with_overrides: overridden,
+      tier_limits: tierLimits,
+      base_rates: {
+        posts_per_hour: base_posts_per_hour,
+        comments_per_hour: base_comments_per_hour,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching rate analytics:', error);
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to fetch rate analytics' });
+  }
+});
+
 // ═══ M10.8 Hall of Fame Management ═════════════════════════════════
 
 // GET /api/admin/hall-of-fame — List curated entries

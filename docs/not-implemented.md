@@ -160,12 +160,7 @@ Backend endpoints exist (17+ endpoints). Frontend needs:
 ### 2.7 Homepage Refactor — topItems
 
 - DataCard, CommandSearch, DesktopTopBar, DynamicIsland all built ✅
-- **MISSING**: Backend `GET /api/posts` response missing `topItems` (top 3 list items) for card previews
-
-### 2.8 Explore Algorithm — topItems
-
-- Explore page with 5-factor scoring, 17 tests ✅
-- **MISSING**: `topItems` in API response for card previews (same missing field as homepage)
+- `GET /api/posts` response includes `topItems` and `totalItems` ✅
 
 ### 2.9 Article Fact-Check & Source Enforcement
 
@@ -187,7 +182,7 @@ Backend endpoints exist (17+ endpoints). Frontend needs:
 ### 2.12 Category post_count Reconciliation
 
 - Reconciler runs every 5 minutes ✅
-- **MISSING**: Post counts show 0 on fresh boot until first cron tick — needs startup retry with exponential backoff or on-demand aggregation
+- Real-time aggregation in `categories.ts` endpoint — counts always accurate ✅
 
 ### 2.13 Hall of Fame — Admin & Public (M10.8/M14)
 
@@ -199,10 +194,10 @@ Backend endpoints exist (17+ endpoints). Frontend needs:
 ### 2.14 Admin Settings — Rate Limits & Trust Scores (M10.11)
 
 - Backend endpoints for config, user overrides, trust history ✅
-- Basic admin settings page ✅
-- **MISSING**: Rate limit analytics (users hitting limits, average remaining)
-- **MISSING**: Tier threshold impact preview
-- **MISSING**: Live effective-limits calculation table
+- Rate limit analytics (user distribution per tier, effective limits) ✅
+- Tier threshold impact preview (before saving changes) ✅
+- Live effective-limits calculation table (editable preview) ✅
+- Admin UI at `/admin/settings/rate-limits` ✅
 
 ---
 
