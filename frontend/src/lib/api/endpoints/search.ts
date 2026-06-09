@@ -4,6 +4,6 @@ export const searchApi = {
   search: (params: Record<string, string>) =>
     apiFetch(`/search?${new URLSearchParams(params)}`),
 
-  autocomplete: (q: string) =>
-    apiFetch(`/search/autocomplete?q=${encodeURIComponent(q)}`),
+  autocomplete: (q: string, options?: RequestInit) =>
+    apiFetch(`/search/autocomplete?q=${encodeURIComponent(q)}`, options),
 };

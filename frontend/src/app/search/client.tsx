@@ -55,14 +55,20 @@ export default function SearchClient() {
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     if (!q || q.length < 2) { setShowSuggestions(false); return; }
+    const abortController = new AbortController();
     timerRef.current = setTimeout(async () => {
       try {
-        const data = await API.autocomplete(q) as { titles: Array<{ slug: string; title?: string; highlight?: string }>; categories: Array<{ slug: string; name?: string; highlight?: string }> };
-        setSuggestions({ titles: data.titles || [], categories: data.categories || [] });
-        setShowSuggestions(true);
+        const data = await API.autocomplete(q, { signal: abortController.signal }) as { titles: Array<{ slug: string; title?: string; highlight?: string }>; categories: Array<{ slug: string; name?: string; highlight?: string }> };
+        if (!abortController.signal.aborted) {
+          setSuggestions({ titles: data.titles || [], categories: data.categories || [] });
+          setShowSuggestions(true);
+        }
       } catch {}
     }, 100);
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      abortController.abort();
+    };
   }, [q]);
 
   const search = useCallback(async (searchPage: number) => {
@@ -93,14 +99,11 @@ export default function SearchClient() {
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node) && inputRef.current && !inputRef.current.contains(e.target as Node)) setShowSuggestions(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
+      // Close suggestions when clicking outside
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node) && inputRef.current && !inputRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+      // Close filters panel when clicking outside
       if (filtersRef.current && !filtersRef.current.contains(e.target as Node) && !(e.target as Element).closest('[data-filters-toggle]')) {
         setFiltersOpen(false);
       }
