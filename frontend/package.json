@@ -37,6 +37,12 @@
     "jsdom": "^29.1.1",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^2"
+    "vitest": "^3.2.6"
+  },
+  "pnpm": {
+    "overrides": {
+      "brace-expansion": ">=1.1.13",
+      "esbuild": ">=0.25.0"
+    }
   }
 }
