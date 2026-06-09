@@ -53,9 +53,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
 
 import { fingerprintMiddleware } from './middleware/fingerprint';
+import fingerprintMergeRouter from './routes/fingerprintMerge';
 
 import { healthRegistry } from './lib/healthCheck';
 import { cronRegistry } from './lib/cronRegistry';
+
+app.use('/api/fingerprint', fingerprintMergeRouter);
 
 app.get('/api/health', async (_req, res) => {
   try {

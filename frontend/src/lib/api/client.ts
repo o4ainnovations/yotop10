@@ -46,6 +46,12 @@ export async function apiFetch<T>(
   let response: Response;
   try {
     response = await fetch(url, { ...options, headers, credentials: 'include' });
+
+    // Capture fingerprint merge token if present (cross-browser identity linking)
+    const mergeToken = response.headers.get('x-merge-token');
+    if (mergeToken && typeof window !== 'undefined') {
+      try { sessionStorage.setItem('yotop10_merge_token', mergeToken); } catch {}
+    }
   } catch (err) {
     // Network error (ECONNREFUSED, DNS failure, etc.) — backend unreachable
     throw new Error(`API Network Error: ${url} - ${(err as Error).message}`);

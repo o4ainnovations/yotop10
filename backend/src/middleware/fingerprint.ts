@@ -75,16 +75,28 @@ export const fingerprintMiddleware = async (req: Request, res: Response, next: N
         }
 
         if (matchedUserId) {
-          user = await User.findOneAndUpdate(
-            { user_id: matchedUserId },
-            { $set: { device_fingerprint: fingerprint } },
-            { new: true }
+          // Cross-browser match — don't auto-link. Create a merge token instead.
+          // The user must confirm the merge on the new device.
+          const mergeToken = crypto.randomBytes(16).toString('hex');
+          const mergeRequest = {
+            from_fingerprint: fingerprint,
+            to_user_id: matchedUserId,
+            created_at: Date.now(),
+            confirmed: false,
+          };
+          await redis.setEx(
+            `fingerprint:merge:${mergeToken}`,
+            900, // 15 minutes
+            JSON.stringify(mergeRequest)
           );
+          res.setHeader('x-merge-token', mergeToken);
+
+          // Log the pending merge
+          console.log(`[Fingerprint] Cross-browser merge pending for user ${matchedUserId}. Token: ${mergeToken.substring(0, 8)}...`);
         }
 
-        if (!user) {
-          user = await User.create({ user_id: userId, username, device_fingerprint: fingerprint, trust_score: 1.0, is_admin: false });
-        }
+        // Create new user regardless of match (no auto-link)
+        user = await User.create({ user_id: userId, username, device_fingerprint: fingerprint, trust_score: 1.0, is_admin: false });
       }
 
       req.user = {

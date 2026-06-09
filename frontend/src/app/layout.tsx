@@ -9,6 +9,7 @@ import { DynamicIsland } from "@/components/DynamicIsland";
 import DesktopTopBar from "@/components/DesktopTopBar";
 import { SlideMenuRouter } from "@/components/SlideMenuRouter";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import { FingerprintMergeDetector } from "@/components/FingerprintMergeDialog";
 
 const anton = Anton({ weight: '400', subsets: ['latin'], display: 'swap', variable: '--font-display' });
 const monoton = Monoton({ weight: '400', subsets: ['latin'], display: 'swap', variable: '--font-accent' });
@@ -93,6 +94,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Suspense>
           <PWAInstallPrompt />
         </Suspense>
+        <FingerprintMergeDetector />
         <DynamicIsland />
       </body>
     </html>
