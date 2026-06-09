@@ -1,6 +1,6 @@
 import { PostCarouselCard } from '@/components/PostCarouselCard';
 import { DesktopCarousel } from '@/components/DesktopCarousel';
-import { HomeCategories } from '@/components/HomeCategories';
+import { HomeCategoryFeed } from '@/components/HomeCategoryFeed';
 import { HomeDebates } from '@/components/HomeDebates';
 import { HomeArticles } from '@/components/HomeArticles';
 import { HomeFactDrop } from '@/components/HomeFactDrop';
@@ -102,8 +102,8 @@ export default async function Home() {
         </div>
       </div>
 
-      {/* Section 2: Categories grid */}
-      <HomeCategories categories={categories} />
+      {/* Section 2: Categories — pills + 3-slide post feed */}
+      <HomeCategoryFeed categories={categories} />
 
       <hr className="border-white/5 mx-3 sm:mx-6" />
 
