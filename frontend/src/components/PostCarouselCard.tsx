@@ -76,7 +76,7 @@ export function PostCarouselCard({ post }: { post: Post }) {
           <div className="flex flex-col items-center gap-2 text-zinc-700">
             <Icon name={getCategoryIcon(post.category_slug) as LucideIconName} size={36} />
             <span className="text-2xs font-mono uppercase tracking-widest text-zinc-600">
-              {post.category_slug}
+              {post.category_name || post.category_slug}
             </span>
           </div>
         )}

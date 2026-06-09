@@ -125,7 +125,7 @@ export default function ExploreClient({ initialPosts, initialHasMore }: ExploreC
                     </span>
                     {post.category_slug && (
                       <span className="text-3xs text-zinc-500 font-mono uppercase">
-                        {post.category_slug}
+                        {post.category_name || post.category_slug}
                       </span>
                     )}
                   </div>

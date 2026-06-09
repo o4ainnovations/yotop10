@@ -4,6 +4,7 @@ import { Post } from '../models/Post';
 import { User } from '../models/User';
 import { ListItem } from '../models/ListItem';
 import { computeExploreScore, trackExploreView, type ExploreSignals } from '../lib/exploreScore';
+import { getCategoryNameMap } from '../lib/categoryCache';
 
 const router: Router = Router();
 
@@ -11,6 +12,9 @@ router.get('/', async (req: any, res: any) => {
   try {
     const limit = Math.min(50, Math.max(5, parseInt(req.query.limit as string) || 20));
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
+
+    const categoryNameMap = await getCategoryNameMap();
+    const catName = (slug: string) => categoryNameMap.get(slug) || slug;
 
     const posts = await Post.find({ status: 'approved', deleted: { $ne: true } })
       .sort({ created_at: -1 })
@@ -78,6 +82,7 @@ router.get('/', async (req: any, res: any) => {
         title: s.title,
         post_type: s.post_type,
         category_slug: s.category_slug,
+        category_name: catName(s.category_slug),
         author_username: s.author_username,
         author_display_name: s.author_display_name,
         comment_count: s.comment_count,

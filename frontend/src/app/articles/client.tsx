@@ -91,8 +91,8 @@ export default function ArticlesClient({ initialArticles, initialHasMore }: Arti
               </span>
               {article.category_slug && (
                 <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-3xs text-zinc-500">
-                  {article.category_slug}
-                </span>
+                {article.category_name || article.category_slug}
+              </span>
               )}
               {article.fact_check_status && (
                 <span

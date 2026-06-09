@@ -8,7 +8,7 @@ import { toast } from '@/lib/toast';
 import { Icon } from '@/components/icons/Icon';
 import { formatDate, relativeTime } from '@/lib/dates';
 
-interface PendingPost { _id: string; title: string; author_username: string; post_type: string; created_at: string; revision_count: number; category_slug: string; intro?: string; collision?: { title: string; submitted_at: string; first: boolean } }
+interface PendingPost { _id: string; title: string; author_username: string; post_type: string; created_at: string; revision_count: number; category_slug: string; category_name?: string; intro?: string; collision?: { title: string; submitted_at: string; first: boolean } }
 interface CategoryOption { slug: string; name: string; children?: Array<{ slug: string; name: string }> }
 
 export default function PendingPostsClient() {
@@ -227,7 +227,7 @@ export default function PendingPostsClient() {
                 </div>
                 {expanded.has(p._id) && (
                   <div className="px-3 py-2.5 sm:pl-10 bg-white/5 border-b border-white/5 text-xs text-white/60">
-                    <p className="mb-1">Category: <strong className="text-white">{p.category_slug}</strong></p>
+                    <p className="mb-1">Category: <strong className="text-white">{p.category_name || p.category_slug}</strong></p>
                     {previewCache[p._id] ? <div>
                       <p className="mb-1"><strong className="text-white">Intro:</strong> {previewCache[p._id].intro.substring(0, 200)}{(previewCache[p._id].intro?.length || 0) > 200 ? '...' : ''}</p>
                       <div>{previewCache[p._id].items.map(i => <div key={i.rank} className="my-1"><strong className="text-white">#{i.rank}</strong> {i.title} — {i.justification.substring(0, 80)}</div>)}</div>

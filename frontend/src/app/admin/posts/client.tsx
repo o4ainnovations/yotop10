@@ -7,7 +7,7 @@ import { Icon } from '@/components/icons/Icon';
 import { toast } from '@/lib/toast';
 import { formatDate } from '@/lib/dates';
 
-interface Post { _id: string; title: string; slug: string; author_username: string; post_type: string; status: string; category_slug: string; comment_count: number; fire_count?: number; view_count: number; created_at: string; published_at?: string; deleted: boolean; featured: boolean; comments_locked: boolean }
+interface Post { _id: string; title: string; slug: string; author_username: string; post_type: string; status: string; category_slug: string; category_name?: string; comment_count: number; fire_count?: number; view_count: number; created_at: string; published_at?: string; deleted: boolean; featured: boolean; comments_locked: boolean }
 
 export default function AdminPostsClient() {
   const router = useRouter();
@@ -170,7 +170,7 @@ export default function AdminPostsClient() {
                 </div>
                 <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-3xs text-white/50">
                   <span>{p.author_username}</span>
-                  <span>{p.category_slug}</span>
+                  <span>{p.category_name || p.category_slug}</span>
                   <span>{p.post_type}</span>
                   <span>{statusBadge(p.status)}</span>
                   <span><Icon name="Flame" size={12} color="#e65100" /> {p.fire_count || 0}</span>

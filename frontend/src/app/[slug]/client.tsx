@@ -33,6 +33,7 @@ interface Post {
   author_username: string;
   author_display_name: string;
   category_slug: string;
+  category_name?: string;
   format?: 'list_only' | 'hero_list' | 'full_list';
   hero_image_url?: string | null;
   created_at: string;
@@ -132,11 +133,12 @@ export default function PostDetailClient({
 
   useEffect(() => {
     mountedRef.current = true;
+    const abortController = new AbortController();
 
     // Only fetch reaction state on mount; post/comments already rendered server-side
     const allTargets = initialComments.map((c) => ({ type: 'comment' as const, id: c.id }));
     if (allTargets.length > 0) {
-      API.getReactionState(allTargets).then((reactionState) => {
+      API.getReactionState(allTargets, { signal: abortController.signal }).then((reactionState) => {
         if (!mountedRef.current) return;
         const data = reactionState as { targets: Array<{ type: string; id: string; user_reacted: boolean }> };
         const reactedIds = new Set<string>(data.targets.filter(t => t.user_reacted).map(t => String(t.id)));
@@ -144,7 +146,7 @@ export default function PostDetailClient({
       }).catch(() => {});
     }
 
-    return () => { mountedRef.current = false; };
+    return () => { abortController.abort(); mountedRef.current = false; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (RESERVED_ROUTES.includes(slug)) {
@@ -360,7 +362,7 @@ export default function PostDetailClient({
               YOTOP10
             </span>
           </Link>
-          <nav className="flex gap-4 text-sm sm:gap-5">
+          <nav className="show-desktop flex gap-4 text-sm sm:gap-5">
             <Link
               href="/"
               className="text-zinc-400 transition-colors hover:text-orange-400"
@@ -387,9 +389,8 @@ export default function PostDetailClient({
             </span>
             <Link
               href={`/c/${post.category_slug}`}
-              className="font-medium text-orange-400 transition hover:text-orange-300"
             >
-              {post.category_slug}
+              {post.category_name || post.category_slug}
             </Link>
             <span suppressHydrationWarning>{formatDate(post.created_at)}</span>
             <span>{post.view_count} views</span>

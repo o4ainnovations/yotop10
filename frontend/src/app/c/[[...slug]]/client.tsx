@@ -47,7 +47,7 @@ export default function CategoryFeedClient({ slug, initialCategory, initialPosts
 
   return (
     <div className="min-h-screen bg-zinc-950">
-      <div className="flex items-center gap-2 px-3 pt-6 sm:px-6">
+      <div className="show-desktop flex items-center gap-2 px-3 pt-6 sm:px-6">
         <Link href="/" className="text-sm2 font-bold text-orange-400 transition hover:text-orange-300">
           YOTOP10
         </Link>

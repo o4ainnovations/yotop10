@@ -38,6 +38,7 @@ export interface Post {
   author_username: string;
   author_display_name: string;
   category_slug: string;
+  category_name?: string;
   status?: string;
   format?: 'list_only' | 'hero_list' | 'full_list';
   hero_image_url?: string | null;
@@ -128,6 +129,7 @@ export interface Article {
   comment_count: number;
   bookmark_count: number;
   category_slug: string;
+  category_name?: string;
   created_at: string;
   updated_at: string;
 }
@@ -151,6 +153,7 @@ export interface ExplorePost {
   title: string;
   post_type: string;
   category_slug: string;
+  category_name?: string;
   author_username: string;
   author_display_name: string;
   comment_count: number;
@@ -188,6 +191,7 @@ export interface ArgumentPost {
   title: string;
   post_type: string;
   category_slug: string;
+  category_name?: string;
   author_username: string;
   author_display_name: string;
   comment_count: number;

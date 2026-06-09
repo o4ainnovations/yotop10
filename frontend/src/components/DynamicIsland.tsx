@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { useAuthStore } from '@/stores/auth';
 import { Icon } from './icons/Icon';
 import { CommandSearch } from './CommandSearch';
 
@@ -9,15 +10,18 @@ export function DynamicIsland() {
   const pathname = usePathname();
   const router = useRouter();
   const [searchOpen, setSearchOpen] = useState(false);
+  const user = useAuthStore((s) => s.user);
 
   if (pathname.startsWith('/admin')) return null;
+
+  const username = user?.username || null;
 
   const tabs = [
     { icon: 'House' as const, label: 'Home', href: '/' },
     { icon: 'Search' as const, label: 'Search', action: () => setSearchOpen(true) },
     { icon: 'MessageCircle' as const, label: 'Arguments', href: '/arguments' },
     { icon: 'Bell' as const, label: 'Notifications', href: '/notifications' },
-    { icon: 'User' as const, label: 'Profile', href: '/a' },
+    { icon: 'User' as const, label: 'Profile', href: username ? `/a/${username}` : '/a' },
   ];
 
   return (

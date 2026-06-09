@@ -16,8 +16,7 @@ WORKDIR /app
 COPY --from=deps /app/frontend/node_modules ./frontend/node_modules
 COPY --from=deps /app/backend/node_modules ./backend/node_modules
 COPY . .
-# Set env vars at build time for Next.js client-side
-ENV NEXT_PUBLIC_API_URL=http://localhost:8100/api
+# Set internal API URL for SSR (not NEXT_PUBLIC_* — these are never baked client-side)
 ENV INTERNAL_API_URL=http://localhost:8000/api
 RUN cd frontend && pnpm build
 RUN cd backend && pnpm build

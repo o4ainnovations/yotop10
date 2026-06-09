@@ -23,18 +23,22 @@ describe('elasticsearch client', () => {
     vi.unstubAllEnvs();
   });
 
-  it('creates client with custom ELASTICSEARCH_URL', async () => {
-    vi.stubEnv('ELASTICSEARCH_URL', 'http://elastic.example.com:9200');
+  it('creates client with custom ES_HOST and ES_PORT', async () => {
+    vi.stubEnv('ES_HOST', 'elastic.example.com');
+    vi.stubEnv('ES_PORT', '9200');
+    vi.stubEnv('ES_PASSWORD', undefined);
     await import('../lib/elasticsearch');
     expect(MockClient).toHaveBeenCalledTimes(1);
-    expect(MockClient).toHaveBeenCalledWith({ node: 'http://elastic.example.com:9200' });
+    expect(MockClient).toHaveBeenCalledWith(expect.objectContaining({ node: 'http://elastic.example.com:9200' }));
   });
 
-  it('falls back to default URL when ELASTICSEARCH_URL is not set', async () => {
-    vi.stubEnv('ELASTICSEARCH_URL', undefined);
+  it('falls back to default host and port when env vars are not set', async () => {
+    vi.stubEnv('ES_HOST', undefined);
+    vi.stubEnv('ES_PORT', undefined);
+    vi.stubEnv('ES_PASSWORD', undefined);
     await import('../lib/elasticsearch');
     expect(MockClient).toHaveBeenCalledTimes(1);
-    expect(MockClient).toHaveBeenCalledWith({ node: 'http://localhost:9200' });
+    expect(MockClient).toHaveBeenCalledWith(expect.objectContaining({ node: 'http://elasticsearch:9200' }));
   });
 
   it('exports a singleton es instance', async () => {

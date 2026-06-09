@@ -79,8 +79,18 @@ function leanToShape(doc: Record<string, unknown>): ConfigShape {
   };
 }
 
-export function getConfig(): ConfigShape {
-  return cachedConfig;
+function deepFreeze<T>(obj: T): T {
+  if (obj === null || typeof obj !== 'object') return obj;
+  const propNames = Object.getOwnPropertyNames(obj);
+  for (const name of propNames) {
+    const value = (obj as Record<string, unknown>)[name];
+    (obj as Record<string, unknown>)[name] = deepFreeze(value);
+  }
+  return Object.freeze(obj);
+}
+
+export function getConfig(): Readonly<ConfigShape> {
+  return deepFreeze(structuredClone(cachedConfig));
 }
 
 export async function initConfig(): Promise<void> {
@@ -144,7 +154,7 @@ export async function updateConfig(
   }
 
   if (Object.keys(setOps).length === 0) {
-    return cachedConfig;
+    return getConfig();
   }
 
   setOps.version = cachedConfig.version + 1;
@@ -179,7 +189,7 @@ export async function updateConfig(
     },
   });
 
-  return cachedConfig;
+  return getConfig();
 }
 
 export async function refreshConfig(): Promise<void> {
@@ -208,6 +218,6 @@ export function stopConfigCron(): void {
   }
 }
 
-export function getConfigVersions(): ConfigShape[] {
-  return [cachedConfig];
+export function getConfigVersions(): Readonly<ConfigShape>[] {
+  return [getConfig()];
 }

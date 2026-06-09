@@ -118,8 +118,7 @@ export default function UserProfileClient({ initialProfile }: UserProfileClientP
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
-      const uploadRes = await fetch(`${baseUrl}/api/upload/profile`, {
+      const uploadRes = await fetch('/api/upload/profile', {
         method: 'POST', body: formData, credentials: 'include',
       });
       if (!uploadRes.ok) {

@@ -7,7 +7,7 @@ import { Icon } from '@/components/icons/Icon';
 import { formatDate } from '@/lib/dates';
 interface SearchResult {
   id: string; title: string; intro?: string; content?: string;
-  slug: string; category_slug?: string; post_type?: string;
+  slug: string; category_slug?: string; category_name?: string; post_type?: string;
   author_username: string; author_display_name?: string;
   status?: string; fire_count?: number; comment_count?: number;
   view_count?: number; created_at: string; _score: number;
@@ -378,7 +378,7 @@ export default function SearchClient() {
                       {r.category_slug && (
                         <span className="inline-flex items-center gap-1">
                           <Icon name="Folder" size={12} />
-                          {r.category_slug}
+                          {r.category_name || r.category_slug}
                         </span>
                       )}
                       {r.post_type && (

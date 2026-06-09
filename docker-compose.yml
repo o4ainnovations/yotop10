@@ -1,5 +1,42 @@
 services:
 
+  nginx:
+    image: nginx:1.27.4-alpine
+    container_name: yotop10_nginx
+    restart: unless-stopped
+    mem_limit: 128m
+    cpus: 0.5
+    ports:
+      - "8080:80"
+      - "8443:443"
+    environment:
+      - NGINX_SERVER_NAME=${NGINX_SERVER_NAME:-yotop10.local}
+      - NGINX_CERT_DIR=${NGINX_CERT_DIR:-/etc/letsencrypt/live/${NGINX_SERVER_NAME:-yotop10.local}}
+    entrypoint: []
+    command: >
+      sh -c "
+        sh /scripts/init-nginx.sh &&
+        exec nginx -g 'daemon off;'
+      "
+    volumes:
+      - ./nginx.conf:/templates/nginx.conf:ro
+      - ./scripts/init-nginx.sh:/scripts/init-nginx.sh:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/acme:/var/www/acme
+      - /var/log/nginx:/var/log/nginx
+    networks:
+      - frontend_net
+    depends_on:
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   frontend:
     build:
       context: .
@@ -14,9 +51,7 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - HOSTNAME=0.0.0.0
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.yotop10.com}
       - INTERNAL_API_URL=http://backend:8000/api
-      - NEXT_PUBLIC_INTERNAL_API_URL=http://backend:8000/api
     tmpfs:
       - /app/.next/cache:uid=1001,gid=1001
     healthcheck:
@@ -26,7 +61,7 @@ services:
       retries: 3
       start_period: 30s
     networks:
-      - yotop10_net
+      - frontend_net
     depends_on:
       backend:
         condition: service_healthy
@@ -44,90 +79,131 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=8000
-      - MONGODB_URI=mongodb://mongodb:27017/yotop10
+      - MONGO_HOST=mongodb
+      - MONGO_PORT=27017
+      - MONGO_DATABASE=yotop10
       - REDIS_URL=redis://redis:6379
       - ELASTICSEARCH_URL=http://elasticsearch:9200
       - JWT_SECRET=${JWT_SECRET}
       - CORS_ORIGINS=${CORS_ORIGINS:-https://yotop10.com,https://www.yotop10.com}
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.yotop10.com}
       - INTERNAL_API_URL=http://backend:8000/api
+      - MONGO_USERNAME=yotop10_admin
+      - MONGO_PASSWORD=${MONGO_PASSWORD}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - ES_PASSWORD=${ES_PASSWORD}
     tmpfs:
       - /app/uploads:uid=1001,gid=1001,size=256m
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8000/api/health"]
-      interval: 30s
+      test: ["CMD", "node", "scripts/healthcheck.mjs"]
+      interval: 15s
       timeout: 10s
-      retries: 3
-      start_period: 45s
+      retries: 5
+      start_period: 60s
+    secrets:
+      - mongo_password
     networks:
-      - yotop10_net
+      - frontend_net
+      - backend_net
     depends_on:
       mongodb:
-        condition: service_started
+        condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       elasticsearch:
         condition: service_healthy
 
   mongodb:
-    image: mongo:7
+    image: mongo:7.0.20
     container_name: yotop10_mongodb
     restart: unless-stopped
     mem_limit: 1g
     cpus: 1.0
-    command: ["mongod", "--wiredTigerCacheSizeGB", "0.25"]
+    command: >
+      mongod
+      --auth
+      --wiredTigerCacheSizeGB 0.25
+      --setParameter authenticationMechanisms=SCRAM-SHA-256
     environment:
       - MONGO_INITDB_DATABASE=yotop10
+      - MONGO_INITDB_ROOT_USERNAME=yotop10_admin
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
     volumes:
       - mongodb_data:/data/db
     networks:
-      - yotop10_net
+      - backend_net
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
-      interval: 30s
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand({ping:1})' 2>/dev/null || mongosh --quiet --username yotop10_admin --password ${MONGO_ROOT_PASSWORD} --eval 'db.adminCommand({ping:1})'"]
+      interval: 15s
       timeout: 10s
-      retries: 3
-      start_period: 20s
+      retries: 10
+      start_period: 60s
 
   redis:
-    image: redis:7-alpine
+    image: redis:7.4.2-alpine
     container_name: yotop10_redis
     restart: unless-stopped
     mem_limit: 256m
     cpus: 0.5
-    command: redis-server --appendonly yes --save 900 1 --save 300 10 --save 60 10000 --loglevel warning
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD}
+      --appendonly yes
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+      --loglevel warning
+      --rename-command FLUSHALL ""
+      --rename-command FLUSHDB ""
+      --rename-command CONFIG ""
     volumes:
       - redis_data:/data
+    secrets:
+      - redis_password
     networks:
-      - yotop10_net
+      - backend_net
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD} ping | grep -q PONG"]
+      interval: 15s
       timeout: 5s
       retries: 3
       start_period: 10s
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
     container_name: yotop10_elasticsearch
     restart: unless-stopped
     mem_limit: 1g
     cpus: 1.0
     environment:
       - discovery.type=single-node
-      - xpack.security.enabled=false
+      - xpack.security.enabled=true
+      - xpack.security.transport.ssl.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - ELASTIC_PASSWORD=${ES_PASSWORD}
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       - cluster.routing.allocation.disk.threshold_enabled=false
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
+    secrets:
+      - es_password
     networks:
-      - yotop10_net
+      - backend_net
     healthcheck:
-      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -vq 'red'"]
-      interval: 30s
+      test: ["CMD-SHELL", "curl -s -u elastic:${ES_PASSWORD} http://localhost:9200/_cluster/health | grep -vq 'red'"]
+      interval: 15s
       timeout: 10s
       retries: 5
       start_period: 30s
+
+secrets:
+  mongo_password:
+    file: ./secrets/mongo_password.txt
+  redis_password:
+    file: ./secrets/redis_password.txt
+  es_password:
+    file: ./secrets/es_password.txt
 
 volumes:
   mongodb_data:
@@ -135,5 +211,7 @@ volumes:
   elasticsearch_data:
 
 networks:
-  yotop10_net:
+  frontend_net:
+    driver: bridge
+  backend_net:
     driver: bridge

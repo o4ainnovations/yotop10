@@ -8,18 +8,34 @@ import { getClientIp } from '../middleware/fingerprint';
 
 const router: Router = Router();
 
-// GET /api/categories — All categories with hierarchy
+// GET /api/categories — All categories with hierarchy (real-time post counts)
 router.get('/', async (req: any, res: any) => {
   try {
     const { include_children = 'true' } = req.query;
 
-    // Get all non-archived categories
-    const categories = await Category.find({ is_archived: false })
-      .sort({ name: 1 })
-      .lean();
+    const [categories, approvedPosts] = await Promise.all([
+      Category.find({ is_archived: false }).sort({ name: 1 }).lean(),
+      Post.find({ status: 'approved', deleted: { $ne: true } }).select('category_slug').lean(),
+    ]);
+
+    const rawCounts = new Map<string, number>();
+    for (const post of approvedPosts) {
+      const slug = (post as Record<string, unknown>).category_slug as string;
+      if (slug) {
+        rawCounts.set(slug, (rawCounts.get(slug) || 0) + 1);
+      }
+    }
+
+    const realCount = (slug: string) => {
+      let total = rawCounts.get(slug) || 0;
+      const prefix = slug + '/';
+      for (const [pslug, count] of rawCounts) {
+        if (pslug.startsWith(prefix)) total += count;
+      }
+      return total;
+    };
 
     if (include_children === 'true') {
-      // Group into parent/children hierarchy
       const parents = categories.filter(c => !c.parent_id);
       const children = categories.filter(c => c.parent_id);
 
@@ -29,7 +45,7 @@ router.get('/', async (req: any, res: any) => {
         slug: parent.slug,
         description: parent.description,
         icon: parent.icon,
-        post_count: parent.post_count,
+        post_count: realCount(parent.slug),
         is_featured: parent.is_featured,
         children: children
           .filter(child => child.parent_id?.toString() === parent._id.toString())
@@ -39,20 +55,19 @@ router.get('/', async (req: any, res: any) => {
             slug: child.slug,
             description: child.description,
             icon: child.icon,
-            post_count: child.post_count,
+            post_count: realCount(child.slug),
           })),
       }));
 
       res.json({ categories: hierarchy });
     } else {
-      // Flat list
       res.json({ categories: categories.map(c => ({
         id: c._id,
         name: c.name,
         slug: c.slug,
         description: c.description,
         icon: c.icon,
-        post_count: c.post_count,
+        post_count: realCount(c.slug),
         parent_id: c.parent_id,
       }))});
     }

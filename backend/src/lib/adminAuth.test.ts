@@ -5,6 +5,15 @@ import { AdminUser } from '../models/AdminUser';
 
 const MOCK_SECRET = 'test-secret-that-is-at-least-16-characters-long';
 
+vi.mock('../lib/secrets', () => {
+  const secret = 'test-secret-that-is-at-least-16-characters-long';
+  return {
+    SecretsManager: {
+      getSecret: vi.fn().mockResolvedValue(secret),
+    },
+  };
+});
+
 vi.mock('../models/AdminUser', () => ({
   AdminUser: {
     findById: vi.fn(),
@@ -14,7 +23,6 @@ vi.mock('../models/AdminUser', () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
-  process.env.JWT_SECRET = MOCK_SECRET;
 });
 
 afterEach(() => {
@@ -23,39 +31,39 @@ afterEach(() => {
 
 describe('adminAuth', () => {
   describe('generateAdminToken', () => {
-    it('returns a string JWT token', () => {
-      const token = generateAdminToken('admin123', 'testadmin', 1);
+    it('returns a string JWT token', async () => {
+      const token = await generateAdminToken('admin123', 'testadmin', 1);
       expect(typeof token).toBe('string');
       expect(token.split('.')).toHaveLength(3);
     });
 
-    it('contains the expected payload claims', () => {
-      const token = generateAdminToken('admin123', 'testadmin', 5);
+    it('contains the expected payload claims', async () => {
+      const token = await generateAdminToken('admin123', 'testadmin', 5);
       const payload = jwt.verify(token, MOCK_SECRET) as { id: string; username: string; token_version: number };
       expect(payload.id).toBe('admin123');
       expect(payload.username).toBe('testadmin');
       expect(payload.token_version).toBe(5);
     });
 
-    it('includes an exp claim with 24h expiry for super_admin', () => {
-      const token = generateAdminToken('admin123', 'testadmin', 1, 'super_admin');
+    it('includes an exp claim with 24h expiry for super_admin', async () => {
+      const token = await generateAdminToken('admin123', 'testadmin', 1, 'super_admin');
       const payload = jwt.verify(token, MOCK_SECRET) as { exp: number; iat: number };
       const expectedExp = Math.floor(Date.now() / 1000) + 24 * 60 * 60;
       expect(payload.exp).toBeGreaterThanOrEqual(expectedExp - 5);
       expect(payload.exp).toBeLessThanOrEqual(expectedExp + 5);
     });
 
-    it('includes an exp claim with 4h expiry for mod', () => {
-      const token = generateAdminToken('admin123', 'testadmin', 1, 'mod');
+    it('includes an exp claim with 4h expiry for mod', async () => {
+      const token = await generateAdminToken('admin123', 'testadmin', 1, 'mod');
       const payload = jwt.verify(token, MOCK_SECRET) as { exp: number; iat: number };
       const expectedExp = Math.floor(Date.now() / 1000) + 4 * 60 * 60;
       expect(payload.exp).toBeGreaterThanOrEqual(expectedExp - 5);
       expect(payload.exp).toBeLessThanOrEqual(expectedExp + 5);
     });
 
-    it('produces different tokens for different token versions', () => {
-      const token1 = generateAdminToken('admin123', 'testadmin', 1);
-      const token2 = generateAdminToken('admin123', 'testadmin', 2);
+    it('produces different tokens for different token versions', async () => {
+      const token1 = await generateAdminToken('admin123', 'testadmin', 1);
+      const token2 = await generateAdminToken('admin123', 'testadmin', 2);
       expect(token1).not.toBe(token2);
     });
   });
@@ -208,7 +216,7 @@ describe('adminAuth', () => {
 
     it('returns 401 when admin account is not found', async () => {
       vi.mocked(AdminUser.findById).mockResolvedValue(null);
-      const token = generateAdminToken('nonexistent', 'ghost', 1);
+      const token = await generateAdminToken('nonexistent', 'ghost', 1);
       const { req, res, next } = mockReqRes({ admin_token: token });
       await adminAuthMiddleware(req as never, res as never, next);
       expect(res.status).toHaveBeenCalledWith(401);
@@ -225,7 +233,7 @@ describe('adminAuth', () => {
         is_active: true,
         token_version: 2,
       });
-      const token = generateAdminToken('admin123', 'testadmin', 1);
+      const token = await generateAdminToken('admin123', 'testadmin', 1);
       const { req, res, next } = mockReqRes({ admin_token: token });
       await adminAuthMiddleware(req as never, res as never, next);
       expect(res.status).toHaveBeenCalledWith(401);
@@ -242,7 +250,7 @@ describe('adminAuth', () => {
         is_active: true,
         token_version: 1,
       });
-      const token = generateAdminToken('admin123', 'testadmin', 1, 'super_admin', ['dashboard:read'], 0);
+      const token = await generateAdminToken('admin123', 'testadmin', 1, 'super_admin', ['dashboard:read'], 0);
       const { req, res, next } = mockReqRes({ admin_token: token });
       await adminAuthMiddleware(req as never, res as never, next);
       expect(next).toHaveBeenCalled();

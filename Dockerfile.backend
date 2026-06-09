@@ -16,6 +16,7 @@ RUN addgroup --system --gid 1001 nodejs && \
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
+COPY scripts/healthcheck.mjs ./scripts/healthcheck.mjs
 RUN mkdir -p /app/uploads && chown nodejs:nodejs /app/uploads
 USER nodejs
 EXPOSE 8000

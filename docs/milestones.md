@@ -1,7 +1,7 @@
 # YoTop10 — Build Milestones
 
 > **Platform**: Open anonymous top 10 lists platform. No login required. Admin-only review.
-> **Stack**: MERN — MongoDB + Express + Next.js + Elasticsearch
+> **Stack**: MERN — MongoDB + Express + Next.js 15 + Elasticsearch
 > **Note**: All styling deferred until after MVP. Platform functions with minimal styling until launch.
 
 ---
@@ -74,7 +74,7 @@ All limits use 2D soft gradient floor algorithm:
 
 ### M2 — Database Schema
 - [x] `users` collection
-- [x] `posts` collection (author_id, author_username, author_display_name, title, post_type, intro, status, category_id, comment_count, view_count, format, hero_image_url, created_at, updated_at)
+- [x] `posts` collection (author_id, author_username, author_display_name, title, post_type, intro, status, category_slug, comment_count, view_count, format, hero_image_url, created_at, updated_at)
   - [x] `post_type` enum: `top_list`, `this_vs_that`, `best_of`, `counter`, `article`, `who_is_better`, `fact_drop`, `worst_of`, `hidden_gems`
 - [x] `list_items` collection (post_id, rank, title, justification, image_url, source_url)
 - [x] `comments` collection (post_id, list_item_id, parent_comment_id, depth, author_id, author_username, author_display_name, content, fire_count, reply_count, created_at, updated_at)
@@ -281,7 +281,7 @@ Reasoning: This keeps your site "High-Quality" in the eyes of Google by hiding "
 - [x] `GET /api/posts/:id/comments` — Get comments
 - [x] `POST /api/posts/:id/comments` — Add comment (anonymous)
   - Two modes: Full Post Comment OR Item-Anchored Comment
-  - Nested replies (max 3 levels)
+  - Nested replies (max 10 levels)
 - [x] `PATCH /api/comments/:id` — Edit (within 2hr window)
 - [x] `DELETE /api/comments/:id` — Delete own comment
 - [x] Rate limit: 50 comments/hour per user
@@ -722,7 +722,7 @@ Single unified notification system that handles all user feedback across the ent
 - [x] `/admin` — Redirect to dashboard (or login if not authenticated)
 - [x] `/admin/login` — Login page
 - [x] `/admin/setup` — One-time setup token page
-- [x] `/admin/dashboard` — Overview with stats cards and charts
+- [x] `/admin` — Overview with stats cards and charts
 - [x] `/admin/statistics` — Full analytics with 15 collapsible panels
 - [x] `/admin/posts/pending` — Review queue
 - [x] `/admin/posts` — All posts management
@@ -1239,14 +1239,14 @@ GET    /api/admin/audit-logs/stats    # Quick audit stats (cached 30s)
 - **Features**:
   - Post type selector dropdown: Top 10 List, This vs That, Who is Better, Fact Drop, Best Of, Worst Of, Hidden Gems, Counter List
   - Category selector dropdown (EXACTLY 1 category, required)
-  - Title input (required, 5-300 chars)
+  - Title input (required, max 300 chars)
   - Intro/description textarea (optional, max 2000 chars)
   - Dynamic list items section:
     - "Add Item" button to add more items
     - Each item: Rank # (auto), Title (required), Justification/description (required), Image URL (optional), Source URL (optional)
     - Remove item button per row
     - Up/Down arrows to reorder items
-    - Minimum 1 item, maximum 25 items
+    - Minimum 3 items, maximum 100 items
   - Author display name input (required, 3-50 chars)
   - Device fingerprint auto-generated and hidden
   - Submit button with loading state
@@ -1274,7 +1274,7 @@ GET    /api/admin/audit-logs/stats    # Quick audit stats (cached 30s)
   - Comments section:
     - Toggle: "Comment on this post" vs "Comment on item #X"
     - Comment form: textarea (1-2000 chars), author display name input
-    - Nested comment tree (max 3 levels, Twitter/X-style):
+    - Nested comment tree (max 10 levels, Twitter/X-style):
       - Level 1: Top-level comment
       - Level 2: Reply to L1
       - Level 3: Reply to L2 (replies go to L2's parent after this)
@@ -1326,7 +1326,7 @@ GET    /api/admin/audit-logs/stats    # Quick audit stats (cached 30s)
   - Breadcrumb: Home > Categories > Category Name
   - Back to all categories link
   - 404 if category not found or archived
-- **API Calls**: `GET /api/categories/:slug`, `GET /api/posts?category_id=...`
+- **API Calls**: `GET /api/categories/:slug`, `GET /api/posts?category=...`
 
 ---
 
@@ -1674,7 +1674,7 @@ We treat the site as a permanent encyclopedia. Indexing is earned through qualit
 
 ---
 
-#### 19. Admin Dashboard — `/admin/dashboard`
+#### 19. Admin Dashboard — `/admin`
 **Description**: Overview of platform statistics.
 - **Features**:
   - Sidebar navigation (collapsible)
@@ -1932,7 +1932,7 @@ We treat the site as a permanent encyclopedia. Indexing is earned through qualit
 
 | Layer | Technology |
 |-------|------------|
-| Frontend | Next.js 14 (App Router) |
+| Frontend | Next.js 15 (App Router) |
 | Backend | Node.js + Express |
 | Database | MongoDB + Mongoose |
 | Search | Elasticsearch |

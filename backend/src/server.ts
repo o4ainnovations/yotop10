@@ -5,10 +5,11 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
-import mongoose from 'mongoose';
 
 import { validateEnv } from './lib/env';
-import { redis } from './lib/redis';
+import { SecretsManager } from './lib/secrets';
+import { sanitizeQueryParams } from './middleware/sanitizeQuery';
+import { connectRedis, disconnectRedis } from './lib/redis';
 import { es } from './lib/elasticsearch';
 import { routes } from './routes';
 import path from 'path';
@@ -17,9 +18,28 @@ dotenv.config();
 
 validateEnv();
 
+// Initialize required secrets — crashes at startup if any are missing
+SecretsManager.initialize(['JWT_SECRET']).catch((err) => {
+  console.error('[Server] FATAL: Secrets initialization failed:', err.message);
+  process.exit(1);
+});
+
+// MongoDB credentials: try Docker secrets first, then env vars
+SecretsManager.getSecretWithFallback('MONGO_USERNAME', 'yotop10_admin');
+SecretsManager.getSecretWithFallback('MONGO_PASSWORD', '').catch((err) => {
+  console.error('[Server] FATAL: Secrets initialization failed:', err.message);
+  process.exit(1);
+});
+
 const app: Application = express();
 const PORT = process.env.PORT || 8000;
 
+// Trust nginx proxy headers for correct client IP, protocol, and host
+app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
+
+app.use(sanitizeQueryParams as express.RequestHandler);
+
+/* Helmet security headers */
 app.use(helmet());
 app.use(cookieParser());
 app.use(cors({
@@ -34,8 +54,22 @@ app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
 
 import { fingerprintMiddleware } from './middleware/fingerprint';
 
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+import { healthRegistry } from './lib/healthCheck';
+import { cronRegistry } from './lib/cronRegistry';
+
+app.get('/api/health', async (_req, res) => {
+  try {
+    const report = await healthRegistry.generateReport();
+    res.json({
+      status: report.status === 'ok' ? 'ok' : report.status,
+      timestamp: report.timestamp,
+      uptime: report.uptime,
+      memory: report.memory,
+      components: report.components,
+    });
+  } catch {
+    res.status(503).json({ status: 'error', timestamp: new Date().toISOString() });
+  }
 });
 
 import searchRouter from './routes/search';
@@ -61,13 +95,10 @@ app.use((err: Error, _req: any, res: any, _next: any) => {
 });
 
 const connectDatabases = async () => {
-  const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/yotop10';
-  await mongoose.connect(mongoUri);
-  console.log('Connected to MongoDB');
+  const mongoConnector = await import('./lib/database/mongoConnector');
+  await mongoConnector.connect();
 
-  redis.on('error', (err: Error) => console.error('Redis client error:', err.message));
-  await redis.connect();
-  console.log('Connected to Redis');
+  await connectRedis();
 
   const maxRetries = 10;
   const retryDelay = 3000;
@@ -94,35 +125,80 @@ const startServer = async () => {
     await connectDatabases();
 
     const { startSparkScoreCron, startThresholdCron } = await import('./routes/comments');
-    startSparkScoreCron();
-    startThresholdCron();
-
     const { startPostCountCron } = await import('./lib/postCountReconciler');
-    startPostCountCron();
-
     const { startSnapshotCron } = await import('./lib/platformSnapshot');
-    startSnapshotCron();
-
     const { startFlagCron } = await import('./lib/flagEngine');
-    startFlagCron();
-
     const { startAutoHeal } = await import('./elasticsearch/lib/searchAutoHeal');
-    startAutoHeal();
-
     const { startAlertEngine } = await import('./lib/alertEngine');
-    startAlertEngine();
-
     const { startSearchAnalyticsCron } = await import('./lib/searchAnalyticsCron');
-    startSearchAnalyticsCron();
-
     const { startArgumentCron } = await import('./lib/argumentCron');
-    startArgumentCron();
-
     const { initConfig, startConfigCron } = await import('./lib/systemConfig');
-    await initConfig();
-    startConfigCron();
-
     const { seedPresets } = await import('./lib/seedPresets');
+
+    const asyncWrap = (fn: () => void) => async () => { fn(); };
+
+    cronRegistry.register({
+      name: 'spark-score',
+      interval: 20 * 60 * 1000,
+      handler: asyncWrap(startSparkScoreCron),
+    });
+
+    cronRegistry.register({
+      name: 'spark-threshold',
+      interval: 6 * 60 * 60 * 1000,
+      handler: asyncWrap(startThresholdCron),
+    });
+
+    cronRegistry.register({
+      name: 'post-count-reconciler',
+      interval: 5 * 60 * 1000,
+      handler: asyncWrap(startPostCountCron),
+    });
+
+    cronRegistry.register({
+      name: 'platform-snapshot',
+      interval: 60 * 60 * 1000,
+      handler: asyncWrap(startSnapshotCron),
+    });
+
+    cronRegistry.register({
+      name: 'flag-engine',
+      interval: 60 * 1000,
+      handler: asyncWrap(startFlagCron),
+    });
+
+    cronRegistry.register({
+      name: 'search-auto-heal',
+      interval: 5 * 60 * 1000,
+      handler: asyncWrap(startAutoHeal),
+    });
+
+    cronRegistry.register({
+      name: 'alert-engine',
+      interval: 60 * 1000,
+      handler: asyncWrap(startAlertEngine),
+      fatal: true,
+    });
+
+    cronRegistry.register({
+      name: 'search-analytics',
+      interval: 60 * 60 * 1000,
+      handler: asyncWrap(startSearchAnalyticsCron),
+    });
+
+    cronRegistry.register({
+      name: 'argument-cron',
+      interval: 60 * 60 * 1000,
+      handler: asyncWrap(startArgumentCron),
+    });
+
+    cronRegistry.register({
+      name: 'config-refresh',
+      interval: 60 * 1000,
+      handler: asyncWrap(startConfigCron),
+    });
+
+    await initConfig();
     await seedPresets();
 
     app.listen(PORT, () => {
@@ -136,38 +212,20 @@ const startServer = async () => {
 
 startServer();
 
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM received. Shutting down gracefully...');
-  const { stopSparkScoreCron } = await import('./routes/comments');
-  stopSparkScoreCron();
-  const { stopPostCountCron } = await import('./lib/postCountReconciler');
-  stopPostCountCron();
-  const { stopSnapshotCron } = await import('./lib/platformSnapshot');
-  stopSnapshotCron();
-  const { stopArgumentCron } = await import('./lib/argumentCron');
-  stopArgumentCron();
-  const { stopConfigCron } = await import('./lib/systemConfig');
-  stopConfigCron();
-  await redis.quit();
-  await mongoose.connection.close();
+async function shutdown(signal: string): Promise<void> {
+  console.log(`[Server] ${signal} received. Draining connections...`);
+  try {
+    await cronRegistry.gracefulShutdown();
+    const { gracefulShutdown } = await import('./lib/database/mongoConnector');
+    await gracefulShutdown();
+    await disconnectRedis();
+  } catch (err) {
+    console.error('[Server] Shutdown error:', err);
+  }
   process.exit(0);
-});
+}
 
-process.on('SIGINT', async () => {
-  console.log('SIGINT received. Shutting down gracefully...');
-  const { stopSparkScoreCron } = await import('./routes/comments');
-  stopSparkScoreCron();
-  const { stopPostCountCron } = await import('./lib/postCountReconciler');
-  stopPostCountCron();
-  const { stopSnapshotCron } = await import('./lib/platformSnapshot');
-  stopSnapshotCron();
-  const { stopArgumentCron } = await import('./lib/argumentCron');
-  stopArgumentCron();
-  const { stopConfigCron } = await import('./lib/systemConfig');
-  stopConfigCron();
-  await redis.quit();
-  await mongoose.connection.close();
-  process.exit(0);
-});
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
 
 export default app;

@@ -1,5 +1,6 @@
 import { User } from '../models/User';
 import { TrustScoreLog } from '../models/TrustScoreLog';
+import { getConfig } from './systemConfig';
 
 /**
  * M11.C: Trust Score Calculation Engine V2
@@ -71,6 +72,21 @@ export const calculateTrustScore = async (userId: string, postId: string, action
   // Clamp to valid range
   const finalScore = Math.max(MIN_TRUST, Math.min(MAX_TRUST, adjustedScore));
 
+  // Determine trust level with hysteresis
+  const config = getConfig();
+  const { hysteresis_enter, hysteresis_lose, troll_max } = config.trust_tiers;
+  const previousLevel = user.trust_level || 'neutral';
+  let newLevel: 'troll' | 'neutral' | 'scholar';
+  if (previousLevel === 'scholar' && finalScore <= hysteresis_lose) {
+    newLevel = 'neutral';
+  } else if (finalScore >= hysteresis_enter) {
+    newLevel = 'scholar';
+  } else if (finalScore <= troll_max) {
+    newLevel = 'troll';
+  } else {
+    newLevel = 'neutral';
+  }
+
   // Increment version for optimistic locking
   const newVersion = currentVersion + 1;
 
@@ -82,6 +98,7 @@ export const calculateTrustScore = async (userId: string, postId: string, action
     {
       trust_score: finalScore,
       trust_version: newVersion,
+      trust_level: newLevel,
       last_50_reviews: user.last_50_reviews,
     },
     { new: true }

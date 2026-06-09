@@ -143,6 +143,22 @@ Lucide icon system and introduce platform-dependent rendering issues.**
 Any emoji found in component JSX or as a standalone icon must be
 replaced with the equivalent Lucide `<Icon>` component.
 
+### 3.0e 🗂️ Not-Implemented Registry Maintenance (NON-NEGOTIABLE)
+
+The file `docs/not-implemented.md` is the authoritative registry of all
+documented-but-not-yet-built pages and features.
+
+- **AFTER implementing any feature from this list**, the agent MUST:
+  1. Open `docs/not-implemented.md`
+  2. Remove the implemented feature(s) from the list
+  3. Commit the change alongside the feature code
+- Features marked `V2` or `V2.x` in the registry are exempt — they MUST
+  remain in the list until explicitly authorized for implementation.
+- Do NOT add speculative features to this list. Only items documented
+  elsewhere in the codebase belong here.
+- If a feature is partially implemented, update its status line to
+  describe what remains rather than deleting it.
+
 ---
 
 ## 3.1 🏭 Enterprise-Grade Implementation Standards (NON-NEGOTIABLE)

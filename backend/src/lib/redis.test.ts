@@ -4,6 +4,12 @@ const mockCreateClient = vi.fn();
 const mockOn = vi.fn();
 const mockEval = vi.fn();
 
+vi.mock('../lib/secrets', () => ({
+  SecretsManager: {
+    getSecretWithFallback: vi.fn().mockResolvedValue(''),
+  },
+}));
+
 vi.mock('redis', () => {
   return {
     createClient: vi.fn().mockImplementation((config: unknown) => {
@@ -12,6 +18,7 @@ vi.mock('redis', () => {
         on: vi.fn().mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
           mockOn(event, handler);
         }),
+        auth: vi.fn(),
         eval: vi.fn().mockImplementation((...args: unknown[]) => mockEval(...args)),
         connect: vi.fn(),
         quit: vi.fn(),
@@ -34,16 +41,26 @@ describe('redis client', () => {
     vi.unstubAllEnvs();
   });
 
-  it('creates client with custom REDIS_URL', async () => {
-    vi.stubEnv('REDIS_URL', 'redis://my-redis-host:6380');
+  it('creates client with custom REDIS_HOST and REDIS_PORT', async () => {
+    vi.stubEnv('REDIS_HOST', 'my-redis-host');
+    vi.stubEnv('REDIS_PORT', '6380');
     await import('../lib/redis');
-    expect(mockCreateClient).toHaveBeenCalledWith({ url: 'redis://my-redis-host:6380' });
+    expect(mockCreateClient).toHaveBeenCalledWith(
+      expect.objectContaining({
+        socket: expect.objectContaining({ host: 'my-redis-host', port: 6380 }),
+      })
+    );
   });
 
-  it('falls back to default URL when REDIS_URL is not set', async () => {
-    vi.stubEnv('REDIS_URL', undefined);
+  it('falls back to default host and port when env vars are not set', async () => {
+    vi.stubEnv('REDIS_HOST', undefined);
+    vi.stubEnv('REDIS_PORT', undefined);
     await import('../lib/redis');
-    expect(mockCreateClient).toHaveBeenCalledWith({ url: 'redis://localhost:6379' });
+    expect(mockCreateClient).toHaveBeenCalledWith(
+      expect.objectContaining({
+        socket: expect.objectContaining({ host: 'redis', port: 6379 }),
+      })
+    );
   });
 
   it('registers an error handler on the client', async () => {

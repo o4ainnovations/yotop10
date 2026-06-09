@@ -49,8 +49,8 @@ addPost: (data: PostSubmission) =>
     body: JSON.stringify(data),
   }),
 
-checkTitle: (query: string, categoryId: string) => 
-  apiFetch(`/posts/check-title?q=${encodeURIComponent(query)}&categoryId=${encodeURIComponent(categoryId)}`),
+checkTitle: (query: string) => 
+  apiFetch(`/posts/check-title?q=${encodeURIComponent(query)}`),
 ```
 
 ### Type Definitions (add to api.ts)
@@ -116,7 +116,7 @@ Industry standard: Show only what's needed when it's needed. Reduce cognitive lo
   - Required validation with inline error
   
 - **Title Input** (Required)
-  - Text input, 5-300 characters
+  - Text input, max 300 characters
   - Real-time character counter: "X/300"
   - Debounced (500ms) title similarity check
   - Inline status: ✅ Allowed / ⚠️ Warning / ❌ Blocked
@@ -127,8 +127,8 @@ Industry standard: Show only what's needed when it's needed. Reduce cognitive lo
   - Placeholder: "Briefly explain what this list is about and why it matters"
 
 ### Step 2: List Items (Progressive Reveal)
-- **Header**: "List Items (add at least 1, max 25)"
-- **Item Template** (repeatable, starts with 1):
+- **Header**: "List Items (add at least 3, max 100)"
+- **Item Template** (repeatable, starts with 3):
   ```
   ┌─────────────────────────────────────────────┐
   │ #1 [Title Input_______] [Remove ✕]       │
@@ -143,7 +143,7 @@ Industry standard: Show only what's needed when it's needed. Reduce cognitive lo
   - **Remove Button**: Disabled if only 1 item exists
   
 - **Controls Below List**:
-  - "Add Item" Button (+), disabled when 25 items reached
+  - "Add Item" Button (+), disabled when 100 items reached
   - Help text: "Each item needs a title and justification"
 
 ### Step 3: Author & Review (Final Step)
@@ -169,8 +169,8 @@ Triggered on blur (not on every keystroke) for performance.
 
 | Field | Validation | Error Message |
 |-------|------------|---------------|
-| Category | Required, must be valid ID | "Please select a category" |
-| Title | Required, 5-300 chars | "Title must be 5-300 characters" |
+| Category | Required, select a category | "Please select a category" |
+| Title | Required, max 300 chars | "Title must be less than 200 characters" |
 | Title Similarity | Check API response | "Similar list exists: [title]" |
 | Intro | Required, max 2000 chars | "Introduction is required (max 2000 chars)" |
 | Item Title | Required, max 200 chars | "Item title is required (max 200 chars)" |
@@ -181,7 +181,7 @@ Triggered on blur (not on every keystroke) for performance.
 ### Layer 2: Title Similarity Check
 - **Trigger**: On title input blur, debounced 500ms
 - **Condition**: Only if title ≥ 8 characters AND category selected
-- **API Call**: `GET /api/posts/check-title?q=[title]&categoryId=[categoryId]`
+- **API Call**: `GET /api/posts/check-title?q=[title]`
 - **Responses**:
   - `blocked: true` → Show error, disable submit, display matching titles
   - `warning: true` → Show yellow warning, enable submit with caution
@@ -301,7 +301,7 @@ Triggered on blur (not on every keystroke) for performance.
   {error && <p className="error">{error}</p>}
 </div>
 <div id="title-help">
-  <p>5-300 characters</p>
+  <p>max 300 characters</p>
 </div>
 ```
 
@@ -395,7 +395,7 @@ const clearDraft = () => {
 // Memoize categories list to prevent re-renders
 const categoryOptions = useMemo(() => 
   categories.map(cat => ({
-    value: cat.id,
+    value: cat.slug,
     label: `${cat.icon || '📁'} ${cat.name}`
   })), [categories]
 );
@@ -473,10 +473,10 @@ Every test must pass 100% before marking complete:
 | Test Case | Expected Result |
 |-----------|-----------------|
 | Submit with empty title | Show error "Title is required" |
-| Submit with title < 5 chars | Show error "Title must be 5-300 characters" |
+| Submit with empty title | Show error "Title is required" |
 | Submit without category | Show error "Please select a category" |
 | Submit without intro | Show error "Introduction is required" |
-| Submit with 0 items | Show error "At least 1 item required" |
+| Submit with fewer than 3 items | Show error "At least 3 items are required" |
 | Item with empty title | Show error on that item "Title is required" |
 | Item with empty justification | Show error "Justification required" |
 | Valid form | Submit button enabled, no errors |

@@ -5,6 +5,7 @@ import { Comment } from '../models/Comment';
 import { ListItem } from '../models/ListItem';
 import { redis } from '../lib/redis';
 import { Category } from '../models/Category';
+import { getCategoryNameMap } from '../lib/categoryCache';
 
 const router: Router = Router();
 
@@ -127,6 +128,9 @@ router.get('/', async (req, res) => {
       }
     }
 
+    const categoryNameMap = await getCategoryNameMap();
+    const argCatName = (slug: string) => categoryNameMap.get(slug) || slug;
+
     const formatted = paginated.map((post: any) => {
       const pid = post._id.toString();
       const postComments = commentsByPost[pid] || [];
@@ -153,6 +157,7 @@ router.get('/', async (req, res) => {
         title: post.title,
         post_type: post.post_type,
         category_slug: post.category_slug,
+        category_name: argCatName(post.category_slug),
         author_username: post.author_username,
         author_display_name: post.author_display_name,
         comment_count: post.comment_count,

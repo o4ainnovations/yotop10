@@ -36,7 +36,7 @@ export function ArgumentCard({ argument }: ArgumentCardProps) {
         </span>
 
         <span className="text-2xs font-mono text-zinc-600 uppercase">
-          {argument.category_slug}
+          {argument.category_name || argument.category_slug}
         </span>
 
         {argument.velocity > 0 && (

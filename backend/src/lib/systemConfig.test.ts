@@ -373,7 +373,7 @@ describe('updateConfig', () => {
   it('returns current config when no changes provided', async () => {
     const mod = await import('./systemConfig');
     const result = await mod.updateConfig({}, 'admin-test');
-    expect(result).toBe(mod.getConfig());
+    expect(result).toStrictEqual(mod.getConfig());
     expect(mockFindOneAndUpdate).not.toHaveBeenCalled();
   });
 });

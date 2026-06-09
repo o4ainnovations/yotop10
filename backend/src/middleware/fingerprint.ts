@@ -27,13 +27,15 @@ declare module 'express' {
 }
 
 const GRACE_PERIOD_MS = 3500;
-const MAX_GRACE_REQUESTS = 3;
+const MAX_GRACE_REQUESTS = 10;
 
 export const getClientIp = (req: { headers: Record<string, string | string[] | undefined>; ip?: string; socket?: { remoteAddress?: string } }): string => {
+  // req.ip is trusted when Express 'trust proxy' is enabled (set in server.ts)
+  if (req.ip && req.ip !== '::1' && req.ip !== '127.0.0.1') return req.ip;
+  // Fallback for direct connections or when trust proxy is disabled
   const xForwardedFor = req.headers['x-forwarded-for'] as string;
   if (xForwardedFor) {
     const ips = xForwardedFor.split(',').map(ip => ip.trim());
-    if (ips.length >= 2) return ips[ips.length - 2];
     return ips[0];
   }
   return req.ip || req.socket?.remoteAddress || 'unknown';

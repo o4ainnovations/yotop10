@@ -6,8 +6,7 @@ import { Comment } from '../models/Comment';
 import { Post } from '../models/Post';
 import { SparkThreshold } from '../models/SparkThreshold';
 import {
-  getPercentileValue, getThresholds,
-  computeSparkScore, computeParentSparkScore,
+  getThresholds, computeSparkScore, computeParentSparkScore,
 } from '../lib/sparkScore';
 import { indexComment, removeComment } from '../elasticsearch/lib/indexWriter';
 
@@ -57,47 +56,71 @@ const updateParentSparkScore = async (parentId: string) => {
 };
 
 // Start cron job for time-decay updates
+const BATCH_SIZE = parseInt(process.env.SPARK_SCORE_BATCH_SIZE || '500', 10);
+const SPARK_WINDOW_HOURS = parseInt(process.env.SPARK_SCORE_WINDOW_HOURS || '72', 10);
+
 const startSparkScoreCron = () => {
   if (cronInterval) return;
-  
-  // Run every 20 minutes
-  cronInterval = setInterval(async () => {
+
+  const runOnce = async (): Promise<void> => {
     try {
-      const seventyTwoHoursAgo = new Date(Date.now() - 72 * 60 * 60 * 1000);
-      
-      // Get comments from last 72 hours with spark_score > 0.01
-      const comments = await Comment.find({
-        created_at: { $gte: seventyTwoHoursAgo },
+      const cutoff = new Date(Date.now() - SPARK_WINDOW_HOURS * 60 * 60 * 1000);
+      const thresholds = await getThresholds();
+
+      // Find matching IDs first (lightweight)
+      const commentIds = await Comment.find({
+        created_at: { $gte: cutoff },
         spark_score: { $gt: 0.01 },
-      });
-      
+      }).select('_id').lean();
+
+      if (commentIds.length === 0) return;
+
       let updated = 0;
-      for (const comment of comments) {
-        const thresholds = await getThresholds();
-        const newScore = computeSparkScore(
-          { fireCount: comment.fire_count, replyCount: comment.reply_count, createdAt: comment.created_at },
-          thresholds
-        );
-        
-        // Stop recalculating if score is very low and below floor
-        if (newScore < 0.01) {
-          await Comment.findByIdAndUpdate(comment._id, { spark_score: newScore });
-          updated++;
-        } else if (Math.abs(newScore - comment.spark_score) > 0.001) {
-          await Comment.findByIdAndUpdate(comment._id, { spark_score: newScore });
-          updated++;
+
+      // Process in batches
+      for (let offset = 0; offset < commentIds.length; offset += BATCH_SIZE) {
+        const batchIds = commentIds.slice(offset, offset + BATCH_SIZE).map(c => c._id);
+
+        const batchComments = await Comment.find({ _id: { $in: batchIds } })
+          .select('fire_count reply_count created_at spark_score')
+          .lean();
+
+        const updates: Array<{ id: string; score: number }> = [];
+
+        for (const comment of batchComments) {
+          const newScore = computeSparkScore(
+            { fireCount: comment.fire_count, replyCount: comment.reply_count, createdAt: comment.created_at },
+            thresholds
+          );
+          if (newScore < 0.01 || Math.abs(newScore - (comment as any).spark_score) > 0.001) {
+            updates.push({ id: comment._id.toString(), score: newScore });
+          }
+        }
+
+        // Bulk update
+        if (updates.length > 0) {
+          await Promise.allSettled(
+            updates.map(u => Comment.findByIdAndUpdate(u.id, { spark_score: u.score }))
+          );
+          updated += updates.length;
         }
       }
-      
+
       if (updated > 0) {
-        console.log(`[SparkEngine] Updated ${updated} comment scores`);
+        console.log(`[SparkEngine] Updated ${updated} comment scores (${commentIds.length} checked)`);
       }
     } catch (error) {
       console.error('[SparkEngine] Cron error:', error);
     }
-  }, 20 * 60 * 1000);
+  };
+
+  // Run immediately on start
+  runOnce();
   
-  console.log('[SparkEngine] Cron job started (every 20 minutes)');
+  // Then every 20 minutes
+  cronInterval = setInterval(runOnce, 20 * 60 * 1000);
+  
+  console.log(`[SparkEngine] Cron job started (every 20 minutes, batch size: ${BATCH_SIZE})`);
 };
 
 // Stop cron job
@@ -118,33 +141,58 @@ const stopSparkScoreCron = () => {
 const calculateThresholds = async () => {
   try {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    
-    // Get all comments from last 30 days
-    const comments = await Comment.find({
-      created_at: { $gte: thirtyDaysAgo }
+
+    // Count total comments in window first
+    const totalComments = await Comment.countDocuments({
+      created_at: { $gte: thirtyDaysAgo },
     });
-    
-    if (comments.length === 0) {
+
+    if (totalComments === 0) {
       console.log('[SparkEngine] No comments in last 30 days to calculate thresholds');
       return;
     }
-    
-    // Calculate base scores for all comments
-    const baseScores: number[] = [];
-    for (const comment of comments) {
-      const baseScore = (comment.reply_count * 2.0) + (comment.fire_count * 0.5) + 3;
-      baseScores.push(baseScore);
-    }
-    
-    // Sort for percentile calculation
-    const sortedScores = [...baseScores].sort((a, b) => a - b);
-    
-    // Calculate percentiles
-    const percentile_99 = getPercentileValue(sortedScores, 99);
-    const percentile_95 = getPercentileValue(sortedScores, 95);
-    const percentile_85 = getPercentileValue(sortedScores, 85);
-    const percentile_70 = getPercentileValue(sortedScores, 70);
-    
+
+    // Build percentile array via batched aggregation
+    // Uses MongoDB $project + $sort + $group to compute base scores server-side
+    const pipeline = [
+      { $match: { created_at: { $gte: thirtyDaysAgo } } },
+      {
+        $project: {
+          baseScore: {
+            $add: [
+              { $multiply: ['$reply_count', 2.0] },
+              { $multiply: ['$fire_count', 0.5] },
+              3,
+            ],
+          },
+        },
+      },
+      { $sort: { baseScore: 1 as 1 | -1 } },
+      {
+        $group: {
+          _id: null,
+          scores: { $push: '$baseScore' },
+          count: { $sum: 1 },
+        },
+      },
+    ];
+
+    const results = await Comment.aggregate(pipeline).allowDiskUse(true);
+    if (results.length === 0) return;
+
+    const scores = results[0].scores as number[];
+    const count = results[0].count as number;
+
+    const getP = (pct: number): number => {
+      const idx = Math.ceil((pct / 100) * count) - 1;
+      return scores[Math.max(0, Math.min(idx, scores.length - 1))];
+    };
+
+    const percentile_99 = getP(99);
+    const percentile_95 = getP(95);
+    const percentile_85 = getP(85);
+    const percentile_70 = getP(70);
+
     // Store thresholds
     await SparkThreshold.create({
       percentile_99,
@@ -153,8 +201,8 @@ const calculateThresholds = async () => {
       percentile_70,
       calculated_at: new Date(),
     });
-    
-    console.log(`[SparkEngine] Thresholds updated: 99th=${percentile_99.toFixed(2)}, 95th=${percentile_95.toFixed(2)}, 85th=${percentile_85.toFixed(2)}, 70th=${percentile_70.toFixed(2)}`);
+
+    console.log(`[SparkEngine] Thresholds (${count} comments): 99th=${percentile_99.toFixed(2)}, 95th=${percentile_95.toFixed(2)}, 85th=${percentile_85.toFixed(2)}, 70th=${percentile_70.toFixed(2)}`);
   } catch (error) {
     console.error('[SparkEngine] Threshold calculation error:', error);
   }
@@ -172,8 +220,15 @@ const startThresholdCron = () => {
   console.log('[SparkEngine] Threshold cron started (every 6 hours)');
 };
 
+const stopThresholdCron = () => {
+  if (thresholdCronInterval) {
+    clearInterval(thresholdCronInterval);
+    thresholdCronInterval = null;
+  }
+};
+
 // PATCH /api/comments/:id - Edit comment (within 2hr window)
-router.patch('/comments/:id', 
+router.patch('/:id', 
   body('content').trim().notEmpty().isLength({ max: 2000 }),
   async (req, res) => {
   try {
@@ -220,7 +275,7 @@ router.patch('/comments/:id',
 });
 
 // DELETE /api/comments/:id - Delete own comment
-router.delete('/comments/:id', async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const commentId = req.params?.id;
     const deviceFingerprint = req.user?.device_fingerprint;
@@ -290,7 +345,7 @@ router.delete('/comments/:id', async (req, res) => {
 });
 
 // POST /api/comments/:id/spark - Recalculate spark score for a comment
-router.post('/comments/:id/spark', async (req, res) => {
+router.post('/:id/spark', async (req, res) => {
   try {
     const commentId = req.params?.id;
 
@@ -312,5 +367,5 @@ router.post('/comments/:id/spark', async (req, res) => {
   }
 });
 
-export { router, updateSparkScore, updateParentSparkScore, startSparkScoreCron, startThresholdCron, stopSparkScoreCron };
+export { router, updateSparkScore, updateParentSparkScore, startSparkScoreCron, startThresholdCron, stopSparkScoreCron, stopThresholdCron };
 export default router;

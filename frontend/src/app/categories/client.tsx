@@ -24,7 +24,7 @@ export default function CategoriesClient() {
     fetch('/api/categories')
       .then(r => r.json())
       .then(d => { setCategories(d.categories || []); setLoading(false); })
-      .catch(e => { setError('Failed to load categories'); setLoading(false); });
+      .catch(() => { setError('Failed to load categories'); setLoading(false); });
   }, []);
 
   if (loading) return null;
@@ -32,7 +32,7 @@ export default function CategoriesClient() {
   if (error) {
     return (
       <div className="min-h-screen bg-zinc-950 px-3 py-6 sm:px-6 sm:py-10">
-        <nav className="mb-6 flex items-center gap-4">
+        <nav className="show-desktop mb-6 flex items-center gap-4">
           <Link href="/" className="text-sm font-bold text-orange-400 transition hover:text-orange-300">Home</Link>
           <span className="text-sm font-semibold text-white">Categories</span>
         </nav>
@@ -52,7 +52,7 @@ export default function CategoriesClient() {
   if (categories.length === 0) {
     return (
       <div className="min-h-screen bg-zinc-950 px-3 py-6 sm:px-6 sm:py-10">
-        <nav className="mb-8 flex items-center gap-4">
+        <nav className="show-desktop mb-8 flex items-center gap-4">
           <Link href="/" className="text-sm font-bold text-orange-400 transition hover:text-orange-300">Home</Link>
           <span className="text-sm font-semibold text-white">Categories</span>
         </nav>
@@ -67,7 +67,7 @@ export default function CategoriesClient() {
 
   return (
     <div className="min-h-screen bg-zinc-950 px-3 py-6 sm:px-6 sm:py-10">
-      <nav className="mb-8 flex items-center gap-4">
+      <nav className="show-desktop mb-8 flex items-center gap-4">
         <Link href="/" className="text-sm font-bold text-orange-400 transition hover:text-orange-300">Home</Link>
         <span className="text-sm font-semibold text-white">Categories</span>
       </nav>
@@ -94,26 +94,6 @@ export default function CategoriesClient() {
               <span className="text-xs text-zinc-600">
                 {cat.post_count} {cat.post_count === 1 ? 'post' : 'posts'}
               </span>
-              {cat.children.length > 0 && (
-                <div className="mt-4 border-t border-white/5 pt-4">
-                  <h3 className="mb-2.5 text-3xs font-bold uppercase tracking-wider text-zinc-500">
-                    Subcategories
-                  </h3>
-                  <ul className="flex flex-col gap-1.5">
-                    {cat.children.map(child => (
-                      <li key={child.id}>
-                        <Link
-                          href={`/c/${child.slug}`}
-                          className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2 text-sm2 text-zinc-400 transition hover:bg-orange-500/10 hover:text-orange-400"
-                        >
-                          <span>{child.name}</span>
-                          <span className="text-xs text-zinc-600">{child.post_count}</span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </Link>
           ))}
         </div>

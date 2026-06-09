@@ -7,6 +7,6 @@ export const reactionsApi = {
       body: JSON.stringify({ target_type, target_id }),
     }),
 
-  getReactionState: (targets: Array<{ type: string; id: string }>) =>
-    apiFetch(`/reactions/state?targets=${encodeURIComponent(JSON.stringify(targets))}`),
+  getReactionState: (targets: Array<{ type: string; id: string }>, options?: RequestInit) =>
+    apiFetch(`/reactions/state?targets=${encodeURIComponent(JSON.stringify(targets))}`, options),
 };

@@ -47,7 +47,7 @@ export function HallOfFameCard({
             </span>
             {post?.category_slug && (
               <span className="text-2xs font-mono text-zinc-500 uppercase">
-                {post.category_slug}
+                {post.category_name || post.category_slug}
               </span>
             )}
           </div>
@@ -102,7 +102,7 @@ export function HallOfFameCard({
               </span>
               {post?.category_slug && (
                 <span className="text-2xs font-mono text-zinc-600 uppercase">
-                  {post.category_slug}
+                  {post.category_name || post.category_slug}
                 </span>
               )}
               <span className="text-2xs text-zinc-600" suppressHydrationWarning>
@@ -189,7 +189,7 @@ export function HallOfFameCard({
         </span>
         {post?.category_slug && (
           <span className="text-2xs font-mono text-zinc-500 uppercase">
-            {post.category_slug}
+            {post.category_name || post.category_slug}
           </span>
         )}
       </div>

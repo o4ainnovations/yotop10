@@ -1,12 +1,72 @@
 import { createClient, RedisClientType } from 'redis';
+import { SecretsManager } from './secrets';
 
-const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+const REDIS_HOST = process.env.REDIS_HOST || 'redis';
+const REDIS_PORT = parseInt(process.env.REDIS_PORT || '6379', 10);
+const REDIS_DB = parseInt(process.env.REDIS_DB || '0', 10);
 
-export const redis: RedisClientType = createClient({ url: redisUrl });
+let connected = false;
+
+export const redis: RedisClientType = createClient({
+  socket: {
+    host: REDIS_HOST,
+    port: REDIS_PORT,
+    reconnectStrategy: (retries) => {
+      if (retries > 20) {
+        console.error('[Redis] Max reconnection attempts reached');
+        return new Error('Max reconnection attempts');
+      }
+      return Math.min(retries * 100, 5000);
+    },
+  },
+  database: REDIS_DB,
+});
 
 redis.on('error', (err: Error) => {
-  console.error('Redis client error:', err.message);
+  console.error('[Redis] Client error:', err.message);
 });
+
+redis.on('reconnecting', () => {
+  console.warn('[Redis] Reconnecting...');
+});
+
+redis.on('connect', () => {
+  console.log('[Redis] Connected');
+  connected = true;
+});
+
+redis.on('end', () => {
+  console.log('[Redis] Connection closed');
+  connected = false;
+});
+
+export async function connectRedis(): Promise<void> {
+  if (connected) return;
+
+  try {
+    const password = await SecretsManager.getSecretWithFallback('REDIS_PASSWORD', '');
+    await redis.connect();
+    if (password) {
+      await redis.auth({ password });
+      console.log('[Redis] Authentication configured');
+    }
+  } catch (err) {
+    const error = err as Error;
+    console.error('[Redis] Connection failed:', error.message);
+    throw error;
+  }
+}
+
+export async function disconnectRedis(): Promise<void> {
+  if (connected) {
+    try {
+      await redis.quit();
+      console.log('[Redis] Disconnected');
+    } catch (err) {
+      console.error('[Redis] Error during disconnect:', err);
+    }
+  }
+}
 
 /**
  * Atomic rate limit check+increment using sorted-set sliding window.

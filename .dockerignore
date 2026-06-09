@@ -1,13 +1,72 @@
-node_modules/
+# Version control
 .git/
+.gitignore
+.gitattributes
+.gitmodules
+.gitkeep
+
+# Environment files (contain secrets — never send to Docker)
 .env
 .env.*
-*.log
-.next/
+!.env.example
+secrets/
+
+# Dependencies (installed in multi-stage build)
+node_modules/
+**/node_modules/
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Build outputs
 dist/
-coverage/
-.vscode/
+.next/
+out/
+build/
+.turbo/
+
+# IDE
 .idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
 .DS_Store
 Thumbs.db
-docker-compose.override.yml
+*.log
+
+# Tests
+coverage/
+.nyc_output/
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+__tests__/
+__mocks__/
+test-results/
+playwright-report/
+
+# Documentation (not needed at runtime)
+docs/
+*.md
+!README.md
+
+# CI
+.github/
+.gitlab-ci.yml
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Temp
+tmp/
+temp/
+*.tmp
+
+# Yotop10 specific
+uploads/

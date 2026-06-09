@@ -218,7 +218,6 @@ export default function StatisticsDashboardClient() {
 
       <Panel scope="trends" titleIcon="TrendingDown" title="Trends with Deltas">
         {panels.trends.data ? ((): React.ReactNode => { const d = panels.trends.data as Record<string, unknown>; const weeks = arr(d.weeks) as Array<Record<string, unknown>>;
-          const arrow = (dir: string) => dir === 'up' ? '\u2191' : dir === 'down' ? '\u2193' : '\u2192';
           const arrowIcon = (dir: string) => dir === 'up' ? <Icon name="ArrowUp" size={12} className="inline" /> : dir === 'down' ? <Icon name="ArrowDown" size={12} className="inline" /> : <Icon name="ArrowRight" size={12} className="inline" />;
           const c = (col: string) => col === 'green' ? 'text-green-500' : col === 'red' ? 'text-red-500' : 'text-white/40';
           return <>

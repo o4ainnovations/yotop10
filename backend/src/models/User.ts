@@ -9,6 +9,7 @@ export interface IUser extends Document {
   trust_score: number;
   trust_version: number;
   trust_locked: boolean;
+  trust_level?: 'troll' | 'neutral' | 'scholar';
   is_admin: boolean;
   authority_id?: string;
   public_key_hash?: string;
@@ -88,6 +89,11 @@ const userSchema = new Schema<IUser>(
     trust_locked: {
       type: Boolean,
       default: false,
+    },
+    trust_level: {
+      type: String,
+      enum: ['troll', 'neutral', 'scholar'],
+      default: 'neutral',
     },
     last_50_reviews: {
       type: [{

@@ -3,6 +3,9 @@ node_modules/
 .pnp/
 .pnp.js
 
+# Secrets (Docker secrets files — NEVER commit)
+secrets/
+
 # Environment
 .env
 .env.local

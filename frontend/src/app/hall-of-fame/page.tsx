@@ -67,7 +67,7 @@ export default async function HallOfFamePage() {
                     </span>
                     {post.category_slug && (
                       <span className="text-2xs text-zinc-500 font-mono uppercase tracking-wide border border-white/10 rounded-full px-2 py-0.5">
-                        {post.category_slug}
+                        {post.category_name || post.category_slug}
                       </span>
                     )}
                   </div>
@@ -133,7 +133,7 @@ export default async function HallOfFamePage() {
                     </span>
                     {post.category_slug && (
                       <span className="text-2xs text-zinc-500 font-mono uppercase tracking-wide border border-white/10 rounded-full px-1.5 py-0.5">
-                        {post.category_slug}
+                        {post.category_name || post.category_slug}
                       </span>
                     )}
                   </div>

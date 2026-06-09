@@ -90,7 +90,6 @@ const postSchema = new Schema<IPost>(
     slug: {
       type: String,
       unique: true,
-      index: true,
       required: false,
       default: null,
     },
@@ -222,16 +221,23 @@ postSchema.pre('save', function(next) {
 });
 
 // Indexes for efficient queries
-postSchema.index({ status: 1, created_at: -1 });
-postSchema.index({ category_id: 1, created_at: -1, status: 1 });
-postSchema.index({ category_id: 1, status: 1 });
-postSchema.index({ author_id: 1, status: 1 });
-postSchema.index({ post_type: 1, status: 1 });
-postSchema.index({ title: 'text', intro: 'text' });
-postSchema.index({ slug: 1 }, { unique: true });
-postSchema.index({ normalized_title: 1 });
+// ─── Primary query indexes ─────────────────────────────────────────
+postSchema.index({ status: 1, deleted: 1, created_at: -1 });        // Public feed (newest first)
+postSchema.index({ status: 1, deleted: 1, comment_count: -1 });     // Public feed (most commented)
+postSchema.index({ status: 1, deleted: 1, view_count: -1 });        // Public feed (most viewed)
 
-// Unique partial index for pending posts - exactly one pending per normalized title
+// ─── Category feed indexes ─────────────────────────────────────────
+postSchema.index({ category_slug: 1, status: 1, deleted: 1, created_at: -1 });  // Category feed
+postSchema.index({ category_id: 1, status: 1, deleted: 1 });                     // Admin category filter
+
+// ─── User & type indexes ───────────────────────────────────────────
+postSchema.index({ author_id: 1, status: 1, created_at: -1 });      // User profile
+postSchema.index({ post_type: 1, status: 1, deleted: 1 });          // Type filter
+
+postSchema.index({ title: 'text', intro: 'text' });
+
+// ─── Unique partial index for pending posts ─────────────────────────
+// Exactly one pending per normalized title
 postSchema.index({ normalized_title: 1 }, {
   unique: true,
   partialFilterExpression: { status: 'pending_review' }

@@ -11,6 +11,12 @@ vi.mock('../models/Category', () => ({
   },
 }));
 
+vi.mock('../models/Post', () => ({
+  Post: {
+    find: vi.fn(),
+  },
+}));
+
 vi.mock('../lib/adminAuth', () => ({
   adminAuthMiddleware: (_req: unknown, _res: unknown, next: () => void) => next(),
   generateAdminToken: vi.fn(),
@@ -19,6 +25,7 @@ vi.mock('../lib/adminAuth', () => ({
 
 import categoriesRouter from '../routes/categories';
 import { Category } from '../models/Category';
+import { Post } from '../models/Post';
 
 function createApp() {
   const app = express();
@@ -57,6 +64,11 @@ describe('GET /api/categories', () => {
       lean: vi.fn().mockResolvedValue([parent, child]),
     } as unknown as ReturnType<typeof Category.find>);
 
+    vi.mocked(Post.find).mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockResolvedValue([]),
+    } as unknown as ReturnType<typeof Post.find>);
+
     const res = await request(createApp()).get('/api/categories');
 
     expect(res.status).toBe(200);
@@ -73,6 +85,11 @@ describe('GET /api/categories', () => {
       lean: vi.fn().mockResolvedValue([cat]),
     } as unknown as ReturnType<typeof Category.find>);
 
+    vi.mocked(Post.find).mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockResolvedValue([]),
+    } as unknown as ReturnType<typeof Post.find>);
+
     const res = await request(createApp()).get('/api/categories?include_children=false');
 
     expect(res.status).toBe(200);
@@ -86,6 +103,11 @@ describe('GET /api/categories', () => {
       lean: vi.fn().mockResolvedValue([]),
     } as unknown as ReturnType<typeof Category.find>);
 
+    vi.mocked(Post.find).mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockResolvedValue([]),
+    } as unknown as ReturnType<typeof Post.find>);
+
     const res = await request(createApp()).get('/api/categories');
 
     expect(res.status).toBe(200);
@@ -97,6 +119,11 @@ describe('GET /api/categories', () => {
       sort: vi.fn().mockReturnThis(),
       lean: vi.fn().mockRejectedValue(new Error('DB down')),
     } as unknown as ReturnType<typeof Category.find>);
+
+    vi.mocked(Post.find).mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockResolvedValue([]),
+    } as unknown as ReturnType<typeof Post.find>);
 
     const res = await request(createApp()).get('/api/categories');
 

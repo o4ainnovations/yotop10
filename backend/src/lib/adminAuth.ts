@@ -2,16 +2,15 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { Request, RequestHandler } from 'express';
 import { AdminUser } from '../models/AdminUser';
-import { getEnv } from './env';
+import { SecretsManager } from './secrets';
 
-function getJwtSecret(): string {
-  try {
-    return getEnv().JWT_SECRET;
-  } catch {
-    const secret = process.env.JWT_SECRET;
-    if (!secret) throw new Error('FATAL: JWT_SECRET environment variable is required but not set.');
-    return secret;
+let jwtSecretPromise: Promise<string> | null = null;
+
+async function getJwtSecret(): Promise<string> {
+  if (!jwtSecretPromise) {
+    jwtSecretPromise = SecretsManager.getSecret('JWT_SECRET');
   }
+  return jwtSecretPromise;
 }
 
 const SUPER_ADMIN_EXPIRY = '24h';
@@ -30,15 +29,16 @@ export interface AdminAuthRequest extends Request {
   };
 }
 
-export const generateAdminToken = (
+export const generateAdminToken = async (
   adminId: string,
   username: string,
   tokenVersion: number,
   role: 'super_admin' | 'mod',
   permissions: string[],
   permissionsVersion: number
-): string => {
+): Promise<string> => {
   const expiresIn = role === 'super_admin' ? SUPER_ADMIN_EXPIRY : MOD_EXPIRY;
+  const secret = await getJwtSecret();
   return jwt.sign(
     {
       id: adminId,
@@ -48,7 +48,7 @@ export const generateAdminToken = (
       permissions_version: permissionsVersion,
       token_version: tokenVersion,
     },
-    getJwtSecret(),
+    secret,
     { expiresIn }
   );
 };
@@ -61,7 +61,8 @@ export const adminAuthMiddleware: RequestHandler = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, getJwtSecret()) as {
+    const secret = await getJwtSecret();
+    const decoded = jwt.verify(token, secret) as {
       id: string;
       username: string;
       role: 'super_admin' | 'mod';
@@ -91,7 +92,7 @@ export const adminAuthMiddleware: RequestHandler = async (req, res, next) => {
       (decoded.exp && Date.now() > (decoded.exp * 1000) - (adminRole === 'super_admin' ? 60 * 60 * 1000 : 30 * 60 * 1000));
 
     if (needsRefresh) {
-      const newToken = generateAdminToken(
+      const newToken = await generateAdminToken(
         (admin._id as { toString(): string }).toString(),
         admin.username,
         admin.token_version,

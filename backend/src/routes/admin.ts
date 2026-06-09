@@ -115,7 +115,7 @@ router.post('/login', async (req, res) => {
       metadata: { username: admin.username },
     });
 
-    const token = generateAdminToken(
+    const token = await generateAdminToken(
       (admin._id as { toString(): string }).toString(),
       admin.username,
       admin.token_version,
@@ -183,7 +183,7 @@ router.post('/setup', async (req, res) => {
 
     await SetupToken.findByIdAndUpdate(setupToken._id, { used: true });
 
-    const authToken = generateAdminToken(
+    const authToken = await generateAdminToken(
       (admin._id as { toString(): string }).toString(),
       admin.username,
       admin.token_version,
@@ -279,7 +279,10 @@ router.get('/posts/pending', async (req, res) => {
     const query: Record<string, unknown> = { status: 'pending_review' };
     if (req.query.category_slug) query.category_slug = req.query.category_slug;
     if (req.query.post_type) query.post_type = req.query.post_type;
-    if (req.query.author) query.author_username = { $regex: req.query.author, $options: 'i' };
+    if (req.query.author) {
+      const escaped = (req.query.author as string).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.author_username = { $regex: escaped, $options: 'i' };
+    }
     if (req.query.date_from || req.query.date_to) {
       query.created_at = {};
       if (req.query.date_from) (query.created_at as Record<string, unknown>).$gte = new Date(req.query.date_from as string);
@@ -542,24 +545,22 @@ router.post('/posts/bulk/approve', async (req, res) => {
       return res.status(400).json({ code: 'VALIDATION', error: 'Provide 1-50 post IDs' });
     }
 
-    let approved = 0; let skipped = 0; const errors: string[] = [];
-    for (const id of ids) {
-      try {
-        const post = await Post.findById(id);
-        if (!post) { skipped++; continue; }
-        if (post.status === 'approved') { skipped++; continue; }
-        post.status = 'approved'; post.published_at = new Date();
-        await post.save();
-        await trustScoreWorker.queueUpdate(post.author_id, (post._id as { toString(): string }).toString(), 'approve');
-        const { grantBoost, BoostType } = await import('../lib/ladderSystem');
-        await grantBoost(post.author_id.toString(), BoostType.POST_APPROVED);
-        await createNotification({ user_id: post.author_id, type: 'post_approved', post_id: (post._id as { toString(): string }).toString(), post_title: post.title, message: `Your list "${post.title}" was approved.` });
-        indexPost(post as unknown as Record<string, unknown>);
-        approved++;
-      } catch (e) { errors.push(`Post ${id}: ${(e as Error).message}`); }
-    }
+    const { processBatch } = await import('../lib/batchProcessor');
+    let skipped = 0;
+    const result = await processBatch(ids, async (id) => {
+      const post = await Post.findById(id);
+      if (!post) { skipped++; return; }
+      if (post.status === 'approved') { skipped++; return; }
+      post.status = 'approved'; post.published_at = new Date();
+      await post.save();
+      await trustScoreWorker.queueUpdate(post.author_id, (post._id as { toString(): string }).toString(), 'approve');
+      const { grantBoost, BoostType } = await import('../lib/ladderSystem');
+      await grantBoost(post.author_id.toString(), BoostType.POST_APPROVED);
+      await createNotification({ user_id: post.author_id, type: 'post_approved', post_id: (post._id as { toString(): string }).toString(), post_title: post.title, message: `Your list "${post.title}" was approved.` });
+      indexPost(post as unknown as Record<string, unknown>);
+    });
 
-    res.json({ success: true, approved, skipped, errors: errors.length > 0 ? errors.slice(0, 5) : [] });
+    res.json({ success: true, approved: result.succeeded, skipped, errors: result.errors.slice(0, 5) });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Bulk approve failed' }); }
 });
 
@@ -576,22 +577,20 @@ router.post('/posts/bulk/reject', async (req, res) => {
       return res.status(400).json({ code: 'VALIDATION', error: 'Rejection reason is required' });
     }
 
-    let rejected = 0; let skipped = 0; const errors: string[] = [];
-    for (const id of ids) {
-      try {
-        const post = await Post.findById(id);
-        if (!post) { skipped++; continue; }
-        if (post.status === 'rejected') { skipped++; continue; }
-        post.status = 'rejected'; post.rejection_reason = reason.trim();
-        await post.save();
-        await trustScoreWorker.queueUpdate(post.author_id, (post._id as { toString(): string }).toString(), 'reject');
-        await createNotification({ user_id: post.author_id, type: 'post_rejected', post_id: (post._id as { toString(): string }).toString(), post_title: post.title, message: `Your list "${post.title}" was not approved. Reason: ${reason.trim()}` });
-        indexPost(post as unknown as Record<string, unknown>);
-        rejected++;
-      } catch (e) { errors.push(`Post ${id}: ${(e as Error).message}`); }
-    }
+    const { processBatch } = await import('../lib/batchProcessor');
+    let skipped = 0;
+    const result = await processBatch(ids, async (id) => {
+      const post = await Post.findById(id);
+      if (!post) { skipped++; return; }
+      if (post.status === 'rejected') { skipped++; return; }
+      post.status = 'rejected'; post.rejection_reason = reason.trim();
+      await post.save();
+      await trustScoreWorker.queueUpdate(post.author_id, (post._id as { toString(): string }).toString(), 'reject');
+      await createNotification({ user_id: post.author_id, type: 'post_rejected', post_id: (post._id as { toString(): string }).toString(), post_title: post.title, message: `Your list "${post.title}" was not approved. Reason: ${reason.trim()}` });
+      indexPost(post as unknown as Record<string, unknown>);
+    });
 
-    res.json({ success: true, rejected, skipped, errors: errors.length > 0 ? errors.slice(0, 5) : [] });
+    res.json({ success: true, rejected: result.succeeded, skipped, errors: result.errors.slice(0, 5) });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Bulk reject failed' }); }
 });
 
@@ -621,7 +620,10 @@ router.get('/audit-logs', async (req, res) => {
 
     const query: Record<string, unknown> = {};
     if (req.query.action) query.action = req.query.action;
-    if (req.query.ip) query.ip = { $regex: req.query.ip, $options: 'i' };
+    if (req.query.ip) {
+      const escaped = (req.query.ip as string).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.ip = { $regex: escaped, $options: 'i' };
+    }
     if (req.query.date_from || req.query.date_to) {
       query.created_at = {} as Record<string, unknown>;
       if (req.query.date_from) (query.created_at as Record<string, unknown>).$gte = new Date(req.query.date_from as string);
@@ -685,13 +687,20 @@ router.get('/posts', async (req, res) => {
 
     const query: Record<string, unknown> = { $or: [{ deleted: false }, { deleted: { $exists: false } }] };
     if (req.query.status) {
-      if (req.query.status === 'deleted') { query.$or = [{ deleted: true }]; }
-      else { query.status = req.query.status; }
+      if (req.query.status === 'deleted') { query.deleted = true; }
+      else if (req.query.status) { query.status = req.query.status; }
     }
     if (req.query.category_slug) query.category_slug = req.query.category_slug;
     if (req.query.post_type) query.post_type = req.query.post_type;
-    if (req.query.author) query.author_username = { $regex: req.query.author, $options: 'i' };
-    if (req.query.search) query.$or = [{ title: { $regex: req.query.search, $options: 'i' } }, { intro: { $regex: req.query.search, $options: 'i' } }];
+    if (req.query.author) {
+      const escaped = (req.query.author as string).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.author_username = { $regex: escaped, $options: 'i' };
+    }
+    if (req.query.search) {
+      const escaped = (req.query.search as string).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const searchOr = [{ title: { $regex: escaped, $options: 'i' } }, { intro: { $regex: escaped, $options: 'i' } }];
+      query.$or = query.$or ? [...(query.$or as Array<Record<string, unknown>>), ...searchOr] : searchOr;
+    }
     if (req.query.date_from || req.query.date_to) { query.created_at = {}; if (req.query.date_from) (query.created_at as Record<string, unknown>).$gte = new Date(req.query.date_from as string); if (req.query.date_to) (query.created_at as Record<string, unknown>).$lte = new Date(req.query.date_to as string); }
 
     const sortMap: Record<string, string> = { newest: 'created_at', oldest: 'created_at', most_comments: 'comment_count', most_views: 'view_count', most_fire: 'fire_count' };
@@ -748,9 +757,29 @@ router.patch('/posts/:id', async (req, res) => {
 
     if (req.body.items && Array.isArray(req.body.items)) {
       const { ListItem } = await import('../models/ListItem');
-      await ListItem.deleteMany({ post_id: post._id });
-      if (req.body.items.length > 0) {
-        await ListItem.insertMany(req.body.items.map((item: { rank: number; title: string; justification: string }) => ({ post_id: post._id, rank: item.rank, title: item.title, justification: item.justification })));
+      const postId = post._id;
+
+      // Journal: save old items for rollback
+      const oldItems = await ListItem.find({ post_id: postId }).lean();
+
+      try {
+        await ListItem.deleteMany({ post_id: postId });
+        if (req.body.items.length > 0) {
+          await ListItem.insertMany(req.body.items.map((item: { rank: number; title: string; justification: string }) => ({ post_id: postId, rank: item.rank, title: item.title, justification: item.justification })));
+        }
+      } catch (itemsError) {
+        // Rollback: restore old items on failure
+        console.error('[PostEdit] Items update failed, rolling back:', itemsError);
+        await ListItem.deleteMany({ post_id: postId });
+        if (oldItems.length > 0) {
+          await ListItem.insertMany(oldItems.map((item: Record<string, unknown>) => ({
+            post_id: postId,
+            rank: item.rank,
+            title: item.title,
+            justification: item.justification,
+          })));
+        }
+        throw itemsError;
       }
     }
 
@@ -923,18 +952,17 @@ router.post('/posts/bulk/status', async (req, res) => {
   try {
     const { ids, status } = req.body;
     if (!Array.isArray(ids) || !['approved', 'rejected', 'pending_review'].includes(status)) return res.status(400).json({ code: 'VALIDATION', error: 'Provide ids and valid status' });
-    let changed = 0;
-    for (const id of ids) {
+    const { processBatch } = await import('../lib/batchProcessor');
+    const result = await processBatch(ids, async (id) => {
       const post = await Post.findById(id);
-      if (!post || post.status === status) continue;
+      if (!post || post.status === status) return;
       post.status = status;
       if (status === 'approved') post.published_at = new Date();
       await post.save();
       await trustScoreWorker.queueUpdate(post.author_id, (post._id as { toString(): string }).toString(), status === 'approved' ? 'approve' : 'reject');
       indexPost(post as unknown as Record<string, unknown>);
-      changed++;
-    }
-    res.json({ success: true, changed });
+    });
+    res.json({ success: true, changed: result.succeeded });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Bulk status change failed' }); }
 });
 
@@ -1021,10 +1049,16 @@ router.get('/comments', async (req, res) => {
     else if (req.query.filter === 'flagged') query.flag_type = { $ne: null };
     else if (req.query.filter === 'highlighted') query.highlighted = true;
     if (req.query.post_id) query.post_id = req.query.post_id;
-    if (req.query.author) query.author_username = { $regex: req.query.author, $options: 'i' };
+    if (req.query.author) {
+      const escaped = (req.query.author as string).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.author_username = { $regex: escaped, $options: 'i' };
+    }
     if (req.query.type === 'item_anchored') query.list_item_id = { $ne: null };
     if (req.query.type === 'post_comment') query.list_item_id = null;
-    if (req.query.search) query.content = { $regex: req.query.search, $options: 'i' };
+    if (req.query.search) {
+      const escaped = (req.query.search as string).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.content = { $regex: escaped, $options: 'i' };
+    }
     if (req.query.date_from || req.query.date_to) { query.created_at = {}; if (req.query.date_from) (query.created_at as Record<string, unknown>).$gte = new Date(req.query.date_from as string); if (req.query.date_to) (query.created_at as Record<string, unknown>).$lte = new Date(req.query.date_to as string); }
     if (req.query.has_replies === 'yes') query.reply_count = { $gt: 0 };
     if (req.query.has_replies === 'no') query.reply_count = 0;
@@ -1261,13 +1295,14 @@ function parseOS(ua: string) { if (!ua) return 'unknown'; if (/Windows/.test(ua)
 // 1. Health Pulse
 router.get('/stats/health', async (req, res) => {
   try {
-    const [mongoState, redisPing, esPing, heartbeats, mongoLatency, redisInfo] = await Promise.all([
+    const [mongoState, redisPing, esPing, heartbeats, mongoLatency, redisInfo, orphanedPosts] = await Promise.all([
       mongoose.connection.readyState,
       redis.ping().then(() => 'ok').catch(() => 'down'),
       (async () => { try { const { es } = await import('../lib/elasticsearch'); await es.ping(); return 'ok'; } catch { return 'down'; } })(),
       redis.hGetAll('cron:heartbeats'),
       (async () => { try { const start = Date.now(); await mongoose.connection.db?.admin().ping(); return Date.now() - start; } catch { return null; } })(),
       (async () => { try { return await redis.info('memory'); } catch { return ''; } })(),
+      Post.countDocuments({ category_slug: '__orphan__' }),
     ]);
 
     const parseHb = (raw: string) => { try { return JSON.parse(raw); } catch { return {}; } };
@@ -1301,6 +1336,7 @@ router.get('/stats/health', async (req, res) => {
         elasticsearch: esPing,
       },
       crons: Object.fromEntries(Object.entries(heartbeats as Record<string, string>).map(([k, v]) => [k, parseHb(v)])),
+      orphaned_posts: orphanedPosts,
       dependency_map: deps,
       affected_features_count: affectedFeatures.length,
       affected_features: affectedFeatures,
@@ -2261,9 +2297,10 @@ router.get('/users', async (req, res) => {
     const filter: Record<string, unknown> = {};
 
     if (q) {
+      const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       filter.$or = [
-        { username: { $regex: q, $options: 'i' } },
-        { user_id: { $regex: q, $options: 'i' } },
+        { username: { $regex: escaped, $options: 'i' } },
+        { user_id: { $regex: escaped, $options: 'i' } },
       ];
     }
 

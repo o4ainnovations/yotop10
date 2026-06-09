@@ -7,11 +7,13 @@ import { Post, generateUniqueSlug } from '../models/Post';
 import { shouldNoIndex } from '../lib/seoGuard';
 import { ListItem } from '../models/ListItem';
 import { Category } from '../models/Category';
+import { getCategoryNameMap } from '../lib/categoryCache';
 import { Comment } from '../models/Comment';
 import { atomicCheckRateLimit, redis } from '../lib/redis';
 import { calculateEffectivePostLimit, getRateLimitKey } from '../lib/rateLimit';
 import { getActiveBoost, grantBoost, BoostType } from '../lib/ladderSystem';
 import { checkTitleMatch } from '../lib/titleSimilarity';
+import { findSimilarTitles } from '../lib/titleSimilarityV2';
 import { validateListTitle, needsListTitleValidation } from '../lib/listTitleValidation';
 import { updateParentSparkScore } from './comments';
 import { computeSparkScore, getThresholds } from '../lib/sparkScore';
@@ -167,6 +169,9 @@ router.get('/', async (req, res) => {
       sortOption = { view_count: -1 };
     }
 
+    // Build slug→name map for category resolution (Redis-cached)
+    const categoryNameMap = await getCategoryNameMap();
+
     // Execute query with pagination
     const [posts, total] = await Promise.all([
       Post.find(query)
@@ -212,6 +217,7 @@ router.get('/', async (req, res) => {
       created_at: post.created_at,
       published_at: post.published_at,
       category_slug: post.category_slug,
+      category_name: categoryNameMap.get(post.category_slug as string) || post.category_slug,
     }));
 
     res.json({
@@ -500,23 +506,16 @@ router.post('/', ...validatePostSubmission as any[], async (req, res) => {
       }
     }
 
-    // Final title similarity check on submit - global (never trust client side validation)
+    // Final title similarity check on submit - ES-backed with MongoDB fallback
     if (post_type !== 'counter_list') {
-      const fiveYearsAgo = new Date(Date.now() - 5 * 365 * 24 * 60 * 60 * 1000);
-      
-      const existingPosts = await Post.find({
-        status: 'approved',
-        created_at: { $gt: fiveYearsAgo },
-      }).select('title');
+      const similar = await findSimilarTitles(title);
 
-      for (const existing of existingPosts) {
-        const result = checkTitleMatch(title, existing.title);
-        if (result.isDuplicate && !result.isYearVariation) {
-          return res.status(409).json({
-            error: 'This list already exists.',
-            suggestion: `${title} ${new Date().getFullYear()}`,
-          });
-        }
+      if (similar.length > 0) {
+        return res.status(409).json({
+          error: 'This list already exists.',
+          suggestion: `${title} ${new Date().getFullYear()}`,
+          matches: similar.slice(0, 5),
+        });
       }
     }
 

@@ -49,15 +49,8 @@ router.get('/me', async (req, res) => {
     const postsRejected = postCounts.rejected || 0;
     const postCount = postsApproved + postsRejected + (postCounts.pending_review || 0);
 
-    // Determine trust level
-    let trustLevel: 'troll' | 'neutral' | 'scholar';
-    if (req.user.trust_score < 0.5) {
-      trustLevel = 'troll';
-    } else if (req.user.trust_score >= 1.8) {
-      trustLevel = 'scholar';
-    } else {
-      trustLevel = 'neutral';
-    }
+    // Determine trust level (stored on user, computed with hysteresis)
+    const trustLevel: 'troll' | 'neutral' | 'scholar' = (req.user as unknown as Record<string, unknown>).trust_level as 'troll' | 'neutral' | 'scholar' || 'neutral';
 
     // Return full user context
     res.json({
@@ -198,15 +191,8 @@ router.get('/:username', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Determine trust level
-    let trustLevel: 'troll' | 'neutral' | 'scholar';
-    if (user.trust_score < 0.5) {
-      trustLevel = 'troll';
-    } else if (user.trust_score >= 1.8) {
-      trustLevel = 'scholar';
-    } else {
-      trustLevel = 'neutral';
-    }
+    // Determine trust level (stored on user, computed with hysteresis)
+    const trustLevel: 'troll' | 'neutral' | 'scholar' = (user as unknown as Record<string, unknown>).trust_level as 'troll' | 'neutral' | 'scholar' || 'neutral';
 
     // Check if this is the user viewing their own profile
     const isOwnProfile = req.user && req.user.user_id === user.user_id;

@@ -60,7 +60,7 @@ export function GlassSlab({ post, variant = 'compact', observe = false, rank, ac
       >
         {/* Header row */}
         <div className="flex items-center justify-between mb-2">
-          <span className="wiki-badge">CAT/{post.category_slug}</span>
+          <span className="wiki-badge">CAT/{post.category_name || post.category_slug}</span>
           <div className="flex items-center gap-2">
             {rank !== undefined && (
               <span className="text-2xs font-mono text-zinc-600">#{rank}</span>

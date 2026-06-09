@@ -46,7 +46,7 @@ YoTop10 is an **open publishing platform** centered on:
 
 ## 4. List Format Rules
 
-- **Length**: Flexible (Top 5 to Top 25+), but default and preferred is **Top 10**
+- **Length**: Flexible (Top 3 to Top 100), but default and preferred is **Top 10**
 - **Items**: Each item requires a **title + written justification** (mandatory)
 - **Sources**: Optional but strongly encouraged
 - **Images**: One image per item (optional). No videos. Clean reading experience.
@@ -147,7 +147,7 @@ All counters update automatically after each action.
 - **Reject** → Stays in author's personal feed only
 
 ### Review Queue
-- URL: `/admin/dashboard`
+- URL: `/admin/posts/pending`
 - List all pending posts
 - One-click approve/reject
 - Optional: Add rejection reason
