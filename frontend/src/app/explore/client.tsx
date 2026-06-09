@@ -33,6 +33,8 @@ interface ExploreClientProps {
 export default function ExploreClient({ initialPosts, initialHasMore }: ExploreClientProps) {
   const [allPosts, setAllPosts] = useState<ExplorePost[]>(initialPosts);
   const [tab, setTab] = useState<TabValue>('all');
+  const [fetchingMore, setFetchingMore] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const hasMoreRef = useRef(initialHasMore);
   const fetchingRef = useRef(false);
@@ -57,6 +59,8 @@ export default function ExploreClient({ initialPosts, initialHasMore }: ExploreC
 
         const nextPage = pageRef.current + 1;
         fetchingRef.current = true;
+        setFetchingMore(true);
+        setFetchError(null);
         try {
           const data = await fetchExplorePage(nextPage);
           setAllPosts((prev) => [...prev, ...(data.posts || [])]);
@@ -64,8 +68,10 @@ export default function ExploreClient({ initialPosts, initialHasMore }: ExploreC
           hasMoreRef.current = nextPage < (data.pagination?.totalPages || 1);
         } catch {
           hasMoreRef.current = false;
+          setFetchError('Failed to load more. Please try again.');
         } finally {
           fetchingRef.current = false;
+          setFetchingMore(false);
         }
       },
       { rootMargin: '400px' }
@@ -174,6 +180,25 @@ export default function ExploreClient({ initialPosts, initialHasMore }: ExploreC
             ))}
           </div>
           <div ref={sentinelRef} className="h-px" />
+          {fetchingMore && (
+            <div className="py-6 text-center">
+              <div className="inline-flex items-center gap-2 text-sm text-zinc-500">
+                <Icon name="Loader" size={16} className="animate-spin" />
+                Loading more...
+              </div>
+            </div>
+          )}
+          {fetchError && (
+            <div className="py-4 text-center">
+              <p className="text-sm text-red-400">{fetchError}</p>
+              <button
+                onClick={() => { setFetchError(null); }}
+                className="mt-2 text-xs text-orange-400 hover:text-orange-300 transition"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>

@@ -230,7 +230,7 @@ export default function AdminUsersClient() {
         </button>
       </div>
 
-      {loading ? null : users.length === 0 ? (
+      {loading ? <div className="animate-pulse space-y-3">{Array.from({length:5}).map((_,i) => <div key={i} className="h-16 rounded-xl bg-white/5" />)}</div> : users.length === 0 ? (
         <p className="text-white/40">No users found.</p>
       ) : (
         <>

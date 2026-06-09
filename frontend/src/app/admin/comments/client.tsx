@@ -11,6 +11,7 @@ interface Comment { _id: string; id: string; content: string; author_username: s
 export default function AdminCommentsClient() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, pages: 0 });
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -32,7 +33,7 @@ export default function AdminCommentsClient() {
       if (filters.filter) params.set('filter', filters.filter);
       const data = await apiFetch<{ comments: Comment[]; pagination: { total: number; pages: number }; stats: Record<string, number> }>(`/admin/comments?${params}`);
       setComments(data.comments); setPagination(data.pagination); setStats(data.stats || {});
-    } catch {} finally { setLoading(false); }
+    } catch { setError('Failed to load comments.'); } finally { setLoading(false); }
   }, [filters]);
 
   useEffect(() => { fetchComments(page); }, [page, fetchComments]);
@@ -176,6 +177,7 @@ export default function AdminCommentsClient() {
         </div>
       )}
 
+      {error && !loading && <div className="mb-4 rounded-lg bg-red-500/10 px-4 py-2 text-sm text-red-400">{error}</div>}
       {loading ? <p className="text-white/40">Loading...</p> : comments.length === 0 ? <p className="text-white/40">No comments found.</p> : (
         <>
           {/* Mobile card view */}

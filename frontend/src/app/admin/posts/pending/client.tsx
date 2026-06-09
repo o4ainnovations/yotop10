@@ -16,6 +16,7 @@ export default function PendingPostsClient() {
   const postsRef = useRef<PendingPost[]>([]);
   const [posts, setPosts] = useState<PendingPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, pages: 0 });
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -43,8 +44,8 @@ export default function PendingPostsClient() {
       if (dateFrom) params.set('date_from', dateFrom);
       if (dateTo) params.set('date_to', dateTo);
       const data = await apiFetch<{ posts: PendingPost[]; pagination: { total: number; pages: number } }>(`/admin/posts/pending?${params}`);
-      setPosts(data.posts); postsRef.current = data.posts; setPagination(data.pagination);
-    } catch {} finally { setLoading(false); }
+      setPosts(data.posts); postsRef.current = data.posts; setPagination(data.pagination); setFetchError(null);
+    } catch { setFetchError('Failed to load pending posts.'); } finally { setLoading(false); }
   }, [filters, dateFrom, dateTo]);
 
   useEffect(() => { fetchPosts(page); }, [page, fetchPosts]);
@@ -162,7 +163,8 @@ export default function PendingPostsClient() {
         </div>
       )}
 
-      {loading ? null : posts.length === 0 ? <p className="text-white/40">No pending posts.</p> : (
+      {fetchError && !loading && <div className="mb-4 rounded-lg bg-red-500/10 px-4 py-2 text-sm text-red-400">{fetchError}</div>}
+      {loading ? <div className="animate-pulse space-y-3">{Array.from({length:5}).map((_,i) => <div key={i} className="h-20 rounded-xl bg-white/5" />)}</div> : posts.length === 0 ? <p className="text-white/40">No pending posts.</p> : (
         <div className="space-y-3 sm:space-y-4">
           {/* Desktop header */}
           <div className="hidden sm:flex border-b-2 border-white/10 pb-2 text-xs text-white/40 text-left">

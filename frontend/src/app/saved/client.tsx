@@ -10,6 +10,7 @@ import { Icon } from '@/components/icons/Icon';
 export default function SavedClient() {
   const [posts, setPosts] = useState<SavedPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -22,7 +23,7 @@ export default function SavedClient() {
         setPosts(data.posts || []);
         setHasMore(1 < (data.pagination?.totalPages || 1));
       })
-      .catch(() => {})
+      .catch(() => { if (!cancelled) setError('Failed to load saved posts.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);
@@ -36,7 +37,7 @@ export default function SavedClient() {
         setPage(nextPage);
         setHasMore(nextPage < (data.pagination?.totalPages || 1));
       })
-      .catch(() => {})
+      .catch(() => setError('Failed to load more.'))
       .finally(() => setLoadingMore(false));
   };
 
@@ -53,6 +54,7 @@ export default function SavedClient() {
   return (
     <div className="min-h-screen bg-zinc-950 px-3 py-6 sm:px-6 sm:py-10">
       <div className="mx-auto max-w-3xl">
+        {error && <p className="mb-4 rounded-lg bg-red-500/10 px-4 py-2 text-sm text-red-400">{error}</p>}
         <h1 className="mb-8 text-2xl font-bold text-white sm:text-3xl">Saved</h1>
 
         {posts.length === 0 ? (

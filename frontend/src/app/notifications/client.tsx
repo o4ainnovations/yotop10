@@ -34,13 +34,15 @@ export default function NotificationsClient() {
   const router = useRouter();
   const [notifs, setNotifications] = useState<NotifItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const data = await apiFetch<{ notifications: NotifItem[] }>('/users/me/notifications?limit=50');
       setNotifications(data.notifications);
-    } catch {}
+    } catch { setError('Failed to load notifications.'); }
     setLoading(false);
   }, []);
 
@@ -66,6 +68,8 @@ export default function NotificationsClient() {
   return (
     <div className="max-w-[700px] mx-auto px-3 sm:px-5 py-5">
       <h1 className="text-xl font-bold mb-5 flex items-center gap-2 text-white"><Icon name="Bell" size={20} /> All Notifications</h1>
+
+      {error && <div className="mb-4 rounded-lg bg-red-500/10 px-4 py-2 text-sm text-red-400">{error}</div>}
 
       {notifs.length === 0 ? (
         <div className="p-10 text-center text-white/40 text-sm">
