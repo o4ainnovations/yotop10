@@ -5,8 +5,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { API, PostHistoryResponse } from '@/lib/api';
 import { formatDate } from '@/lib/dates';
-
-const RESERVED_ROUTES = ['admin', 'api', 'login', 'search', 'settings', 'profile', 'categories', 'c', 'auth'];
+import { RESERVED_ROUTES } from '@/lib/reservedRoutes';
 
 interface PostVersion {
   version_number: number;
@@ -26,7 +25,7 @@ export default function PostHistoryClient({ slug }: { slug: string }) {
   const [error, setError] = useState<string | null>(null);
   const [selectedVersion, setSelectedVersion] = useState<PostVersion | null>(null);
 
-  if (RESERVED_ROUTES.includes(postId)) {
+  if (RESERVED_ROUTES.has(postId)) {
     notFound();
   }
 

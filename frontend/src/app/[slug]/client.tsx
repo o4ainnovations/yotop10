@@ -10,8 +10,7 @@ import { formatDate } from '@/lib/dates';
 import { Icon } from '@/components/icons/Icon';
 import { BookmarkButton } from '@/components/BookmarkButton';
 import { ShareButton } from '@/components/ShareButton';
-
-const RESERVED_ROUTES = ['admin', 'api', 'login', 'search', 'settings', 'profile', 'categories', 'c', 'auth'];
+import { RESERVED_ROUTES } from '@/lib/reservedRoutes';
 
 interface ListItem {
   id: string;
@@ -149,7 +148,7 @@ export default function PostDetailClient({
     return () => { abortController.abort(); mountedRef.current = false; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (RESERVED_ROUTES.includes(slug)) {
+  if (RESERVED_ROUTES.has(slug)) {
     return <NotFound />;
   }
 
