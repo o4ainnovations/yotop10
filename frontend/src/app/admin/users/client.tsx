@@ -224,6 +224,7 @@ export default function AdminUsersClient() {
         <button
           onClick={() => setSortDir(d => d === 'asc' ? 'desc' : 'asc')}
           className={filterSelectClass}
+          aria-label={sortDir === 'asc' ? 'Ascending' : 'Descending'}
           title={sortDir === 'asc' ? 'Ascending' : 'Descending'}
         >
           <Icon name={sortDir === 'asc' ? 'ArrowUp' : 'ArrowDown'} size={13} />

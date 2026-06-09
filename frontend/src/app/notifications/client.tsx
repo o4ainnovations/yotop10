@@ -117,7 +117,7 @@ export default function NotificationsClient() {
                   <button
                     onClick={(e) => handleDismissAdmin(e, n._id)}
                     className="bg-transparent border-none text-white/30 cursor-pointer text-base px-2 py-1 flex-shrink-0 hover:text-white/60"
-                    title="Dismiss"
+                    aria-label="Dismiss" title="Dismiss"
                   >
                     <Icon name="X" size={16} />
                   </button>

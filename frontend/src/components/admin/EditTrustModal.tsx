@@ -45,7 +45,7 @@ export function EditTrustModal({ user, onClose, onSave }: EditTrustModalProps) {
       >
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-white font-semibold text-lg">Edit Trust Score</h3>
-          <button onClick={onClose} className="text-zinc-500 hover:text-white cursor-pointer">
+          <button aria-label="Close" onClick={onClose} className="text-zinc-500 hover:text-white cursor-pointer">
             <Icon name="X" size={18} />
           </button>
         </div>

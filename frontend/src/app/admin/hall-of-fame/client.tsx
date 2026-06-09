@@ -168,8 +168,8 @@ export default function AdminHallOfFameClient() {
                             placeholder="Editorial note..."
                           />
                           <div className="flex flex-col gap-1">
-                            <button onClick={() => saveEditNote(entry.id)} className={btnSmClass}><Icon name="Check" size={12} /></button>
-                            <button onClick={() => setEditingId(null)} className={btnDangerSm}><Icon name="X" size={12} /></button>
+                            <button aria-label="Save note" onClick={() => saveEditNote(entry.id)} className={btnSmClass}><Icon name="Check" size={12} /></button>
+                            <button aria-label="Cancel edit" onClick={() => setEditingId(null)} className={btnDangerSm}><Icon name="X" size={12} /></button>
                           </div>
                         </div>
                       ) : (
@@ -186,13 +186,13 @@ export default function AdminHallOfFameClient() {
                       <div className="flex gap-1 flex-wrap items-center">
                         <button onClick={() => handleMove(i, -1)} disabled={i === 0 || reordering}
                           className={`${btnSmClass} ${i === 0 || reordering ? 'opacity-30 cursor-not-allowed' : ''}`}
-                          title="Move up"
+                          title="Move up" aria-label="Move up"
                         >
                           <Icon name="ArrowUp" size={12} />
                         </button>
                         <button onClick={() => handleMove(i, 1)} disabled={i === featured.length - 1 || reordering}
                           className={`${btnSmClass} ${i === featured.length - 1 || reordering ? 'opacity-30 cursor-not-allowed' : ''}`}
-                          title="Move down"
+                          title="Move down" aria-label="Move down"
                         >
                           <Icon name="ArrowDown" size={12} />
                         </button>
@@ -261,8 +261,8 @@ export default function AdminHallOfFameClient() {
                                   onKeyDown={e => { if (e.key === 'Enter') saveEditNote(entry.id); if (e.key === 'Escape') setEditingId(null); }}
                                   autoFocus
                                 />
-                                <button onClick={() => saveEditNote(entry.id)} className={btnSmClass} title="Save"><Icon name="Check" size={12} /></button>
-                                <button onClick={() => setEditingId(null)} className={btnDangerSm} title="Cancel"><Icon name="X" size={12} /></button>
+                                <button onClick={() => saveEditNote(entry.id)} className={btnSmClass} aria-label="Save" title="Save"><Icon name="Check" size={12} /></button>
+                                <button onClick={() => setEditingId(null)} className={btnDangerSm} aria-label="Cancel" title="Cancel"><Icon name="X" size={12} /></button>
                               </div>
                             ) : (
                               <p
@@ -288,13 +288,13 @@ export default function AdminHallOfFameClient() {
                             <div className="flex gap-1 items-center">
                               <button onClick={() => handleMove(i, -1)} disabled={i === 0 || reordering}
                                 className={`${btnSmClass} ${i === 0 || reordering ? 'opacity-30 cursor-not-allowed' : ''}`}
-                                title="Move up"
+                                title="Move up" aria-label="Move up"
                               >
                                 <Icon name="ArrowUp" size={12} />
                               </button>
                               <button onClick={() => handleMove(i, 1)} disabled={i === featured.length - 1 || reordering}
                                 className={`${btnSmClass} ${i === featured.length - 1 || reordering ? 'opacity-30 cursor-not-allowed' : ''}`}
-                                title="Move down"
+                                title="Move down" aria-label="Move down"
                               >
                                 <Icon name="ArrowDown" size={12} />
                               </button>
@@ -304,7 +304,7 @@ export default function AdminHallOfFameClient() {
                                   <button onClick={() => setConfirmRemoveId(null)} className={btnSmClass}>Cancel</button>
                                 </span>
                               ) : (
-                                <button onClick={() => setConfirmRemoveId(entry.id)} className={btnDangerSm} title="Remove">
+                                <button onClick={() => setConfirmRemoveId(entry.id)} className={btnDangerSm} aria-label="Remove" title="Remove">
                                   <Icon name="Trash2" size={12} />
                                 </button>
                               )}

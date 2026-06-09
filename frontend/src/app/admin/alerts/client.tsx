@@ -341,7 +341,7 @@ export default function AdminAlertsClient() {
                       </td>
                       <td className="p-2.5 text-white/40">{t.cooldown_minutes}m</td>
                       <td className="p-2.5">
-                        <button onClick={() => handleToggle(t._id)} className="bg-transparent border-none cursor-pointer min-h-8 min-w-[32px]">
+                        <button aria-label={t.enabled ? 'Disable alert' : 'Enable alert'} onClick={() => handleToggle(t._id)} className="bg-transparent border-none cursor-pointer min-h-8 min-w-[32px]">
                           {t.enabled ? <Icon name="Circle" size={16} color="#2e7d32" fill="#2e7d32" /> : <Icon name="Circle" size={16} color="#999" />}
                         </button>
                       </td>

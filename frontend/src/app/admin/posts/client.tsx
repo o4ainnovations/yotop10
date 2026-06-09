@@ -140,6 +140,7 @@ export default function AdminPostsClient() {
                   <div className="relative" ref={mobileDropdownId === p._id ? dropdownRef : null}>
                     <button
                       onClick={e => { e.stopPropagation(); setMobileDropdownId(prev => prev === p._id ? null : p._id); }}
+                      aria-label="Post actions"
                       className="min-h-11 min-w-11 flex items-center justify-center bg-white/5 border border-white/10 rounded-lg"
                     >
                       <Icon name="Ellipsis" size={18} />

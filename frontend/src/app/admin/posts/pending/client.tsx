@@ -221,10 +221,10 @@ export default function PendingPostsClient() {
                   <span className="hidden sm:block w-[90px] text-3xs text-white/60">{p.author_username}</span>
                   <span className={`hidden sm:block w-[50px] text-3xs ${ageColor(p.created_at)}`} suppressHydrationWarning>{relativeTime(p.created_at)}</span>
                   <span className="hidden sm:flex w-[140px] gap-1">
-                    <button onClick={e => { e.stopPropagation(); singleAction(p._id, 'approve'); }} disabled={actionLoading} className={btnSmClass}><Icon name="Check" size={14} color="#2e7d32" /></button>
-                    <button onClick={e => { e.stopPropagation(); router.push(`/admin/posts/pending/${p._id}`); }} className={btnSmClass}><Icon name="Search" size={14} /></button>
-                    <button onClick={e => { e.stopPropagation(); setShowRejectModal(true); setSelected(new Set([p._id])); }} disabled={actionLoading} className={btnSmClass}><Icon name="X" size={14} color="#c62828" /></button>
-                    <button onClick={e => { e.stopPropagation(); setShowRetryModal(true); setSelected(new Set([p._id])); }} disabled={actionLoading} className={btnSmClass}><Icon name="RefreshCw" size={14} /></button>
+                    <button aria-label="Approve" onClick={e => { e.stopPropagation(); singleAction(p._id, 'approve'); }} disabled={actionLoading} className={btnSmClass}><Icon name="Check" size={14} color="#2e7d32" /></button>
+                    <button aria-label="View details" onClick={e => { e.stopPropagation(); router.push(`/admin/posts/pending/${p._id}`); }} className={btnSmClass}><Icon name="Search" size={14} /></button>
+                    <button aria-label="Reject" onClick={e => { e.stopPropagation(); setShowRejectModal(true); setSelected(new Set([p._id])); }} disabled={actionLoading} className={btnSmClass}><Icon name="X" size={14} color="#c62828" /></button>
+                    <button aria-label="Request revision" onClick={e => { e.stopPropagation(); setShowRetryModal(true); setSelected(new Set([p._id])); }} disabled={actionLoading} className={btnSmClass}><Icon name="RefreshCw" size={14} /></button>
                   </span>
                 </div>
                 {expanded.has(p._id) && (

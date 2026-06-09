@@ -191,6 +191,7 @@ export default function AdminCommentsClient() {
                   {/* Mobile dropdown trigger */}
                   <div className="relative" ref={mobileDropdownId === c._id ? dropdownRef : null}>
                     <button
+                      aria-label="Comment actions"
                       onClick={e => { e.stopPropagation(); setMobileDropdownId(prev => prev === c._id ? null : c._id); }}
                       className="min-h-11 min-w-11 flex items-center justify-center bg-white/5 border border-white/10 rounded-lg"
                     >

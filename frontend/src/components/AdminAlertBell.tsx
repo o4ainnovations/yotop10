@@ -203,7 +203,7 @@ export default function AdminAlertBell() {
                       <button
                         onClick={(e) => handleDismiss(e, n._id)}
                         style={{ background: 'none', border: 'none', color: '#8D6E63', cursor: 'pointer', fontSize: '14px', padding: 0, lineHeight: 1 }}
-                        title="Dismiss"
+                        aria-label="Dismiss" title="Dismiss"
                       >
                         <Icon name="X" size={16} />
                       </button>

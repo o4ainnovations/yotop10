@@ -13,7 +13,7 @@ export const DataCard = memo(function DataCard({
   rank?: number;
 }) {
   return (
-    <Link href={`/${post.slug}`} className="block group focus:outline-none">
+    <Link href={`/${post.slug}`} className="block group focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded-2xl">
       <GlassSlab
         post={post}
         rank={rank}
