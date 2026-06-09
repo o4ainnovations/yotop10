@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Icon } from '@/components/icons/Icon';
 import { formatDate } from '@/lib/dates';
+import { SafeHTML } from '@/components/SafeHTML';
 interface SearchResult {
   id: string; title: string; intro?: string; content?: string;
   slug: string; category_slug?: string; category_name?: string; post_type?: string;
@@ -171,8 +172,9 @@ export default function SearchClient() {
                       key={t.slug}
                       onClick={() => selectSuggestion(t.title || '')}
                       className="cursor-pointer border-t border-white/5 px-3 py-2.5 text-sm text-zinc-300 transition hover:bg-white/5 sm:px-4"
-                      dangerouslySetInnerHTML={{ __html: t.highlight || t.title || '' }}
-                    />
+                    >
+                      <SafeHTML html={t.highlight || t.title || ''} variant="highlight" />
+                    </div>
                   ))}
                 </div>
               )}
@@ -186,8 +188,9 @@ export default function SearchClient() {
                       key={c.slug}
                       onClick={() => selectSuggestion(c.name || '')}
                       className="cursor-pointer border-t border-white/5 px-3 py-2.5 text-sm text-zinc-300 transition hover:bg-white/5 sm:px-4"
-                      dangerouslySetInnerHTML={{ __html: c.highlight || c.name || '' }}
-                    />
+                    >
+                      <SafeHTML html={c.highlight || c.name || ''} variant="highlight" />
+                    </div>
                   ))}
                 </div>
               )}
@@ -365,14 +368,12 @@ export default function SearchClient() {
               <div key={`${r._type}-${r.id}`} className="border-b border-white/5 py-3.5 sm:py-4">
                 {r._type === 'post' ? (
                   <Link href={`/${r.slug}`} className="block group">
-                    <h3
-                      className="mb-1 text-base font-semibold text-orange-400 transition group-hover:text-orange-300"
-                      dangerouslySetInnerHTML={{ __html: r.highlight?.title?.[0] || r.title }}
-                    />
-                    <div
-                      className="mb-2 text-sm2 leading-relaxed text-zinc-400 line-clamp-2"
-                      dangerouslySetInnerHTML={{ __html: r.highlight?.intro?.[0] || (r.intro || '').substring(0, 200) }}
-                    />
+                    <h3 className="mb-1 text-base font-semibold text-orange-400 transition group-hover:text-orange-300">
+                      <SafeHTML html={r.highlight?.title?.[0] || r.title} variant="highlight" />
+                    </h3>
+                    <div className="mb-2 text-sm2 leading-relaxed text-zinc-400 line-clamp-2">
+                      <SafeHTML html={r.highlight?.intro?.[0] || (r.intro || '').substring(0, 200)} variant="highlight" />
+                    </div>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-600">
                       <span>By {r.author_username}</span>
                       {r.category_slug && (
@@ -404,10 +405,9 @@ export default function SearchClient() {
                       <Icon name="MessageCircle" size={12} className="inline mr-1" />
                       Comment on <strong className="text-zinc-500">{r.post_title || 'a post'}</strong>
                     </div>
-                    <div
-                      className="mb-1.5 text-sm leading-relaxed text-zinc-400 line-clamp-2"
-                      dangerouslySetInnerHTML={{ __html: r.highlight?.content?.[0] || (r.content || '').substring(0, 200) }}
-                    />
+                    <div className="mb-1.5 text-sm leading-relaxed text-zinc-400 line-clamp-2">
+                      <SafeHTML html={r.highlight?.content?.[0] || (r.content || '').substring(0, 200)} variant="highlight" />
+                    </div>
                     <div className="text-xs text-zinc-600">
                       By {r.author_username} &middot; <span suppressHydrationWarning>{formatDate(r.created_at)}</span>
                     </div>

@@ -15,23 +15,28 @@
   "dependencies": {
     "@noble/ed25519": "^3.1.0",
     "@noble/hashes": "^2.2.0",
+    "isomorphic-dompurify": "^3.16.0",
     "lucide-react": "^0.471.0",
     "next": "15.5.18",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "zustand": "^5.0.12"
   },
-  "browserslist": ["> 1%", "last 2 versions", "not dead"],
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ],
   "devDependencies": {
-    "autoprefixer": "^10",
-    "@tailwindcss/postcss": "^4",
     "@playwright/test": "^1.51.1",
+    "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^4.7.0",
+    "autoprefixer": "^10",
     "eslint": "^9",
     "eslint-config-next": "15.5.18",
     "jsdom": "^29.1.1",
