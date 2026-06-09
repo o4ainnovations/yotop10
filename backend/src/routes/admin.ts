@@ -1500,9 +1500,13 @@ router.get('/stats/quality', async (req, res) => {
 router.get('/stats/traffic', async (req, res) => {
   try {
     const today = new Date().toISOString().substring(0,10); const todayStart = new Date(today+'T00:00:00.000Z'); const sevenDaysAgo = new Date(Date.now()-7*86400000);
-    const [visitsToday, uniqueFps, topPaths, browsers, peakHours, referrers, countries, itemEngagement, newUserByRef, engagement] = await Promise.all([
+    const [visitsToday, uniqueFpsCount, topPaths, browsers, peakHours, referrers, countries, itemEngagement, newUserByRef, engagement] = await Promise.all([
       PageVisit.countDocuments({ created_at: { $gte: todayStart } }),
-      PageVisit.distinct('fingerprint', { created_at: { $gte: todayStart }, fingerprint: { $ne: null } }),
+      PageVisit.aggregate([
+        { $match: { created_at: { $gte: todayStart }, fingerprint: { $ne: null } } },
+        { $group: { _id: '$fingerprint' } },
+        { $count: 'count' },
+      ]).then((r: Array<{ count: number }>) => r.length > 0 ? r[0].count : 0),
       PageVisit.aggregate([{ $group: { _id: '$path', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 10 }]),
       PageVisit.aggregate([{ $match: { created_at: { $gte: todayStart } } }, { $group: { _id: '$user_agent', count: { $sum: 1 } } }, { $limit: 100 }]),
       PageVisit.aggregate([{ $match: { created_at: { $gte: sevenDaysAgo } } }, { $group: { _id: { $hour: '$created_at' }, count: { $sum: 1 } } }, { $sort: { _id: 1 } }]),
@@ -1524,7 +1528,7 @@ router.get('/stats/traffic', async (req, res) => {
     }
     let population: Record<string,number>={}; try { population = require('../data/countryPopulation.json'); } catch { /* file may not exist in dev */ }
     const countriesWithPop = countries.map((c: Record<string,unknown>)=>{const code=c._id as string; const pop=population[code]||null; return {code,count:c.count,population:pop,visits_per_million:pop?Math.round((c.count as number/pop)*1000000*100)/100:null};});
-    res.json({ visits_today: visitsToday, unique_today: uniqueFps.length, top_paths: topPaths.map((p:Record<string,unknown>)=>({path:p._id,count:p.count})), browsers: browserMap, os: osMap, peak_hours: peakHours.map((h:Record<string,unknown>)=>({hour:h._id,count:h.count})), top_referrers: topRefs, countries: countriesWithPop, top_engaged: engagement.map((e:Record<string,unknown>)=>({slug:e.slug,title:e.title,ratio:Math.round((e.ratio as number)*1000)/10})), top_engaged_items: itemEngagement.map((i:Record<string,unknown>)=>({title:i.item_title,rank:i.item_rank,comment_count:i.comment_count})), new_users_by_referrer: newUserByRef.map((r:Record<string,unknown>)=>({source:r._id,count:r.count})) });
+    res.json({ visits_today: visitsToday, unique_today: uniqueFpsCount, top_paths: topPaths.map((p:Record<string,unknown>)=>({path:p._id,count:p.count})), browsers: browserMap, os: osMap, peak_hours: peakHours.map((h:Record<string,unknown>)=>({hour:h._id,count:h.count})), top_referrers: topRefs, countries: countriesWithPop, top_engaged: engagement.map((e:Record<string,unknown>)=>({slug:e.slug,title:e.title,ratio:Math.round((e.ratio as number)*1000)/10})), top_engaged_items: itemEngagement.map((i:Record<string,unknown>)=>({title:i.item_title,rank:i.item_rank,comment_count:i.comment_count})), new_users_by_referrer: newUserByRef.map((r:Record<string,unknown>)=>({source:r._id,count:r.count})) });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
@@ -2659,23 +2663,38 @@ router.get('/config/impact', async (req, res) => {
     const newScholar = proposedTrust.scholar_min ?? currentScholar;
     const newTroll = proposedTrust.troll_max ?? currentTroll;
 
-    const allUsers = await User.find({}).select('trust_score').lean();
-    let toScholar = 0;
-    let fromScholar = 0;
+    // Compute tier changes via server-side aggregation (not loading all users)
+    const tierChanges = await User.aggregate([
+      {
+        $project: {
+          was_scholar: { $gte: ['$trust_score', currentScholar] },
+          now_scholar: { $gte: ['$trust_score', newScholar] },
+          trust_score: 1,
+          has_override: {
+            $or: [
+              { $ne: [{ $type: '$rate_limit_override' }, 'missing'] },
+              { $and: [
+                { $ne: [{ $ifNull: ['$rate_limit_override.posts_per_hour', null] }, null] },
+                { $ne: [{ $ifNull: ['$rate_limit_override.comments_per_hour', null] }, null] },
+              ]},
+            ],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          to_scholar: { $sum: { $cond: [{ $and: [{ $eq: ['$was_scholar', false] }, { $eq: ['$now_scholar', true] }] }, 1, 0] } },
+          from_scholar: { $sum: { $cond: [{ $and: [{ $eq: ['$was_scholar', true] }, { $eq: ['$now_scholar', false] }] }, 1, 0] } },
+          without_override: { $push: { $cond: [{ $eq: ['$has_override', false] }, '$trust_score', '$$REMOVE'] } },
+        },
+      },
+    ]).allowDiskUse(true);
 
-    for (const u of allUsers as Array<{ trust_score: number }>) {
-      const wasScholar = u.trust_score >= currentScholar;
-      const nowScholar = u.trust_score >= newScholar;
-      if (!wasScholar && nowScholar) toScholar++;
-      if (wasScholar && !nowScholar) fromScholar++;
-    }
-
-    const usersWithoutOverride = await User.find({
-      $or: [
-        { rate_limit_override: { $exists: false } },
-        { 'rate_limit_override.posts_per_hour': null, 'rate_limit_override.comments_per_hour': null },
-      ],
-    }).select('trust_score').lean();
+    const tc = tierChanges[0] || { to_scholar: 0, from_scholar: 0, without_override: [] };
+    const toScholar = (tc as Record<string, unknown>).to_scholar as number || 0;
+    const fromScholar = (tc as Record<string, unknown>).from_scholar as number || 0;
+    const scores = (tc as Record<string, unknown>).without_override as number[] || [];
 
     const proposedRates = (changes as Record<string, Record<string, Record<string, Record<string, number>>>>).rate_limits || {};
     const proposedTiers = proposedRates.tiers || {};
@@ -2683,8 +2702,8 @@ router.get('/config/impact', async (req, res) => {
     let ratesIncreased = 0;
     let ratesDecreased = 0;
 
-    for (const u of usersWithoutOverride as Array<{ trust_score: number }>) {
-      const tier = u.trust_score >= newScholar ? 'scholar' : u.trust_score < newTroll ? 'troll' : 'neutral';
+    for (const trustScore of scores) {
+      const tier = trustScore >= newScholar ? 'scholar' : trustScore < newTroll ? 'troll' : 'neutral';
       const curTier = current.rate_limits.tiers[tier];
       const curTotal = (curTier.multiplier * current.rate_limits.base_posts_per_hour) + (curTier.multiplier * current.rate_limits.base_comments_per_hour);
 
