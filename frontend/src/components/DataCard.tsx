@@ -1,10 +1,11 @@
+import { memo } from 'react';
 import Link from 'next/link';
 import { GlassSlab } from './GlassSlab';
 import { BookmarkButton } from './BookmarkButton';
 import { ShareButton } from './ShareButton';
 import type { Post } from '@/lib/api/types';
 
-export function DataCard({
+export const DataCard = memo(function DataCard({
   post,
   rank,
 }: {
@@ -25,4 +26,4 @@ export function DataCard({
       />
     </Link>
   );
-}
+});

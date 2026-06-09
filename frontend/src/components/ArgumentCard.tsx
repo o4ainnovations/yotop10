@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import Link from 'next/link';
 import { Icon } from './icons/Icon';
 import { ArgumentBar } from './ArgumentBar';
@@ -15,7 +16,7 @@ interface ArgumentCardProps {
   argument: ArgumentPost;
 }
 
-export function ArgumentCard({ argument }: ArgumentCardProps) {
+export const ArgumentCard = memo(function ArgumentCard({ argument }: ArgumentCardProps) {
   const config = POST_TYPE_CONFIG[argument.post_type] ?? {
     label: argument.post_type.toUpperCase(),
     borderClass: 'border border-white/10 text-zinc-400',
@@ -106,4 +107,4 @@ export function ArgumentCard({ argument }: ArgumentCardProps) {
       </div>
     </div>
   );
-}
+});

@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Icon } from './icons/Icon';
@@ -15,7 +16,7 @@ interface HallOfFameCardProps {
 
 const FALLBACK_TEXT = 'No post data available';
 
-export function HallOfFameCard({
+export const HallOfFameCard = memo(function HallOfFameCard({
   entry,
   variant,
   onRemove,
@@ -227,4 +228,4 @@ export function HallOfFameCard({
       )}
     </div>
   );
-}
+});

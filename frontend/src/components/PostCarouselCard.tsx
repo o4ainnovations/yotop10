@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Icon, type LucideIconName } from './icons/Icon';
@@ -19,7 +20,7 @@ function getCategoryIcon(slug: string): string {
   return 'Folder';
 }
 
-export function PostCarouselCard({ post }: { post: Post }) {
+export const PostCarouselCard = memo(function PostCarouselCard({ post }: { post: Post }) {
   const topItems = post.topItems || [];
   const displayName = post.author_display_name || post.author_username;
   const totalItems = post.totalItems || topItems.length;
@@ -103,4 +104,4 @@ export function PostCarouselCard({ post }: { post: Post }) {
       </div>
     </Link>
   );
-}
+});
