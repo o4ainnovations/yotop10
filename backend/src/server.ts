@@ -154,36 +154,42 @@ const startServer = async () => {
       name: 'spark-score',
       interval: 20 * 60 * 1000,
       handler: asyncWrap(startSparkScoreCron),
+      deadManSwitch: true,
     });
 
     cronRegistry.register({
       name: 'spark-threshold',
       interval: 6 * 60 * 60 * 1000,
       handler: asyncWrap(startThresholdCron),
+      deadManSwitch: true,
     });
 
     cronRegistry.register({
       name: 'post-count-reconciler',
       interval: 5 * 60 * 1000,
       handler: asyncWrap(startPostCountCron),
+      deadManSwitch: true,
     });
 
     cronRegistry.register({
       name: 'platform-snapshot',
       interval: 60 * 60 * 1000,
       handler: asyncWrap(startSnapshotCron),
+      deadManSwitch: true,
     });
 
     cronRegistry.register({
       name: 'flag-engine',
       interval: 60 * 1000,
       handler: asyncWrap(startFlagCron),
+      deadManSwitch: true,
     });
 
     cronRegistry.register({
       name: 'search-auto-heal',
       interval: 5 * 60 * 1000,
       handler: asyncWrap(startAutoHeal),
+      deadManSwitch: true,
     });
 
     cronRegistry.register({
@@ -191,24 +197,28 @@ const startServer = async () => {
       interval: 60 * 1000,
       handler: asyncWrap(startAlertEngine),
       fatal: true,
+      deadManSwitch: true,
     });
 
     cronRegistry.register({
       name: 'search-analytics',
       interval: 60 * 60 * 1000,
       handler: asyncWrap(startSearchAnalyticsCron),
+      deadManSwitch: true,
     });
 
     cronRegistry.register({
       name: 'argument-cron',
       interval: 60 * 60 * 1000,
       handler: asyncWrap(startArgumentCron),
+      deadManSwitch: true,
     });
 
     cronRegistry.register({
       name: 'config-refresh',
       interval: 60 * 1000,
       handler: asyncWrap(startConfigCron),
+      deadManSwitch: true,
     });
 
     await initConfig();

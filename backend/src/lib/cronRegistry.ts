@@ -1,4 +1,7 @@
 import { EventEmitter } from 'events';
+import { redis } from './redis';
+
+const DEAD_MAN_TTL_MULTIPLIER = 3;
 
 interface CronJobConfig {
   name: string;
@@ -7,6 +10,7 @@ interface CronJobConfig {
   timeout?: number;
   fatal?: boolean;
   startDelay?: number;
+  deadManSwitch?: boolean;
 }
 
 interface CronJob {
@@ -57,6 +61,13 @@ export class CronRegistry extends EventEmitter {
         job.lastRun = new Date();
         job.lastDuration = Date.now() - startTime;
         this.emit('job:complete', { name: job.config.name, duration: job.lastDuration });
+
+        // Dead-man's-switch heartbeat
+        if (job.config.deadManSwitch) {
+          redis.set(`cron:heartbeat:${job.config.name}`, Date.now().toString(), {
+            EX: job.config.interval * DEAD_MAN_TTL_MULTIPLIER / 1000,
+          }).catch(() => {});
+        }
       } catch (err) {
         const error = err as Error;
         console.error(`[CronRegistry] Job '${job.config.name}' failed:`, error.message);
