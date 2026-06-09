@@ -1641,7 +1641,7 @@ router.get('/stats/alerts', async (req, res) => {
     const [thresholds, history, active] = await Promise.all([
       AlertThreshold.find({ enabled: true }).lean(),
       AlertHistory.find().sort({ triggered_at: -1 }).limit(20).lean(),
-      (async () => { const keys = await redis.keys('alert:*'); const results: unknown[] = []; for (const k of keys) { const v = await redis.get(k); if (v) results.push(JSON.parse(v)); } return results; })(),
+      (async () => { const results: unknown[] = []; let cursor = 0; do { const scan = await redis.scan(cursor, { MATCH: 'alert:*', COUNT: 100 }); cursor = scan.cursor; for (const k of scan.keys) { const v = await redis.get(k); if (v) try { results.push(JSON.parse(v)); } catch { /* skip malformed alert */ } } } while (cursor !== 0); return results; })(),
     ]);
     res.json({ thresholds, history, active });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
