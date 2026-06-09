@@ -43,7 +43,7 @@ const PUBLIC_PATHS = new Set(['/login', '/setup', '/setup/validate']);
 
 router.use((req, res, next) => {
   if (PUBLIC_PATHS.has(req.path)) return next();
-  return adminAuthMiddleware(req as any, res, next);
+  return adminAuthMiddleware(req, res, next);
 });
 
 router.use((req, res, next) => {

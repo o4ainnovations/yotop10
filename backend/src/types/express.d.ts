@@ -7,15 +7,17 @@ declare global {
       user?: {
         user_id: string;
         username: string;
-        trust_score: number;
+        custom_display_name?: string | null;
         device_fingerprint: string;
-        created_at?: Date | string;
-        restricted_until?: Date | string;
-        custom_display_name?: string;
+        trust_score: number;
+        trust_locked: boolean;
+        is_admin: boolean;
+        created_at?: Date;
+        restricted_until?: Date | null;
         rate_limit_override?: {
           posts_per_hour?: number | null;
           comments_per_hour?: number | null;
-        } | null;
+        };
       };
       admin?: {
         id: string;
