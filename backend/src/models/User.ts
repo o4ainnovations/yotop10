@@ -119,4 +119,8 @@ const userSchema = new Schema<IUser>(
   }
 );
 
+// Indexes for efficient queries
+userSchema.index({ updated_at: -1 });
+userSchema.index({ trust_score: 1 });
+
 export const User = registerModel<IUser>('User', userSchema);

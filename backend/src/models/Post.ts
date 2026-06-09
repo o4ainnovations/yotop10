@@ -234,6 +234,9 @@ postSchema.index({ category_id: 1, status: 1, deleted: 1 });                    
 postSchema.index({ author_id: 1, status: 1, created_at: -1 });      // User profile
 postSchema.index({ post_type: 1, status: 1, deleted: 1 });          // Type filter
 
+// ─── Admin & monitoring indexes ──────────────────────────────────────
+postSchema.index({ status: 1, deleted: 1, updated_at: -1 });        // Alert engine review lag
+
 postSchema.index({ title: 'text', intro: 'text' });
 
 // ─── Unique partial index for pending posts ─────────────────────────
