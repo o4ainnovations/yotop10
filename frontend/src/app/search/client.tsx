@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Icon } from '@/components/icons/Icon';
 import { formatDate } from '@/lib/dates';
 import { SafeHTML } from '@/components/SafeHTML';
+import { API } from '@/lib/api';
 interface SearchResult {
   id: string; title: string; intro?: string; content?: string;
   slug: string; category_slug?: string; category_name?: string; post_type?: string;
@@ -55,8 +56,7 @@ export default function SearchClient() {
     if (!q || q.length < 2) { setShowSuggestions(false); return; }
     timerRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/search/autocomplete?q=${encodeURIComponent(q)}`);
-        const data = await res.json();
+        const data = await API.autocomplete(q) as { titles: Array<{ slug: string; title?: string; highlight?: string }>; categories: Array<{ slug: string; name?: string; highlight?: string }> };
         setSuggestions({ titles: data.titles || [], categories: data.categories || [] });
         setShowSuggestions(true);
       } catch {}
@@ -69,15 +69,14 @@ export default function SearchClient() {
     setLoading(true); setError('');
 
     try {
-      const params = new URLSearchParams({ q: q.trim(), page: String(searchPage), sort });
-      if (categorySlug) params.set('category_slug', categorySlug);
-      if (postType) params.set('post_type', postType);
-      if (author) params.set('author', author);
-      const res = await fetch(`/api/search?${params}`);
-      if (!res.ok) throw new Error('');
-      setResults(await res.json());
+      const params: Record<string, string> = { q: q.trim(), page: String(searchPage), sort };
+      if (categorySlug) params.category_slug = categorySlug;
+      if (postType) params.post_type = postType;
+      if (author) params.author = author;
+      const data = await API.search(params) as SearchResponse;
+      setResults(data);
       if (typeof window !== 'undefined') {
-        const url = `/search?${params}`;
+        const url = `/search?${new URLSearchParams(params)}`;
         window.history.replaceState(null, '', url);
       }
     } catch { setError('Search failed'); }

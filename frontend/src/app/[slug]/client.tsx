@@ -121,7 +121,7 @@ export default function PostDetailClient({
         // Non-critical
       }
     } catch {
-      setCommentError('Failed to react. Please try again.');
+      setCommentError('Failed to refresh comments. Please try again.');
     } finally {
       if (mountedRef.current) {
         setRefreshingComments(false);
