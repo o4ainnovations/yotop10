@@ -75,7 +75,7 @@ export default function SubmitClient() {
   const generateId = () => `item-${++idCounter.current}`;
 
   // Form state
-  const [postType, setPostType] = useState<'top_list' | 'this_vs_that'>('top_list');
+  const [postType, setPostType] = useState<'top_list' | 'this_vs_that' | 'counter_list' | 'fact_drop'>('top_list');
   const [categorySlug, setCategorySlug] = useState('');
   const [title, setTitle] = useState('Top 10 ');
   const [intro, setIntro] = useState('');
@@ -271,7 +271,9 @@ export default function SubmitClient() {
 
   const validateItems = (): string | undefined => {
     if (postType === 'this_vs_that') {
-      if (items.length !== 2) return 'Exactly 2 items required for head-to-head comparison';
+      if (items.length !== 2) return 'Exactly 2 items required';
+    } else if (postType === 'fact_drop') {
+      if (items.length < 1) return 'At least 1 fact is required';
     } else if (items.length < MIN_ITEMS) {
       return `At least ${MIN_ITEMS} items are required`;
     }
@@ -534,8 +536,8 @@ export default function SubmitClient() {
             <label htmlFor="postType" className="mb-1.5 block text-sm font-medium text-zinc-400">
               List Type <span className="text-orange-400" aria-label="required">*</span>
             </label>
-            <div className="grid grid-cols-2 gap-2">
-              {(['top_list', 'this_vs_that'] as const).map(type => (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {(['top_list', 'this_vs_that', 'counter_list', 'fact_drop'] as const).map(type => (
                 <button
                   key={type}
                   type="button"
@@ -547,6 +549,18 @@ export default function SubmitClient() {
                         { id: generateId(), rank: 1, title: 'Side A', justification: '', source_url: '', image_url: '' },
                         { id: generateId(), rank: 2, title: 'Side B', justification: '', source_url: '', image_url: '' },
                       ]);
+                    } else if (type === 'fact_drop') {
+                      setTitle('');
+                      setItems([{ id: generateId(), rank: 1, title: '', justification: '', source_url: '', image_url: '' }]);
+                    } else if (type === 'counter_list') {
+                      if (!title.match(/^Top\s+\d+/i) && items.length <= 1) setTitle('Top 10 ');
+                      if (items.length < 3) {
+                        const newItems = [...items];
+                        while (newItems.length < 3) {
+                          newItems.push({ id: generateId(), rank: newItems.length + 1, title: '', justification: '', source_url: '', image_url: '' });
+                        }
+                        setItems(newItems);
+                      }
                     } else {
                       if (!title.match(/^Top\s+\d+/i)) setTitle('Top 10 ');
                       if (items.length < 3) {
@@ -558,17 +572,17 @@ export default function SubmitClient() {
                       }
                     }
                   }}
-                  className={`rounded-xl border-2 px-4 py-3 text-sm font-semibold text-left transition ${
+                  className={`rounded-xl border-2 px-3 py-2.5 text-xs font-semibold text-left transition ${
                     postType === type
                       ? 'border-orange-500 bg-orange-500/10 text-white'
                       : 'border-white/10 bg-white/5 text-zinc-400 hover:border-white/20 hover:text-zinc-200'
                   }`}
                 >
-                  <span className="block text-xs font-normal uppercase tracking-wider mb-0.5">
-                    {type === 'top_list' ? 'Ranked List' : 'Head to Head'}
+                  <span className="block font-medium text-xs mb-0.5">
+                    {type === 'top_list' ? 'Ranked List' : type === 'this_vs_that' ? 'This vs That' : type === 'counter_list' ? 'Counter List' : 'Fact Drop'}
                   </span>
-                  <span className="block text-2xs text-zinc-500 font-normal">
-                    {type === 'top_list' ? 'Classic top 10 format' : 'Compare two sides'}
+                  <span className="block text-3xs text-zinc-500 font-normal">
+                    {type === 'top_list' ? 'Top 10 format' : type === 'this_vs_that' ? 'Debate two sides' : type === 'counter_list' ? 'Challenge a list' : 'Did you know?'}
                   </span>
                 </button>
               ))}

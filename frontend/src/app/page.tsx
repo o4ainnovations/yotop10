@@ -3,6 +3,7 @@ import { DesktopCarousel } from '@/components/DesktopCarousel';
 import { HomeCategories } from '@/components/HomeCategories';
 import { HomeDebates } from '@/components/HomeDebates';
 import { HomeArticles } from '@/components/HomeArticles';
+import { HomeFactDrop } from '@/components/HomeFactDrop';
 import CtaButton from '@/components/CtaButton';
 import { Icon } from '@/components/icons/Icon';
 import type { PostsResponse } from '@/lib/api/types';
@@ -43,17 +44,19 @@ async function fetchJson<T>(url: string, fallback: T): Promise<T> {
 }
 
 export default async function Home() {
-  const [postsData, catsData, argsData, artsData] = await Promise.all([
+  const [postsData, catsData, argsData, artsData, factsData] = await Promise.all([
     fetchJson<PostsResponse>(`${API_BASE}/posts?page=1&limit=12`, { posts: [] }),
     fetchJson<{ categories: CategoryItem[] }>(`${API_BASE}/categories`, { categories: [] }),
     fetchJson<{ arguments: DebateItem[] }>(`${API_BASE}/arguments?limit=4`, { arguments: [] }),
     fetchJson<{ articles: ArticleItem[] }>(`${API_BASE}/articles?limit=3`, { articles: [] }),
+    fetchJson<PostsResponse>(`${API_BASE}/posts?post_type=fact_drop&limit=1`, { posts: [] }),
   ]);
 
   const posts = postsData.posts || [];
   const categories = catsData.categories || [];
   const debates = argsData.arguments || [];
   const articles = artsData.articles || [];
+  const facts = factsData.posts || [];
 
   const hasContent = posts.length > 0 || categories.some(c => c.post_count > 0) || debates.length > 0 || articles.length > 0;
 
@@ -104,19 +107,24 @@ export default async function Home() {
 
       <hr className="border-white/5 mx-3 sm:mx-6" />
 
-      {/* Section 3: Hot Debates */}
+      {/* Section 3: Did You Know? (Fact Drop widget) */}
+      <HomeFactDrop facts={facts} />
+
+      {facts.length > 0 && <hr className="border-white/5 mx-3 sm:mx-6" />}
+
+      {/* Section 4: Hot Debates */}
       <HomeDebates debates={debates} />
 
       {articles.length > 0 && debates.length > 0 && (
         <hr className="border-white/5 mx-3 sm:mx-6" />
       )}
 
-      {/* Section 4: Recent Articles */}
+      {/* Section 5: Recent Articles */}
       <HomeArticles articles={articles} />
 
       <hr className="border-white/5 mx-3 sm:mx-6" />
 
-      {/* Section 5: Bottom CTA */}
+      {/* Section 6: Bottom CTA */}
       <section className="px-3 sm:px-6 py-8 text-center">
         <p className="mb-4 text-sm text-zinc-500 leading-relaxed max-w-md mx-auto">
           Have a ranking to share? Submit your list and join the debate.

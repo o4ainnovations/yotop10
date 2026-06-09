@@ -6,7 +6,7 @@ import NotFound from '@/components/NotFound';
 import Link from 'next/link';
 import Image from 'next/image';
 import { API } from '@/lib/api';
-import { formatDate } from '@/lib/dates';
+import { formatDate, relativeTime } from '@/lib/dates';
 import { Icon } from '@/components/icons/Icon';
 import { BookmarkButton } from '@/components/BookmarkButton';
 import { ShareButton } from '@/components/ShareButton';
@@ -374,8 +374,56 @@ export default function PostDetailClient({
       <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-10 sm:pb-16">
         {post.post_type === 'this_vs_that' ? (
           <ThisVsThatView slug={slug} post={post} items={items} />
+        ) : post.post_type === 'fact_drop' ? (
+          <>
+          {/* Fact Drop — simple, focused on the fact */}
+          <div className="max-w-2xl mx-auto py-10">
+            <div className="text-center mb-8">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-orange-500/20 to-pink-500/20 border border-orange-500/30 px-4 py-1.5 text-xs font-bold text-orange-400 uppercase tracking-wider">
+                <Icon name="Lightbulb" size={14} /> Did You Know?
+              </span>
+            </div>
+            <p className="text-lg sm:text-xl leading-relaxed text-white text-center mb-6 font-medium">
+              {post.intro}
+            </p>
+            {items.map(item => (
+              <div key={item.id} className="text-center">
+                <p className="text-base sm:text-lg leading-relaxed text-zinc-300 mb-6">
+                  {item.justification || item.title}
+                </p>
+                <div className="flex items-center justify-center gap-6 text-xs text-zinc-500">
+                  <span className="inline-flex items-center gap-1.5"><Icon name="User" size={12} /> {post.author_display_name}</span>
+                  <span suppressHydrationWarning>{relativeTime(post.created_at)}</span>
+                </div>
+              </div>
+            ))}
+            {items[0]?.source_url && (
+              <div className="text-center mt-8">
+                <a href={items[0].source_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-orange-400 hover:text-orange-300 transition">
+                  <Icon name="ExternalLink" size={14} /> View Source
+                </a>
+              </div>
+            )}
+            <div className="flex items-center justify-center gap-3 mt-8">
+              <BookmarkButton postId={post.id} />
+              <ShareButton slug={slug} title={post.title} postId={post.id} />
+            </div>
+          </div>
+          </>
         ) : (
         <>
+        {/* Counter List Battle Banner */}
+        {post.post_type === 'counter_list' && (
+          <div className="rounded-xl border border-orange-500/20 bg-orange-500/5 p-4 mb-6 flex items-center gap-3">
+            <Icon name="Swords" size={20} className="text-orange-400 shrink-0" />
+            <p className="text-sm text-zinc-300">
+              <strong className="text-orange-400">Counter list</strong> — a rebuttal to another list.
+              {post.intro?.startsWith('Counter to:') && (
+                <> View the original: <Link href={`/${post.intro.replace(/^Counter to:\s*/, '').trim()}`} className="text-orange-400 underline hover:text-orange-300">{post.intro.replace(/^Counter to:\s*/, '').trim()}</Link></>
+              )}
+            </p>
+          </div>
+        )}
         {/* Post Header — minimal, clean */}
         <header className="mb-6 sm:mb-8">
           <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-500 mb-3">
@@ -393,7 +441,7 @@ export default function PostDetailClient({
           </h1>
 
           <p className="text-sm leading-relaxed text-zinc-400 sm:text-base sm:leading-relaxed">
-            {post.intro}
+            {post.post_type === 'counter_list' && post.intro?.startsWith('Counter to:') ? post.intro.replace(/^Counter to:\s*[^\s]+\s*/, '') || post.intro : post.intro}
           </p>
 
           <div className="flex flex-wrap items-center justify-between gap-3 mt-4 pt-4 border-t border-white/5">
