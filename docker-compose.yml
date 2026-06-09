@@ -82,6 +82,7 @@ services:
       - MONGO_HOST=mongodb
       - MONGO_PORT=27017
       - MONGO_DATABASE=yotop10
+      - MONGODB_URI=mongodb://mongodb:27017/yotop10
       - REDIS_URL=redis://redis:6379
       - ELASTICSEARCH_URL=http://elasticsearch:9200
       - JWT_SECRET=${JWT_SECRET}

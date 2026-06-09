@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 # ── rebuild.sh ── Rebuild and restart yotop10 production stack
-# Usage: bash /opt/yotop10/scripts/rebuild.sh
+# Usage: bash /opt/yotop10/scripts/rebuild.sh [--with-seed]
+# SAFETY: NEVER runs `docker compose down -v` — that would wipe ALL database volumes.
+#         --with-seed runs seed scripts after rebuild (dev only, skips existing data).
 set -euo pipefail
 
 APP_DIR="/opt/yotop10"
 DOMAIN="yotop10.com"
 COMPOSE_FILE="$APP_DIR/docker-compose.yml"
+WITH_SEED=false
+[[ "${1:-}" == "--with-seed" ]] && WITH_SEED=true
 
 R='\033[0;31m' G='\033[0;32m' Y='\033[1;33m' B='\033[1;34m' W='\033[1;37m' N='\033[0m'
 
@@ -54,6 +58,13 @@ for i in $(seq 1 30); do
     if [ "$i" = 30 ]; then fail "Frontend not healthy after 60s"; fi
     sleep 2
 done
+
+# ─── Seed data (dev only, skips existing) ─────────────────────────
+if $WITH_SEED; then
+  step "Running seed scripts"
+  docker exec yotop10_backend node dist/scripts/seedCategories.js 2>/dev/null && ok "Categories seeded" || warn "Categories seed skipped (may already exist)"
+  docker exec yotop10_backend node dist/scripts/seedPosts.js 2>/dev/null && ok "Posts seeded" || warn "Posts seed skipped (may already exist)"
+fi
 
 step "Verifying endpoints"
 curl -sf -o /dev/null "http://127.0.0.1:3100/" && ok "Frontend (:3100) reachable" || warn "Frontend check failed"

@@ -190,9 +190,14 @@ async function seedCategories() {
     await mongoose.connect(mongoUri);
     console.log('✅ Connected to MongoDB');
 
-    // Clear existing categories
-    await Category.deleteMany({});
-    console.log('🗑️  Cleared existing categories');
+    // Check if categories already exist
+    const existingCount = await Category.countDocuments({});
+    if (existingCount > 0) {
+      console.log(`✅ Categories already seeded (${existingCount} found).`);
+      console.log('   Run with --force to clear and reseed.');
+      await mongoose.disconnect();
+      return;
+    }
 
     // Create parent categories using bulkWrite for upsert
     const parentOperations = parentCategories.map(cat => ({
