@@ -80,6 +80,7 @@ export default function PostDetailClient({
   const [post, setPost] = useState<Post>(initialPost);
   const [items] = useState<ListItem[]>(initialItems);
   const [comments, setComments] = useState<Comment[]>(initialComments);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [refreshingComments, setRefreshingComments] = useState(false);
 
   const [commentContent, setCommentContent] = useState('');
@@ -369,60 +370,57 @@ export default function PostDetailClient({
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-3 py-6 sm:px-6 sm:py-10 sm:pb-16">
-        {/* Article Header */}
-        <article className="mb-8 rounded-2xl border border-white/5 bg-white/5 p-5 backdrop-blur-sm sm:p-10">
-          {/* Post metadata */}
-          <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-zinc-500 sm:text-sm">
-            <span className="rounded-lg border border-white/10 bg-white/5 px-2 py-0.5 text-3xs font-medium capitalize">
-              {post.post_type}
+      <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-10 sm:pb-16">
+        {/* Post Header — minimal, clean */}
+        <header className="mb-6 sm:mb-8">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-500 mb-3">
+            <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-2xs font-medium capitalize">
+              {post.post_type === 'top_list' ? 'Top List' : post.post_type.replace(/_/g, ' ')}
             </span>
-            <Link
-              href={`/c/${post.category_slug}`}
-            >
+            <Link href={`/c/${post.category_slug}`} className="hover:text-orange-400 transition">
               {post.category_name || post.category_slug}
             </Link>
             <span suppressHydrationWarning>{formatDate(post.created_at)}</span>
-            <span>{post.view_count} views</span>
-            <BookmarkButton postId={post.id} />
-            <ShareButton slug={post.slug} title={post.title} postId={post.id} />
           </div>
 
-          <h1 className="mb-4 text-2xl font-bold leading-tight -tracking-[0.02em] text-white sm:text-3xl">
+          <h1 className="text-2xl font-bold leading-tight text-white mb-3 sm:text-3xl sm:leading-tight">
             {post.title}
           </h1>
 
-          <p className="mb-4 text-sm leading-relaxed text-zinc-400 sm:text-base">
+          <p className="text-sm leading-relaxed text-zinc-400 sm:text-base sm:leading-relaxed">
             {post.intro}
           </p>
 
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="text-sm text-zinc-400">
-              By{' '}
+          <div className="flex flex-wrap items-center justify-between gap-3 mt-4 pt-4 border-t border-white/5">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-zinc-400">
+                By{' '}
+                <Link
+                  href={`/a/${post.author_username.replace(/^a_/, '')}`}
+                  className="font-semibold text-orange-400 hover:text-orange-300 transition"
+                >
+                  {post.author_display_name}
+                </Link>
+              </span>
+              <span className="text-xs text-zinc-600">{post.view_count} views</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <BookmarkButton postId={post.id} />
+              <ShareButton slug={post.slug} title={post.title} postId={post.id} />
               <Link
-                href={`/a/${post.author_username.replace(/^a_/, '')}`}
-                className="font-semibold text-orange-400 transition hover:text-orange-300"
+                href={`/${slug}/history`}
+                className="text-xs text-zinc-500 hover:text-orange-400 transition"
               >
-                {post.author_display_name}
+                History
               </Link>
-            </span>
-            <Link
-              href={`/${slug}/history`}
-              className="inline-flex items-center gap-1 text-sm text-zinc-400 transition-colors hover:text-orange-400"
-            >
-              View History <Icon name="ArrowRight" size={12} />
-            </Link>
+            </div>
           </div>
-        </article>
+        </header>
 
         {/* Ranked List */}
-        <section className="mb-10">
-          <h2 className="mb-5 text-lg font-semibold -tracking-[0.01em] text-white sm:text-xl">
-            Ranked List
-          </h2>
-
+        <section className="mb-12">
           {post.hero_image_url && (post.format === 'hero_list' || post.format === 'full_list') && (
-            <div className="mb-6 overflow-hidden rounded-xl border border-white/5">
+            <div className="mb-8 overflow-hidden rounded-xl border border-white/5">
               <Image
                 src={post.hero_image_url}
                 alt={post.title}
@@ -434,83 +432,79 @@ export default function PostDetailClient({
             </div>
           )}
 
-          {items.map(item => {
-            const hasImage = !!(item.image_url && (post.format === 'hero_list' || post.format === 'full_list'));
-            return (
-              <div
-                key={item.id}
-                className="mb-4 flex gap-4 rounded-xl border border-white/5 bg-white/5 p-4 backdrop-blur-sm transition-all duration-300 hover:border-orange-500/30 hover:bg-white/5 hover:shadow-lg hover:shadow-orange-500/5 sm:p-5"
-              >
-                {hasImage && (
-                  <div className="w-24 flex-shrink-0 overflow-hidden rounded-lg border border-white/5 sm:w-48">
-                    <Image
-                      src={item.image_url!}
-                      alt={item.title}
-                      width={400}
-                      height={280}
-                      className="block w-full h-auto"
-                      unoptimized
-                    />
+          <div className="space-y-3 sm:space-y-4">
+            {items.map(item => {
+              const hasImage = !!(item.image_url && (post.format === 'hero_list' || post.format === 'full_list'));
+              return (
+                <div
+                  key={item.id}
+                  className="flex gap-3 sm:gap-5 rounded-xl border border-white/5 bg-white/5 p-4 sm:p-6 transition hover:border-orange-500/20"
+                >
+                  {/* Rank badge */}
+                  <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-orange-500/20 to-red-600/20 border border-orange-500/20 flex items-center justify-center">
+                    <span className="text-sm sm:text-base font-bold text-orange-400">{item.rank}</span>
                   </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <h3 className="mb-2 text-base font-bold leading-snug text-white sm:text-lg">
-                    #{item.rank} {item.title}
-                  </h3>
-                  <p className="mb-2.5 text-sm leading-relaxed text-zinc-400">
-                    {item.justification}
-                  </p>
-                  {item.source_url && (
-                    <a
-                      href={item.source_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-sm font-medium text-orange-400 transition hover:text-orange-300"
-                    >
-                      Source <Icon name="ExternalLink" size={11} />
-                    </a>
-                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-base sm:text-lg font-bold text-white mb-2 leading-snug">
+                      {item.title}
+                    </h3>
+                    <p className="text-sm sm:text-base leading-relaxed text-zinc-400 mb-3">
+                      {item.justification}
+                    </p>
+                    {hasImage && (
+                      <div className="mb-3 overflow-hidden rounded-lg border border-white/5 max-w-md">
+                        <Image
+                          src={item.image_url!}
+                          alt={item.title}
+                          width={400}
+                          height={280}
+                          className="block w-full h-auto"
+                          unoptimized
+                        />
+                      </div>
+                    )}
+                    <div className="flex items-center gap-3">
+                      {item.source_url && (
+                        <a
+                          href={item.source_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-orange-400 hover:text-orange-300 transition"
+                        >
+                          <Icon name="ExternalLink" size={11} />
+                          Source
+                        </a>
+                      )}
+                      <button
+                        onClick={() => toggleItemDropdown(item.id)}
+                        className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-orange-400 transition"
+                      >
+                        <Icon name="ChevronDown" size={12} />
+                        Comment on this item
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex-shrink-0">
-                  <button
-                    onClick={() => toggleItemDropdown(item.id)}
-                    className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-semibold text-zinc-400 transition hover:border-orange-500/30 hover:text-orange-400"
-                    title="Comment on this item"
-                  >
-                    <Icon name="ChevronDown" size={14} /> Comment
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </section>
 
         {/* Comments Section */}
-        <section ref={commentsSectionRef} className="border-t-2 border-white/5 pt-8">
-          <h2 className="mb-6 flex items-center gap-2.5 text-lg font-semibold -tracking-[0.01em] text-white sm:text-xl">
-            Comments ({post.comment_count})
-            {refreshingComments && (
-              <span className="inline-flex items-center text-sm text-zinc-500">
-                <Icon name="RefreshCw" size={14} />
-              </span>
-            )}
-          </h2>
-
-          {/* Comment Filter */}
-          <div className="mb-5">
-            <label className="mb-1.5 block text-sm font-medium text-zinc-500">
-              Filter:{' '}
-            </label>
+        <section ref={commentsSectionRef} className="border-t border-white/5 pt-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold text-white sm:text-xl">
+              Comments ({post.comment_count})
+            </h2>
             <select
               value={selectedItemId || ''}
-              onChange={(e) => {
-                setSelectedItemId(e.target.value || null);
-              }}
-              className="w-full max-w-md appearance-none rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-orange-500/50 focus:outline-none"
+              onChange={(e) => setSelectedItemId(e.target.value || null)}
+              className="max-w-[220px] appearance-none rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-zinc-400 focus:border-orange-500/50 focus:outline-none"
             >
-              <option value="">All Comments</option>
+              <option value="">All comments</option>
               {items.map(item => (
-                <option key={item.id} value={item.id}>On #{item.rank} - {item.title}</option>
+                <option key={item.id} value={item.id}>#{item.rank} - {item.title.substring(0, 30)}</option>
               ))}
             </select>
           </div>

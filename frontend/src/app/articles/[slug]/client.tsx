@@ -47,7 +47,7 @@ export default function ArticleDetailClient() {
 
   if (loading) {
     return (
-      <main className="mx-auto min-h-screen max-w-3xl px-4 py-20 sm:px-6">
+      <main className="mx-auto min-h-screen max-w-2xl px-5 py-20 sm:px-6">
         <div className="flex items-center justify-center py-20">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/10 border-t-orange-500" />
         </div>
@@ -57,8 +57,8 @@ export default function ArticleDetailClient() {
 
   if (error) {
     return (
-      <main className="mx-auto min-h-screen max-w-3xl px-4 py-20 sm:px-6">
-        <div className="rounded-2xl border border-red-500/20 bg-red-500/5 px-5 py-4 text-sm text-red-400">
+      <main className="mx-auto min-h-screen max-w-2xl px-5 py-20 sm:px-6">
+        <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-5 py-4 text-sm text-red-400">
           {error}
         </div>
         <Link
@@ -74,91 +74,90 @@ export default function ArticleDetailClient() {
 
   if (!article) {
     return (
-      <main className="mx-auto min-h-screen max-w-3xl px-4 py-20 sm:px-6">
-        <div className="rounded-2xl border border-white/5 bg-white/5 p-12 text-center backdrop-blur-xl">
-          <p className="text-zinc-500">Article not found.</p>
-        </div>
+      <main className="mx-auto min-h-screen max-w-2xl px-5 py-20 sm:px-6">
         <Link
           href="/articles"
-          className="mt-6 inline-flex items-center gap-1 text-sm text-zinc-400 transition hover:text-white"
+          className="inline-flex items-center gap-1 text-sm text-zinc-400 transition hover:text-white"
         >
           <Icon name="ArrowLeft" size={14} />
           Back to Articles
         </Link>
+        <p className="mt-12 text-zinc-500">Article not found.</p>
       </main>
     );
   }
 
   const paragraphs = article.body ? article.body.split('\n\n').filter(Boolean) : [];
-  const authorInitial = (article.author_display_name || 'A')[0].toUpperCase();
 
   return (
-    <main className="mx-auto min-h-screen max-w-3xl px-4 py-12 sm:px-6 lg:py-16">
+    <main className="mx-auto min-h-screen max-w-2xl px-5 py-12 sm:px-6 lg:py-16">
+      {/* Back link */}
       <Link
         href="/articles"
-        className="mb-8 inline-flex items-center gap-1 text-sm text-zinc-400 transition hover:text-white"
+        className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-white transition mb-12"
       >
         <Icon name="ArrowLeft" size={14} />
         Back to Articles
       </Link>
 
       <article>
-        <header className="mb-10">
-          <h1 className="text-3xl font-display text-white sm:text-4xl">{article.title}</h1>
-
-          <div className="mt-6 flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-orange-500 to-red-600 text-sm font-bold text-white">
-                {authorInitial}
-              </div>
-              <div>
-                <p className="text-sm font-medium text-white">{article.author_display_name}</p>
-                <p className="text-xs text-zinc-500">
-                  <span className="font-mono">{article.reading_time} min read</span>
-                  <span className="mx-1.5 text-zinc-700">&middot;</span>
-                  <span suppressHydrationWarning>{relativeTime(article.created_at)}</span>
-                </p>
-              </div>
-            </div>
-
-            {article.fact_check_status && (
-              <span
-                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-3xs font-mono ${factCheckStyles[article.fact_check_status] || factCheckStyles.unverified}`}
-              >
-                <Icon
-                  name={article.fact_check_status === 'verified' ? 'ShieldCheck' : article.fact_check_status === 'disputed' ? 'TriangleAlert' : 'Info'}
-                  size={12}
-                />
-                {factCheckLabels[article.fact_check_status] || 'Unverified'}
-              </span>
-            )}
-          </div>
-        </header>
-
+        {/* Cover image — full width, no card */}
         {article.cover_image && (
-          <div className="relative mb-10 w-full overflow-hidden rounded-xl">
+          <div className="relative w-full overflow-hidden rounded-xl mb-10">
             <Image
               src={article.cover_image}
               alt={article.title}
               width={1200}
-              height={600}
+              height={630}
               className="w-full object-cover"
               priority
+              unoptimized
             />
           </div>
         )}
 
-        <div className="space-y-4">
+        {/* Title — big, clean */}
+        <h1 className="text-3xl font-bold leading-tight text-white sm:text-4xl sm:leading-tight lg:text-5xl">
+          {article.title}
+        </h1>
+
+        {/* Author bar — minimal */}
+        <div className="flex items-center gap-4 mt-6 pb-8 border-b border-white/5">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-red-600 text-sm font-bold text-white shrink-0">
+            {(article.author_display_name || 'A')[0].toUpperCase()}
+          </div>
+          <div>
+            <p className="text-sm font-medium text-white">{article.author_display_name}</p>
+            <p className="text-xs text-zinc-500">
+              <span>{article.reading_time} min read</span>
+              <span className="mx-1.5 text-zinc-700">&middot;</span>
+              <span suppressHydrationWarning>{relativeTime(article.created_at)}</span>
+            </p>
+          </div>
+          {article.fact_check_status && article.fact_check_status !== 'unverified' && (
+            <span className={`ml-auto inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-2xs font-mono ${factCheckStyles[article.fact_check_status] || factCheckStyles.unverified}`}>
+              <Icon
+                name={article.fact_check_status === 'verified' ? 'ShieldCheck' : 'TriangleAlert'}
+                size={11}
+              />
+              {factCheckLabels[article.fact_check_status]}
+            </span>
+          )}
+        </div>
+
+        {/* Body — readable, generous spacing */}
+        <div className="mt-8 space-y-5 sm:space-y-6">
           {paragraphs.map((paragraph, idx) => (
-            <p key={idx} className="text-base leading-relaxed text-zinc-300">
+            <p key={idx} className="text-base sm:text-lg leading-relaxed sm:leading-relaxed text-zinc-200">
               {paragraph}
             </p>
           ))}
         </div>
 
+        {/* Sources */}
         {article.sources && article.sources.length > 0 && (
-          <section className="mt-12 rounded-2xl border border-white/5 bg-white/5 p-6 backdrop-blur-xl">
-            <h2 className="mb-4 font-display text-lg text-white">Sources</h2>
+          <section className="mt-12 pt-8 border-t border-white/5">
+            <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-4">Sources</h2>
             <ul className="space-y-2">
               {article.sources.map((source, idx) => (
                 <li key={idx}>
@@ -166,7 +165,7 @@ export default function ArticleDetailClient() {
                     href={source.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-sm text-zinc-400 transition hover:text-orange-400"
+                    className="inline-flex items-center gap-1.5 text-sm text-orange-400 hover:text-orange-300 transition"
                   >
                     <Icon name="ExternalLink" size={12} />
                     {source.title || source.url}
@@ -177,35 +176,19 @@ export default function ArticleDetailClient() {
           </section>
         )}
 
-        {article.related_posts && article.related_posts.length > 0 && (
-          <section className="mt-12">
-            <h2 className="mb-4 font-display text-lg text-white">Related Posts</h2>
-            <div className="flex gap-3 overflow-x-auto pb-2">
-              {article.related_posts.map((slug, idx) => (
-                <Link
-                  key={idx}
-                  href={`/${slug}`}
-                  className="flex-shrink-0 rounded-xl border border-white/5 bg-white/5 px-4 py-3 text-sm text-zinc-400 backdrop-blur-xl transition hover:border-white/10 hover:text-white"
-                >
-                  {slug}
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <div className="mt-12 flex items-center gap-6 border-t border-white/5 pt-6 text-zinc-500">
-          <span className="inline-flex items-center gap-1.5 text-xs font-mono">
-            <Icon name="ChartBar" size={14} />
+        {/* Stats bar */}
+        <div className="mt-8 pt-6 border-t border-white/5 flex items-center gap-6 text-xs text-zinc-600">
+          <span className="inline-flex items-center gap-1.5">
+            <Icon name="Eye" size={14} />
             {article.view_count} views
           </span>
-          <span className="inline-flex items-center gap-1.5 text-xs font-mono">
+          <span className="inline-flex items-center gap-1.5">
             <Icon name="MessageCircle" size={14} />
             {article.comment_count} comments
           </span>
-          <span className="inline-flex items-center gap-1.5 text-xs font-mono">
+          <span className="inline-flex items-center gap-1.5">
             <Icon name="Bookmark" size={14} />
-            {article.bookmark_count} bookmarks
+            {article.bookmark_count}
           </span>
         </div>
       </article>
