@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import mongoose from 'mongoose';
 import { redis } from './redis';
+import { AppError } from './errors';
 
 export interface HealthCheckResult {
   name: string;
@@ -100,7 +101,7 @@ healthRegistry.register('mongodb-ping', async () => {
   const start = Date.now();
   try {
     const db = mongoose.connection.db;
-    if (!db) throw new Error('Not connected');
+    if (!db) throw new AppError('MongoDB not connected', 'SERVICE_UNAVAILABLE', 503);
     await db.admin().ping();
     const latency = Date.now() - start;
     return { name: 'mongodb-ping', status: latency < 5000 ? 'pass' : 'fail', observedValue: latency, threshold: 5000, observedUnit: 'ms' };

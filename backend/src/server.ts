@@ -115,7 +115,8 @@ const connectDatabases = async () => {
       break;
     } catch (_error) {
       if (attempt === maxRetries) {
-        throw new Error(`Failed to connect to Elasticsearch after ${maxRetries} attempts`);
+        console.error(`[Server] Failed to connect to Elasticsearch after ${maxRetries} attempts`);
+        throw new Error(`ES connection failed after ${maxRetries} attempts`);
       }
       console.log(`Elasticsearch connection attempt ${attempt}/${maxRetries} failed, retrying in ${retryDelay}ms...`);
       await new Promise((resolve) => setTimeout(resolve, retryDelay));

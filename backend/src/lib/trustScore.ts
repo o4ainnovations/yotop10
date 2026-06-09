@@ -1,6 +1,7 @@
 import { User } from '../models/User';
 import { TrustScoreLog } from '../models/TrustScoreLog';
 import { getConfig } from './systemConfig';
+import { ConflictError } from './errors';
 
 /**
  * M11.C: Trust Score Calculation Engine V2
@@ -105,7 +106,7 @@ export const calculateTrustScore = async (userId: string, postId: string, action
   );
 
   if (!updateResult) {
-    throw new Error('Version conflict: Trust score updated by another process');
+    throw new ConflictError('Trust score was updated by another process. Retry the action.');
   }
 
   await TrustScoreLog.create({

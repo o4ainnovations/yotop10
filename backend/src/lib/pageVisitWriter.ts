@@ -4,7 +4,7 @@ import { Request } from 'express';
 let geoip: { lookup: (ip: string) => { country: string } | null } | null = null;
 try {
   geoip = require('geoip-lite');
-} catch { /* geoip-lite not installed or DB missing */ }
+} catch { console.warn('[GeoIP] geoip-lite not available — country detection disabled'); }
 
 function resolveCountry(ip: string): string | null {
   if (!geoip || !ip || ip === 'unknown' || ip === '::1' || ip === '127.0.0.1' || ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.')) return null;

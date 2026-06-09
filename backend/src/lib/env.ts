@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ValidationError } from './errors';
 
 const envSchema = z.object({
   PORT: z.coerce.number().default(8000),
@@ -23,7 +24,7 @@ export function validateEnv(): Env {
     const messages = result.error.issues
       .map((i) => `  ${i.path.join('.')}: ${i.message}`)
       .join('\n');
-    throw new Error(`Environment validation failed:\n${messages}`);
+    throw new ValidationError(`Environment validation failed:\n${messages}`);
   }
 
   _env = result.data;

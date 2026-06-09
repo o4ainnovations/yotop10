@@ -168,7 +168,7 @@ describe('trustScore', () => {
 
       await expect(
         calculateTrustScore('user1', 'post1', 'approve')
-      ).rejects.toThrow('Version conflict');
+      ).rejects.toThrow('updated by another process');
     });
 
     it('increments trust version on update', async () => {

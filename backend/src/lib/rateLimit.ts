@@ -50,7 +50,7 @@ export function calculateEffectiveCommentLimit(trustScore: number): number {
 }
 
 export function getRateLimitKey(namespace: 'posts' | 'comments', fingerprint: string): string {
-  if (!fingerprint) throw new Error('Fingerprint is required for rate limit key');
+  if (!fingerprint) throw new Error('Fingerprint is required for rate limit key'); // kept as Error — caught internally
   return `rate_limit:${namespace}:${fingerprint}`;
 }
 

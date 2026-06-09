@@ -458,7 +458,7 @@ router.get('/me/notifications/unread-count', async (req, res) => {
     let sysCount = 0;
     let msgCount = 0;
 
-    try { sysCount = await Notification.countDocuments({ user_id: uid, read: false }); } catch { /* DB issue — count as 0 */ }
+    try { sysCount = await Notification.countDocuments({ user_id: uid, read: false }); } catch (err) { console.error('[Notifications] Failed to count system notifications:', (err as Error).message); }
 
     try {
       msgCount = await AdminMessage.countDocuments({
@@ -467,7 +467,7 @@ router.get('/me/notifications/unread-count', async (req, res) => {
           { type: 'broadcast', dismissed_by: { $nin: [uid] }, expires_at: { $gt: now } },
         ],
       });
-    } catch { /* DB issue — count as 0 */ }
+    } catch (err) { console.error('[Notifications] Failed to count admin messages:', (err as Error).message); }
 
     res.json({ count: sysCount + msgCount });
   } catch (error) {

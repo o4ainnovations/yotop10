@@ -556,7 +556,7 @@ router.post('/', ...validatePostSubmission as any[], async (req, res) => {
       const finalSlug = generateUniqueSlug(title, (post._id as { toString(): string }).toString());
       await Post.findByIdAndUpdate(post._id, { slug: finalSlug });
       const updatedPost = await Post.findById(post._id);
-      if (!updatedPost) throw new Error('Post lost during creation');
+      if (!updatedPost) throw new Error('Post lost during creation'); // caught by route handler → 500
 
       indexPost(updatedPost as unknown as Record<string, unknown>);
 
