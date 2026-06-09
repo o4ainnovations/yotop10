@@ -2,19 +2,15 @@ import { create } from 'zustand';
 import { API } from '@/lib/api';
 import { toast } from '@/lib/toast';
 
-interface AdminUser {
+export interface AdminUser {
   id: string;
   username: string;
   role: string;
   permissions: string[];
 }
 
-interface AdminSession {
-  id: string;
-  username: string;
-  role: string;
-  permissions: string[];
-}
+// AdminSession is the same shape as AdminUser — reuse the interface
+export type AdminSession = AdminUser;
 
 interface AdminState {
   admin: AdminUser | null;
@@ -87,7 +83,13 @@ export const useAdminStore = create<AdminState>((set) => ({
   },
 
   logout: async () => {
-    await API.adminLogout();
-    set({ admin: null, authenticated: false });
+    try {
+      await API.adminLogout();
+    } catch (err) {
+      console.warn('[AdminStore] Logout API call failed, clearing local state:', err);
+    } finally {
+      set({ admin: null, authenticated: false, loading: false, initialized: true });
+      document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    }
   },
 }));
