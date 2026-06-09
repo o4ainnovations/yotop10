@@ -794,7 +794,8 @@ router.delete('/posts/:id', async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
-    post.deleted = true; post.deleted_at = new Date(); post.auto_hard_delete_at = new Date(Date.now() + 30 * 86400000);
+    const SOFT_DELETE_TTL_MS = parseInt(process.env.SOFT_DELETE_TTL_MS || '2592000000', 10);
+    post.deleted = true; post.deleted_at = new Date(); post.auto_hard_delete_at = new Date(Date.now() + SOFT_DELETE_TTL_MS);
     await post.save();
     logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'delete_post', ip: getClientIp(req), metadata: { post_id: (post._id as { toString(): string }).toString(), post_title: post.title }, user_agent: req.headers['user-agent'] || '' });
     removePost((post._id as { toString(): string }).toString());
@@ -933,7 +934,8 @@ router.post('/posts/bulk/delete', async (req, res) => {
   try {
     const { ids } = req.body;
     if (!Array.isArray(ids) || ids.length === 0 || ids.length > 50) return res.status(400).json({ code: 'VALIDATION', error: 'Provide 1-50 post IDs' });
-    const result = await Post.updateMany({ _id: { $in: ids } }, { $set: { deleted: true, deleted_at: new Date(), auto_hard_delete_at: new Date(Date.now() + 30 * 86400000) } });
+    const SOFT_DELETE_TTL_MS = parseInt(process.env.SOFT_DELETE_TTL_MS || '2592000000', 10);
+    const result = await Post.updateMany({ _id: { $in: ids } }, { $set: { deleted: true, deleted_at: new Date(), auto_hard_delete_at: new Date(Date.now() + SOFT_DELETE_TTL_MS) } });
     for (const id of ids) removePost(id);
     res.json({ success: true, deleted: result.modifiedCount });
   } catch (error) { res.status(500).json({ code: 'SERVER_ERROR', error: 'Bulk delete failed' }); }

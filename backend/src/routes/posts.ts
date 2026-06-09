@@ -21,10 +21,12 @@ import { indexComment, indexPost } from '../elasticsearch/lib/indexWriter';
 
 const router: Router = Router();
 
+const RATE_LIMIT_WINDOW_MS = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '3600000', 10);
+
 const checkRateLimit = async (fingerprint: string, trustScore: number = 1.0, postType?: string, userId?: string): Promise<{ allowed: boolean; remaining: number; resetTime: number; maxRequests: number }> => {
   try {
     const key = getRateLimitKey('posts', fingerprint);
-    const windowMs = 60 * 60 * 1000;
+    const windowMs = RATE_LIMIT_WINDOW_MS;
 
     let maxRequests = calculateEffectivePostLimit(trustScore, postType);
 

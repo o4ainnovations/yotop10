@@ -8,6 +8,7 @@ import { SparkThreshold } from '../models/SparkThreshold';
 import {
   getThresholds, computeSparkScore, computeParentSparkScore,
 } from '../lib/sparkScore';
+import { getConfig } from '../lib/systemConfig';
 import { indexComment, removeComment } from '../elasticsearch/lib/indexWriter';
 
 const router: Router = Router();
@@ -254,11 +255,12 @@ router.patch('/:id',
       return res.status(403).json({ error: 'You can only edit your own comments' });
     }
 
-    // Check 2-hour edit window
-    const twoHoursMs = 2 * 60 * 60 * 1000;
+    // Check edit window from system config
+    const editWindowMin = getConfig().rate_limits.comment_edit_window_minutes;
+    const editWindowMs = editWindowMin * 60 * 1000;
     const timeSinceCreation = Date.now() - comment.created_at.getTime();
-    if (timeSinceCreation > twoHoursMs) {
-      return res.status(403).json({ error: 'Comments can only be edited within 2 hours of posting' });
+    if (timeSinceCreation > editWindowMs) {
+      return res.status(403).json({ error: `Comments can only be edited within ${editWindowMin} minutes of posting` });
     }
 
     // Update comment
