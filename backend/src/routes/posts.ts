@@ -117,13 +117,13 @@ const validatePostSubmission = [
     .isLength({ max: 50 })
     .withMessage('Display name must be less than 50 characters'),
   body('format')
-    .optional()
+    .optional({ values: 'falsy' })
+    .customSanitizer(v => !v || v === '' ? undefined : v)
     .isIn(['list_only', 'hero_list', 'full_list'])
     .withMessage('Invalid format'),
   body('hero_image_url')
-    .optional()
-    .isURL()
-    .withMessage('Invalid hero image URL'),
+    .optional({ values: 'falsy' })
+    .customSanitizer(v => !v || v === '' ? undefined : v),
 ];
 
 // GET /api/posts — Approved posts with filtering, sorting, pagination
