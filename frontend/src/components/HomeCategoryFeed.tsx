@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { API } from '@/lib/api';
 import { DataCard } from './DataCard';
+import { Icon } from './icons/Icon';
 import type { Post } from '@/lib/api/types';
 
 interface CatItem {
@@ -35,6 +36,26 @@ function VsMiniCard({ post }: { post: Post }) {
           </div>
         ))}
       </div>
+      <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5">
+        <span className="text-3xs text-zinc-600">@{post.author_username}</span>
+        <span className="text-3xs text-zinc-600">{post.view_count} views</span>
+      </div>
+    </Link>
+  );
+}
+
+function FactDropMiniCard({ post }: { post: Post }) {
+  return (
+    <Link
+      href={`/${post.slug}`}
+      className="block rounded-2xl border border-orange-500/10 bg-gradient-to-r from-orange-500/5 to-pink-500/5 px-4 py-4 transition hover:border-orange-500/20 hover:from-orange-500/10 hover:to-pink-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+    >
+      <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/10 px-2 py-0.5 text-2xs font-bold text-orange-400 uppercase tracking-wider mb-2">
+        <Icon name="Lightbulb" size={11} /> Did You Know?
+      </span>
+      <p className="text-xs leading-relaxed text-zinc-300 line-clamp-3">
+        {post.intro || post.title}
+      </p>
       <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5">
         <span className="text-3xs text-zinc-600">@{post.author_username}</span>
         <span className="text-3xs text-zinc-600">{post.view_count} views</span>
@@ -127,7 +148,9 @@ export function HomeCategoryFeed({ categories }: { categories: CatItem[] }) {
             <div className="min-h-[160px]">
               {currentPost && currentPost.post_type === 'this_vs_that'
                 ? <VsMiniCard post={currentPost} />
-                : currentPost && <DataCard post={currentPost} />
+                : currentPost && currentPost.post_type === 'fact_drop'
+                  ? <FactDropMiniCard post={currentPost} />
+                  : currentPost && <DataCard post={currentPost} />
               }
             </div>
 

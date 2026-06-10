@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Icon } from './icons/Icon';
 
@@ -11,8 +12,19 @@ interface FactItem {
 }
 
 export function HomeFactDrop({ facts }: { facts: FactItem[] }) {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (facts.length <= 1) return;
+    const interval = setInterval(() => {
+      setIndex(i => (i + 1) % facts.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [facts.length]);
+
   if (!facts || facts.length === 0) return null;
-  const fact = facts[0];
+
+  const fact = facts[index];
 
   return (
     <section className="px-3 sm:px-6 py-6">

@@ -60,7 +60,7 @@ export default async function Home() {
     fetchJson<{ categories: CategoryItem[] }>(`${API_BASE}/categories`, { categories: [] }),
     fetchJson<{ arguments: DebateItem[] }>(`${API_BASE}/arguments?limit=4`, { arguments: [] }),
     fetchJson<{ articles: ArticleItem[] }>(`${API_BASE}/articles?limit=3`, { articles: [] }),
-    fetchJson<PostsResponse>(`${API_BASE}/posts?post_type=fact_drop&limit=1`, { posts: [] }),
+    fetchJson<PostsResponse>(`${API_BASE}/posts?post_type=fact_drop&limit=5`, { posts: [] }),
   ]);
 
   const posts = postsData.posts || [];
