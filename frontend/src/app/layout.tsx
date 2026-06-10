@@ -120,7 +120,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Suspense>
           <AuthInitializer />
         </Suspense>
-        <main className="flex-1 pt-14">{children}</main>
+        <main className="flex-1 pt-14">
+          {children}
+          <AppFooter />
+        </main>
         <Suspense>
           <ToastContainer />
         </Suspense>
@@ -139,7 +142,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Suspense fallback={null}>
           <SubmitFAB />
         </Suspense>
-        <AppFooter />
       </body>
     </html>
   );
