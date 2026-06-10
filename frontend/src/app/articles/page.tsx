@@ -2,6 +2,8 @@ import { API } from '@/lib/api';
 import type { Article } from '@/lib/api/types';
 import ArticlesClient from './client';
 
+export const dynamic = 'force-dynamic';
+
 const PAGE_SIZE = 10;
 
 export default async function ArticlesPage() {

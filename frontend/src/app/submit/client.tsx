@@ -549,10 +549,6 @@ export default function SubmitClient({ initialType }: { initialType?: 'top_list'
           {submitting ? 'Submitting...' : 'Submit for Review'}
         </button>
       </form>
-
-      <footer className="mt-8 text-center text-3xs text-zinc-700">
-        YoTop10 — Open Platform for Top 10 Lists
-      </footer>
     </div>
   );
 }
