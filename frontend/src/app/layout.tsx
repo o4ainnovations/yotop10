@@ -6,6 +6,7 @@ import AuthInitializer from "@/components/AuthInitializer";
 import ToastContainer from "@/components/Toast";
 import AnalyticsBeacon from "@/components/AnalyticsBeacon";
 import { DynamicIsland } from "@/components/DynamicIsland";
+import { SubmitFAB } from "@/components/SubmitFAB";
 import DesktopTopBar from "@/components/DesktopTopBar";
 import { SlideMenuRouter } from "@/components/SlideMenuRouter";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
@@ -103,6 +104,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </Suspense>
         <Suspense fallback={null}>
           <DynamicIsland />
+        </Suspense>
+        <Suspense fallback={null}>
+          <SubmitFAB />
         </Suspense>
       </body>
     </html>

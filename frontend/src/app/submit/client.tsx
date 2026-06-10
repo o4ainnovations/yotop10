@@ -70,14 +70,20 @@ const debounce = <T extends unknown[]>(fn: (...args: T) => void, ms: number) => 
   };
 };
 
-export default function SubmitClient() {
+export default function SubmitClient({ initialType }: { initialType?: 'top_list' | 'this_vs_that' | 'fact_drop' | 'best_of' | 'worst_of' }) {
   const idCounter = useRef(0);
   const generateId = () => `item-${++idCounter.current}`;
 
   // Form state
-  const [postType, setPostType] = useState<'top_list' | 'this_vs_that' | 'counter_list' | 'fact_drop' | 'best_of' | 'worst_of'>('top_list');
+  const getDefaultTitle = (t: string) => {
+    if (t === 'best_of') return 'Best of ';
+    if (t === 'worst_of') return 'Worst of ';
+    if (t === 'top_list') return 'Top 10 ';
+    return '';
+  };
+  const [postType, setPostType] = useState<'top_list' | 'this_vs_that' | 'fact_drop' | 'best_of' | 'worst_of'>(initialType || 'top_list');
   const [categorySlug, setCategorySlug] = useState('');
-  const [title, setTitle] = useState('Top 10 ');
+  const [title, setTitle] = useState(getDefaultTitle(initialType || 'top_list'));
   const [intro, setIntro] = useState('');
   const [postFormat, setPostFormat] = useState<'list_only' | 'hero_list' | 'full_list'>('list_only');
   const [heroImageUrl, setHeroImageUrl] = useState('');
@@ -133,7 +139,7 @@ export default function SubmitClient() {
         const data: DraftData = JSON.parse(draft);
         if (Date.now() - data.savedAt < DRAFT_EXPIRY_MS) {
           type ValidType = typeof postType;
-          if (data.post_type && (['this_vs_that', 'counter_list', 'fact_drop', 'best_of', 'worst_of', 'top_list'] as ValidType[]).includes(data.post_type as ValidType)) setPostType(data.post_type as ValidType);
+          if (data.post_type && (['this_vs_that', 'fact_drop', 'best_of', 'worst_of', 'top_list'] as ValidType[]).includes(data.post_type as ValidType)) setPostType(data.post_type as ValidType);
           if (data.category_slug) setCategorySlug(data.category_slug);
           if (data.title) setTitle(data.title);
           if (data.intro) setIntro(data.intro);
@@ -514,15 +520,31 @@ export default function SubmitClient() {
 
   const categorySelectBorder = errors.category ? 'border-red-400 border-2' : 'border-white/10 focus:border-orange-500/50';
 
+  // Type-specific help banner
+  const typeHelp: Record<string, { title: string; tip: string; color: string }> = {
+    top_list: { title: 'Submit a Ranked List', tip: 'Rank items from best to worst in a classic top 10 format. Each item needs a title and a short justification.', color: 'border-orange-500/20 bg-orange-500/5 text-orange-400' },
+    this_vs_that: { title: 'Submit a This vs That', tip: 'Set up two sides for the community to debate and vote on. No ranking needed — just two compelling options.', color: 'border-purple-500/20 bg-purple-500/5 text-purple-400' },
+    fact_drop: { title: 'Submit a Fact Drop', tip: 'Share a surprising fact. Include a source link for credibility. Keep it concise and impactful.', color: 'border-pink-500/20 bg-pink-500/5 text-pink-400' },
+    best_of: { title: 'Submit a Best Of', tip: 'Curate the absolute best picks in any category. Title must start with "Best" and contain "of" (e.g. "Best of 90s Hip Hop").', color: 'border-emerald-500/20 bg-emerald-500/5 text-emerald-400' },
+    worst_of: { title: 'Submit a Worst Of', tip: 'Call out the worst offenders. Title must start with "Worst" and contain "of" (e.g. "Worst Movies of 2024").', color: 'border-red-500/20 bg-red-500/5 text-red-400' },
+  };
+  const help = typeHelp[postType] || typeHelp.top_list;
+
   // ── Main form ──
   return (
     <div className="mx-auto max-w-3xl px-3 py-6 sm:px-6 sm:py-10">
       <header className="mb-8">
-        <h1 className="text-2xl font-bold text-white sm:text-3xl">Submit a Top 10 List</h1>
-        <p className="mt-1 text-sm text-zinc-400 sm:text-base">Share your ranked list with the world. No account required.</p>
-        <nav className="mt-3">
+        <h1 className="text-2xl font-bold text-white sm:text-3xl">{help.title}</h1>
+        <div className={`mt-3 rounded-xl border ${help.color} px-4 py-3 text-sm leading-relaxed`}>
+          {help.tip}
+        </div>
+        <nav className="mt-4">
+          <Link href="/new" className="text-sm text-orange-400 transition hover:text-orange-300">
+            &larr; Change post type
+          </Link>
+          <span className="mx-2 text-zinc-700">|</span>
           <Link href="/" className="text-sm text-orange-400 transition hover:text-orange-300">
-            &larr; Back to Feed
+            Back to Feed
           </Link>
         </nav>
       </header>
@@ -538,11 +560,10 @@ export default function SubmitClient() {
               List Type <span className="text-orange-400" aria-label="required">*</span>
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {(['top_list', 'this_vs_that', 'counter_list', 'fact_drop', 'best_of', 'worst_of'] as const).map(type => {
+              {(['top_list', 'this_vs_that', 'fact_drop', 'best_of', 'worst_of'] as const).map(type => {
                 const labels: Record<string, { name: string; desc: string }> = {
                   top_list: { name: 'Ranked List', desc: 'Top 10 format' },
                   this_vs_that: { name: 'This vs That', desc: 'Debate two sides' },
-                  counter_list: { name: 'Counter List', desc: 'Challenge a list' },
                   fact_drop: { name: 'Fact Drop', desc: 'Did you know?' },
                   best_of: { name: 'Best Of', desc: 'The best picks ranked' },
                   worst_of: { name: 'Worst Of', desc: 'The worst offenders' },

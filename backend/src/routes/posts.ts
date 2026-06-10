@@ -506,7 +506,7 @@ router.post('/', ...validatePostSubmission as any[], async (req, res) => {
 
     // Validate list title format for list-type posts
     if (needsListTitleValidation(post_type)) {
-      const formatResult = validateListTitle(title);
+      const formatResult = validateListTitle(title, post_type);
       if (!formatResult.valid) {
         return res.status(400).json({
           code: 'INVALID_TITLE_FORMAT',
