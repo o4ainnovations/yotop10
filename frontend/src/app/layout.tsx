@@ -10,7 +10,7 @@ import { SubmitFAB } from "@/components/SubmitFAB";
 import { AppFooter } from "@/components/AppFooter";
 import DesktopTopBar from "@/components/DesktopTopBar";
 import { SlideMenuRouter } from "@/components/SlideMenuRouter";
-import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+// import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import { FingerprintMergeDetector } from "@/components/FingerprintMergeDialog";
 
 const anton = Anton({ weight: '400', subsets: ['latin'], display: 'swap', variable: '--font-display' });
@@ -130,9 +130,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Suspense>
           <AnalyticsBeacon />
         </Suspense>
-        <Suspense>
+        {/* <Suspense>
           <PWAInstallPrompt />
-        </Suspense>
+        </Suspense> */}
         <Suspense fallback={<div className="h-0" />}>
           <FingerprintMergeDetector />
         </Suspense>
