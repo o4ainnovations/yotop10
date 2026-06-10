@@ -30,6 +30,9 @@ interface DebateItem {
   item_b_title?: string;
   votes_a?: number;
   votes_b?: number;
+  hero_image_url?: string | null;
+  user_display_name?: string;
+  view_count?: number;
 }
 
 interface ArticleItem {

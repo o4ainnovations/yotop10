@@ -41,10 +41,19 @@ export function HomeCategoryFeed({ categories }: { categories: CatItem[] }) {
     if (activeSlug) fetchPosts(activeSlug);
   }, [activeSlug, fetchPosts]);
 
+  // Auto-slide every 3 seconds (must be before early return — hooks rule)
+  const totalSlides = Math.min(posts.length, 3);
+  useEffect(() => {
+    if (totalSlides <= 1) return;
+    const interval = setInterval(() => {
+      setSlide(s => (s + 1) % totalSlides);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [totalSlides]);
+
   if (top.length === 0) return null;
 
   const currentPost = posts[slide] || null;
-  const totalSlides = Math.min(posts.length, 3);
 
   return (
     <section className="px-3 sm:px-6 py-6">

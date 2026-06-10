@@ -59,6 +59,8 @@ router.get('/', async (req: any, res: any) => {
           })),
       }));
 
+      hierarchy.sort((a, b) => b.post_count - a.post_count);
+
       res.json({ categories: hierarchy });
     } else {
       res.json({ categories: categories.map(c => ({

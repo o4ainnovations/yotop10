@@ -193,6 +193,9 @@ router.get('/', async (req, res) => {
         item_b_title: itemTitles.item_b_title,
         votes_a: post.votes_a || 0,
         votes_b: post.votes_b || 0,
+        hero_image_url: post.hero_image_url || null,
+        user_display_name: post.author_display_name,
+        user_avatar_url: null,
       };
     });
 

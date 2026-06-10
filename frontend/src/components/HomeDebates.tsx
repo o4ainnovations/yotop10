@@ -2,22 +2,30 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Icon } from './icons/Icon';
 
 interface DebateItem {
+  id?: string;
   slug: string;
   title: string;
   comment_count: number;
-  velocity?: number;
-  support_pct?: number;
-  contradict_pct?: number;
+  view_count?: number;
   post_type?: string;
   item_a_title?: string;
   item_b_title?: string;
   votes_a?: number;
   votes_b?: number;
-  id?: string;
+  hero_image_url?: string | null;
+  user_display_name?: string;
 }
+
+const BG_GRADIENTS = [
+  'from-orange-600/40 to-red-700/40',
+  'from-blue-600/40 to-purple-700/40',
+  'from-emerald-600/40 to-teal-700/40',
+  'from-pink-600/40 to-rose-700/40',
+];
 
 export function HomeDebates({ debates }: { debates: DebateItem[] }) {
   const [localDebates, setLocalDebates] = useState(debates);
@@ -56,83 +64,131 @@ export function HomeDebates({ debates }: { debates: DebateItem[] }) {
           View all &rarr;
         </Link>
       </div>
-      <div className="space-y-3">
-        {localDebates.slice(0, 4).map(d => {
+      <div className="space-y-4">
+        {localDebates.slice(0, 4).map((d, idx) => {
           const votesA = d.votes_a ?? 0;
           const votesB = d.votes_b ?? 0;
           const totalVotes = votesA + votesB || 1;
           const pctA = Math.round((votesA / totalVotes) * 100);
           const pctB = 100 - pctA;
-          const did = d.id;
-          const voted = did ? (votedMap[did] ?? null) : null;
+          const voted = (d.id ? votedMap[d.id] : null) ?? null;
+          const gradient = BG_GRADIENTS[idx % BG_GRADIENTS.length];
 
           return (
-            <div
+            <article
               key={d.slug}
-              className="rounded-xl border border-white/5 bg-white/5 px-4 py-4 transition hover:border-orange-500/20 hover:bg-white/10 group"
+              className="rounded-2xl border border-white/5 bg-white/5 overflow-hidden transition hover:border-orange-500/20 hover:bg-white/[0.07]"
             >
-              <p className="text-sm font-semibold text-zinc-200 group-hover:text-white transition mb-3 leading-snug">
-                {d.title}
-              </p>
-
-              {/* Two vote options side by side */}
-              <div className="grid grid-cols-2 gap-3 mb-3">
-                <button
-                  onClick={() => handleVote(d, 'A')}
-                  className={`rounded-lg border px-3 py-2.5 text-center transition ${
-                    voted === 'A'
-                      ? 'border-orange-500/50 bg-orange-500/10 text-orange-400'
-                      : 'border-white/10 text-zinc-400 hover:border-orange-500/30 hover:text-orange-400'
-                  }`}
-                >
-                  <div className="flex items-center justify-center gap-1.5 mb-1">
-                    <Icon name="ArrowUp" size={14} />
-                    <span className="text-xs font-semibold">Vote</span>
+              {/* A. Debate Banner Image */}
+              <Link href={`/${d.slug}`} className="block relative h-36 w-full overflow-hidden bg-zinc-900">
+                {d.hero_image_url ? (
+                  <Image src={d.hero_image_url} alt="" fill className="object-cover" unoptimized />
+                ) : (
+                  <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>
+                    <Icon name="MessageCircle" size={36} className="text-white/20" />
                   </div>
-                  <p className="text-xs font-medium truncate">{d.item_a_title || 'Side A'}</p>
-                  <span className="text-lg font-bold font-mono">{pctA}%</span>
-                </button>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                <span className="absolute top-2 left-2 rounded-md bg-black/60 backdrop-blur-sm px-2 py-0.5 text-2xs font-bold text-orange-400 tracking-wider flex items-center gap-1">
+                  <Icon name="Flame" size={11} />
+                  TRENDING
+                </span>
+              </Link>
 
-                <button
-                  onClick={() => handleVote(d, 'B')}
-                  className={`rounded-lg border px-3 py-2.5 text-center transition ${
-                    voted === 'B'
-                      ? 'border-orange-500/50 bg-orange-500/10 text-orange-400'
-                      : 'border-white/10 text-zinc-400 hover:border-orange-500/30 hover:text-orange-400'
-                  }`}
-                >
-                  <div className="flex items-center justify-center gap-1.5 mb-1">
-                    <Icon name="ArrowUp" size={14} />
-                    <span className="text-xs font-semibold">Vote</span>
-                  </div>
-                  <p className="text-xs font-medium truncate">{d.item_b_title || 'Side B'}</p>
-                  <span className="text-lg font-bold font-mono">{pctB}%</span>
-                </button>
-              </div>
-
-              {/* Bar + vote count + CTA */}
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-1.5 w-28 rounded-full bg-zinc-800 overflow-hidden">
-                    <div className="bg-gradient-to-r from-orange-500 to-red-500 transition-all" style={{ width: `${pctA}%` }} />
-                    <div className="bg-zinc-600 transition-all" style={{ width: `${pctB}%` }} />
-                  </div>
-                  <span className="text-3xs text-zinc-600 font-mono">{totalVotes - 1} votes</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-3xs text-zinc-600 flex items-center gap-1">
-                    <Icon name="MessageCircle" size={12} />
-                    {d.comment_count}
+              <div className="px-4 pb-4">
+                {/* B. Creator Row */}
+                <div className="flex items-center gap-2 mt-3 mb-2">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white/10 text-2xs font-mono text-zinc-400 shrink-0">
+                    {(d.user_display_name || 'A')[0].toUpperCase()}
                   </span>
-                  <Link
-                    href={`/${d.slug}`}
-                    className="rounded-md border border-orange-500/20 bg-orange-500/10 px-2 py-0.5 text-2xs font-semibold text-orange-400 transition hover:bg-orange-500/20"
-                  >
-                    Cast your vote &rarr;
+                  <span className="text-xs text-zinc-500">{d.user_display_name || 'anonymous'}</span>
+                  <Icon name="BadgeCheck" size={12} className="text-blue-400" />
+                </div>
+
+                {/* C. Debate Info */}
+                <Link href={`/${d.slug}`} className="block mb-3">
+                  <h3 className="text-base font-bold text-white leading-snug mb-1">{d.title}</h3>
+                  <p className="text-xs text-zinc-500 leading-relaxed">
+                    {d.item_a_title && d.item_b_title
+                      ? `${d.item_a_title} vs ${d.item_b_title} — which side are you on?`
+                      : 'Cast your vote and join the discussion.'}
+                  </p>
+                </Link>
+
+                {/* D. Stacked Voting Options */}
+                <div className="space-y-3 mb-3">
+                  {/* Option A */}
+                  <div className="rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium text-zinc-200">{d.item_a_title || 'Side A'}</span>
+                      <span className="text-sm font-bold font-mono text-red-400">{pctA}%</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden mb-1.5">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-red-500 to-orange-500 transition-all"
+                        style={{ width: `${pctA}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xs text-zinc-600 font-mono">{votesA.toLocaleString()} votes</span>
+                      <button
+                        onClick={() => handleVote(d, 'A')}
+                        className={`rounded-md px-2.5 py-1 text-2xs font-semibold transition ${
+                          voted === 'A'
+                            ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                            : 'border border-white/10 text-zinc-400 hover:border-red-500/30 hover:text-red-400'
+                        }`}
+                      >
+                        {voted === 'A' ? 'Voted' : 'Vote'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Option B */}
+                  <div className="rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium text-zinc-200">{d.item_b_title || 'Side B'}</span>
+                      <span className="text-sm font-bold font-mono text-blue-400">{pctB}%</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden mb-1.5">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all"
+                        style={{ width: `${pctB}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xs text-zinc-600 font-mono">{votesB.toLocaleString()} votes</span>
+                      <button
+                        onClick={() => handleVote(d, 'B')}
+                        className={`rounded-md px-2.5 py-1 text-2xs font-semibold transition ${
+                          voted === 'B'
+                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                            : 'border border-white/10 text-zinc-400 hover:border-blue-500/30 hover:text-blue-400'
+                        }`}
+                      >
+                        {voted === 'B' ? 'Voted' : 'Vote'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* E. Engagement Footer */}
+                <div className="flex items-center justify-start gap-5 pt-3 border-t border-zinc-800">
+                  <span className="flex items-center gap-1.5 text-3xs text-zinc-600">
+                    <Icon name="Users" size={13} />
+                    {totalVotes - 1}
+                  </span>
+                  <Link href={`/${d.slug}`} className="flex items-center gap-1.5 text-3xs text-zinc-600 hover:text-zinc-400 transition">
+                    <Icon name="MessageCircle" size={13} />
+                    {d.comment_count}
                   </Link>
+                  <span className="flex items-center gap-1.5 text-3xs text-zinc-600">
+                    <Icon name="Eye" size={13} />
+                    {(d.view_count ?? 0).toLocaleString()}
+                  </span>
                 </div>
               </div>
-            </div>
+            </article>
           );
         })}
       </div>
