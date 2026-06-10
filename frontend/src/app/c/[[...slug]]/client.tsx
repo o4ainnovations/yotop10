@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { API } from '@/lib/api';
 import { DataCard } from '@/components/DataCard';
+import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { Icon } from '@/components/icons/Icon';
 import type { Post } from '@/lib/api/types';
 
@@ -91,6 +92,11 @@ export default function CategoryFeedClient({ slug, initialCategory, initialPosts
       </div>
 
       <main className="mx-auto max-w-3xl px-3 pb-20 sm:px-4">
+        <Breadcrumbs items={[
+          { label: 'Home', href: '/' },
+          { label: 'Categories', href: '/categories' },
+          { label: category?.name || slug || 'Category', href: `/c/${slug}` },
+        ]} />
         {posts.length === 0 ? (
           <div className="py-16 text-center sm:py-20">
             <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 sm:h-16 sm:w-16">

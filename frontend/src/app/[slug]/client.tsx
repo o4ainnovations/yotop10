@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { API } from '@/lib/api';
 import { formatDate, relativeTime } from '@/lib/dates';
 import { Icon } from '@/components/icons/Icon';
+import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { BookmarkButton } from '@/components/BookmarkButton';
 import { ShareButton } from '@/components/ShareButton';
 import { ThisVsThatView } from '@/components/ThisVsThatView';
@@ -343,6 +344,11 @@ export default function PostDetailClient({
 
   return (
     <main className="mx-auto min-h-screen max-w-4xl bg-[var(--color-bg)] px-4 py-6 sm:px-6 sm:py-10 sm:pb-16">
+        <Breadcrumbs items={[
+          { label: 'Home', href: '/' },
+          { label: post.category_name || post.category_slug, href: `/c/${post.category_slug}` },
+          { label: post.title, href: `/${post.slug}` },
+        ]} />
         {post.post_type === 'this_vs_that' ? (
           <ThisVsThatView slug={slug} post={post} items={items} />
         ) : post.post_type === 'fact_drop' ? (
@@ -535,6 +541,18 @@ export default function PostDetailClient({
                 </div>
               );
             })}
+          </div>
+        </section>
+
+        {/* Related posts from same category */}
+        <section className="border-t border-white/5 pt-8 mb-8">
+          <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-4">More from {post.category_name || post.category_slug}</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {items.length > 0 && (
+              <Link href={`/c/${post.category_slug}`} className="col-span-full rounded-lg border border-white/5 bg-white/[0.02] px-4 py-3 text-xs text-zinc-500 hover:text-orange-400 hover:border-orange-500/20 transition text-center">
+                Browse all posts in {post.category_name || post.category_slug} &rarr;
+              </Link>
+            )}
           </div>
         </section>
 

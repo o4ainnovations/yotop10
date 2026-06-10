@@ -6,6 +6,7 @@ import { API } from '@/lib/api';
 import type { Article } from '@/lib/api/types';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { Icon } from '@/components/icons/Icon';
 import { relativeTime } from '@/lib/dates';
 
@@ -91,14 +92,11 @@ export default function ArticleDetailClient() {
 
   return (
     <main className="mx-auto min-h-screen max-w-2xl px-5 py-12 sm:px-6 lg:py-16">
-      {/* Back link */}
-      <Link
-        href="/articles"
-        className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-white transition mb-12"
-      >
-        <Icon name="ArrowLeft" size={14} />
-        Back to Articles
-      </Link>
+      <Breadcrumbs items={[
+        { label: 'Home', href: '/' },
+        { label: 'Articles', href: '/articles' },
+        { label: article.title, href: `/articles/${article.slug}` },
+      ]} />
 
       <article>
         {/* Cover image — full width, no card */}
