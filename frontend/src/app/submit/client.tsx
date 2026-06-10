@@ -2,16 +2,13 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { API, PostSubmission, PostSubmissionResponse, TitleCheckResponse } from '@/lib/api';
 import { Icon } from '@/components/icons/Icon';
 import { useAuthStore } from '@/stores/auth';
 import { toast } from '@/lib/toast';
-import { formatDate } from '@/lib/dates';
-
 const DRAFT_KEY = 'yotop10_submit_draft';
 const DEBOUNCE_MS = 500;
-const DRAFT_EXPIRY_MS = 3600000; // 1 hour
+const DRAFT_EXPIRY_MS = 3600000;
 const MIN_ITEMS = 3;
 const MAX_ITEMS = 100;
 
@@ -55,8 +52,6 @@ interface DraftData {
   category_slug?: string;
   title?: string;
   intro?: string;
-  format?: string;
-  hero_image_url?: string;
   items?: Array<{ title: string; justification: string; source_url: string; image_url: string }>;
   author_display_name?: string;
   savedAt: number;
@@ -74,19 +69,16 @@ export default function SubmitClient({ initialType }: { initialType?: 'top_list'
   const idCounter = useRef(0);
   const generateId = () => `item-${++idCounter.current}`;
 
-  // Form state
   const getDefaultTitle = (t: string) => {
     if (t === 'best_of') return 'Best of ';
     if (t === 'worst_of') return 'Worst of ';
     if (t === 'top_list') return 'Top 10 ';
     return '';
   };
-  const [postType, setPostType] = useState<'top_list' | 'this_vs_that' | 'fact_drop' | 'best_of' | 'worst_of'>(initialType || 'top_list');
+  const [postType] = useState<'top_list' | 'this_vs_that' | 'fact_drop' | 'best_of' | 'worst_of'>(initialType || 'top_list');
   const [categorySlug, setCategorySlug] = useState('');
   const [title, setTitle] = useState(getDefaultTitle(initialType || 'top_list'));
   const [intro, setIntro] = useState('');
-  const [postFormat, setPostFormat] = useState<'list_only' | 'hero_list' | 'full_list'>('list_only');
-  const [heroImageUrl, setHeroImageUrl] = useState('');
   const [items, setItems] = useState<ListItem[]>([
     { id: generateId(), rank: 1, title: '', justification: '', source_url: '', image_url: '' },
     { id: generateId(), rank: 2, title: '', justification: '', source_url: '', image_url: '' },
@@ -94,13 +86,15 @@ export default function SubmitClient({ initialType }: { initialType?: 'top_list'
   ]);
   const [authorName, setAuthorName] = useState('');
 
-  const formDataRef = useRef({ postType, categorySlug, title, intro, postFormat, heroImageUrl, items, authorName });
-  formDataRef.current = { postType, categorySlug, title, intro, postFormat, heroImageUrl, items, authorName };
+  const formDataRef = useRef({ postType, categorySlug, title, intro, items, authorName });
+  formDataRef.current = { postType, categorySlug, title, intro, items, authorName };
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
-  // UI state
   const [categories, setCategories] = useState<Array<{ id: string; name: string; slug: string; icon?: string }>>([]);
+  const [catSearch, setCatSearch] = useState('');
+  const [catOpen, setCatOpen] = useState(false);
+  const catRef = useRef<HTMLDivElement>(null);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [titleCheck, setTitleCheck] = useState<{
@@ -113,7 +107,6 @@ export default function SubmitClient({ initialType }: { initialType?: 'top_list'
     suggestion?: string;
   } | null>(null);
 
-  // Success state
   const [submitted, setSubmitted] = useState<{
     title: string;
     id: string;
@@ -122,41 +115,50 @@ export default function SubmitClient({ initialType }: { initialType?: 'top_list'
     username?: string;
   } | null>(null);
 
-  // Load categories on mount
+  const [showSource, setShowSource] = useState<Record<string, boolean>>({});
+
+  const filteredCategories = categories.filter(c =>
+    c.name.toLowerCase().includes(catSearch.toLowerCase()) || c.slug.toLowerCase().includes(catSearch.toLowerCase())
+  );
+
   useEffect(() => {
     API.getCategories()
       .then(data => {
-        setCategories((data as { categories?: Array<{ id: string; name: string; slug: string; icon?: string }> }).categories || []);
+        const flat = (data as { categories?: Array<{ id: string; name: string; slug: string; icon?: string; children?: Array<{ id: string; name: string; slug: string }> }> }).categories || [];
+        const all: Array<{ id: string; name: string; slug: string }> = [];
+        for (const p of flat) {
+          all.push({ id: p.id, name: p.name, slug: p.slug });
+          if (p.children) for (const c of p.children) all.push({ id: c.id, name: `  ${c.name}`, slug: c.slug });
+        }
+        setCategories(all);
       })
       .catch(err => console.error('Failed to load categories:', err));
   }, []);
 
-  // Restore draft on mount
+  useEffect(() => {
+    if (!catOpen) return;
+    const handle = (e: MouseEvent) => {
+      if (catRef.current && !catRef.current.contains(e.target as Node)) setCatOpen(false);
+    };
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, [catOpen]);
+
   useEffect(() => {
     try {
       const draft = localStorage.getItem(DRAFT_KEY);
       if (draft) {
         const data: DraftData = JSON.parse(draft);
         if (Date.now() - data.savedAt < DRAFT_EXPIRY_MS) {
-          type ValidType = typeof postType;
-          if (data.post_type && (['this_vs_that', 'fact_drop', 'best_of', 'worst_of', 'top_list'] as ValidType[]).includes(data.post_type as ValidType)) setPostType(data.post_type as ValidType);
-          if (data.category_slug) setCategorySlug(data.category_slug);
+          if (data.category_slug) { setCategorySlug(data.category_slug); setCatSearch(categories.find(c => c.slug === data.category_slug)?.name || ''); }
           if (data.title) setTitle(data.title);
           if (data.intro) setIntro(data.intro);
-          if (data.format) setPostFormat(data.format as 'list_only' | 'hero_list' | 'full_list');
-          if (data.hero_image_url) setHeroImageUrl(data.hero_image_url);
           if (data.items && data.items.length > 0) {
             const restored = data.items.map((item, idx) => ({
-              id: generateId(),
-              rank: idx + 1,
-              title: item.title || '',
-              justification: item.justification || '',
-              source_url: item.source_url || '',
-              image_url: item.image_url || '',
+              id: generateId(), rank: idx + 1, title: item.title || '', justification: item.justification || '',
+              source_url: item.source_url || '', image_url: item.image_url || '',
             }));
-            while (restored.length < MIN_ITEMS) {
-              restored.push({ id: generateId(), rank: restored.length + 1, title: '', justification: '', source_url: '', image_url: '' });
-            }
+            while (restored.length < MIN_ITEMS) restored.push({ id: generateId(), rank: restored.length + 1, title: '', justification: '', source_url: '', image_url: '' });
             setItems(restored);
           }
           if (data.author_display_name) setAuthorName(data.author_display_name);
@@ -167,102 +169,66 @@ export default function SubmitClient({ initialType }: { initialType?: 'top_list'
     } catch (e) {
       console.error('Failed to restore draft:', e);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Save draft (debounced via ref to avoid stale closures)
   const saveDraft = useCallback(() => {
     clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(() => {
-      const { categorySlug: cat, title: t, intro: i, postFormat: fmt, heroImageUrl: hero, items: it, authorName: a } = formDataRef.current;
+      const { categorySlug: cat, title: t, intro: i, items: it, authorName: a } = formDataRef.current;
       if (!t && !i && !it.some(item => item.title || item.justification) && !a) return;
       const draft: DraftData = {
-        category_slug: cat || undefined,
-        title: t || undefined,
-        intro: i || undefined,
-        format: fmt,
-        hero_image_url: hero || undefined,
+        category_slug: cat || undefined, title: t || undefined, intro: i || undefined,
         items: it.map(({ title, justification, source_url, image_url }) => ({ title, justification, source_url, image_url })),
-        author_display_name: a || undefined,
-        savedAt: Date.now(),
+        author_display_name: a || undefined, savedAt: Date.now(),
       };
       localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
     }, 1000);
   }, []);
 
-  useEffect(() => {
-    saveDraft();
-  }, [categorySlug, title, intro, postFormat, heroImageUrl, items, authorName, saveDraft]);
+  useEffect(() => { saveDraft(); }, [categorySlug, title, intro, items, authorName, saveDraft]);
 
-  // Flush draft synchronously on tab close / unload (bypasses debounce)
   useEffect(() => {
-    const flushDraftSync = () => {
-      const { categorySlug: cat, title: t, intro: i, postFormat: fmt, heroImageUrl: hero, items: it, authorName: a } = formDataRef.current;
+    const flush = () => {
+      const { categorySlug: cat, title: t, intro: i, items: it, authorName: a } = formDataRef.current;
       if (!t && !i && !it.some(item => item.title || item.justification) && !a) return;
-      const draft: DraftData = {
-        category_slug: cat || undefined,
-        title: t || undefined,
-        intro: i || undefined,
-        format: fmt,
-        hero_image_url: hero || undefined,
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({
+        category_slug: cat || undefined, title: t || undefined, intro: i || undefined,
         items: it.map(({ title, justification, source_url, image_url }) => ({ title, justification, source_url, image_url })),
-        author_display_name: a || undefined,
-        savedAt: Date.now(),
-      };
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+        author_display_name: a || undefined, savedAt: Date.now(),
+      }));
     };
-    window.addEventListener('beforeunload', flushDraftSync);
-    return () => window.removeEventListener('beforeunload', flushDraftSync);
+    window.addEventListener('beforeunload', flush);
+    return () => window.removeEventListener('beforeunload', flush);
   }, []);
 
-  // Scroll to first error after React re-renders with aria-invalid attributes
   useEffect(() => {
     if (Object.keys(errors).length > 0) {
-      const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement;
-      if (firstErrorField) firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const first = document.querySelector('[aria-invalid="true"]') as HTMLElement;
+      if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }, [errors]);
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const checkTitleSimilarity = useCallback(
     debounce(async (titleValue: string, catId: string) => {
-      if (titleValue.length < 8 || !catId) {
-        setTitleCheck(null);
-        return;
-      }
-
+      if (titleValue.length < 8 || !catId) { setTitleCheck(null); return; }
       setTitleCheck(prev => prev ? { ...prev, checking: true } : { checking: true, allowed: true, blocked: false, warning: false, matches: [], pendingConflicts: [] });
-
       try {
         const response = await API.checkTitle(titleValue, catId) as TitleCheckResponse;
-        setTitleCheck({
-          checking: false,
-          allowed: response.allowed,
-          blocked: response.blocked,
-          warning: response.warning,
-          matches: response.matches || [],
-          pendingConflicts: response.pending_conflicts || [],
-          suggestion: response.suggestion,
-        });
-      } catch (err) {
-        console.error('Title check failed:', err);
-        setTitleCheck(prev => prev ? { ...prev, checking: false } : null);
-      }
-    }, DEBOUNCE_MS),
-    []
+        setTitleCheck({ checking: false, allowed: response.allowed, blocked: response.blocked, warning: response.warning, matches: response.matches || [], pendingConflicts: response.pending_conflicts || [], suggestion: response.suggestion });
+      } catch { setTitleCheck(null); }
+    }, DEBOUNCE_MS), []
   );
 
-  // Client-side validation
   const validateField = (field: string, value: string): string | undefined => {
     switch (field) {
-      case 'category':
-        return !value ? 'Please select a category' : undefined;
+      case 'category': return !value ? 'Please select a category' : undefined;
       case 'title':
         if (!value) return 'Title is required';
         if (value.length < 4) return 'Title must be at least 4 characters';
         if (value.length > 300) return 'Title must be less than 300 characters';
-        if (postType === 'top_list') {
-          const format = validateListTitle(value);
-          if (!format.valid) return format.error;
-        }
+        if (postType === 'top_list') { const f = validateListTitle(value); if (!f.valid) return f.error; }
         return undefined;
       case 'intro':
         if (!value) return 'Introduction is required';
@@ -271,103 +237,54 @@ export default function SubmitClient({ initialType }: { initialType?: 'top_list'
       case 'author_display_name':
         if (value && value.length > 50) return 'Name must be less than 50 characters';
         return undefined;
-      default:
-        return undefined;
+      default: return undefined;
     }
   };
 
   const validateItems = (): string | undefined => {
-    if (postType === 'this_vs_that') {
-      if (items.length !== 2) return 'Exactly 2 items required';
-    } else if (postType === 'fact_drop') {
-      if (items.length < 1) return 'At least 1 fact is required';
-    } else if (items.length < MIN_ITEMS) {
-      return `At least ${MIN_ITEMS} items are required`;
-    }
-
+    if (postType === 'this_vs_that' && items.length !== 2) return 'Exactly 2 items required';
+    if (postType === 'fact_drop' && items.length < 1) return 'At least 1 fact is required';
+    if (postType !== 'this_vs_that' && postType !== 'fact_drop' && items.length < MIN_ITEMS) return `At least ${MIN_ITEMS} items are required`;
     for (let i = 0; i < items.length; i++) {
-      if (!items[i].title.trim()) return `Item #${i + 1}: Title is required (max 200 chars)`;
+      if (!items[i].title.trim()) return `Item #${i + 1}: Title is required`;
       if (items[i].title.length > 200) return `Item #${i + 1}: Title must be less than 200 characters`;
-      if (!items[i].justification.trim()) return `Item #${i + 1}: Justification is required (max 2000 chars)`;
+      if (!items[i].justification.trim()) return `Item #${i + 1}: Justification is required`;
       if (items[i].justification.length > 2000) return `Item #${i + 1}: Justification must be less than 2000 characters`;
-      if (items[i].source_url && !isValidUrl(items[i].source_url)) {
-        return `Item #${i + 1}: Please enter a valid URL`;
-      }
+      if (items[i].source_url) { try { new URL(items[i].source_url); } catch { return `Item #${i + 1}: Please enter a valid URL`; } }
     }
     return undefined;
   };
 
-  const isValidUrl = (url: string): boolean => {
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  // Validate all fields
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
-
-    const categoryError = validateField('category', categorySlug);
-    if (categoryError) newErrors.category = categoryError;
-
-    const titleError = validateField('title', title);
-    if (titleError) newErrors.title = titleError;
-
-    const introError = validateField('intro', intro);
-    if (introError) newErrors.intro = introError;
-
-    const itemsError = validateItems();
-    if (itemsError) newErrors.items = itemsError;
-
-    const authorError = validateField('author_display_name', authorName);
-    if (authorError) newErrors.author_display_name = authorError;
-
-    // Title similarity check
-    if (titleCheck?.blocked) {
-      newErrors.titleSimilarity = 'This list already exists. Please choose a different title.';
-    }
-
+    const ce = validateField('category', categorySlug); if (ce) newErrors.category = ce;
+    const te = validateField('title', title); if (te) newErrors.title = te;
+    const ie = validateField('intro', intro); if (ie) newErrors.intro = ie;
+    const ve = validateItems(); if (ve) newErrors.items = ve;
+    const ae = validateField('author_display_name', authorName); if (ae) newErrors.author_display_name = ae;
+    if (titleCheck?.blocked) newErrors.titleSimilarity = 'This list already exists. Please choose a different title.';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle category change
-  const handleCategoryChange = (value: string) => {
-    setCategorySlug(value);
+  const handleCategoryChange = (slug: string, name: string) => {
+    setCategorySlug(slug);
+    setCatSearch(name);
+    setCatOpen(false);
     setErrors(prev => ({ ...prev, category: undefined }));
-
-    if (title.length >= 8 && value) {
-      checkTitleSimilarity(title, value);
-    }
+    if (title.length >= 8 && slug) checkTitleSimilarity(title, slug);
   };
 
   const handleTitleChange = (value: string) => {
     setTitle(value);
     setErrors(prev => ({ ...prev, title: undefined, titleSimilarity: undefined }));
-
-    const formatResult = validateListTitle(value);
-    if (!formatResult.valid) {
-      setTitleCheck(null);
-      return;
-    }
-
-    if (value.length >= 8 && categorySlug) {
-      checkTitleSimilarity(value, categorySlug);
-    } else {
-      setTitleCheck(null);
-    }
+    if (value.length >= 8 && categorySlug) checkTitleSimilarity(value, categorySlug);
+    else setTitleCheck(null);
   };
 
-  // Item management
   const addItem = () => {
     if (items.length >= MAX_ITEMS) return;
-    setItems(prev => [
-      ...prev,
-      { id: generateId(), rank: prev.length + 1, title: '', justification: '', source_url: '', image_url: '' }
-    ]);
+    setItems(prev => [...prev, { id: generateId(), rank: prev.length + 1, title: '', justification: '', source_url: '', image_url: '' }]);
   };
 
   const removeItem = (id: string) => {
@@ -377,90 +294,44 @@ export default function SubmitClient({ initialType }: { initialType?: 'top_list'
   };
 
   const updateItem = (id: string, field: string, value: string) => {
-    setItems(prev => prev.map(item =>
-      item.id === id ? { ...item, [field]: value } : item
-    ));
-    if (field === 'title' || field === 'justification') {
-      setErrors(prev => ({ ...prev, items: undefined }));
-    }
+    setItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+    if (field === 'title' || field === 'justification') setErrors(prev => ({ ...prev, items: undefined }));
   };
 
-  // Form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
+    if (!validateForm()) return;
     setSubmitting(true);
     setErrors({});
-
     const submission: PostSubmission = {
-      title,
-      post_type: postType,
-      intro,
-      category_slug: categorySlug,
-      items: items.map((item, idx) => ({
-        rank: idx + 1,
-        title: item.title,
-        justification: item.justification,
-        image_url: item.image_url || undefined,
-        source_url: item.source_url || undefined,
-      })),
+      title, post_type: postType, intro, category_slug: categorySlug,
+      items: items.map((item, idx) => ({ rank: idx + 1, title: item.title, justification: item.justification, image_url: item.image_url || undefined, source_url: item.source_url || undefined })),
       author_display_name: authorName || undefined,
-      format: postFormat,
-      hero_image_url: heroImageUrl || undefined,
     };
-
     try {
       const response = await API.addPost(submission) as PostSubmissionResponse & { post?: { title: string; id: string; status: string }; items?: Array<{ id: string }> };
-
-      // Clear draft
       localStorage.removeItem(DRAFT_KEY);
-
       const authUser = useAuthStore.getState().user;
-      const username = authUser?.username || '';
-
       setSubmitted({
-        title: response.post?.title || title,
-        id: response.post?.id || '',
-        status: response.post?.status || 'pending_review',
-        itemCount: response.items?.length || items.length,
-        username,
+        title: response.post?.title || title, id: response.post?.id || '', status: response.post?.status || 'pending_review',
+        itemCount: response.items?.length || items.length, username: authUser?.username || '',
       });
       toast.success('Post submitted! It\'s now pending review.');
     } catch (err: unknown) {
       console.error('Submit failed:', err);
-
       const msg = err instanceof Error ? err.message : '';
-      const statusMatch = msg.match(/API Error: (\d+)/);
-      const status = statusMatch ? parseInt(statusMatch[1], 10) : 0;
+      const s = parseInt(msg.match(/API Error: (\d+)/)?.[1] || '0', 10);
       let body: Record<string, unknown> | null = null;
-      try {
-        const jsonStart = msg.lastIndexOf('{');
-        if (jsonStart !== -1) body = JSON.parse(msg.slice(jsonStart));
-      } catch { /* not json */ }
-
-      if (status === 400 && body?.format_code) {
-        setErrors({ title: (body.error as string) || 'Invalid title format.' });
-      } else if (status === 400 && body?.error) {
-        setErrors({ title: body.error as string });
-      } else if (status === 409) {
-        setErrors({ title: (body?.error as string) || 'This list already exists. Choose a different title.' });
-      } else if (status === 429) {
-        setErrors({ title: (body?.error as string) || 'Rate limit exceeded. Please try again later.' });
-      } else if (body?.error) {
-        setErrors({ title: body.error as string });
-      } else {
-        setErrors({ title: msg || 'Failed to submit post.' });
-      }
-    } finally {
-      setSubmitting(false);
-    }
+      try { const j = msg.lastIndexOf('{'); if (j !== -1) body = JSON.parse(msg.slice(j)); } catch { /* not json */ }
+      if (s === 400 && body?.format_code) setErrors({ title: (body.error as string) || 'Invalid title format.' });
+      else if (s === 400 && body?.error) setErrors({ title: body.error as string });
+      else if (s === 409) setErrors({ title: (body?.error as string) || 'This list already exists. Choose a different title.' });
+      else if (s === 429) setErrors({ title: (body?.error as string) || 'Rate limit exceeded.' });
+      else if (body?.error) setErrors({ title: body.error as string });
+      else setErrors({ title: msg || 'Failed to submit post.' });
+    } finally { setSubmitting(false); }
   };
 
-  // ── Success state ──
   if (submitted) {
     return (
       <div className="mx-auto max-w-3xl px-3 py-8 sm:px-6 sm:py-12">
@@ -468,46 +339,31 @@ export default function SubmitClient({ initialType }: { initialType?: 'top_list'
           <h1 className="mb-3 flex items-center justify-center gap-2 text-2xl font-bold text-green-400">
             <Icon name="Check" size={24} color="#4ade80" /> Post submitted!
           </h1>
-          <p className="mb-4 text-base text-white sm:text-lg">Your list is now pending review by our admin team.</p>
-
+          <p className="mb-4 text-base text-white sm:text-lg">Your list is now pending review.</p>
           <div className="my-6 rounded-xl bg-white/5 p-5 text-left">
             <p className="text-white"><strong className="text-white">Title:</strong> {submitted.title}</p>
             <p className="text-white"><strong className="text-white">Status:</strong>{' '}
               <span className="inline-block rounded-lg bg-orange-500/10 px-2 py-0.5 text-sm text-orange-400">Pending Review</span>
             </p>
-            <p className="text-white"><strong className="text-white">Items:</strong> {submitted.itemCount} items submitted</p>
+            <p className="text-white"><strong className="text-white">Items:</strong> {submitted.itemCount} items</p>
           </div>
-
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             {submitted.username && (
-              <Link
-                href={`/a/${submitted.username.replace(/^a_/, '')}`}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:shadow-xl hover:shadow-orange-500/40 active:scale-[0.98]"
-              >
+              <Link href={`/a/${submitted.username.replace(/^a_/, '')}`} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:shadow-xl active:scale-[0.98]">
                 View My Profile
               </Link>
             )}
-            <button
-              onClick={() => {
-                setSubmitted(null);
-                setTitle('Top 10 ');
-                setIntro('');
-                setPostFormat('list_only');
-                setHeroImageUrl('');
-                setItems([{ id: generateId(), rank: 1, title: '', justification: '', source_url: '', image_url: '' },
-                          { id: generateId(), rank: 2, title: '', justification: '', source_url: '', image_url: '' },
-                          { id: generateId(), rank: 3, title: '', justification: '', source_url: '', image_url: '' }]);
-                setAuthorName('');
-                localStorage.removeItem(DRAFT_KEY);
-              }}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:shadow-xl hover:shadow-orange-500/40 active:scale-[0.98]"
-            >
-              Submit Another Post
+            <button onClick={() => {
+              setSubmitted(null);
+              setTitle('Top 10 '); setIntro('');
+              setItems([{ id: generateId(), rank: 1, title: '', justification: '', source_url: '', image_url: '' },
+                { id: generateId(), rank: 2, title: '', justification: '', source_url: '', image_url: '' },
+                { id: generateId(), rank: 3, title: '', justification: '', source_url: '', image_url: '' }]);
+              setAuthorName(''); localStorage.removeItem(DRAFT_KEY);
+            }} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:shadow-xl active:scale-[0.98]">
+              Submit Another
             </button>
-            <Link
-              href="/"
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-zinc-300 backdrop-blur-sm transition hover:border-white/20 hover:bg-white/10"
-            >
+            <Link href="/" className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-zinc-300 backdrop-blur-sm transition hover:border-white/20 hover:bg-white/10">
               Go to Feed
             </Link>
           </div>
@@ -516,8 +372,16 @@ export default function SubmitClient({ initialType }: { initialType?: 'top_list'
     );
   }
 
-  // ── Dynamic title input border classes ──
-  const titleInputBorder = (() => {
+  const typeHelp: Record<string, { title: string; tip: string; color: string }> = {
+    top_list: { title: 'Submit a Ranked List', tip: 'Rank items from best to worst in a classic top 10 format.', color: 'border-orange-500/20 bg-orange-500/5 text-orange-400' },
+    this_vs_that: { title: 'Submit a This vs That', tip: 'Set up two sides for the community to debate and vote on.', color: 'border-purple-500/20 bg-purple-500/5 text-purple-400' },
+    fact_drop: { title: 'Submit a Fact Drop', tip: 'Share a surprising fact with a source link. Keep it concise.', color: 'border-pink-500/20 bg-pink-500/5 text-pink-400' },
+    best_of: { title: 'Submit a Best Of', tip: 'Curate the best picks. Title must start with "Best" and contain "of".', color: 'border-emerald-500/20 bg-emerald-500/5 text-emerald-400' },
+    worst_of: { title: 'Submit a Worst Of', tip: 'Call out the worst offenders. Title must start with "Worst" and contain "of".', color: 'border-red-500/20 bg-red-500/5 text-red-400' },
+  };
+  const help = typeHelp[postType] || typeHelp.top_list;
+
+  const titleBorder = (() => {
     if (errors.title || errors.titleSimilarity) return 'border-red-400 border-2';
     if (titleCheck?.blocked) return 'border-red-400 border-2';
     if (titleCheck?.warning) return 'border-orange-400 border-2';
@@ -525,484 +389,169 @@ export default function SubmitClient({ initialType }: { initialType?: 'top_list'
     return 'border-white/10 focus:border-orange-500/50';
   })();
 
-  const introBorder = errors.intro ? 'border-red-400 border-2' : 'border-white/10 focus:border-orange-500/50';
-
-  const authorBorder = errors.author_display_name ? 'border-red-400 border-2' : 'border-white/10 focus:border-orange-500/50';
-
-  const selectBaseClasses = 'w-full appearance-none rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white focus:border-orange-500/50 focus:outline-none';
-
-  const categorySelectBorder = errors.category ? 'border-red-400 border-2' : 'border-white/10 focus:border-orange-500/50';
-
-  // Type-specific help banner
-  const typeHelp: Record<string, { title: string; tip: string; color: string }> = {
-    top_list: { title: 'Submit a Ranked List', tip: 'Rank items from best to worst in a classic top 10 format. Each item needs a title and a short justification.', color: 'border-orange-500/20 bg-orange-500/5 text-orange-400' },
-    this_vs_that: { title: 'Submit a This vs That', tip: 'Set up two sides for the community to debate and vote on. No ranking needed — just two compelling options.', color: 'border-purple-500/20 bg-purple-500/5 text-purple-400' },
-    fact_drop: { title: 'Submit a Fact Drop', tip: 'Share a surprising fact. Include a source link for credibility. Keep it concise and impactful.', color: 'border-pink-500/20 bg-pink-500/5 text-pink-400' },
-    best_of: { title: 'Submit a Best Of', tip: 'Curate the absolute best picks in any category. Title must start with "Best" and contain "of" (e.g. "Best of 90s Hip Hop").', color: 'border-emerald-500/20 bg-emerald-500/5 text-emerald-400' },
-    worst_of: { title: 'Submit a Worst Of', tip: 'Call out the worst offenders. Title must start with "Worst" and contain "of" (e.g. "Worst Movies of 2024").', color: 'border-red-500/20 bg-red-500/5 text-red-400' },
-  };
-  const help = typeHelp[postType] || typeHelp.top_list;
-
-  // ── Main form ──
   return (
     <div className="mx-auto max-w-3xl px-3 py-6 sm:px-6 sm:py-10">
-      <header className="mb-8">
-        <h1 className="text-2xl font-bold text-white sm:text-3xl">{help.title}</h1>
-        <div className={`mt-3 rounded-xl border ${help.color} px-4 py-3 text-sm leading-relaxed`}>
-          {help.tip}
-        </div>
-        <nav className="mt-4">
-          <Link href="/new" className="text-sm text-orange-400 transition hover:text-orange-300">
-            &larr; Change post type
-          </Link>
-          <span className="mx-2 text-zinc-700">|</span>
-          <Link href="/" className="text-sm text-orange-400 transition hover:text-orange-300">
-            Back to Feed
-          </Link>
+      <header className="mb-6">
+        <h1 className="text-xl font-bold text-white sm:text-2xl">{help.title}</h1>
+        <div className={`mt-2 rounded-xl border ${help.color} px-3 py-2 text-xs leading-relaxed`}>{help.tip}</div>
+        <nav className="mt-3 flex items-center gap-3 text-xs">
+          <Link href="/new" className="text-orange-400 hover:text-orange-300 transition">&larr; Change type</Link>
+          <span className="text-zinc-700">|</span>
+          <Link href="/" className="text-zinc-500 hover:text-orange-400 transition">Home</Link>
         </nav>
       </header>
 
-      <form onSubmit={handleSubmit} noValidate>
-        {/* Step 1: Basic Info */}
-        <section className="mb-8">
-          <h2 className="mb-5 border-b border-white/5 pb-3 text-lg font-bold text-white">Basic Information</h2>
-
-          {/* Post Type */}
-          <div className="mb-5">
-            <label htmlFor="postType" className="mb-1.5 block text-sm font-medium text-zinc-400">
-              List Type <span className="text-orange-400" aria-label="required">*</span>
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {(['top_list', 'this_vs_that', 'fact_drop', 'best_of', 'worst_of'] as const).map(type => {
-                const labels: Record<string, { name: string; desc: string }> = {
-                  top_list: { name: 'Ranked List', desc: 'Top 10 format' },
-                  this_vs_that: { name: 'This vs That', desc: 'Debate two sides' },
-                  fact_drop: { name: 'Fact Drop', desc: 'Did you know?' },
-                  best_of: { name: 'Best Of', desc: 'The best picks ranked' },
-                  worst_of: { name: 'Worst Of', desc: 'The worst offenders' },
-                };
-                return (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => {
-                      setPostType(type);
-                      if (type === 'this_vs_that') {
-                        setTitle(title.replace(/^Top\s+\d+\s+/i, ''));
-                        setItems([
-                          { id: generateId(), rank: 1, title: 'Side A', justification: '', source_url: '', image_url: '' },
-                          { id: generateId(), rank: 2, title: 'Side B', justification: '', source_url: '', image_url: '' },
-                        ]);
-                      } else if (type === 'fact_drop') {
-                        setTitle('');
-                        setItems([{ id: generateId(), rank: 1, title: '', justification: '', source_url: '', image_url: '' }]);
-                      } else {
-                        if (type === 'best_of' && !title.match(/^Best\s+\d+/i)) setTitle('Best 10 ');
-                        else if (type === 'worst_of' && !title.match(/^Worst\s+\d+/i)) setTitle('Worst 10 ');
-                        else if (!title.match(/^Top\s+\d+/i) && type === 'top_list') setTitle('Top 10 ');
-                        if (items.length < 3) {
-                          const newItems = [...items];
-                          while (newItems.length < 3) {
-                            newItems.push({ id: generateId(), rank: newItems.length + 1, title: '', justification: '', source_url: '', image_url: '' });
-                          }
-                          setItems(newItems);
-                        }
-                      }
-                    }}
-                    className={`rounded-xl border-2 px-3 py-2.5 text-xs font-semibold text-left transition ${
-                      postType === type
-                        ? type === 'best_of'
-                          ? 'border-emerald-500 bg-emerald-500/10 text-white'
-                          : type === 'worst_of'
-                            ? 'border-red-500 bg-red-500/10 text-white'
-                            : 'border-orange-500 bg-orange-500/10 text-white'
-                        : 'border-white/10 bg-white/5 text-zinc-400 hover:border-white/20 hover:text-zinc-200'
-                    }`}
-                  >
-                    <span className="block font-medium text-xs mb-0.5">{labels[type].name}</span>
-                    <span className="block text-3xs text-zinc-500 font-normal">{labels[type].desc}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Category */}
-          <div className="mb-5">
-            <label htmlFor="category" className="mb-1.5 block text-sm font-medium text-zinc-400">
-              Category <span className="text-orange-400" aria-label="required">*</span>
-            </label>
-            <div className="relative">
-              <select
-                id="category"
-                value={categorySlug}
-                onChange={(e) => handleCategoryChange(e.target.value)}
-                aria-required="true"
-                aria-invalid={!!errors.category}
-                aria-describedby={errors.category ? 'category-error' : 'category-help'}
-                className={`${selectBaseClasses} pr-10 ${categorySelectBorder}`}
-              >
-                <option value="">Select a category...</option>
-                {categories.map(cat => (
-                  <option key={cat.id} value={cat.slug}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                <Icon name="ChevronDown" size={16} className="text-zinc-500" />
-              </div>
-            </div>
-            <div id="category-help" className="mt-1.5 text-xs text-zinc-500">Choose exactly one category for your list</div>
-            {errors.category && (
-              <div id="category-error" role="alert" className="mt-1.5 text-sm text-red-400">{errors.category}</div>
-            )}
-          </div>
-
-          {/* Title */}
-          <div className="mb-5">
-            <label htmlFor="title" className="mb-1.5 block text-sm font-medium text-zinc-400">
-              Title <span className="text-orange-400" aria-label="required">*</span>
-            </label>
-            <input
-              id="title"
-              type="text"
-              value={title}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              onBlur={() => {
-                const error = validateField('title', title);
-                if (error) setErrors(prev => ({ ...prev, title: error }));
-              }}
-              maxLength={300}
-              aria-required="true"
-              aria-invalid={!!errors.title || !!errors.titleSimilarity}
-              aria-describedby={errors.title || errors.titleSimilarity ? 'title-error' : 'title-help'}
-              className={`w-full rounded-xl bg-white/5 px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none ${titleInputBorder}`}
-            />
-            <div className="mt-1.5 flex justify-between text-xs text-zinc-500">
-              <span id="title-help" className="flex items-center gap-1.5">
-                {title.length < 8 ? 'At least 8 characters for similarity check' : 'Title ready for check'}
-                {titleCheck?.checking && <><Icon name="Hourglass" size={14} /> Checking...</>}
-                {titleCheck?.allowed && !titleCheck.blocked && <span className="flex items-center gap-1 text-green-400"><Icon name="Check" size={14} color="#4ade80" /> Title available</span>}
-                {titleCheck?.warning && <span className="flex items-center gap-1 text-orange-400"><Icon name="TriangleAlert" size={14} color="#f97316" /> Similar titles found</span>}
-                {titleCheck?.blocked && <span className="flex items-center gap-1 text-red-400"><Icon name="X" size={14} color="#f87171" /> This title is blocked</span>}
-                {titleCheck?.pendingConflicts && titleCheck.pendingConflicts.length > 0 && <span className="flex items-center gap-1 text-orange-400"><Icon name="Hourglass" size={14} /> Already pending review</span>}
-              </span>
-              <span className={title.length > 240 ? 'text-orange-400' : title.length > 285 ? 'text-red-400' : 'text-zinc-500'}>
-                {title.length}/300
-              </span>
-            </div>
-            {(errors.title || errors.titleSimilarity) && (
-              <div id="title-error" role="alert" className="mt-2 text-sm text-red-400">
-                {errors.title || errors.titleSimilarity}
-                {titleCheck?.matches && titleCheck.matches.length > 0 && (
-                  <div className="mt-3">
-                    <p className="mb-1 text-zinc-400">Similar lists:</p>
-                    <ul className="ml-5 list-disc">
-                      {titleCheck.matches.map((match, idx) => (
-                        <li key={idx} className="text-zinc-400">{match.title}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {titleCheck?.pendingConflicts && titleCheck.pendingConflicts.length > 0 && (
-                  <div className="mt-3 rounded-lg bg-orange-500/10 p-3 text-sm">
-                    <strong className="flex items-center gap-1.5 text-white"><Icon name="Hourglass" size={14} /> This title is already pending review:</strong>
-                    <ul className="ml-5 mt-1 list-disc">
-                      {titleCheck.pendingConflicts.map((pc, idx) => (
-                        <li key={idx} className="text-zinc-400">
-                          {pc.title}
-                          <span className="ml-2 text-xs text-zinc-500">
-                            (submitted <span suppressHydrationWarning>{formatDate(pc.submitted_at)}</span>)
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                    <p className="mt-1 text-xs text-orange-400">
-                      You can still submit, but the first to be approved claims the title.
-                    </p>
-                  </div>
-                )}
-                {titleCheck?.suggestion && (
-                  <p className="mt-1.5 text-zinc-400">Try: <strong className="text-white">{titleCheck.suggestion}</strong></p>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Intro */}
-          <div className="mb-5">
-            <label htmlFor="intro" className="mb-1.5 block text-sm font-medium text-zinc-400">
-              Introduction <span className="text-orange-400" aria-label="required">*</span>
-            </label>
-            <textarea
-              id="intro"
-              value={intro}
-              onChange={(e) => { setIntro(e.target.value); setErrors(prev => ({ ...prev, intro: undefined })); }}
-              onBlur={() => {
-                const error = validateField('intro', intro);
-                if (error) setErrors(prev => ({ ...prev, intro: error }));
-              }}
-              maxLength={2000}
-              rows={4}
-              placeholder="Briefly explain what this list is about and why it matters"
-              aria-required="true"
-              aria-invalid={!!errors.intro}
-              aria-describedby={errors.intro ? 'intro-error' : 'intro-help'}
-              className={`w-full resize-y rounded-xl bg-white/5 px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none ${introBorder}`}
-            />
-            <div className="mt-1.5 flex justify-between text-xs text-zinc-500">
-              <span id="intro-help">Explain what your list is about</span>
-              <span className={intro.length > 1600 ? 'text-orange-400' : intro.length > 1900 ? 'text-red-400' : 'text-zinc-500'}>
-                {intro.length}/2000
-              </span>
-            </div>
-            {errors.intro && (
-              <div id="intro-error" role="alert" className="mt-1.5 text-sm text-red-400">{errors.intro}</div>
-            )}
-          </div>
-        </section>
-
-        {/* Layout Format */}
-        <section className="mb-8">
-          <h2 className="mb-5 border-b border-white/5 pb-3 text-lg font-bold text-white">Layout Format</h2>
-
-          <div className="mb-5">
-            <label htmlFor="format" className="mb-1.5 block text-sm font-medium text-zinc-400">
-              Post Layout
-            </label>
-            <div className="relative">
-              <select
-                id="format"
-                value={postFormat}
-                onChange={(e) => setPostFormat(e.target.value as 'list_only' | 'hero_list' | 'full_list')}
-                className={`${selectBaseClasses} pr-10`}
-              >
-                <option value="list_only">List Only — text items, no images</option>
-                <option value="hero_list">Hero + List — hero banner top, items with images</option>
-                <option value="full_list">Full List — hero banner + all items have images</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                <Icon name="ChevronDown" size={16} className="text-zinc-500" />
-              </div>
-            </div>
-          </div>
-
-          {(postFormat === 'hero_list' || postFormat === 'full_list') && (
-            <div className="mb-5">
-              <label htmlFor="hero-image" className="mb-1.5 block text-sm font-medium text-zinc-400">
-                Hero Banner Image
-              </label>
-              <input
-                id="hero-image"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  setErrors(prev => ({ ...prev, titleSimilarity: undefined }));
-                  try {
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    const baseUrl = typeof window !== 'undefined' ? '' : (process.env.INTERNAL_API_URL || 'http://localhost:8000');
-                    const res = await fetch(`${baseUrl}/api/upload`, {
-                      method: 'POST',
-                      body: formData,
-                      credentials: 'include',
-                    });
-                    if (!res.ok) throw new Error('Upload failed');
-                    const data = await res.json() as { file: { hero_lg: string; item_thumb: string; original: string } };
-                    setHeroImageUrl(data.file.hero_lg);
-                  } catch {
-                    setErrors(prev => ({ ...prev, titleSimilarity: 'Image upload failed. Try a smaller file.' }));
-                  }
-                }}
-                className="w-full text-sm text-zinc-400 file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-white/10 file:px-4 file:py-2 file:text-sm file:font-medium file:text-zinc-300 file:transition hover:file:bg-white/20"
-              />
-              {heroImageUrl && (
-                <div className="mt-2">
-                  <Image src={heroImageUrl} alt="Hero preview" width={400} height={200} unoptimized className="h-auto max-h-[200px] max-w-[400px] rounded-lg border border-white/5" />
-                </div>
-              )}
+      <form onSubmit={handleSubmit} noValidate className="space-y-5">
+        {/* Category — searchable */}
+        <div ref={catRef} className="relative">
+          <label htmlFor="cat-search" className="mb-1 block text-xs font-medium text-zinc-400">Category <span className="text-orange-400">*</span></label>
+          <input
+            id="cat-search"
+            type="text"
+            value={catSearch}
+            onChange={e => { setCatSearch(e.target.value); setCatOpen(true); setCategorySlug(''); }}
+            onFocus={() => setCatOpen(true)}
+            placeholder="Search categories..."
+            aria-required="true"
+            aria-invalid={!!errors.category}
+            className={`w-full rounded-xl bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none ${errors.category ? 'border-2 border-red-400' : 'border border-white/10 focus:border-orange-500/50'}`}
+          />
+          {catOpen && filteredCategories.length > 0 && (
+            <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-white/10 bg-zinc-900 shadow-xl">
+              {filteredCategories.map(c => (
+                <button key={c.slug} type="button" onClick={() => handleCategoryChange(c.slug, c.name)}
+                  className={`w-full px-3 py-2 text-left text-sm transition ${c.slug === categorySlug ? 'bg-orange-500/10 text-orange-400' : 'text-zinc-300 hover:bg-white/5'}`}
+                >{c.name}</button>
+              ))}
             </div>
           )}
-        </section>
+          {errors.category && <div className="mt-1 text-xs text-red-400">{errors.category}</div>}
+        </div>
 
-        {/* Step 2: List Items */}
-        <section className="mb-8">
-          <h2 className="mb-5 border-b border-white/5 pb-3 text-lg font-bold text-white">List Items</h2>
-          <p className="mb-4 text-sm text-zinc-400">Add at least 3 items (max 100). Each item needs a title and justification.</p>
+        {/* Title */}
+        <div>
+          <label htmlFor="title" className="mb-1 block text-xs font-medium text-zinc-400">Title <span className="text-orange-400">*</span></label>
+          <input id="title" type="text" value={title} onChange={e => handleTitleChange(e.target.value)}
+            maxLength={300} aria-required="true" aria-invalid={!!errors.title || !!errors.titleSimilarity}
+            className={`w-full rounded-xl bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none ${titleBorder}`}
+          />
+          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-3xs text-zinc-600">
+            <span>{titleCheck?.checking ? <>Checking...</> : title.length < 8 ? 'Type at least 8 chars' : titleCheck?.allowed ? <span className="text-green-400">Title available</span> : titleCheck?.warning ? <span className="text-orange-400">Similar titles exist</span> : titleCheck?.blocked ? <span className="text-red-400">Blocked</span> : ''}</span>
+            <span className="ml-auto">{title.length}/300</span>
+          </div>
+          {(errors.title || errors.titleSimilarity) && (
+            <div className="mt-1 text-xs text-red-400">
+              {errors.title || errors.titleSimilarity}
+              {titleCheck?.suggestion && <p className="mt-0.5 text-zinc-400">Try: <strong className="text-white">{titleCheck.suggestion}</strong></p>}
+            </div>
+          )}
+        </div>
 
-          {items.map((item) => (
-            <fieldset key={item.id} className="mb-4 rounded-xl border border-white/5 p-3 sm:p-4">
-              <legend className="px-2 text-sm font-bold text-white">Item #{item.rank}</legend>
+        {/* Intro */}
+        <div>
+          <label htmlFor="intro" className="mb-1 block text-xs font-medium text-zinc-400">Intro <span className="text-orange-400">*</span></label>
+          <textarea id="intro" value={intro} onChange={e => { setIntro(e.target.value); setErrors(prev => ({ ...prev, intro: undefined })); }}
+            maxLength={2000} rows={3} placeholder="Briefly explain what this list is about"
+            aria-required="true" aria-invalid={!!errors.intro}
+            className={`w-full resize-y rounded-xl bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none ${errors.intro ? 'border-2 border-red-400' : 'border border-white/10 focus:border-orange-500/50'}`}
+          />
+          <div className="mt-0.5 text-right text-3xs text-zinc-600">{intro.length}/2000</div>
+          {errors.intro && <div className="mt-1 text-xs text-red-400">{errors.intro}</div>}
+        </div>
 
-              <div className="mb-3">
-                <label htmlFor={`item-title-${item.id}`} className="mb-1.5 block text-sm font-medium text-zinc-400">
-                  Title <span className="text-orange-400" aria-label="required">*</span>
-                </label>
-                <input
-                  id={`item-title-${item.id}`}
-                  type="text"
-                  value={item.title}
-                  onChange={(e) => updateItem(item.id, 'title', e.target.value)}
-                  placeholder="e.g., Albert Einstein"
-                  maxLength={200}
-                  aria-required="true"
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none"
-                />
-              </div>
-
-              <div className="mb-3">
-                <label htmlFor={`item-justification-${item.id}`} className="mb-1.5 block text-sm font-medium text-zinc-400">
-                  Justification <span className="text-orange-400" aria-label="required">*</span>
-                </label>
-                <textarea
-                  id={`item-justification-${item.id}`}
-                  value={item.justification}
-                  onChange={(e) => updateItem(item.id, 'justification', e.target.value)}
-                  placeholder={`This is rank #${item.rank} because...`}
-                  maxLength={2000}
-                  rows={3}
-                  aria-required="true"
-                  className="w-full resize-y rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none"
-                />
-              </div>
-
-              <div className="mb-3">
-                <label htmlFor={`item-source-${item.id}`} className="mb-1.5 block text-sm text-zinc-400">
-                  Source URL (optional)
-                </label>
-                <input
-                  id={`item-source-${item.id}`}
-                  type="url"
-                  value={item.source_url}
-                  onChange={(e) => updateItem(item.id, 'source_url', e.target.value)}
-                  placeholder="Paste article, video, or profile link"
-                  aria-label="Source URL (optional)"
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none"
-                />
-              </div>
-
-              {(postFormat === 'hero_list' || postFormat === 'full_list') && (
-                <div className="mb-3">
-                  <label htmlFor={`item-image-${item.id}`} className="mb-1.5 block text-sm text-zinc-400">
-                    Item Image (optional)
-                  </label>
-                  <input
-                    id={`item-image-${item.id}`}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      try {
-                        const formData = new FormData();
-                        formData.append('file', file);
-                        const baseUrl = typeof window !== 'undefined' ? '' : (process.env.INTERNAL_API_URL || 'http://localhost:8000');
-                        const res = await fetch(`${baseUrl}/api/upload`, {
-                          method: 'POST',
-                          body: formData,
-                          credentials: 'include',
-                        });
-                        if (!res.ok) throw new Error('Upload failed');
-                        const data = await res.json() as { file: { item_thumb: string; original: string; hero_lg: string } };
-                        updateItem(item.id, 'image_url', data.file.item_thumb);
-                      } catch {
-                        /* upload failed — silently ignore */
-                      }
-                    }}
-                    className="w-full text-sm text-zinc-400 file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-zinc-300 file:transition hover:file:bg-white/20"
-                  />
-                  {item.image_url && (
-                    <div className="mt-1.5">
-                      <Image src={item.image_url} alt="Item preview" width={150} height={100} unoptimized className="h-auto max-h-[100px] max-w-[150px] rounded-lg border border-white/5" />
-                    </div>
+        {/* Items */}
+        <div>
+          <h2 className="mb-3 text-xs font-bold text-white uppercase tracking-wider">
+            {postType === 'this_vs_that' ? 'Sides' : postType === 'fact_drop' ? 'Fact' : 'Items'} ({items.length}/{MAX_ITEMS})
+          </h2>
+          <div className="space-y-2">
+            {items.map(item => (
+              <div key={item.id} className="rounded-xl border border-white/5 bg-white/[0.03] p-3">
+                <div className="flex items-start gap-2">
+                  <span className={`mt-1.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-2xs font-bold font-mono ${
+                    postType === 'best_of' ? 'bg-emerald-500/20 text-emerald-400' :
+                    postType === 'worst_of' ? 'bg-red-500/20 text-red-400' :
+                    'bg-orange-500/15 text-orange-400'
+                  }`}>
+                    {postType === 'best_of' ? `B${item.rank}` : postType === 'worst_of' ? `W${item.rank}` : item.rank}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <input type="text" value={item.title} onChange={e => updateItem(item.id, 'title', e.target.value)}
+                      placeholder={postType === 'this_vs_that' ? (item.rank === 1 ? 'Side A name' : 'Side B name') : postType === 'fact_drop' ? 'Fact headline' : 'Item title'}
+                      maxLength={200} aria-label={`Item ${item.rank} title`}
+                      className="mb-1.5 w-full rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-sm text-white placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none"
+                    />
+                    <textarea value={item.justification} onChange={e => updateItem(item.id, 'justification', e.target.value)}
+                      placeholder={postType === 'this_vs_that' ? 'Describe this side...' : postType === 'fact_drop' ? 'The fact in detail...' : 'Why this rank?'}
+                      maxLength={2000} rows={2} aria-label={`Item ${item.rank} justification`}
+                      className="w-full resize-y rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-zinc-300 placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none"
+                    />
+                    {/* Source toggle */}
+                    {(showSource[item.id] || item.source_url) ? (
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <input type="url" value={item.source_url} onChange={e => updateItem(item.id, 'source_url', e.target.value)}
+                          placeholder="Source URL" aria-label="Source URL"
+                          className="flex-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-white placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none"
+                        />
+                        {!item.source_url && (
+                          <button type="button" onClick={() => setShowSource(prev => ({ ...prev, [item.id]: false }))}
+                            className="text-2xs text-zinc-600 hover:text-zinc-400 transition"
+                          >Hide</button>
+                        )}
+                      </div>
+                    ) : (
+                      <button type="button" onClick={() => setShowSource(prev => ({ ...prev, [item.id]: true }))}
+                        className="mt-1 text-2xs text-zinc-600 hover:text-orange-400 transition"
+                      >+ Add source link</button>
+                    )}
+                  </div>
+                  {items.length > (postType === 'this_vs_that' ? 2 : postType === 'fact_drop' ? 1 : MIN_ITEMS) && (
+                    <button type="button" onClick={() => removeItem(item.id)} aria-label="Remove item"
+                      className="mt-1 shrink-0 rounded-lg p-1 text-zinc-600 hover:text-red-400 transition"
+                    ><Icon name="X" size={14} /></button>
                   )}
                 </div>
-              )}
-
-              {items.length > MIN_ITEMS && (
-                <button
-                  type="button"
-                  onClick={() => removeItem(item.id)}
-                  aria-label={`Remove item #${item.rank}`}
-                  className="rounded-lg bg-red-500/80 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-600/80"
-                >
-                  Remove
-                </button>
-              )}
-            </fieldset>
-          ))}
-
-          {errors.items && (
-            <div role="alert" className="mb-3 text-sm text-red-400">{errors.items}</div>
-          )}
-
-          <button
-            type="button"
-            onClick={addItem}
-            disabled={items.length >= MAX_ITEMS}
-            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-zinc-300 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            + Add Item ({items.length}/{MAX_ITEMS})
-          </button>
-        </section>
-
-        {/* Step 3: Author */}
-        <section className="mb-8">
-          <h2 className="mb-5 border-b border-white/5 pb-3 text-lg font-bold text-white">Author Information</h2>
-
-          <div className="mb-5">
-            <label htmlFor="author" className="mb-1.5 block text-sm font-medium text-zinc-400">
-              Display Name (optional)
-            </label>
-            <input
-              id="author"
-              type="text"
-              value={authorName}
-              onChange={(e) => { setAuthorName(e.target.value); setErrors(prev => ({ ...prev, author_display_name: undefined })); }}
-              maxLength={50}
-              placeholder="Leave blank for auto-generated username (e.g., a_9Gh7)"
-              aria-label="Display name (optional)"
-              aria-invalid={!!errors.author_display_name}
-              aria-describedby={errors.author_display_name ? 'author-error' : 'author-help'}
-              className={`w-full rounded-xl bg-white/5 px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none ${authorBorder}`}
-            />
-            <div className="mt-1.5 flex justify-between text-xs text-zinc-500">
-              <span id="author-help">Customize your display name (auto-generated if blank)</span>
-              <span>{authorName.length}/50</span>
-            </div>
-            {errors.author_display_name && (
-              <div id="author-error" role="alert" className="mt-1.5 text-sm text-red-400">{errors.author_display_name}</div>
-            )}
+              </div>
+            ))}
           </div>
-        </section>
+          {errors.items && <div className="mt-2 text-xs text-red-400">{errors.items}</div>}
+          {postType !== 'this_vs_that' && (
+            <button type="button" onClick={addItem} disabled={items.length >= MAX_ITEMS}
+              className="mt-3 inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-zinc-400 transition hover:border-white/20 hover:text-zinc-200 disabled:opacity-40"
+            ><Icon name="Plus" size={12} /> Add item</button>
+          )}
+        </div>
 
-        {/* Error Summary */}
+        {/* Author */}
+        <div>
+          <label htmlFor="author" className="mb-1 block text-xs font-medium text-zinc-400">Display Name <span className="text-zinc-600">(optional)</span></label>
+          <input id="author" type="text" value={authorName} onChange={e => { setAuthorName(e.target.value); setErrors(prev => ({ ...prev, author_display_name: undefined })); }}
+            maxLength={50} placeholder="Leave blank for auto-generated username"
+            className={`w-full rounded-xl bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none ${errors.author_display_name ? 'border-2 border-red-400' : 'border border-white/10 focus:border-orange-500/50'}`}
+          />
+          {errors.author_display_name && <div className="mt-1 text-xs text-red-400">{errors.author_display_name}</div>}
+        </div>
+
+        {/* Error summary */}
         {Object.keys(errors).length > 0 && (
-          <div role="alert" aria-live="assertive" className="mb-5 rounded-xl border border-red-500/30 bg-red-500/10 p-4">
-            <strong className="text-red-400">Please fix the following:</strong>
-            <ul className="ml-5 mt-2 list-disc">
-              {Object.values(errors).map((error, idx) => (
-                <li key={idx} className="mb-1 text-sm text-white">{error}</li>
-              ))}
+          <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3">
+            <strong className="text-xs text-red-400">Please fix:</strong>
+            <ul className="ml-4 mt-1 list-disc text-xs text-white space-y-0.5">
+              {Object.values(errors).map((e, i) => <li key={i}>{e}</li>)}
             </ul>
           </div>
         )}
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={submitting || !categorySlug || !title || !intro || items.some(i => !i.title || !i.justification)}
-          className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 py-4 text-base font-bold text-white shadow-lg shadow-orange-500/25 transition hover:shadow-xl hover:shadow-orange-500/40 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:text-lg"
+        {/* Submit */}
+        <button type="submit" disabled={submitting || !categorySlug || !title || !intro || items.some(i => !i.title || !i.justification)}
+          className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 py-3.5 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:shadow-xl active:scale-[0.98] disabled:opacity-60"
         >
           {submitting ? 'Submitting...' : 'Submit for Review'}
         </button>
       </form>
 
-      <footer className="mt-10 border-t border-white/5 pt-6 text-center text-sm text-zinc-500">
-        <p>YoTop10 — Open Platform for Top 10 Lists</p>
+      <footer className="mt-8 text-center text-3xs text-zinc-700">
+        YoTop10 — Open Platform for Top 10 Lists
       </footer>
     </div>
   );
