@@ -7,13 +7,6 @@ import { API } from '@/lib/api';
 
 const RECENT_KEY = 'yotop10_recent_searches';
 const MAX_RECENT = 5;
-const FALLBACK_TRENDING = [
-  'best movies 2024',
-  'top hip hop albums',
-  'football players',
-  'coding languages',
-  'workout routines',
-];
 
 interface AutoTitle {
   title: string;
@@ -57,7 +50,7 @@ export function CommandSearch({ open, onClose }: { open: boolean; onClose: () =>
     fetch('/api/search/trending')
       .then(r => r.json())
       .then(d => setTrending((d.trending || []).map((t: { query: string }) => t.query).slice(0, 8)))
-      .catch(() => setTrending(FALLBACK_TRENDING));
+      .catch(() => {});
   }, [open]);
 
   // Debounced autocomplete

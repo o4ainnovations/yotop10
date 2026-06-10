@@ -365,4 +365,20 @@ router.get(
   }
 );
 
+// GET /api/search/trending — Public trending searches (no auth)
+router.get('/trending', async (_req, res) => {
+  try {
+    const results = await SearchClick.aggregate([
+      { $match: { timestamp: { $gte: new Date(Date.now() - 7 * 86400000) } } },
+      { $group: { _id: '$query', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 },
+    ]);
+    const trending = results.map(r => ({ query: r._id, count: r.count }));
+    res.json({ trending });
+  } catch {
+    res.json({ trending: [] });
+  }
+});
+
 export default router;
