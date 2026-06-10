@@ -159,9 +159,14 @@ router.get('/', async (req, res) => {
       }
     }
 
-    // Filter by post type
+    // Filter by post type (supports comma-separated list, e.g. "top_list,best_of,worst_of")
     if (post_type) {
-      query.post_type = post_type;
+      const types = (post_type as string).split(',').map(s => s.trim()).filter(Boolean);
+      if (types.length === 1) {
+        query.post_type = types[0];
+      } else if (types.length > 1) {
+        query.post_type = { $in: types };
+      }
     }
 
     // Determine sort order

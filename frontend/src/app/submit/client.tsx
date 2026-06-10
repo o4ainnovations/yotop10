@@ -75,7 +75,7 @@ export default function SubmitClient() {
   const generateId = () => `item-${++idCounter.current}`;
 
   // Form state
-  const [postType, setPostType] = useState<'top_list' | 'this_vs_that' | 'counter_list' | 'fact_drop'>('top_list');
+  const [postType, setPostType] = useState<'top_list' | 'this_vs_that' | 'counter_list' | 'fact_drop' | 'best_of' | 'worst_of'>('top_list');
   const [categorySlug, setCategorySlug] = useState('');
   const [title, setTitle] = useState('Top 10 ');
   const [intro, setIntro] = useState('');
@@ -132,7 +132,8 @@ export default function SubmitClient() {
       if (draft) {
         const data: DraftData = JSON.parse(draft);
         if (Date.now() - data.savedAt < DRAFT_EXPIRY_MS) {
-          if (data.post_type === 'this_vs_that') setPostType('this_vs_that');
+          type ValidType = typeof postType;
+          if (data.post_type && (['this_vs_that', 'counter_list', 'fact_drop', 'best_of', 'worst_of', 'top_list'] as ValidType[]).includes(data.post_type as ValidType)) setPostType(data.post_type as ValidType);
           if (data.category_slug) setCategorySlug(data.category_slug);
           if (data.title) setTitle(data.title);
           if (data.intro) setIntro(data.intro);
@@ -536,56 +537,59 @@ export default function SubmitClient() {
             <label htmlFor="postType" className="mb-1.5 block text-sm font-medium text-zinc-400">
               List Type <span className="text-orange-400" aria-label="required">*</span>
             </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {(['top_list', 'this_vs_that', 'counter_list', 'fact_drop'] as const).map(type => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => {
-                    setPostType(type);
-                    if (type === 'this_vs_that') {
-                      setTitle(title.replace(/^Top\s+\d+\s+/i, ''));
-                      setItems([
-                        { id: generateId(), rank: 1, title: 'Side A', justification: '', source_url: '', image_url: '' },
-                        { id: generateId(), rank: 2, title: 'Side B', justification: '', source_url: '', image_url: '' },
-                      ]);
-                    } else if (type === 'fact_drop') {
-                      setTitle('');
-                      setItems([{ id: generateId(), rank: 1, title: '', justification: '', source_url: '', image_url: '' }]);
-                    } else if (type === 'counter_list') {
-                      if (!title.match(/^Top\s+\d+/i) && items.length <= 1) setTitle('Top 10 ');
-                      if (items.length < 3) {
-                        const newItems = [...items];
-                        while (newItems.length < 3) {
-                          newItems.push({ id: generateId(), rank: newItems.length + 1, title: '', justification: '', source_url: '', image_url: '' });
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {(['top_list', 'this_vs_that', 'counter_list', 'fact_drop', 'best_of', 'worst_of'] as const).map(type => {
+                const labels: Record<string, { name: string; desc: string }> = {
+                  top_list: { name: 'Ranked List', desc: 'Top 10 format' },
+                  this_vs_that: { name: 'This vs That', desc: 'Debate two sides' },
+                  counter_list: { name: 'Counter List', desc: 'Challenge a list' },
+                  fact_drop: { name: 'Fact Drop', desc: 'Did you know?' },
+                  best_of: { name: 'Best Of', desc: 'The best picks ranked' },
+                  worst_of: { name: 'Worst Of', desc: 'The worst offenders' },
+                };
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => {
+                      setPostType(type);
+                      if (type === 'this_vs_that') {
+                        setTitle(title.replace(/^Top\s+\d+\s+/i, ''));
+                        setItems([
+                          { id: generateId(), rank: 1, title: 'Side A', justification: '', source_url: '', image_url: '' },
+                          { id: generateId(), rank: 2, title: 'Side B', justification: '', source_url: '', image_url: '' },
+                        ]);
+                      } else if (type === 'fact_drop') {
+                        setTitle('');
+                        setItems([{ id: generateId(), rank: 1, title: '', justification: '', source_url: '', image_url: '' }]);
+                      } else {
+                        if (type === 'best_of' && !title.match(/^Best\s+\d+/i)) setTitle('Best 10 ');
+                        else if (type === 'worst_of' && !title.match(/^Worst\s+\d+/i)) setTitle('Worst 10 ');
+                        else if (!title.match(/^Top\s+\d+/i) && type === 'top_list') setTitle('Top 10 ');
+                        if (items.length < 3) {
+                          const newItems = [...items];
+                          while (newItems.length < 3) {
+                            newItems.push({ id: generateId(), rank: newItems.length + 1, title: '', justification: '', source_url: '', image_url: '' });
+                          }
+                          setItems(newItems);
                         }
-                        setItems(newItems);
                       }
-                    } else {
-                      if (!title.match(/^Top\s+\d+/i)) setTitle('Top 10 ');
-                      if (items.length < 3) {
-                        const newItems = [...items];
-                        while (newItems.length < 3) {
-                          newItems.push({ id: generateId(), rank: newItems.length + 1, title: '', justification: '', source_url: '', image_url: '' });
-                        }
-                        setItems(newItems);
-                      }
-                    }
-                  }}
-                  className={`rounded-xl border-2 px-3 py-2.5 text-xs font-semibold text-left transition ${
-                    postType === type
-                      ? 'border-orange-500 bg-orange-500/10 text-white'
-                      : 'border-white/10 bg-white/5 text-zinc-400 hover:border-white/20 hover:text-zinc-200'
-                  }`}
-                >
-                  <span className="block font-medium text-xs mb-0.5">
-                    {type === 'top_list' ? 'Ranked List' : type === 'this_vs_that' ? 'This vs That' : type === 'counter_list' ? 'Counter List' : 'Fact Drop'}
-                  </span>
-                  <span className="block text-3xs text-zinc-500 font-normal">
-                    {type === 'top_list' ? 'Top 10 format' : type === 'this_vs_that' ? 'Debate two sides' : type === 'counter_list' ? 'Challenge a list' : 'Did you know?'}
-                  </span>
-                </button>
-              ))}
+                    }}
+                    className={`rounded-xl border-2 px-3 py-2.5 text-xs font-semibold text-left transition ${
+                      postType === type
+                        ? type === 'best_of'
+                          ? 'border-emerald-500 bg-emerald-500/10 text-white'
+                          : type === 'worst_of'
+                            ? 'border-red-500 bg-red-500/10 text-white'
+                            : 'border-orange-500 bg-orange-500/10 text-white'
+                        : 'border-white/10 bg-white/5 text-zinc-400 hover:border-white/20 hover:text-zinc-200'
+                    }`}
+                  >
+                    <span className="block font-medium text-xs mb-0.5">{labels[type].name}</span>
+                    <span className="block text-3xs text-zinc-500 font-normal">{labels[type].desc}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 

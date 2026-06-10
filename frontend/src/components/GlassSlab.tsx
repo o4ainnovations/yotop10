@@ -99,11 +99,17 @@ export function GlassSlab({ post, variant = 'compact', observe = false, rank, ac
             {topItems.map((item) => (
               <div key={item.rank} className="flex items-center gap-2 text-zinc-400">
                 <span
-                  className={`font-mono text-zinc-600 shrink-0 ${
+                  className={`font-mono shrink-0 ${
                     variant === 'featured' ? 'text-xs w-6' : 'text-2xs w-5'
+                  } ${
+                    post.post_type === 'best_of' ? 'text-emerald-500' :
+                    post.post_type === 'worst_of' ? 'text-red-500' :
+                    'text-zinc-600'
                   }`}
                 >
-                  {item.rank.toString().padStart(2, '0')}
+                  {post.post_type === 'best_of' ? `B${item.rank}` :
+                   post.post_type === 'worst_of' ? `W${item.rank}` :
+                   item.rank.toString().padStart(2, '0')}
                 </span>
                 <span className={`truncate ${variant === 'featured' ? 'text-sm' : 'text-xs'}`}>
                   {item.title}

@@ -56,7 +56,7 @@ async function fetchJson<T>(url: string, fallback: T): Promise<T> {
 
 export default async function Home() {
   const [postsData, catsData, argsData, artsData, factsData] = await Promise.all([
-    fetchJson<PostsResponse>(`${API_BASE}/posts?page=1&limit=12&post_type=top_list`, { posts: [] }),
+    fetchJson<PostsResponse>(`${API_BASE}/posts?page=1&limit=12&post_type=top_list%2Cbest_of%2Cworst_of`, { posts: [] }),
     fetchJson<{ categories: CategoryItem[] }>(`${API_BASE}/categories`, { categories: [] }),
     fetchJson<{ arguments: DebateItem[] }>(`${API_BASE}/arguments?limit=4`, { arguments: [] }),
     fetchJson<{ articles: ArticleItem[] }>(`${API_BASE}/articles?limit=3`, { articles: [] }),

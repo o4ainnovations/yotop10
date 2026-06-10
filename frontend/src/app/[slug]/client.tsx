@@ -427,8 +427,15 @@ export default function PostDetailClient({
         {/* Post Header — minimal, clean */}
         <header className="mb-6 sm:mb-8">
           <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-500 mb-3">
-            <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-2xs font-medium capitalize">
-              {post.post_type === 'top_list' ? 'Top List' : post.post_type.replace(/_/g, ' ')}
+            <span className={`rounded-md border px-2 py-0.5 text-2xs font-medium capitalize ${
+              post.post_type === 'best_of' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400' :
+              post.post_type === 'worst_of' ? 'border-red-500/30 bg-red-500/10 text-red-400' :
+              'border-white/10 bg-white/5 text-zinc-500'
+            }`}>
+              {post.post_type === 'top_list' ? 'Top List' :
+               post.post_type === 'best_of' ? 'Best Of' :
+               post.post_type === 'worst_of' ? 'Worst Of' :
+               post.post_type.replace(/_/g, ' ')}
             </span>
             <Link href={`/c/${post.category_slug}`} className="hover:text-orange-400 transition">
               {post.category_name || post.category_slug}
@@ -491,11 +498,27 @@ export default function PostDetailClient({
               return (
                 <div
                   key={item.id}
-                  className="flex gap-3 sm:gap-5 rounded-xl border border-white/5 bg-white/5 p-4 sm:p-6 transition hover:border-orange-500/20"
+                  className={`flex gap-3 sm:gap-5 rounded-xl border border-white/5 bg-white/5 p-4 sm:p-6 transition ${
+                    post.post_type === 'best_of' ? 'hover:border-emerald-500/20' :
+                    post.post_type === 'worst_of' ? 'hover:border-red-500/20' :
+                    'hover:border-orange-500/20'
+                  }`}
                 >
                   {/* Rank badge */}
-                  <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-orange-500/20 to-red-600/20 border border-orange-500/20 flex items-center justify-center">
-                    <span className="text-sm sm:text-base font-bold text-orange-400">{item.rank}</span>
+                  <div className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center ${
+                    post.post_type === 'best_of' ? 'bg-emerald-500/20 border border-emerald-500/20' :
+                    post.post_type === 'worst_of' ? 'bg-red-500/20 border border-red-500/20' :
+                    'bg-gradient-to-br from-orange-500/20 to-red-600/20 border border-orange-500/20'
+                  }`}>
+                    <span className={`text-sm sm:text-base font-bold ${
+                      post.post_type === 'best_of' ? 'text-emerald-400' :
+                      post.post_type === 'worst_of' ? 'text-red-400' :
+                      'text-orange-400'
+                    }`}>
+                      {post.post_type === 'best_of' ? `B${item.rank}` :
+                       post.post_type === 'worst_of' ? `W${item.rank}` :
+                       item.rank}
+                    </span>
                   </div>
 
                   <div className="min-w-0 flex-1">
