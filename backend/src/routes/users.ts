@@ -8,6 +8,7 @@ import { Notification } from '../models/Notification';
 import { AdminMessage } from '../models/AdminMessage';
 import { isUsernameAvailable, recordUsernameChange } from '../lib/usernameService';
 import { calculateEffectivePostLimit, calculateEffectiveCommentLimit, RateLimitStatus, getRateLimitKey } from '../lib/rateLimit';
+import { getCategoryNameMap } from '../lib/categoryCache';
 import { redis } from '../lib/redis';
 
 const router: Router = Router();
@@ -207,7 +208,7 @@ router.get('/:username', async (req, res) => {
 
     const userPosts = await Post.find(postQuery)
       .sort({ created_at: -1 })
-      .select('title slug status post_type fire_count comment_count created_at category_slug rejection_reason revision_guidance')
+      .select('title slug status post_type view_count comment_count created_at category_slug rejection_reason revision_guidance')
       .lean();
 
     // Count posts with status breakdown
@@ -240,6 +241,16 @@ router.get('/:username', async (req, res) => {
       .limit(100)
       .select('content post_id fire_count reply_count created_at');
 
+    // Aggregate total view_count across all posts
+    const viewAgg = await Post.aggregate([
+      { $match: { author_id: user.user_id } },
+      { $group: { _id: null, total_views: { $sum: '$view_count' } } },
+    ]);
+    const totalViews = viewAgg[0]?.total_views || 0;
+
+    // Category name map for resolving post categories
+    const catNameMap = await getCategoryNameMap();
+
     // Return public profile data
     res.json({
       username: currentUsername,
@@ -253,16 +264,18 @@ router.get('/:username', async (req, res) => {
         total_posts: isOwnProfile ? postCount : postsApproved,
         total_comments: userComments.length,
         approval_rate: Math.round(approvalRate * 100),
+        total_views: totalViews,
       },
-      posts: userPosts.map((post) => ({
+      posts: userPosts.map((post: any) => ({
         id: post._id,
         title: post.title,
         slug: post.slug,
         status: isOwnProfile ? post.status : 'approved',
         post_type: post.post_type,
+        view_count: post.view_count || 0,
         comment_count: post.comment_count,
         created_at: post.created_at,
-        category: post.category_slug ? { slug: post.category_slug } : null,
+        category: post.category_slug ? { slug: post.category_slug, name: catNameMap.get(post.category_slug) || null } : null,
         rejection_reason: isOwnProfile ? post.rejection_reason || undefined : undefined,
         revision_guidance: isOwnProfile ? post.revision_guidance || undefined : undefined,
       })),
