@@ -9,6 +9,7 @@ import { AdminMessage } from '../models/AdminMessage';
 import { isUsernameAvailable, recordUsernameChange } from '../lib/usernameService';
 import { calculateEffectivePostLimit, calculateEffectiveCommentLimit, RateLimitStatus, getRateLimitKey } from '../lib/rateLimit';
 import { getCategoryNameMap } from '../lib/categoryCache';
+import { checkAndPromoteUser } from '../lib/trustScore';
 import { redis } from '../lib/redis';
 
 const router: Router = Router();
@@ -23,6 +24,8 @@ router.get('/me', async (req, res) => {
   }
 
   try {
+    // Check and promote/demote user based on age/activity
+    await checkAndPromoteUser(req.user.user_id).catch(() => {});
     // Fetch user for profile_image_url
     const userDoc = await User.findOne({ user_id: req.user.user_id }).select('profile_image_url').lean();
 
@@ -166,6 +169,11 @@ router.patch('/me', ...validateDisplayName as any[], async (req, res) => {
 router.get('/:username', async (req, res) => {
   try {
     const { username } = req.params;
+
+    // Check and promote/demote user when viewing own profile
+    if (req.user) {
+      await checkAndPromoteUser(req.user.user_id).catch(() => {});
+    }
     
     console.log(`[USER PROFILE] Requested: ${username} - User from middleware: ${req.user ? req.user.username : 'NO USER'}`);
     
@@ -340,8 +348,9 @@ router.get('/me/rate-limits', async (req, res) => {
     const now = Date.now();
 
     // Calculate total limits
-    let postLimit = calculateEffectivePostLimit(req.user.trust_score);
-    let commentLimit = calculateEffectiveCommentLimit(req.user.trust_score);
+    const theTrustLevel = (req.user as any).trust_level;
+    let postLimit = calculateEffectivePostLimit(req.user.trust_score, undefined, theTrustLevel);
+    let commentLimit = calculateEffectiveCommentLimit(req.user.trust_score, theTrustLevel);
     
     // Add active boost if available
     const { getActiveBoost } = await import('../lib/ladderSystem');
@@ -367,8 +376,11 @@ router.get('/me/rate-limits', async (req, res) => {
     const commentCount = (commentEntries || []).length || 0;
 
     // Determine tier
-    let currentTier: 'troll' | 'neutral' | 'scholar';
-    if (req.user.trust_score < 0.5) {
+    const tl = (req.user as any).trust_level;
+    let currentTier: 'ghost' | 'newbie' | 'troll' | 'neutral' | 'scholar';
+    if (tl === 'ghost' || tl === 'newbie') {
+      currentTier = tl;
+    } else if (req.user.trust_score < 0.5) {
       currentTier = 'troll';
     } else if (req.user.trust_score >= 1.8) {
       currentTier = 'scholar';

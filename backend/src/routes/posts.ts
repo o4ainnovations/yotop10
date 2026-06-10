@@ -23,12 +23,12 @@ const router: Router = Router();
 
 const RATE_LIMIT_WINDOW_MS = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '3600000', 10);
 
-const checkRateLimit = async (fingerprint: string, trustScore: number = 1.0, postType?: string, userId?: string): Promise<{ allowed: boolean; remaining: number; resetTime: number; maxRequests: number }> => {
+const checkRateLimit = async (fingerprint: string, trustScore: number = 1.0, postType?: string, userId?: string, trustLevel?: string): Promise<{ allowed: boolean; remaining: number; resetTime: number; maxRequests: number }> => {
   try {
     const key = getRateLimitKey('posts', fingerprint);
     const windowMs = RATE_LIMIT_WINDOW_MS;
 
-    let maxRequests = calculateEffectivePostLimit(trustScore, postType);
+    let maxRequests = calculateEffectivePostLimit(trustScore, postType, trustLevel);
 
     if (userId) {
       const activeBoost = await getActiveBoost(userId);
@@ -38,7 +38,7 @@ const checkRateLimit = async (fingerprint: string, trustScore: number = 1.0, pos
     }
 
     if (!Number.isFinite(maxRequests)) {
-      maxRequests = calculateEffectivePostLimit(trustScore);
+      maxRequests = calculateEffectivePostLimit(trustScore, undefined, trustLevel);
     }
 
     const { allowed, remaining } = await atomicCheckRateLimit(key, windowMs, maxRequests);
@@ -48,11 +48,11 @@ const checkRateLimit = async (fingerprint: string, trustScore: number = 1.0, pos
       allowed,
       remaining,
       resetTime: now + windowMs,
-      maxRequests: Number.isFinite(maxRequests) ? maxRequests : calculateEffectivePostLimit(trustScore),
+      maxRequests: Number.isFinite(maxRequests) ? maxRequests : calculateEffectivePostLimit(trustScore, undefined, trustLevel),
     };
   } catch (error) {
     console.error('Rate limit check failed:', error);
-    const fallback = calculateEffectivePostLimit(trustScore);
+    const fallback = calculateEffectivePostLimit(trustScore, undefined, trustLevel);
     return { allowed: false, remaining: 0, resetTime: Date.now() + 60 * 60 * 1000, maxRequests: fallback };
   }
 };
@@ -488,7 +488,7 @@ router.post('/', ...validatePostSubmission as any[], async (req, res) => {
       return res.status(401).json({ error: 'Device identity required for posting' });
     }
     const userId = req.user?.user_id;
-    const rateLimitResult = await checkRateLimit(fingerprint, effectiveTrustScore, post_type, userId);
+    const rateLimitResult = await checkRateLimit(fingerprint, effectiveTrustScore, post_type, userId, (req.user as any)?.trust_level);
     if (!rateLimitResult.allowed) {
       return res.status(429).json({
         error: `Rate limit exceeded. You can submit ${rateLimitResult.maxRequests ?? 4} posts per hour.`,

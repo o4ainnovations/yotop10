@@ -7,7 +7,7 @@ interface AuthUser {
   custom_display_name?: string | null;
   profile_image_url?: string | null;
   trust_score: number;
-  trust_level: 'troll' | 'neutral' | 'scholar';
+  trust_level: 'newbie' | 'ghost' | 'troll' | 'neutral' | 'scholar';
   post_count: number;
   comment_count: number;
   posts_approved: number;

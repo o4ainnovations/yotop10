@@ -8,6 +8,8 @@ export const DEFAULT_CONFIG = {
     base_posts_per_hour: 4,
     base_comments_per_hour: 20,
     tiers: {
+      ghost: { multiplier: 0.1, min_posts: 1 },
+      newbie: { multiplier: 0.25, min_posts: 1 },
       troll: { multiplier: 0.5, min_posts: 2 },
       neutral: { multiplier: 1.0, min_posts: 4 },
       scholar: { multiplier: 2.0, min_posts: 8 },
@@ -48,6 +50,14 @@ function leanToShape(doc: Record<string, unknown>): ConfigShape {
       base_posts_per_hour: (rl?.base_posts_per_hour as number) ?? DEFAULT_CONFIG.rate_limits.base_posts_per_hour,
       base_comments_per_hour: (rl?.base_comments_per_hour as number) ?? DEFAULT_CONFIG.rate_limits.base_comments_per_hour,
       tiers: {
+        ghost: {
+          multiplier: (rlTiers?.ghost?.multiplier as number) ?? DEFAULT_CONFIG.rate_limits.tiers.ghost.multiplier,
+          min_posts: (rlTiers?.ghost?.min_posts as number) ?? DEFAULT_CONFIG.rate_limits.tiers.ghost.min_posts,
+        },
+        newbie: {
+          multiplier: (rlTiers?.newbie?.multiplier as number) ?? DEFAULT_CONFIG.rate_limits.tiers.newbie.multiplier,
+          min_posts: (rlTiers?.newbie?.min_posts as number) ?? DEFAULT_CONFIG.rate_limits.tiers.newbie.min_posts,
+        },
         troll: {
           multiplier: (rlTiers?.troll?.multiplier as number) ?? DEFAULT_CONFIG.rate_limits.tiers.troll.multiplier,
           min_posts: (rlTiers?.troll?.min_posts as number) ?? DEFAULT_CONFIG.rate_limits.tiers.troll.min_posts,
@@ -127,6 +137,14 @@ export async function updateConfig(
     if (rl.counter_lists_unlimited !== undefined) setOps['rate_limits.counter_lists_unlimited'] = rl.counter_lists_unlimited;
     if (rl.comment_edit_window_minutes !== undefined) setOps['rate_limits.comment_edit_window_minutes'] = rl.comment_edit_window_minutes;
     if (rl.tiers) {
+      if (rl.tiers.ghost) {
+        if (rl.tiers.ghost.multiplier !== undefined) setOps['rate_limits.tiers.ghost.multiplier'] = rl.tiers.ghost.multiplier;
+        if (rl.tiers.ghost.min_posts !== undefined) setOps['rate_limits.tiers.ghost.min_posts'] = rl.tiers.ghost.min_posts;
+      }
+      if (rl.tiers.newbie) {
+        if (rl.tiers.newbie.multiplier !== undefined) setOps['rate_limits.tiers.newbie.multiplier'] = rl.tiers.newbie.multiplier;
+        if (rl.tiers.newbie.min_posts !== undefined) setOps['rate_limits.tiers.newbie.min_posts'] = rl.tiers.newbie.min_posts;
+      }
       if (rl.tiers.troll) {
         if (rl.tiers.troll.multiplier !== undefined) setOps['rate_limits.tiers.troll.multiplier'] = rl.tiers.troll.multiplier;
         if (rl.tiers.troll.min_posts !== undefined) setOps['rate_limits.tiers.troll.min_posts'] = rl.tiers.troll.min_posts;

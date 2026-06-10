@@ -15,7 +15,7 @@ interface UserProfile {
   username: string;
   canonical_url?: string;
   profile_image_url?: string | null;
-  trust_level: 'troll' | 'neutral' | 'scholar';
+  trust_level: 'newbie' | 'ghost' | 'troll' | 'neutral' | 'scholar';
   created_at: string;
   stats: {
     member_since: string;
@@ -40,14 +40,16 @@ const POST_TYPE_LABELS: Record<string, string> = {
   best_of: 'Best Of', worst_of: 'Worst Of', counter_list: 'Counter',
 };
 
-const TIERS = [
-  { min: 6, label: 'Scholar', color: 'text-amber-400', bar: 'bg-amber-500', icon: 'ShieldCheck' as const },
-  { min: 3, label: 'Neutral', color: 'text-zinc-400', bar: 'bg-zinc-500', icon: 'Minus' as const },
-  { min: 0, label: 'Troll', color: 'text-red-400', bar: 'bg-red-500', icon: 'TriangleAlert' as const },
-];
+const TIER_BY_LEVEL: Record<string, { label: string; color: string; bar: string; icon: 'ShieldCheck' | 'Minus' | 'TriangleAlert' | 'Clock' | 'User' }> = {
+  newbie: { label: 'Newbie', color: 'text-blue-400', bar: 'bg-blue-500', icon: 'User' },
+  ghost: { label: 'Ghost', color: 'text-zinc-600', bar: 'bg-zinc-600', icon: 'Clock' },
+  scholar: { label: 'Scholar', color: 'text-amber-400', bar: 'bg-amber-500', icon: 'ShieldCheck' },
+  neutral: { label: 'Neutral', color: 'text-zinc-400', bar: 'bg-zinc-500', icon: 'Minus' },
+  troll: { label: 'Troll', color: 'text-red-400', bar: 'bg-red-500', icon: 'TriangleAlert' },
+};
 
-function getTier(score: number) {
-  return TIERS.find(t => score >= t.min) || TIERS[2];
+function getTierForLevel(level: string, _score: number) {
+  return TIER_BY_LEVEL[level] || TIER_BY_LEVEL.neutral;
 }
 
 export default function UserProfileClient({ initialProfile }: { initialProfile: UserProfile }) {
@@ -70,7 +72,7 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
   const retryTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const trustScore = profile.is_own_profile && authUser ? authUser.trust_score : profile.trust_score ?? 0;
-  const tier = getTier(trustScore);
+  const tier = getTierForLevel(profile.trust_level, trustScore);
   const trustPct = Math.min(100, (trustScore / 10) * 100);
 
   useEffect(() => {
@@ -119,13 +121,15 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
         <div className={`h-24 sm:h-32 w-full bg-gradient-to-r ${
           tier.label === 'Scholar' ? 'from-amber-600/30 via-amber-800/20 to-zinc-900' :
           tier.label === 'Troll' ? 'from-red-600/20 via-zinc-800/10 to-zinc-900' :
+          tier.label === 'Newbie' ? 'from-blue-600/20 via-zinc-800/10 to-zinc-900' :
+          tier.label === 'Ghost' ? 'from-zinc-700/10 via-zinc-900/10 to-zinc-900' :
           'from-zinc-600/20 via-zinc-800/10 to-zinc-900'
         }`} />
 
         <div className="px-4 sm:px-6 pb-5 sm:pb-6">
           {/* Avatar + Trust ring */}
           <div className="relative -mt-10 sm:-mt-14 mb-3 flex items-end gap-4">
-            <div className={`relative rounded-full p-0.5 ${tier.label === 'Scholar' ? 'bg-amber-500' : tier.label === 'Troll' ? 'bg-red-500' : 'bg-zinc-500'}`}>
+            <div className={`relative rounded-full p-0.5 ${tier.label === 'Scholar' ? 'bg-amber-500' : tier.label === 'Troll' ? 'bg-red-500' : tier.label === 'Newbie' ? 'bg-blue-500' : tier.label === 'Ghost' ? 'bg-zinc-600' : 'bg-zinc-500'}`}>
               {profile.profile_image_url ? (
                 <Image src={profile.profile_image_url} alt="" width={72} height={72} className="h-18 w-18 sm:h-20 sm:w-20 rounded-full border-2 border-zinc-900 object-cover" />
               ) : (
@@ -140,6 +144,8 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
                 <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-2xs font-semibold capitalize ${
                   tier.label === 'Scholar' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
                   tier.label === 'Troll' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
+                  tier.label === 'Newbie' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                  tier.label === 'Ghost' ? 'bg-zinc-700/30 text-zinc-500 border border-zinc-700/30' :
                   'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20'
                 }`}>
                   <Icon name={tier.icon} size={11} /> {tier.label}

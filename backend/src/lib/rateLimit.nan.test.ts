@@ -6,11 +6,16 @@ vi.mock('./systemConfig', () => ({
       base_posts_per_hour: 4,
       base_comments_per_hour: 20,
       tiers: {
+        ghost: { multiplier: 0.1, min_posts: 1 },
+        newbie: { multiplier: 0.25, min_posts: 1 },
         troll: { multiplier: 0.5, min_posts: 2 },
         neutral: { multiplier: 1.0, min_posts: 4 },
         scholar: { multiplier: 2.0, min_posts: 8 },
       },
       counter_lists_unlimited: true,
+    },
+    trust_tiers: {
+      troll_max: 0.49,
     },
   })),
 }));
@@ -20,11 +25,11 @@ import { calculateEffectivePostLimit, calculateEffectiveCommentLimit, getRateLim
 describe('RateLimit — NaN guard', () => {
   describe('calculateEffectivePostLimit', () => {
     it('returns minimum when trustScore is NaN', () => {
-      expect(calculateEffectivePostLimit(NaN)).toBe(2);
+      expect(calculateEffectivePostLimit(NaN)).toBe(4);
     });
 
     it('returns minimum when trustScore is Infinity', () => {
-      expect(calculateEffectivePostLimit(Infinity)).toBe(2);
+      expect(calculateEffectivePostLimit(Infinity)).toBe(4);
     });
 
     it('returns minimum when trustScore is -Infinity', () => {
@@ -42,7 +47,7 @@ describe('RateLimit — NaN guard', () => {
 
   describe('calculateEffectiveCommentLimit', () => {
     it('returns minimum when trustScore is NaN', () => {
-      expect(calculateEffectiveCommentLimit(NaN)).toBe(10);
+      expect(calculateEffectiveCommentLimit(NaN)).toBe(20);
     });
   });
 

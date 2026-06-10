@@ -3,7 +3,7 @@ import { apiFetch } from '@/lib/api/client';
 
 interface RateLimitStatus {
   trust_score: number;
-  current_tier: 'troll' | 'neutral' | 'scholar';
+  current_tier: 'ghost' | 'newbie' | 'troll' | 'neutral' | 'scholar';
   limits: {
     posts: { total: number; remaining: number; reset_in_seconds: number };
     comments: { total: number; remaining: number; reset_in_seconds: number };

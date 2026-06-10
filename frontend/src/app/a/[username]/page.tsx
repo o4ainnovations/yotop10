@@ -6,7 +6,7 @@ interface UserProfile {
   username: string;
   canonical_url?: string;
   profile_image_url?: string | null;
-  trust_level: 'troll' | 'neutral' | 'scholar';
+  trust_level: 'newbie' | 'ghost' | 'troll' | 'neutral' | 'scholar';
   created_at: string;
   stats: {
     member_since: string;
