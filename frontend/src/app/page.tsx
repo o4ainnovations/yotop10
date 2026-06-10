@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { PostCarouselCard } from '@/components/PostCarouselCard';
 import { DesktopCarousel } from '@/components/DesktopCarousel';
 import { HomeCategoryFeed } from '@/components/HomeCategoryFeed';
@@ -53,6 +54,15 @@ async function fetchJson<T>(url: string, fallback: T): Promise<T> {
     return fallback;
   }
 }
+
+export const metadata: Metadata = {
+  title: 'YoTop10 — Fact Mine. Debate Ground.',
+  description: 'The open catalog of ranked lists. Submit your list. Defend your rankings. Vote on debates, discover facts, and curate the best of everything.',
+  openGraph: {
+    title: 'YoTop10 — Fact Mine. Debate Ground.',
+    description: 'The open catalog of ranked lists. Submit your list. Defend your rankings.',
+  },
+};
 
 export default async function Home() {
   const [postsData, catsData, argsData, artsData, factsData] = await Promise.all([

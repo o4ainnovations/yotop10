@@ -16,7 +16,7 @@ const anton = Anton({ weight: '400', subsets: ['latin'], display: 'swap', variab
 const monoton = Monoton({ weight: '400', subsets: ['latin'], display: 'swap', variable: '--font-accent' });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://yotop10.com'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://yotop10.com'),
   title: "YoTop10 — Fact Mine. Debate Ground.",
   description: "The open catalog of ranked lists. Submit your list. Defend your rankings.",
   manifest: "/manifest.json",
@@ -68,6 +68,36 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="h-full antialiased" suppressHydrationWarning>
       <head>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@graph': [
+            {
+              '@type': 'Organization',
+              '@id': `${process.env.NEXT_PUBLIC_SITE_URL || 'https://yotop10.com'}/#organization`,
+              name: 'YoTop10',
+              url: process.env.NEXT_PUBLIC_SITE_URL || 'https://yotop10.com',
+              logo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://yotop10.com'}/icon-512.png`,
+              sameAs: ['https://twitter.com/yotop10', 'https://reddit.com/r/yotop10'],
+              foundingDate: '2025',
+            },
+            {
+              '@type': 'WebSite',
+              '@id': `${process.env.NEXT_PUBLIC_SITE_URL || 'https://yotop10.com'}/#website`,
+              url: process.env.NEXT_PUBLIC_SITE_URL || 'https://yotop10.com',
+              name: 'YoTop10',
+              description: 'The open catalog of ranked lists. Submit your list. Defend your rankings.',
+              publisher: { '@id': `${process.env.NEXT_PUBLIC_SITE_URL || 'https://yotop10.com'}/#organization` },
+              potentialAction: {
+                '@type': 'SearchAction',
+                target: {
+                  '@type': 'EntryPoint',
+                  urlTemplate: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://yotop10.com'}/search?q={search_term_string}`,
+                },
+                'query-input': 'required name=search_term_string',
+              },
+            },
+          ],
+        }).replace(/<\//gi, '<\\/') }} />
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {
             try {

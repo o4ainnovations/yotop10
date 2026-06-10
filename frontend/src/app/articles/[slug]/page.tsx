@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { Suspense } from 'react';
 import ArticleDetailClient from './client';
 import { API } from '@/lib/api';
+import { absoluteUrl } from '@/lib/urls';
 
 type ArticlePageProps = {
   params: Promise<{ slug: string }>;
@@ -32,7 +33,7 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
         follow: true,
       },
       alternates: {
-        canonical: `https://yotop10.fun/articles/${article.slug}`,
+        canonical: absoluteUrl(`/articles/${article.slug}`),
       },
       openGraph: {
         title: article.title,
