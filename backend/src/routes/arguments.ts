@@ -130,21 +130,16 @@ router.get('/', async (req, res) => {
 
     // Look up item titles for this_vs_that posts
     const itemLookup: Record<string, { item_a_title?: string; item_b_title?: string }> = {};
-    const thisVsThatPosts = paginated.filter((p: any) => p.post_type === 'this_vs_that');
-    if (thisVsThatPosts.length > 0) {
-      const itemIds = thisVsThatPosts.flatMap((p: any) =>
-        (p.items || []).map((i: any) => (typeof i === 'object' ? i._id || i : i))
-      );
-      const foundItems = await ListItem.find({ _id: { $in: itemIds } }).select('title _id').lean();
-      const itemById = new Map(foundItems.map((i: any) => [i._id.toString(), i.title]));
-      for (const p of thisVsThatPosts) {
-        const rawItems = p.items || [];
-        const firstId = rawItems[0] ? (rawItems[0]._id?.toString?.() || rawItems[0]) : null;
-        const secondId = rawItems[1] ? (rawItems[1]._id?.toString?.() || rawItems[1]) : null;
-        itemLookup[p._id.toString()] = {
-          item_a_title: firstId ? itemById.get(firstId) || null : null,
-          item_b_title: secondId ? itemById.get(secondId) || null : null,
-        };
+    if (postIds.length > 0) {
+      const vsItems = await ListItem.find({ post_id: { $in: postIds } })
+        .select('title post_id rank')
+        .sort({ rank: 1 })
+        .lean();
+      for (const item of vsItems) {
+        const pid = (item.post_id as any).toString();
+        if (!itemLookup[pid]) itemLookup[pid] = {};
+        if (item.rank === 1) itemLookup[pid].item_a_title = item.title;
+        if (item.rank === 2) itemLookup[pid].item_b_title = item.title;
       }
     }
 

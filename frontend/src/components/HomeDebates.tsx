@@ -68,9 +68,10 @@ export function HomeDebates({ debates }: { debates: DebateItem[] }) {
         {localDebates.slice(0, 4).map((d, idx) => {
           const votesA = d.votes_a ?? 0;
           const votesB = d.votes_b ?? 0;
-          const totalVotes = votesA + votesB || 1;
-          const pctA = Math.round((votesA / totalVotes) * 100);
-          const pctB = 100 - pctA;
+          const totalVotes = votesA + votesB;
+          const hasVotes = totalVotes > 0;
+          const pctA = hasVotes ? Math.round((votesA / totalVotes) * 100) : 0;
+          const pctB = hasVotes ? Math.round((votesB / totalVotes) * 100) : 0;
           const voted = (d.id ? votedMap[d.id] : null) ?? null;
           const gradient = BG_GRADIENTS[idx % BG_GRADIENTS.length];
 
@@ -120,41 +121,41 @@ export function HomeDebates({ debates }: { debates: DebateItem[] }) {
                   {/* Option A */}
                   <div className="rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium text-zinc-200">{d.item_a_title || 'Side A'}</span>
-                      <span className="text-sm font-bold font-mono text-red-400">{pctA}%</span>
+                      <span className="text-sm font-medium text-zinc-200">{d.item_a_title || ''}</span>
+                      <span className="text-sm font-bold font-mono text-red-400">{hasVotes ? `${pctA}%` : '--'}</span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden mb-1.5">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-red-500 to-orange-500 transition-all"
-                        style={{ width: `${pctA}%` }}
-                      />
+                      <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden mb-1.5">
+                        <div
+                          className={`h-full rounded-full bg-gradient-to-r from-red-500 to-orange-500 transition-all ${!hasVotes ? 'opacity-0' : ''}`}
+                          style={{ width: `${hasVotes ? pctA : 0}%` }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-2xs text-zinc-600 font-mono">{votesA.toLocaleString()} votes</span>
+                        <button
+                          onClick={() => handleVote(d, 'A')}
+                          className={`rounded-md px-2.5 py-1 text-2xs font-semibold transition ${
+                            voted === 'A'
+                              ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                              : 'border border-white/10 text-zinc-400 hover:border-red-500/30 hover:text-red-400'
+                          }`}
+                        >
+                          {voted === 'A' ? 'Voted' : 'Vote'}
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xs text-zinc-600 font-mono">{votesA.toLocaleString()} votes</span>
-                      <button
-                        onClick={() => handleVote(d, 'A')}
-                        className={`rounded-md px-2.5 py-1 text-2xs font-semibold transition ${
-                          voted === 'A'
-                            ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                            : 'border border-white/10 text-zinc-400 hover:border-red-500/30 hover:text-red-400'
-                        }`}
-                      >
-                        {voted === 'A' ? 'Voted' : 'Vote'}
-                      </button>
-                    </div>
-                  </div>
 
-                  {/* Option B */}
-                  <div className="rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium text-zinc-200">{d.item_b_title || 'Side B'}</span>
-                      <span className="text-sm font-bold font-mono text-blue-400">{pctB}%</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden mb-1.5">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all"
-                        style={{ width: `${pctB}%` }}
-                      />
+                    {/* Option B */}
+                    <div className="rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-zinc-200">{d.item_b_title || ''}</span>
+                        <span className="text-sm font-bold font-mono text-blue-400">{hasVotes ? `${pctB}%` : '--'}</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden mb-1.5">
+                        <div
+                          className={`h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all ${!hasVotes ? 'opacity-0' : ''}`}
+                          style={{ width: `${hasVotes ? pctB : 0}%` }}
+                        />
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-2xs text-zinc-600 font-mono">{votesB.toLocaleString()} votes</span>
@@ -176,7 +177,7 @@ export function HomeDebates({ debates }: { debates: DebateItem[] }) {
                 <div className="flex items-center justify-start gap-5 pt-3 border-t border-zinc-800">
                   <span className="flex items-center gap-1.5 text-3xs text-zinc-600">
                     <Icon name="Users" size={13} />
-                    {totalVotes - 1}
+                    {totalVotes}
                   </span>
                   <Link href={`/${d.slug}`} className="flex items-center gap-1.5 text-3xs text-zinc-600 hover:text-zinc-400 transition">
                     <Icon name="MessageCircle" size={13} />
