@@ -80,7 +80,7 @@ export default function NotificationDetailClient() {
   const priorityBg = PRIORITY_BG[pc];
 
   return (
-    <div className="max-w-[700px] mx-auto px-3 sm:px-5 py-5">
+    <div className="min-h-screen bg-[var(--color-bg)] max-w-[700px] mx-auto px-3 sm:px-5 py-5">
       <button onClick={() => router.push('/notifications')} className="bg-transparent border-none text-white/50 cursor-pointer text-sm2 mb-5 hover:text-white/80">
         <Icon name="ArrowLeft" size={16} className="inline mr-1" /> Back to notifications
       </button>

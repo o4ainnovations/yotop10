@@ -80,10 +80,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         `}} />
       </head>
       <body className={`${anton.variable} ${monoton.variable} h-full bg-[var(--color-bg)] text-[#eaeaef]`} suppressHydrationWarning>
-        <Suspense fallback={<div className="h-14 bg-zinc-950 animate-pulse" />}>
+        <Suspense fallback={<div className="h-14 bg-[var(--color-bg)] animate-pulse" />}>
           <DesktopTopBar />
         </Suspense>
-        <Suspense fallback={<div className="fixed inset-0 z-40 bg-zinc-950/50" />}>
+        <Suspense fallback={<div className="fixed inset-0 z-40 bg-[var(--color-bg)]/50" />}>
           <SlideMenuRouter />
         </Suspense>
         <Suspense>

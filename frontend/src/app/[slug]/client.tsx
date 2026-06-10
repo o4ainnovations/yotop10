@@ -342,36 +342,7 @@ export default function PostDetailClient({
   const rootComments = comments.filter(c => c.depth === 0);
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
-      {/* Navigation Header */}
-      <header className="border-b border-white/5 bg-white/5">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-3 py-3.5 sm:px-6 sm:py-4">
-          <Link
-            href="/"
-            className="text-lg font-extrabold tracking-widest sm:text-xl"
-          >
-            <span className="bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
-              YOTOP10
-            </span>
-          </Link>
-          <nav className="show-desktop flex gap-4 text-sm sm:gap-5">
-            <Link
-              href="/"
-              className="text-zinc-400 transition-colors hover:text-orange-400"
-            >
-              Home
-            </Link>
-            <Link
-              href="/categories"
-              className="text-zinc-400 transition-colors hover:text-orange-400"
-            >
-              Categories
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-10 sm:pb-16">
+    <main className="mx-auto min-h-screen max-w-4xl bg-[var(--color-bg)] px-4 py-6 sm:px-6 sm:py-10 sm:pb-16">
         {post.post_type === 'this_vs_that' ? (
           <ThisVsThatView slug={slug} post={post} items={items} />
         ) : post.post_type === 'fact_drop' ? (
@@ -619,7 +590,6 @@ export default function PostDetailClient({
         </section>
         </>
       )}
-      </main>
 
       {/* Footer */}
       <footer className="border-t border-white/5 bg-white/5 px-3 py-6 text-center sm:px-6">
@@ -627,6 +597,6 @@ export default function PostDetailClient({
           YoTop10 — Open Platform for Top 10 Lists
         </p>
       </footer>
-    </div>
+    </main>
   );
 }

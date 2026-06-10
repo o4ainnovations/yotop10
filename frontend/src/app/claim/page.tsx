@@ -78,7 +78,7 @@ export default function ClaimPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 px-3 py-10 sm:px-6 sm:py-16">
+    <div className="min-h-screen bg-[var(--color-bg)] px-3 py-10 sm:px-6 sm:py-16">
       <div className="mx-auto max-w-md">
         <div className="mb-8">
           <h1 className="mb-2 text-2xl font-bold text-white sm:text-3xl">Claim Your Identity</h1>

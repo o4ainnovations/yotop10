@@ -112,7 +112,7 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
   const initials = (profile.username[0] || '?').toUpperCase();
 
   return (
-    <div className="mx-auto min-h-screen max-w-3xl bg-zinc-950 text-white">
+    <div className="mx-auto min-h-screen max-w-3xl bg-[var(--color-bg)] text-white">
       {/* ─── Profile Header ─── */}
       <div className="relative mb-6 overflow-hidden rounded-2xl border border-white/5 bg-white/5 sm:mb-8">
         {/* Cover gradient */}

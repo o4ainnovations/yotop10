@@ -151,7 +151,7 @@ export default function SearchClient() {
   const selectClasses = "w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm2 text-white outline-none transition focus:border-orange-500/50";
 
   return (
-    <div className="min-h-screen bg-zinc-950 px-3 py-6 sm:px-6 sm:py-10">
+    <div className="min-h-screen bg-[var(--color-bg)] px-3 py-6 sm:px-6 sm:py-10">
       <div className="mx-auto max-w-5xl">
         <div className="relative mb-4 sm:mb-6">
           <div className="flex gap-2 sm:gap-3">

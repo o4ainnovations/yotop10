@@ -66,7 +66,7 @@ export default function NotificationsClient() {
   if (loading) return <div className="p-5 text-white/40">Loading...</div>;
 
   return (
-    <div className="max-w-[700px] mx-auto px-3 sm:px-5 py-5">
+    <div className="min-h-screen bg-[var(--color-bg)] max-w-[700px] mx-auto px-3 sm:px-5 py-5">
       <h1 className="text-xl font-bold mb-5 flex items-center gap-2 text-white"><Icon name="Bell" size={20} /> All Notifications</h1>
 
       {error && <div className="mb-4 rounded-lg bg-red-500/10 px-4 py-2 text-sm text-red-400">{error}</div>}

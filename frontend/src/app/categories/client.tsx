@@ -31,7 +31,7 @@ export default function CategoriesClient() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-zinc-950 px-3 py-6 sm:px-6 sm:py-10">
+      <div className="min-h-screen bg-[var(--color-bg)] px-3 py-6 sm:px-6 sm:py-10">
         <nav className="show-desktop mb-6 flex items-center gap-4">
           <Link href="/" className="text-sm font-bold text-orange-400 transition hover:text-orange-300">Home</Link>
           <span className="text-sm font-semibold text-white">Categories</span>
@@ -51,7 +51,7 @@ export default function CategoriesClient() {
 
   if (categories.length === 0) {
     return (
-      <div className="min-h-screen bg-zinc-950 px-3 py-6 sm:px-6 sm:py-10">
+      <div className="min-h-screen bg-[var(--color-bg)] px-3 py-6 sm:px-6 sm:py-10">
         <nav className="show-desktop mb-8 flex items-center gap-4">
           <Link href="/" className="text-sm font-bold text-orange-400 transition hover:text-orange-300">Home</Link>
           <span className="text-sm font-semibold text-white">Categories</span>
@@ -66,7 +66,7 @@ export default function CategoriesClient() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 px-3 py-6 sm:px-6 sm:py-10">
+    <div className="min-h-screen bg-[var(--color-bg)] px-3 py-6 sm:px-6 sm:py-10">
       <nav className="show-desktop mb-8 flex items-center gap-4">
         <Link href="/" className="text-sm font-bold text-orange-400 transition hover:text-orange-300">Home</Link>
         <span className="text-sm font-semibold text-white">Categories</span>

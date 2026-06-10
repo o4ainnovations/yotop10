@@ -97,7 +97,7 @@ export default function ArgumentsClient({ initialPosts, initialCategories, initi
   }, [time, category, fetchArguments]);
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-[var(--color-bg)] max-w-3xl mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="font-display text-3xl text-white mb-1">Arguments</h1>
         <p className="text-zinc-500 text-sm">The hottest debates happening right now</p>
