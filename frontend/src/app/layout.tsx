@@ -110,7 +110,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           })();
         `}} />
       </head>
-      <body className={`${anton.variable} ${monoton.variable} h-full bg-[var(--color-bg)] text-[#eaeaef]`} suppressHydrationWarning>
+      <body className={`${anton.variable} ${monoton.variable} min-h-screen flex flex-col bg-[var(--color-bg)] text-[#eaeaef]`} suppressHydrationWarning>
         <Suspense fallback={<div className="h-14 bg-[var(--color-bg)] animate-pulse" />}>
           <DesktopTopBar />
         </Suspense>

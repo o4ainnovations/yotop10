@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { PostCarouselCard } from '@/components/PostCarouselCard';
 import { DesktopCarousel } from '@/components/DesktopCarousel';
 import { HomeCategoryFeed } from '@/components/HomeCategoryFeed';
 import { HomeDebates } from '@/components/HomeDebates';
 import { HomeArticles } from '@/components/HomeArticles';
 import { HomeFactDrop } from '@/components/HomeFactDrop';
+import { HomeSkeleton } from '@/components/HomeSkeleton';
 import CtaButton from '@/components/CtaButton';
 import { Icon } from '@/components/icons/Icon';
 import type { PostsResponse } from '@/lib/api/types';
@@ -100,6 +102,7 @@ export default async function Home() {
   }
 
   return (
+    <Suspense fallback={<HomeSkeleton />}>
     <>
       {/* Section 1: Latest Lists — horizontal carousel */}
       <div className="pb-2">
@@ -154,5 +157,6 @@ export default async function Home() {
         </CtaButton>
       </section>
     </>
+    </Suspense>
   );
 }
