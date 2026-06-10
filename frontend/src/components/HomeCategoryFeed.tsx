@@ -11,6 +11,38 @@ interface CatItem {
   slug: string;
 }
 
+function VsMiniCard({ post }: { post: Post }) {
+  const items = post.topItems ?? [];
+  return (
+    <Link
+      href={`/${post.slug}`}
+      className="block rounded-2xl border border-white/5 bg-white/5 backdrop-blur-sm px-4 py-4 transition hover:border-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+    >
+      <div className="flex items-center justify-between mb-2">
+        <span className="rounded-md border border-orange-500/20 bg-orange-500/10 px-2 py-0.5 text-2xs font-bold text-orange-400">VS</span>
+        <span className="text-2xs text-zinc-600">{post.comment_count} comments</span>
+      </div>
+      <h3 className="text-sm font-bold text-white leading-snug mb-2">{post.title}</h3>
+      <div className="flex items-center gap-2">
+        {items.slice(0, 2).map((item, i) => (
+          <div
+            key={item.rank}
+            className={`flex-1 rounded-lg border px-2.5 py-2 text-center ${i === 0 ? 'border-orange-500/20 bg-orange-500/5' : 'border-blue-500/20 bg-blue-500/5'}`}
+          >
+            <span className={`text-xs font-semibold ${i === 0 ? 'text-orange-400' : 'text-blue-400'}`}>
+              {item.title}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5">
+        <span className="text-3xs text-zinc-600">@{post.author_username}</span>
+        <span className="text-3xs text-zinc-600">{post.view_count} views</span>
+      </div>
+    </Link>
+  );
+}
+
 export function HomeCategoryFeed({ categories }: { categories: CatItem[] }) {
   const top = categories.filter(c => c.name).slice(0, 4);
   const [activeSlug, setActiveSlug] = useState(top[0]?.slug || '');
@@ -93,9 +125,10 @@ export function HomeCategoryFeed({ categories }: { categories: CatItem[] }) {
           <>
             {/* Post card */}
             <div className="min-h-[160px]">
-              {currentPost && (
-                <DataCard post={currentPost} />
-              )}
+              {currentPost && currentPost.post_type === 'this_vs_that'
+                ? <VsMiniCard post={currentPost} />
+                : currentPost && <DataCard post={currentPost} />
+              }
             </div>
 
             {/* Arrows + Dots */}
