@@ -433,14 +433,27 @@ export default function SubmitClient({ initialType }: { initialType?: 'top_list'
     } catch (err: unknown) {
       console.error('Submit failed:', err);
 
-      // Try to parse field errors from response
-      const errorText = err instanceof Error ? err.message : '';
-      if (errorText.includes('409') || errorText.includes('already exists')) {
-        setErrors({ titleSimilarity: 'This list already exists. Please choose a different title.' });
-      } else if (errorText.includes('429')) {
-        setErrors({ title: 'Rate limit exceeded. Please try again later.' });
+      const msg = err instanceof Error ? err.message : '';
+      const statusMatch = msg.match(/API Error: (\d+)/);
+      const status = statusMatch ? parseInt(statusMatch[1], 10) : 0;
+      let body: Record<string, unknown> | null = null;
+      try {
+        const jsonStart = msg.lastIndexOf('{');
+        if (jsonStart !== -1) body = JSON.parse(msg.slice(jsonStart));
+      } catch { /* not json */ }
+
+      if (status === 400 && body?.format_code) {
+        setErrors({ title: (body.error as string) || 'Invalid title format.' });
+      } else if (status === 400 && body?.error) {
+        setErrors({ title: body.error as string });
+      } else if (status === 409) {
+        setErrors({ title: (body?.error as string) || 'This list already exists. Choose a different title.' });
+      } else if (status === 429) {
+        setErrors({ title: (body?.error as string) || 'Rate limit exceeded. Please try again later.' });
+      } else if (body?.error) {
+        setErrors({ title: body.error as string });
       } else {
-        setErrors({ title: 'Failed to submit post. Please try again.' });
+        setErrors({ title: msg || 'Failed to submit post.' });
       }
     } finally {
       setSubmitting(false);
