@@ -59,7 +59,9 @@ html.light-mode .bg-white\/10 { background: rgba(0,0,0,0.06); }
 html.light-mode .border-white\/5 { border-color: rgba(0,0,0,0.1); }
 html.light-mode .border-white\/10 { border-color: rgba(0,0,0,0.15); }
 html.light-mode .border-white\/20 { border-color: rgba(0,0,0,0.2); }
+html.light-mode .text-zinc-200 { color: #27272a; }
 html.light-mode .text-zinc-300 { color: #3f3f46; }
+html.light-mode .text-zinc-700 { color: #a1a1aa; }
 html.light-mode .bg-white\/\[0\.03\] { background: rgba(0,0,0,0.03); }
 html.light-mode .bg-white\/\[0\.04\] { background: rgba(0,0,0,0.04); }
 
