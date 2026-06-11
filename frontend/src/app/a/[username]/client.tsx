@@ -67,7 +67,7 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
 
   // Compute is_own_profile locally — server-side fetch can't determine identity
   const profileUsername = profile.username;
-  const isOwn = (profile as any).is_own_profile ||
+  const isOwn = profile.is_own_profile ||
     (authUser?.username === profileUsername) ||
     (authUser?.custom_display_name === profileUsername);
 
