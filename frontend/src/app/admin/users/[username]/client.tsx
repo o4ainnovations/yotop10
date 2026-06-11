@@ -6,12 +6,31 @@ import { apiFetch } from '@/lib/api';
 import { Icon } from '@/components/icons/Icon';
 import { formatDate } from '@/lib/dates';
 
+interface AdminUserData {
+  _id: string;
+  user_id: string;
+  username: string;
+  custom_display_name?: string;
+  display_name?: string;
+  trust_score: number;
+  trust_locked: boolean;
+  trust_level?: string;
+  restricted_until?: string | null;
+  rate_limit_override?: { posts_per_hour?: number; comments_per_hour?: number };
+  post_count?: number;
+  comment_count?: number;
+  posts_approved?: number;
+  posts_rejected?: number;
+  profile_image_url?: string;
+  created_at?: string;
+}
+
 export default function AdminUserDetailClient() {
   const params = useParams();
   const router = useRouter();
   const username = typeof params.username === 'string' ? params.username : '';
 
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<AdminUserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,8 +46,8 @@ export default function AdminUserDetailClient() {
     if (!username) return;
     setLoading(true);
     // First find the user_id from the public endpoint, then fetch admin detail
-    apiFetch(`/admin/users?q=${encodeURIComponent(username)}&limit=1`)
-      .then((data: any) => {
+    apiFetch<{ users: AdminUserData[] }>(`/admin/users?q=${encodeURIComponent(username)}&limit=1`)
+      .then(data => {
         const found = data.users?.[0];
         if (!found) { setError('User not found'); return; }
         setUser(found);
