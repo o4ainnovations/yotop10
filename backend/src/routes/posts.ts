@@ -609,6 +609,7 @@ router.post('/', ...validatePostSubmission as any[], async (req, res) => {
         message: 'Post submitted successfully. It will be reviewed by an admin.',
         post: {
           id: updatedPost._id,
+          slug: updatedPost.slug,
           title: updatedPost.title,
           status: updatedPost.status,
           created_at: updatedPost.created_at,

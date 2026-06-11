@@ -107,7 +107,7 @@ export interface TitleCheckResponse {
 
 export interface PostSubmissionResponse {
   message: string;
-  post: { id: string; title: string; status: string; created_at: string };
+  post: { id: string; slug?: string; title: string; status: string; created_at: string };
   items: Array<{ id: string; rank: number; title: string }>;
   rate_limit: { remaining: number; resetTime: number };
 }

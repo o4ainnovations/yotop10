@@ -105,14 +105,18 @@ export default function DebateClient() {
           { rank: 2, title: sideB, justification: sideBJustification, source_url: sideBSource || undefined },
         ],
         author_display_name: authorName || undefined,
-      }) as { post?: { id: string; title: string; status: string; slug?: string } };
+      });
+      const slug = (response as { post?: { slug?: string } }).post?.slug || '';
 
       localStorage.removeItem(DEBATE_DRAFT_KEY);
-      const slug = response.post?.slug || '';
-
       setSubmitting(false);
-      toast.success('Debate submitted! It\'s now pending review.');
-      window.location.href = `/${slug}`;
+
+      if (slug) {
+        toast.success('Debate submitted! It\'s now pending review.');
+        window.location.href = `/${slug}`;
+      } else {
+        setError('Debate was created but could not determine the URL. Check your pending posts.');
+      }
     } catch (err) {
       setSubmitting(false);
       const msg = err instanceof Error ? err.message : '';
