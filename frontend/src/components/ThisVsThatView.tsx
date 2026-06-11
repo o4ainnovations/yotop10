@@ -7,6 +7,7 @@ import { Icon } from './icons/Icon';
 import { BookmarkButton } from './BookmarkButton';
 import { ShareButton } from './ShareButton';
 import { relativeTime } from '@/lib/dates';
+
 interface ListItem {
   id: string;
   rank: number;
@@ -31,6 +32,8 @@ interface ThisVsThatViewProps {
     created_at: string;
     format?: string;
     hero_image_url?: string | null;
+    votes_a?: number;
+    votes_b?: number;
   };
   items: ListItem[];
 }
@@ -39,25 +42,58 @@ export function ThisVsThatView({ slug, post, items }: ThisVsThatViewProps) {
   const sideA = items.find(i => i.rank === 1);
   const sideB = items.find(i => i.rank === 2);
 
-  const [votes, setVotes] = useState<Record<string, number>>({});
+  const [votesA, setVotesA] = useState(post.votes_a ?? 0);
+  const [votesB, setVotesB] = useState(post.votes_b ?? 0);
   const [userVote, setUserVote] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
 
-  const handleVote = useCallback((side: string) => {
+  const totalVotes = votesA + votesB || 1;
+  const pctA = Math.round((votesA / totalVotes) * 100);
+  const pctB = 100 - pctA;
+
+  const castVote = useCallback(async (side: 'A' | 'B') => {
+    if (pending) return;
+    setPending(true);
+
+    // Optimistic update
     if (userVote === side) {
       setUserVote(null);
-      setVotes(prev => ({ ...prev, [side]: (prev[side] || 3) - 1 }));
+      if (side === 'A') setVotesA(prev => Math.max(0, prev - 1));
+      else setVotesB(prev => Math.max(0, prev - 1));
     } else {
-      if (userVote) {
-        setVotes(prev => ({ ...prev, [userVote]: Math.max(0, (prev[userVote] || 3) - 1) }));
-      }
+      if (userVote === 'A') setVotesA(prev => Math.max(0, prev - 1));
+      else if (userVote === 'B') setVotesB(prev => Math.max(0, prev - 1));
       setUserVote(side);
-      setVotes(prev => ({ ...prev, [side]: (prev[side] || 3) + 1 }));
+      if (side === 'A') setVotesA(prev => prev + 1);
+      else setVotesB(prev => prev + 1);
     }
-  }, [userVote]);
 
-  const totalVotes = Math.max(1, Object.values(votes).reduce((a, b) => a + b, 0));
-  const voteA = votes['A'] || 3;
-  const voteB = votes['B'] || 3;
+    try {
+      const { apiFetch } = await import('@/lib/api/client');
+      const res = await apiFetch<{ votes_a: number; votes_b: number; voted: string | null }>(`/posts/${post.id}/vote`, {
+        method: 'POST',
+        body: JSON.stringify({ side }),
+      });
+      setVotesA(res.votes_a);
+      setVotesB(res.votes_b);
+      setUserVote(res.voted);
+    } catch {
+      // Revert on failure
+      if (userVote === side) {
+        setUserVote(side);
+        if (side === 'A') setVotesA(prev => prev + 1);
+        else setVotesB(prev => prev + 1);
+      } else {
+        if (userVote === 'A') setVotesA(prev => prev + 1);
+        else if (userVote === 'B') setVotesB(prev => prev + 1);
+        setUserVote(userVote);
+        if (side === 'A') setVotesA(prev => Math.max(0, prev - 1));
+        else setVotesB(prev => Math.max(0, prev - 1));
+      }
+    } finally {
+      setPending(false);
+    }
+  }, [post.id, userVote, pending]);
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-10 sm:pb-16">
@@ -125,7 +161,8 @@ export function ThisVsThatView({ slug, post, items }: ThisVsThatViewProps) {
           )}
           <div className="mt-4 flex items-center justify-between pt-4 border-t border-white/5">
             <button
-              onClick={() => handleVote('A')}
+              onClick={() => castVote('A')}
+              disabled={pending}
               className={`inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition ${
                 userVote === 'A'
                   ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-lg'
@@ -137,7 +174,7 @@ export function ThisVsThatView({ slug, post, items }: ThisVsThatViewProps) {
             </button>
             <span className="text-sm font-mono text-zinc-500 flex items-center gap-1">
               <Icon name="Flame" size={14} className="text-orange-500" />
-              {Math.round((voteA / totalVotes) * 100)}%
+              {pctA}%
             </span>
           </div>
         </div>
@@ -176,7 +213,8 @@ export function ThisVsThatView({ slug, post, items }: ThisVsThatViewProps) {
           )}
           <div className="mt-4 flex items-center justify-between pt-4 border-t border-white/5">
             <button
-              onClick={() => handleVote('B')}
+              onClick={() => castVote('B')}
+              disabled={pending}
               className={`inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition ${
                 userVote === 'B'
                   ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-lg'
@@ -188,7 +226,7 @@ export function ThisVsThatView({ slug, post, items }: ThisVsThatViewProps) {
             </button>
             <span className="text-sm font-mono text-zinc-500 flex items-center gap-1">
               <Icon name="Flame" size={14} className="text-blue-500" />
-              {Math.round((voteB / totalVotes) * 100)}%
+              {pctB}%
             </span>
           </div>
         </div>

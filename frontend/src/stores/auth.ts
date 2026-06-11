@@ -19,7 +19,16 @@ interface AuthState {
   loading: boolean;
   initialized: boolean;
   fetchUser: () => Promise<void>;
+  logout: () => Promise<void>;
 }
+
+const CLEAR_KEYS = [
+  'yotop10_fp',
+  'yotop10_identity',
+  'yotop10_merge_token',
+  'yotop10_recent_searches',
+  'yotop10_submit_draft',
+];
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
@@ -32,6 +41,20 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ user: data, loading: false, initialized: true });
     } catch {
       set({ user: null, loading: false, initialized: true });
+    }
+  },
+
+  logout: async () => {
+    for (const key of CLEAR_KEYS) {
+      try { localStorage.removeItem(key); } catch { /* ignore */ }
+    }
+    set({ user: null, loading: false, initialized: true });
+    // Generate new identity
+    try {
+      const data = await API.getCurrentUser() as AuthUser;
+      set({ user: data });
+    } catch {
+      // stay logged out
     }
   },
 }));

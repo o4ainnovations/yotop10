@@ -14,10 +14,11 @@ export function SlideMenuPanel() {
   const user = useAuthStore((s) => s.user);
 
   const displayName = user?.custom_display_name || user?.username || 'User';
-  const username = user?.username || 'unknown';
+  const rawUsername = user?.username || 'unknown';
+  const cleanUsername = rawUsername.replace(/^a_/, '');
 
   const navItems = [
-    { icon: 'User' as const, label: 'Profile', href: user ? `/a/${username}` : '/a' },
+    { icon: 'User' as const, label: 'Profile', href: user ? `/a/${cleanUsername}` : '/a' },
     { icon: 'Folder' as const, label: 'Categories', href: '/categories' },
     { icon: 'MessageCircle' as const, label: 'Argument', href: '/arguments', badge: 'Beta' },
     { icon: 'Search' as const, label: 'Explore', href: '/explore' },
@@ -50,7 +51,7 @@ export function SlideMenuPanel() {
                 <span className="text-base font-bold text-white truncate">{displayName}</span>
                 <Icon name="BadgeCheck" size={15} className="text-orange-400 shrink-0" />
               </div>
-              <p className="text-sm2 text-zinc-500 font-mono">@{username}</p>
+              <p className="text-sm2 text-zinc-500 font-mono">@{cleanUsername}</p>
             </div>
           </div>
         </div>
@@ -87,10 +88,14 @@ export function SlideMenuPanel() {
           <div className="pt-8 pb-3">
             <hr className="border-white/5 mx-6" />
           </div>
-          <button className="w-full flex items-center justify-between px-6 py-3 text-base2 text-zinc-400 hover:text-white hover:bg-white/5 transition">
+          <Link
+            href="/settings"
+            onClick={() => setOpen(false)}
+            className="w-full flex items-center gap-3 px-6 py-3 text-base2 text-zinc-400 hover:text-white hover:bg-white/5 transition"
+          >
+            <Icon name="Settings" size={18} />
             <span>Settings &amp; Doc</span>
-            <Icon name="ChevronDown" size={16} />
-          </button>
+          </Link>
           <div className="px-6 py-3 mb-6">
             <ThemeToggle />
           </div>

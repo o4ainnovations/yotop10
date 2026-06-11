@@ -45,6 +45,11 @@ type PageProps = {
 export default async function UserProfileServer({ params }: PageProps) {
   const { username } = await params;
 
+  // Strip a_ prefix to normalize URLs — prevents flash redirect
+  if (username.startsWith('a_')) {
+    redirect(`/a/${username.slice(2)}`);
+  }
+
   let profile: UserProfile | null = null;
   try {
     profile = await API.getUserProfile(username) as UserProfile;

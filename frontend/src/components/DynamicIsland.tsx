@@ -21,7 +21,7 @@ export function DynamicIsland() {
     { icon: 'Search' as const, label: 'Search', action: () => setSearchOpen(true) },
     { icon: 'MessageCircle' as const, label: 'Arguments', href: '/arguments' },
     { icon: 'Bell' as const, label: 'Notifications', href: '/notifications' },
-    { icon: 'User' as const, label: 'Profile', href: username ? `/a/${username}` : '/a' },
+    { icon: 'User' as const, label: 'Profile', href: username ? `/a/${username.replace(/^a_/, '')}` : '/a' },
   ];
 
   return (

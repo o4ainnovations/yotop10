@@ -411,6 +411,8 @@ router.get('/:idOrSlug', async (req, res) => {
         updated_at: post.updated_at,
         published_at: post.published_at,
         robots,
+        votes_a: (post as any).votes_a || 0,
+        votes_b: (post as any).votes_b || 0,
       },
       items: listItems.map((item) => ({
         id: item._id,
