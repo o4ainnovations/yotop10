@@ -120,7 +120,11 @@ export default function ClaimPage() {
             )}
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
               <button
-                onClick={() => router.push(`/a/${recoveredUser?.username || ''}`)}
+                onClick={() => {
+                  const raw = String(recoveredUser?.custom_display_name || recoveredUser?.username || '');
+                  const clean = raw.replace(/^a_/, '');
+                  router.push(`/a/${clean}`);
+                }}
                 className="rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:shadow-xl hover:shadow-orange-500/40 active:scale-[0.98]"
               >
                 Go to Profile
