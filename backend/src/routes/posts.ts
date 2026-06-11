@@ -961,6 +961,18 @@ router.post('/:id/vote', async (req, res) => {
   }
 });
 
+// GET /api/posts/:id/vote — Get current vote counts (no side = read-only)
+router.get('/:id/vote', async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id).select('votes_a votes_b').lean();
+    if (!post) return res.status(404).json({ error: 'Post not found' });
+    res.json({ votes_a: (post as any).votes_a || 0, votes_b: (post as any).votes_b || 0 });
+  } catch (error) {
+    console.error('Vote counts error:', error);
+    res.status(500).json({ error: 'Failed to get vote counts' });
+  }
+});
+
 // ─── Counter-List Arena (M5.6) ─────────────────────────────────────────
 
 // POST /api/posts/:slug/counter — Create a counter list rebutting an existing post

@@ -48,8 +48,16 @@ export const useAuthStore = create<AuthState>((set) => ({
     for (const key of CLEAR_KEYS) {
       try { localStorage.removeItem(key); } catch { /* ignore */ }
     }
+
+    // Generate a new fingerprint immediately (not wait for 3s timer)
+    try {
+      const { getFingerprint } = await import('@/lib/fingerprint');
+      const fpHash = await getFingerprint();
+      localStorage.setItem('yotop10_fp', fpHash);
+    } catch { /* fingerprint failed — try without it */ }
+
+    // Fetch new identity with the fresh fingerprint
     set({ user: null, loading: false, initialized: true });
-    // Generate new identity
     try {
       const data = await API.getCurrentUser() as AuthUser;
       set({ user: data });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Icon } from './icons/Icon';
@@ -46,6 +46,18 @@ export function ThisVsThatView({ slug, post, items }: ThisVsThatViewProps) {
   const [votesB, setVotesB] = useState(post.votes_b ?? 0);
   const [userVote, setUserVote] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
+  // Fetch fresh vote counts on mount — aggregates votes from all sources
+  useEffect(() => {
+    if (!post.id) return;
+    fetch(`/api/posts/${post.id}/vote`)
+      .then(r => r.json())
+      .then(data => {
+        if (typeof data.votes_a === 'number') setVotesA(data.votes_a);
+        if (typeof data.votes_b === 'number') setVotesB(data.votes_b);
+      })
+      .catch(() => {});
+  }, [post.id]);
 
   const totalVotes = votesA + votesB || 1;
   const pctA = Math.round((votesA / totalVotes) * 100);
