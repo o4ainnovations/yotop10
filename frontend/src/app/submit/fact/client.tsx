@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Icon } from '@/components/icons/Icon';
 import { API } from '@/lib/api';
 import { toast } from '@/lib/toast';
+
+const FACT_DRAFT_KEY = 'yotop10_fact_draft';
 
 export default function FactClient() {
   const [title, setTitle] = useState('');
@@ -13,6 +15,33 @@ export default function FactClient() {
   const [authorName, setAuthorName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Restore draft on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(FACT_DRAFT_KEY);
+      if (saved) {
+        const d = JSON.parse(saved);
+        if (Date.now() - d.savedAt < 3600000) {
+          if (d.title) setTitle(d.title);
+          if (d.body) setBody(d.body);
+          if (d.sourceUrl) setSourceUrl(d.sourceUrl);
+          if (d.authorName) setAuthorName(d.authorName);
+        } else {
+          localStorage.removeItem(FACT_DRAFT_KEY);
+        }
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  // Save draft on change
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      const data = { title, body, sourceUrl, authorName, savedAt: Date.now() };
+      localStorage.setItem(FACT_DRAFT_KEY, JSON.stringify(data));
+    }, 800);
+    return () => clearTimeout(timeout);
+  }, [title, body, sourceUrl, authorName]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +66,7 @@ export default function FactClient() {
         author_display_name: authorName || undefined,
       }) as { post?: { id: string; title: string; status: string; slug?: string } };
 
-      localStorage.removeItem('yotop10_submit_draft');
+      localStorage.removeItem(FACT_DRAFT_KEY);
       const slug = response.post?.slug || '';
 
       setSubmitting(false);

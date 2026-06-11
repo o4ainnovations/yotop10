@@ -6,6 +6,8 @@ import { Icon } from '@/components/icons/Icon';
 import { API } from '@/lib/api';
 import { toast } from '@/lib/toast';
 
+const DEBATE_DRAFT_KEY = 'yotop10_debate_draft';
+
 export default function DebateClient() {
   const [title, setTitle] = useState('');
   const [categorySlug, setCategorySlug] = useState('');
@@ -23,6 +25,39 @@ export default function DebateClient() {
   const [error, setError] = useState<string | null>(null);
 
   const [categories, setCategories] = useState<Array<{ id: string; name: string; slug: string }>>([]);
+
+  // Restore draft on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(DEBATE_DRAFT_KEY);
+      if (saved) {
+        const d = JSON.parse(saved);
+        if (Date.now() - d.savedAt < 3600000) {
+          if (d.title) setTitle(d.title);
+          if (d.categorySlug) setCategorySlug(d.categorySlug);
+          if (d.catSearch) setCatSearch(d.catSearch);
+          if (d.sideA) setSideA(d.sideA);
+          if (d.sideAJustification) setSideAJustification(d.sideAJustification);
+          if (d.sideASource) setSideASource(d.sideASource);
+          if (d.sideB) setSideB(d.sideB);
+          if (d.sideBJustification) setSideBJustification(d.sideBJustification);
+          if (d.sideBSource) setSideBSource(d.sideBSource);
+          if (d.authorName) setAuthorName(d.authorName);
+        } else {
+          localStorage.removeItem(DEBATE_DRAFT_KEY);
+        }
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  // Save draft on change
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      const data = { title, categorySlug, catSearch, sideA, sideAJustification, sideASource, sideB, sideBJustification, sideBSource, authorName, savedAt: Date.now() };
+      localStorage.setItem(DEBATE_DRAFT_KEY, JSON.stringify(data));
+    }, 800);
+    return () => clearTimeout(timeout);
+  }, [title, categorySlug, catSearch, sideA, sideAJustification, sideASource, sideB, sideBJustification, sideBSource, authorName]);
   const filteredCategories = categories.filter(c =>
     c.name.toLowerCase().includes(catSearch.toLowerCase()) || c.slug.toLowerCase().includes(catSearch.toLowerCase())
   );
@@ -72,7 +107,7 @@ export default function DebateClient() {
         author_display_name: authorName || undefined,
       }) as { post?: { id: string; title: string; status: string; slug?: string } };
 
-      localStorage.removeItem('yotop10_submit_draft');
+      localStorage.removeItem(DEBATE_DRAFT_KEY);
       const slug = response.post?.slug || '';
 
       setSubmitting(false);
