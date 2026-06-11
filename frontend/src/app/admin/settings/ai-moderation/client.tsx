@@ -7,8 +7,8 @@ import { Icon } from '@/components/icons/Icon';
 const PREDEFINED_MODELS = [
   'deepseek-chat',
   'deepseek-reasoner',
-  'deepseek-v4-flash',
-  'deepseek-v4-pro',
+  'deepseek-chat-v4-flash',
+  'deepseek-pro',
   '__custom__',
 ];
 
@@ -22,8 +22,11 @@ export default function AiModerationClient() {
   const [threshold, setThreshold] = useState(80);
   const [enabled, setEnabled] = useState(false);
   const [stats, setStats] = useState<{ posts_reviewed: number; auto_approved: number; avg_score: number; total_tokens: number } | null>(null);
+  const [availablePosts, setAvailablePosts] = useState<Array<{ slug: string; title: string }>>([]);
+  const [testPostSlug, setTestPostSlug] = useState('');
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ score: number; flags: string[]; model: string; tokens: number; sample?: string } | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
@@ -43,6 +46,7 @@ export default function AiModerationClient() {
       setSavedKey(d.has_key ?? false);
     }).catch(() => {});
     apiFetch<{ posts_reviewed: number; auto_approved: number; avg_score: number; total_tokens: number }>('/admin/stats/ai-moderation').then(setStats).catch(() => {});
+    apiFetch<{ posts: Array<{ slug: string; title: string }> }>('/admin/posts?limit=50&status=approved').then(d => setAvailablePosts(d.posts || [])).catch(() => {});
   }, []);
 
   const handleModelChange = (val: string) => {
@@ -76,12 +80,16 @@ export default function AiModerationClient() {
   const handleTest = async () => {
     setTesting(true);
     setMessage(null);
+    setTestResult(null);
     try {
       const body: Record<string, unknown> = {};
       if (apiKey) body.api_key = apiKey;
       body.model = model;
-      await apiFetch('/admin/settings/ai-moderation/test', { method: 'POST', body: JSON.stringify(body) });
-      setMessage({ type: 'success', text: 'API connection successful!' });
+      body.temperature = temperature;
+      if (testPostSlug) body.slug = testPostSlug;
+      const res = await apiFetch<{ success: boolean; score: number; flags: string[]; model: string; tokens: number; title: string }>('/admin/settings/ai-moderation/test', { method: 'POST', body: JSON.stringify(body) });
+      setTestResult({ score: res.score, flags: res.flags, model: res.model, tokens: res.tokens, sample: res.title || '' });
+      setMessage({ type: 'success', text: `AI scored it ${res.score}/100 — Model: ${res.model}` });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Test failed';
       setMessage({ type: 'error', text: msg });
@@ -126,10 +134,10 @@ export default function AiModerationClient() {
                 onChange={e => handleModelChange(e.target.value)}
                 className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-orange-500/50 focus:outline-none"
               >
-                <option value="deepseek-chat" className="bg-zinc-900">DeepSeek Chat (v3)</option>
+                <option value="deepseek-chat" className="bg-zinc-900">DeepSeek Chat (latest)</option>
                 <option value="deepseek-reasoner" className="bg-zinc-900">DeepSeek Reasoner</option>
-                <option value="deepseek-v4-flash" className="bg-zinc-900">DeepSeek V4 Flash</option>
-                <option value="deepseek-v4-pro" className="bg-zinc-900">DeepSeek V4 Pro</option>
+                <option value="deepseek-chat-v4-flash" className="bg-zinc-900">DeepSeek V4 Flash</option>
+                <option value="deepseek-pro" className="bg-zinc-900">DeepSeek Pro</option>
                 <option value="__custom__" className="bg-zinc-900">Custom...</option>
               </select>
               {modelSelect === '__custom__' && (
@@ -193,6 +201,17 @@ export default function AiModerationClient() {
             </button>
           </div>
 
+          <div className="mb-4">
+            <label className="mb-1.5 block text-xs font-medium text-zinc-400">Test Post (optional)</label>
+            <select value={testPostSlug} onChange={e => setTestPostSlug(e.target.value)}
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-orange-500/50 focus:outline-none">
+              <option value="" className="bg-zinc-900">Use hardcoded sample post</option>
+              {availablePosts.map(p => (
+                <option key={p.slug} value={p.slug} className="bg-zinc-900">{p.title}</option>
+              ))}
+            </select>
+          </div>
+
           <div className="flex gap-3">
             <button onClick={handleSave} disabled={saving}
               className="rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:shadow-xl disabled:opacity-50">
@@ -203,6 +222,35 @@ export default function AiModerationClient() {
               {testing ? 'Testing...' : 'Test Connection'}
             </button>
           </div>
+
+          {/* Test result */}
+          {testResult && (
+            <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4">
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Test Analysis Result</h3>
+              <div className="flex items-center gap-3 mb-3">
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold font-mono ${
+                  testResult.score >= 80 ? 'bg-green-500/15 text-green-400' :
+                  testResult.score >= 40 ? 'bg-yellow-500/15 text-yellow-400' :
+                  'bg-red-500/15 text-red-400'
+                }`}>
+                  {testResult.score}/100
+                </span>
+                <span className="text-2xs text-zinc-500">Model: <span className="font-mono text-zinc-400">{testResult.model}</span></span>
+                <span className="text-2xs text-zinc-500">{testResult.tokens} tokens used</span>
+              </div>
+              {testResult.flags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {testResult.flags.map(f => (
+                    <span key={f} className="rounded-full bg-yellow-500/10 text-yellow-400 px-2 py-0.5 text-2xs font-medium">{f}</span>
+                  ))}
+                </div>
+              )}
+              {testResult.flags.length === 0 && (
+                <p className="text-xs text-green-400">No quality issues detected.</p>
+              )}
+              <p className="text-2xs text-zinc-600 mt-2">Post: &ldquo;{testResult.sample || 'Sample post'}&rdquo;</p>
+            </div>
+          )}
         </div>
 
         {/* Stats */}
