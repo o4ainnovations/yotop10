@@ -113,6 +113,20 @@ export default function AccountSettingsClient() {
           </p>
           <SecureMyAuthority />
         </div>
+
+        {/* Recover Identity — always visible */}
+        <div className="rounded-xl border border-white/5 bg-white/[0.02] px-5 py-5">
+          <h2 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Recover Identity</h2>
+          <p className="text-2xs text-zinc-600 mb-4">
+            Already have a 12-word seed phrase? Use it to recover your identity on this device. All your posts, comments, and reputation will be restored.
+          </p>
+          <Link
+            href="/claim"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-5 py-2.5 text-xs font-semibold text-white shadow-lg shadow-orange-500/25 transition hover:shadow-xl active:scale-[0.98]"
+          >
+            Recover Identity &rarr;
+          </Link>
+        </div>
       </div>
     </div>
   );
