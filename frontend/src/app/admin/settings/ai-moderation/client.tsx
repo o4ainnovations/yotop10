@@ -4,10 +4,21 @@ import { useState, useEffect } from 'react';
 import { apiFetch } from '@/lib/api';
 import { Icon } from '@/components/icons/Icon';
 
+const PREDEFINED_MODELS = [
+  'deepseek-chat',
+  'deepseek-reasoner',
+  'deepseek-v4-flash',
+  'deepseek-v4-pro',
+  '__custom__',
+];
+
 export default function AiModerationClient() {
   const [apiKey, setApiKey] = useState('');
   const [savedKey, setSavedKey] = useState(false);
   const [model, setModel] = useState('deepseek-chat');
+  const [customModel, setCustomModel] = useState('');
+  const [modelSelect, setModelSelect] = useState('deepseek-chat');
+  const [temperature, setTemperature] = useState(0.1);
   const [threshold, setThreshold] = useState(80);
   const [enabled, setEnabled] = useState(false);
   const [stats, setStats] = useState<{ posts_reviewed: number; auto_approved: number; avg_score: number; total_tokens: number } | null>(null);
@@ -16,8 +27,17 @@ export default function AiModerationClient() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
-    apiFetch<{ model?: string; auto_approve_threshold?: number; enabled?: boolean; has_key?: boolean }>('/admin/settings/ai-moderation').then(d => {
-      setModel(d.model || 'deepseek-chat');
+    apiFetch<{ model?: string; temperature?: number; auto_approve_threshold?: number; enabled?: boolean; has_key?: boolean }>('/admin/settings/ai-moderation').then(d => {
+      const m = d.model || 'deepseek-chat';
+      if (PREDEFINED_MODELS.includes(m)) {
+        setModelSelect(m);
+        setModel(m);
+      } else {
+        setModelSelect('__custom__');
+        setCustomModel(m);
+        setModel(m);
+      }
+      setTemperature(d.temperature ?? 0.1);
       setThreshold(d.auto_approve_threshold ?? 80);
       setEnabled(d.enabled ?? false);
       setSavedKey(d.has_key ?? false);
@@ -25,11 +45,25 @@ export default function AiModerationClient() {
     apiFetch<{ posts_reviewed: number; auto_approved: number; avg_score: number; total_tokens: number }>('/admin/stats/ai-moderation').then(setStats).catch(() => {});
   }, []);
 
+  const handleModelChange = (val: string) => {
+    setModelSelect(val);
+    if (val === '__custom__') {
+      setModel(customModel || 'deepseek-chat');
+    } else {
+      setModel(val);
+    }
+  };
+
+  const handleCustomModelChange = (val: string) => {
+    setCustomModel(val);
+    setModel(val);
+  };
+
   const handleSave = async () => {
     setSaving(true);
     setMessage(null);
     try {
-      const body: Record<string, unknown> = { model, auto_approve_threshold: threshold, enabled };
+      const body: Record<string, unknown> = { model, temperature, auto_approve_threshold: threshold, enabled };
       if (apiKey) body.api_key = apiKey;
       await apiFetch('/admin/settings/ai-moderation', { method: 'POST', body: JSON.stringify(body) });
       setSavedKey(true);
@@ -45,7 +79,7 @@ export default function AiModerationClient() {
     try {
       const body: Record<string, unknown> = {};
       if (apiKey) body.api_key = apiKey;
-      if (model) body.model = model;
+      body.model = model;
       await apiFetch('/admin/settings/ai-moderation/test', { method: 'POST', body: JSON.stringify(body) });
       setMessage({ type: 'success', text: 'API connection successful!' });
     } catch (e: unknown) {
@@ -86,12 +120,48 @@ export default function AiModerationClient() {
 
           <div className="mb-4">
             <label className="mb-1.5 block text-xs font-medium text-zinc-400">Model</label>
+            <div className="flex gap-2">
+              <select
+                value={modelSelect}
+                onChange={e => handleModelChange(e.target.value)}
+                className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-orange-500/50 focus:outline-none"
+              >
+                <option value="deepseek-chat" className="bg-zinc-900">DeepSeek Chat (v3)</option>
+                <option value="deepseek-reasoner" className="bg-zinc-900">DeepSeek Reasoner</option>
+                <option value="deepseek-v4-flash" className="bg-zinc-900">DeepSeek V4 Flash</option>
+                <option value="deepseek-v4-pro" className="bg-zinc-900">DeepSeek V4 Pro</option>
+                <option value="__custom__" className="bg-zinc-900">Custom...</option>
+              </select>
+              {modelSelect === '__custom__' && (
+                <input
+                  type="text"
+                  value={customModel}
+                  onChange={e => handleCustomModelChange(e.target.value)}
+                  placeholder="Enter model name"
+                  className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none"
+                />
+              )}
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <label className="mb-1.5 block text-xs font-medium text-zinc-400">
+              Temperature: <span className="text-orange-400 font-bold">{temperature.toFixed(1)}</span>
+            </label>
             <input
-              type="text"
-              value={model}
-              onChange={e => setModel(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-orange-500/50 focus:outline-none"
+              type="range"
+              min={0}
+              max={20}
+              step={1}
+              value={Math.round(temperature * 10)}
+              onChange={e => setTemperature(parseInt(e.target.value) / 10)}
+              className="w-full accent-orange-500"
             />
+            <div className="flex justify-between text-3xs text-zinc-600 mt-1">
+              <span>0 (deterministic)</span>
+              <span>Lower = consistent scoring</span>
+              <span>2.0 (creative)</span>
+            </div>
           </div>
 
           <div className="mb-4">
@@ -108,7 +178,7 @@ export default function AiModerationClient() {
             />
             <div className="flex justify-between text-3xs text-zinc-600 mt-1">
               <span>0</span>
-              <span>Any post with AI score &ge; {threshold} is auto-approved</span>
+              <span>Score &ge; {threshold} auto-approved</span>
               <span>100</span>
             </div>
           </div>
