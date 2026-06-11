@@ -147,6 +147,7 @@ const startServer = async () => {
     const { startArgumentCron } = await import('./lib/argumentCron');
     const { initConfig, startConfigCron } = await import('./lib/systemConfig');
     const { seedPresets } = await import('./lib/seedPresets');
+    const { processAiModerationQueue } = await import('./lib/aiModerationWorker');
 
     const asyncWrap = (fn: () => void) => async () => { fn(); };
 
@@ -218,6 +219,13 @@ const startServer = async () => {
       name: 'config-refresh',
       interval: 60 * 1000,
       handler: asyncWrap(startConfigCron),
+      deadManSwitch: true,
+    });
+
+    cronRegistry.register({
+      name: 'ai-moderation',
+      interval: 10 * 1000,
+      handler: processAiModerationQueue,
       deadManSwitch: true,
     });
 

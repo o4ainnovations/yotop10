@@ -291,7 +291,8 @@ router.get('/posts/pending', async (req, res) => {
 
     const sortField = (req.query.sort as string) === 'newest' ? 'created_at' : 'created_at';
     const sortDir = (req.query.sort as string) === 'newest' ? -1 : 1;
-    const sortObj: Record<string, 1 | -1> = { [sortField]: sortDir as 1 | -1 };
+    // Default sort: lowest ai_score first (null = unscored at bottom), then by date
+    const sortObj: Record<string, 1 | -1> = { ai_score: 1, [sortField]: sortDir as 1 | -1 };
 
     const [posts, total] = await Promise.all([
       Post.find(query).sort(sortObj).skip(skip).limit(limit).select('-__v').lean(),
@@ -3261,6 +3262,103 @@ router.post('/mods/:id/reset-password', async (req, res) => {
     console.error('Error resetting mod password:', e);
     res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to reset password' });
   }
+});
+
+// ─── AI Moderation Settings ─────────────────────────────────────────────
+
+// GET /api/admin/settings/ai-moderation — Get AI moderation config (no key)
+router.get('/settings/ai-moderation', async (_req, res) => {
+  try {
+    const doc = await _SystemConfig.findOne({ key: 'global' }).lean();
+    const ai = (doc as any)?.ai_moderation || {};
+    res.json({
+      enabled: ai.enabled ?? false,
+      model: ai.model || 'deepseek-chat',
+      auto_approve_threshold: ai.auto_approve_threshold ?? 80,
+      has_key: !!(ai.api_key_encrypted),
+    });
+  } catch { res.status(500).json({ error: 'Failed' }); }
+});
+
+// POST /api/admin/settings/ai-moderation — Save AI moderation config
+router.post('/settings/ai-moderation', async (req, res) => {
+  try {
+    const { api_key, model, auto_approve_threshold, enabled } = req.body;
+    const { encrypt } = await import('../lib/aiModeration');
+    const setOps: Record<string, unknown> = {};
+    if (api_key) setOps['ai_moderation.api_key_encrypted'] = encrypt(api_key);
+    if (model) setOps['ai_moderation.model'] = model;
+    if (typeof auto_approve_threshold === 'number') setOps['ai_moderation.auto_approve_threshold'] = Math.max(0, Math.min(100, auto_approve_threshold));
+    if (typeof enabled === 'boolean') setOps['ai_moderation.enabled'] = enabled;
+    if (Object.keys(setOps).length === 0) return res.status(400).json({ error: 'No fields to update' });
+
+    await _SystemConfig.findOneAndUpdate({ key: 'global' }, { $set: setOps });
+    const doc = await _SystemConfig.findOne({ key: 'global' }).lean();
+    const ai = (doc as any)?.ai_moderation || {};
+    res.json({
+      enabled: ai.enabled ?? false,
+      model: ai.model || 'deepseek-chat',
+      auto_approve_threshold: ai.auto_approve_threshold ?? 80,
+      has_key: !!(ai.api_key_encrypted),
+    });
+  } catch (e: any) {
+    if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
+    console.error('AI moderation config error:', e);
+    res.status(500).json({ error: 'Failed to save' });
+  }
+});
+
+// POST /api/admin/settings/ai-moderation/test — Test API key
+router.post('/settings/ai-moderation/test', async (req, res) => {
+  try {
+    const { encrypt, decrypt: _d, getAiConfig } = await import('../lib/aiModeration');
+    let config;
+    if (req.body.api_key) {
+      config = { api_key: req.body.api_key, model: req.body.model || 'deepseek-chat', auto_approve_threshold: 80, enabled: true };
+    } else {
+      config = await getAiConfig();
+    }
+    if (!config) return res.status(400).json({ error: 'No API key configured' });
+
+    const response = await fetch('https://api.deepseek.com/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${config.api_key}` },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [{ role: 'user', content: 'Reply with just the word: OK' }],
+        temperature: 0.1,
+        max_tokens: 10,
+      }),
+    });
+    if (!response.ok) {
+      const text = await response.text();
+      return res.status(400).json({ error: `API test failed: ${response.status} - ${text}` });
+    }
+    res.json({ success: true });
+  } catch (e: any) {
+    res.status(500).json({ error: `Test failed: ${e.message}` });
+  }
+});
+
+// GET /api/admin/stats/ai-moderation — Moderation stats
+router.get('/stats/ai-moderation', async (_req, res) => {
+  try {
+    const [reviewed, approved, total] = await Promise.all([
+      Post.countDocuments({ ai_reviewed_at: { $ne: null } }),
+      Post.countDocuments({ ai_reviewed_at: { $ne: null }, status: 'approved' }),
+      Post.aggregate([
+        { $match: { ai_reviewed_at: { $ne: null } } },
+        { $group: { _id: null, avg_score: { $avg: '$ai_score' }, total_tokens: { $sum: '$ai_prompt_tokens' } } },
+      ]),
+    ]);
+    const agg = total[0] || {};
+    res.json({
+      posts_reviewed: reviewed,
+      auto_approved: approved,
+      avg_score: Math.round((agg.avg_score || 0) * 10) / 10,
+      total_tokens: agg.total_tokens || 0,
+    });
+  } catch { res.status(500).json({ error: 'Failed' }); }
 });
 
 // ─── Battle Monitor (Counter-List Admin) ────────────────────────────────

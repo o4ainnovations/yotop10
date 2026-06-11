@@ -18,6 +18,7 @@ import { validateListTitle, needsListTitleValidation } from '../lib/listTitleVal
 import { updateParentSparkScore } from './comments';
 import { computeSparkScore, getThresholds } from '../lib/sparkScore';
 import { indexComment, indexPost } from '../elasticsearch/lib/indexWriter';
+import { queuePostForAiReview } from '../lib/aiModerationWorker';
 
 const router: Router = Router();
 
@@ -600,6 +601,9 @@ router.post('/', ...validatePostSubmission as any[], async (req, res) => {
       if (!updatedPost) throw new Error('Post lost during creation'); // caught by route handler → 500
 
       indexPost(updatedPost as unknown as Record<string, unknown>);
+
+      // Enqueue AI quality check (async, fire-and-forget)
+      queuePostForAiReview(updatedPost._id.toString()).catch(() => {});
 
       res.status(201).json({
         message: 'Post submitted successfully. It will be reviewed by an admin.',

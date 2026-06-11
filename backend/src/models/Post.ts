@@ -32,6 +32,11 @@ export interface IPost extends Document {
   featured_at: Date | null;
   editorial_note: string | null;
   fire_count: number;
+  ai_score?: number;
+  ai_reviewed_at?: Date;
+  ai_flags?: string[];
+  ai_model?: string;
+  ai_prompt_tokens?: number;
   votes_a: number;
   votes_b: number;
   bookmark_count: number;
@@ -174,6 +179,11 @@ const postSchema = new Schema<IPost>(
     featured_at: { type: Date, default: null },
     editorial_note: { type: String, default: null },
     fire_count: { type: Number, default: 0 },
+    ai_score: { type: Number, default: null },
+    ai_reviewed_at: { type: Date, default: null },
+    ai_flags: { type: [String], default: [] },
+    ai_model: { type: String, default: null },
+    ai_prompt_tokens: { type: Number, default: 0 },
     votes_a: { type: Number, default: 0 },
     votes_b: { type: Number, default: 0 },
     bookmark_count: { type: Number, default: 0 },

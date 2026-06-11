@@ -8,7 +8,7 @@ import { toast } from '@/lib/toast';
 import { Icon } from '@/components/icons/Icon';
 import { formatDate, relativeTime } from '@/lib/dates';
 
-interface PendingPost { _id: string; title: string; author_username: string; post_type: string; created_at: string; revision_count: number; category_slug: string; category_name?: string; intro?: string; collision?: { title: string; submitted_at: string; first: boolean } }
+interface PendingPost { _id: string; title: string; author_username: string; post_type: string; created_at: string; revision_count: number; category_slug: string; category_name?: string; intro?: string; ai_score?: number; ai_flags?: string[]; collision?: { title: string; submitted_at: string; first: boolean } }
 interface CategoryOption { slug: string; name: string; children?: Array<{ slug: string; name: string }> }
 
 export default function PendingPostsClient() {
@@ -204,9 +204,18 @@ export default function PendingPostsClient() {
                         )}
                       </div>
                     </div>
-                    <div className="flex gap-3 text-3xs text-white/50 pl-11">
+                    <div className="flex gap-3 text-3xs text-white/50 pl-11 items-center">
                       <span>{p.post_type}</span>
                       <span>{p.author_username}</span>
+                      {p.ai_score !== undefined && p.ai_score !== null && (
+                        <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 font-mono font-bold ${
+                          p.ai_score >= 80 ? 'bg-green-500/15 text-green-400' :
+                          p.ai_score >= 40 ? 'bg-yellow-500/15 text-yellow-400' :
+                          'bg-red-500/15 text-red-400'
+                        }`}>
+                          {p.ai_score}
+                        </span>
+                      )}
                       <span className={ageColor(p.created_at)} suppressHydrationWarning>{relativeTime(p.created_at)}</span>
                     </div>
                   </div>
@@ -218,6 +227,15 @@ export default function PendingPostsClient() {
                     {p.revision_count > 0 && <span className="bg-orange-500/20 text-orange-400 px-1 py-px rounded text-2xs ml-1">{p.revision_count}x</span>}
                   </span>
                   <span className="hidden sm:block w-[90px] text-3xs text-white/40">{p.post_type}</span>
+                  {p.ai_score !== undefined && p.ai_score !== null && (
+                    <span className={`hidden sm:inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-2xs font-mono font-bold ${
+                      p.ai_score >= 80 ? 'bg-green-500/15 text-green-400' :
+                      p.ai_score >= 40 ? 'bg-yellow-500/15 text-yellow-400' :
+                      'bg-red-500/15 text-red-400'
+                    }`}>
+                      {p.ai_score}
+                    </span>
+                  )}
                   <span className="hidden sm:block w-[90px] text-3xs text-white/60">{p.author_username}</span>
                   <span className={`hidden sm:block w-[50px] text-3xs ${ageColor(p.created_at)}`} suppressHydrationWarning>{relativeTime(p.created_at)}</span>
                   <span className="hidden sm:flex w-[140px] gap-1">
