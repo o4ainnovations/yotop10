@@ -120,17 +120,13 @@ export default function DebateClient() {
     } catch (err) {
       setSubmitting(false);
       const msg = err instanceof Error ? err.message : '';
-      const s = parseInt(msg.match(/API Error: (\d+)/)?.[1] || '0', 10);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let body: any = null;
-      try { const j = msg.lastIndexOf('{'); if (j !== -1) body = JSON.parse(msg.slice(j)); } catch { /* not json */ }
-      if (body?.errors?.[0]?.msg) setError(body.errors[0].msg);
-      else if (s === 400 && body?.format_code) setError(body?.error || 'Invalid format.');
-      else if (s === 400 && body?.error) setError(body.error);
-      else if (s === 409) setError(body?.error || 'This already exists.');
-      else if (s === 429) setError(body?.error || 'Rate limit exceeded.');
-      else if (body?.error) setError(body.error);
-      else setError(msg || 'Failed to submit debate.');
+      try {
+        // Try to extract backend error message from the API error string
+        const body = JSON.parse(msg.slice(msg.lastIndexOf('{')));
+        const errorText = body?.errors?.[0]?.msg || body?.error || body?.message || '';
+        if (errorText) { setError(errorText); return; }
+      } catch { /* not json */ }
+      setError(msg || 'Failed to submit debate.');
     }
   };
 
