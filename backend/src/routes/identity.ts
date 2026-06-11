@@ -146,6 +146,11 @@ router.post('/claim/verify', async (req: any, res: any) => {
       { upsert: true, new: true }
     );
 
+    // Release fingerprint from any previous owner, then assign to claiming user
+    await User.updateOne(
+      { device_fingerprint: body.device_fingerprint, user_id: { $ne: user.user_id } },
+      { $set: { device_fingerprint: `released_${body.device_fingerprint}_${Date.now()}` } }
+    );
     await User.updateOne(
       { user_id: user.user_id },
       { device_fingerprint: body.device_fingerprint }
