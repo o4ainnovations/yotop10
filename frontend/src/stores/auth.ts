@@ -57,12 +57,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch { /* fingerprint failed — try without it */ }
 
     // Fetch new identity with the fresh fingerprint
-    set({ user: null, loading: false, initialized: true });
+    set({ user: null, loading: false, initialized: false });
     try {
       const data = await API.getCurrentUser() as AuthUser;
-      set({ user: data });
+      set({ user: data, initialized: true });
     } catch {
-      // stay logged out
+      // stay logged out — AuthInitializer will retry on next page load
     }
   },
 }));

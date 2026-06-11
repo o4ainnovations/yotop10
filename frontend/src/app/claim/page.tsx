@@ -6,6 +6,7 @@ import { validateMnemonic, mnemonicToKeyPair, signChallenge } from '@/lib/identi
 import { WORDLIST } from '@/lib/bip39Wordlist';
 import { API } from '@/lib/api';
 import { Icon } from '@/components/icons/Icon';
+import { useAuthStore } from '@/stores/auth';
 
 export default function ClaimPage() {
   const router = useRouter();
@@ -59,6 +60,8 @@ export default function ClaimPage() {
 
       setRecoveredUser(result.user);
       setStep('done');
+      // Refresh auth store so the app recognizes the recovered identity
+      useAuthStore.getState().fetchUser();
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to claim identity';
       if (msg.includes('404')) {
