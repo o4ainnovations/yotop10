@@ -147,6 +147,7 @@ const startServer = async () => {
     const { startArgumentCron } = await import('./lib/argumentCron');
     const { initConfig, startConfigCron } = await import('./lib/systemConfig');
     const { seedPresets } = await import('./lib/seedPresets');
+    const { runAdminMigration } = await import('./lib/adminAuth');
     const { processAiModerationQueue } = await import('./lib/aiModerationWorker');
 
     const asyncWrap = (fn: () => void) => async () => { fn(); };
@@ -231,6 +232,7 @@ const startServer = async () => {
 
     await initConfig();
     await seedPresets();
+    await runAdminMigration();
 
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

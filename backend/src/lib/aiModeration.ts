@@ -33,6 +33,7 @@ export function decrypt(encoded: string): string {
 export interface AiModerationConfig {
   api_key: string;
   model: string;
+  temperature: number;
   auto_approve_threshold: number;
   enabled: boolean;
 }
@@ -53,6 +54,7 @@ export async function getAiConfig(): Promise<AiModerationConfig | null> {
     return {
       api_key: decrypt(ai.api_key_encrypted),
       model: ai.model || 'deepseek-chat',
+      temperature: ai.temperature ?? 0.1,
       auto_approve_threshold: ai.auto_approve_threshold ?? 80,
       enabled: ai.enabled,
     };
@@ -92,7 +94,7 @@ export async function analyzePost(
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: userMessage },
       ],
-      temperature: 0.1,
+      temperature: config.temperature ?? 0.1,
       max_tokens: 200,
     }),
   });

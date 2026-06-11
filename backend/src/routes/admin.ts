@@ -128,6 +128,8 @@ router.post('/login', async (req, res) => {
       ? 24 * 60 * 60 * 1000
       : 4 * 60 * 60 * 1000;
 
+    // Clear any stale httpOnly cookie before setting the new one
+    res.clearCookie('admin_token', { path: '/' });
     res.cookie('admin_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -2307,6 +2309,7 @@ router.get('/users', async (req, res) => {
       const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       filter.$or = [
         { username: { $regex: escaped, $options: 'i' } },
+        { custom_display_name: { $regex: escaped, $options: 'i' } },
         { user_id: { $regex: escaped, $options: 'i' } },
       ];
     }
@@ -2358,6 +2361,11 @@ router.get('/users', async (req, res) => {
           comment_count: { $size: { $filter: { input: '$comments_data', as: 'c', cond: { $and: [{ $eq: ['$$c.deleted', false] }, { $eq: ['$$c.hidden', false] }] } } } },
         },
       },
+      {
+        $addFields: {
+          display_name: { $ifNull: ['$custom_display_name', '$username'] },
+        },
+      },
       { $project: { posts_data: 0, comments_data: 0, last_50_reviews: 0, __v: 0 } },
       { $skip: skip },
       { $limit: limit },
@@ -2394,7 +2402,14 @@ router.get('/users', async (req, res) => {
 // 2. GET /api/admin/users/:user_id — Single user detail
 router.get('/users/:user_id', async (req, res) => {
   try {
-    const user = await User.findOne({ user_id: req.params.user_id });
+    const identifier = req.params.user_id;
+    const user = await User.findOne({
+      $or: [
+        { user_id: identifier },
+        { username: identifier },
+        { username: `a_${identifier.replace(/^a_/, '')}` },
+      ],
+    });
     if (!user) {
       return res.status(404).json({ code: 'NOT_FOUND', error: 'User not found' });
     }
@@ -3274,6 +3289,7 @@ router.get('/settings/ai-moderation', async (_req, res) => {
     res.json({
       enabled: ai.enabled ?? false,
       model: ai.model || 'deepseek-chat',
+      temperature: ai.temperature ?? 0.1,
       auto_approve_threshold: ai.auto_approve_threshold ?? 80,
       has_key: !!(ai.api_key_encrypted),
     });
@@ -3283,11 +3299,12 @@ router.get('/settings/ai-moderation', async (_req, res) => {
 // POST /api/admin/settings/ai-moderation — Save AI moderation config
 router.post('/settings/ai-moderation', async (req, res) => {
   try {
-    const { api_key, model, auto_approve_threshold, enabled } = req.body;
+    const { api_key, model, temperature, auto_approve_threshold, enabled } = req.body;
     const { encrypt } = await import('../lib/aiModeration');
     const setOps: Record<string, unknown> = {};
     if (api_key) setOps['ai_moderation.api_key_encrypted'] = encrypt(api_key);
     if (model) setOps['ai_moderation.model'] = model;
+    if (typeof temperature === 'number') setOps['ai_moderation.temperature'] = Math.max(0, Math.min(2, temperature));
     if (typeof auto_approve_threshold === 'number') setOps['ai_moderation.auto_approve_threshold'] = Math.max(0, Math.min(100, auto_approve_threshold));
     if (typeof enabled === 'boolean') setOps['ai_moderation.enabled'] = enabled;
     if (Object.keys(setOps).length === 0) return res.status(400).json({ error: 'No fields to update' });
@@ -3298,6 +3315,7 @@ router.post('/settings/ai-moderation', async (req, res) => {
     res.json({
       enabled: ai.enabled ?? false,
       model: ai.model || 'deepseek-chat',
+      temperature: ai.temperature ?? 0.1,
       auto_approve_threshold: ai.auto_approve_threshold ?? 80,
       has_key: !!(ai.api_key_encrypted),
     });
@@ -3311,32 +3329,35 @@ router.post('/settings/ai-moderation', async (req, res) => {
 // POST /api/admin/settings/ai-moderation/test — Test API key
 router.post('/settings/ai-moderation/test', async (req, res) => {
   try {
-    const { encrypt, decrypt: _d, getAiConfig } = await import('../lib/aiModeration');
+    const { encrypt: _e, decrypt: _d, getAiConfig, analyzePost } = await import('../lib/aiModeration');
     let config;
     if (req.body.api_key) {
-      config = { api_key: req.body.api_key, model: req.body.model || 'deepseek-chat', auto_approve_threshold: 80, enabled: true };
+      config = { api_key: req.body.api_key, model: req.body.model || 'deepseek-chat', temperature: req.body.temperature ?? 0.1, auto_approve_threshold: 80, enabled: true };
     } else {
       config = await getAiConfig();
     }
     if (!config) return res.status(400).json({ error: 'No API key configured' });
 
-    const response = await fetch('https://api.deepseek.com/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${config.api_key}` },
-      body: JSON.stringify({
-        model: config.model,
-        messages: [{ role: 'user', content: 'Reply with just the word: OK' }],
-        temperature: 0.1,
-        max_tokens: 10,
-      }),
+    // Run a real quality analysis on a sample post
+    const result = await analyzePost(
+      'Top 10 Greatest Football Players of All Time',
+      'top_list',
+      'A definitive ranking of the greatest footballers in history based on skill, achievements, and impact.',
+      '1. Lionel Messi: 8 Ballon d\'Or awards, World Cup winner, unmatched dribbling and vision. | 2. Cristiano Ronaldo: 5 Champions League titles, all-time top scorer, incredible athleticism. | 3. Pelé: 3 World Cups, over 1000 career goals, the original legend.',
+      config,
+    );
+
+    res.json({
+      success: true,
+      model: result.model,
+      tokens: result.prompt_tokens,
+      score: result.score,
+      flags: result.flags,
+      sample: 'Analyzed a mock "Top 10 Football Players" post',
     });
-    if (!response.ok) {
-      const text = await response.text();
-      return res.status(400).json({ error: `API test failed: ${response.status} - ${text}` });
-    }
-    res.json({ success: true });
   } catch (e: any) {
-    res.status(500).json({ error: `Test failed: ${e.message}` });
+    const msg = e instanceof Error ? e.message : String(e);
+    res.status(500).json({ error: `Test failed: ${msg}` });
   }
 });
 
