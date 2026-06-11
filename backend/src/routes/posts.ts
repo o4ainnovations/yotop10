@@ -73,8 +73,7 @@ const validatePostSubmission = [
     .withMessage('Invalid post type'),
   body('intro')
     .trim()
-    .notEmpty()
-    .withMessage('Intro is required')
+    .optional({ values: 'falsy' })
     .isLength({ max: 2000 })
     .withMessage('Intro must be less than 2000 characters'),
   body('category_id')
@@ -86,8 +85,8 @@ const validatePostSubmission = [
     .trim()
     .optional(),
   body('items')
-    .isArray({ min: 3 })
-    .withMessage('At least 3 items are required'),
+    .isArray({ min: 1 })
+    .withMessage('At least 1 item is required'),
   body('items.*.rank')
     .isInt({ min: 1 })
     .withMessage('Item rank must be a positive integer'),
@@ -99,8 +98,7 @@ const validatePostSubmission = [
     .withMessage('Item title must be less than 200 characters'),
   body('items.*.justification')
     .trim()
-    .notEmpty()
-    .withMessage('Item justification is required')
+    .optional({ values: 'falsy' })
     .isLength({ max: 2000 })
     .withMessage('Item justification must be less than 2000 characters'),
   body('items.*.image_url')
@@ -111,6 +109,10 @@ const validatePostSubmission = [
     .optional()
     .isURL()
     .withMessage('Invalid source URL'),
+  body('source_url')
+    .optional({ values: 'falsy' })
+    .isURL()
+    .withMessage('Invalid fact source URL'),
   body('author_display_name')
     .optional()
     .trim()
@@ -506,7 +508,7 @@ router.post('/', ...validatePostSubmission as any[], async (req, res) => {
       return res.status(429).json({ error: `Account restricted. Resumes in ${remaining} minutes.`, resetTime: user.restricted_until });
     }
 
-    // Validate list title format for list-type posts
+    // Validate title format for list-type posts
     if (needsListTitleValidation(post_type)) {
       const formatResult = validateListTitle(title, post_type);
       if (!formatResult.valid) {
@@ -515,6 +517,34 @@ router.post('/', ...validatePostSubmission as any[], async (req, res) => {
           error: formatResult.error,
           format_code: formatResult.code,
         });
+      }
+    }
+
+    // Per-type item count + field validation
+    const bodyItems: Array<{ title?: string; justification?: string; source_url?: string }> = req.body.items || [];
+    const LIST_TYPES = new Set(['top_list', 'best_of', 'worst_of', 'hidden_gems', 'counter_list']);
+
+    if (post_type === 'this_vs_that') {
+      if (bodyItems.length !== 2) {
+        return res.status(400).json({ code: 'INVALID_ITEM_COUNT', error: 'Exactly 2 items are required for debates.' });
+      }
+      if (!req.body.intro && bodyItems[0]?.title && bodyItems[1]?.title) {
+        req.body.intro = `${bodyItems[0].title} vs ${bodyItems[1].title}`;
+      }
+    } else if (post_type === 'fact_drop') {
+      if (bodyItems.length !== 1) {
+        return res.status(400).json({ code: 'INVALID_ITEM_COUNT', error: 'Exactly 1 item is required for fact drops.' });
+      }
+      const sourceUrl = bodyItems[0]?.source_url || req.body.source_url;
+      if (!sourceUrl) {
+        return res.status(400).json({ code: 'SOURCE_REQUIRED', error: 'Source URL is required for fact drops.' });
+      }
+    } else if (LIST_TYPES.has(post_type)) {
+      if (bodyItems.length < 3) {
+        return res.status(400).json({ code: 'INVALID_ITEM_COUNT', error: 'At least 3 items are required for ranked lists.' });
+      }
+      if (bodyItems.length > 100) {
+        return res.status(400).json({ code: 'MAX_ITEMS', error: 'Maximum 100 items allowed.' });
       }
     }
 
