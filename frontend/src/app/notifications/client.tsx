@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { Icon, type LucideIconName } from '@/components/icons/Icon';
+import { NotificationsSkeleton } from '@/components/NotificationsSkeleton';
 
 interface NotifItem {
   _id: string;
@@ -63,7 +64,7 @@ export default function NotificationsClient() {
     } catch {}
   };
 
-  if (loading) return <div className="p-5 text-white/40">Loading...</div>;
+  if (loading) return <NotificationsSkeleton />;
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)] max-w-[700px] mx-auto px-3 sm:px-5 py-5">

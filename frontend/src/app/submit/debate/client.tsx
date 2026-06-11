@@ -116,8 +116,15 @@ export default function DebateClient() {
     } catch (err) {
       setSubmitting(false);
       const msg = err instanceof Error ? err.message : '';
-      try { const j = msg.lastIndexOf('{'); if (j !== -1) { const body = JSON.parse(msg.slice(j)); setError(body.error || msg); return; } } catch { /* */ }
-      setError(msg || 'Failed to submit debate.');
+      const s = parseInt(msg.match(/API Error: (\d+)/)?.[1] || '0', 10);
+      let body: Record<string, unknown> | null = null;
+      try { const j = msg.lastIndexOf('{'); if (j !== -1) body = JSON.parse(msg.slice(j)); } catch { /* not json */ }
+      if (s === 400 && body?.format_code) setError((body.error as string) || 'Invalid format.');
+      else if (s === 400 && body?.error) setError(body.error as string);
+      else if (s === 409) setError((body?.error as string) || 'This already exists.');
+      else if (s === 429) setError((body?.error as string) || 'Rate limit exceeded.');
+      else if (body?.error) setError(body.error as string);
+      else setError(msg || 'Failed to submit debate.');
     }
   };
 
