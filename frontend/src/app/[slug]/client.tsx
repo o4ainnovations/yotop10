@@ -12,6 +12,8 @@ import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { BookmarkButton } from '@/components/BookmarkButton';
 import { ShareButton } from '@/components/ShareButton';
 import { ThisVsThatView } from '@/components/ThisVsThatView';
+import { BattleView } from '@/components/BattleView';
+import { CounterListSection } from '@/components/CounterListSection';
 import { RESERVED_ROUTES } from '@/lib/reservedRoutes';
 
 interface ListItem {
@@ -76,6 +78,8 @@ export default function PostDetailClient({
 }) {
   const searchParams = useSearchParams();
   const itemParam = searchParams?.get('item');
+  const vsParam = searchParams?.get('vs');
+  const [vsSlug, setVsSlug] = useState<string | null>(vsParam || null);
   const commentsSectionRef = useRef<HTMLDivElement>(null);
   const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -349,7 +353,9 @@ export default function PostDetailClient({
           { label: post.category_name || post.category_slug, href: `/c/${post.category_slug}` },
           { label: post.title, href: `/${post.slug}` },
         ]} />
-        {post.post_type === 'this_vs_that' ? (
+        {vsSlug && ['top_list', 'best_of', 'worst_of'].includes(post.post_type) ? (
+          <BattleView originalSlug={slug} counterSlug={vsSlug} onClose={() => setVsSlug(null)} />
+        ) : post.post_type === 'this_vs_that' ? (
           <ThisVsThatView slug={slug} post={post} items={items} />
         ) : post.post_type === 'fact_drop' ? (
           <>
@@ -560,6 +566,11 @@ export default function PostDetailClient({
               Submit a Counter-List
             </Link>
           </section>
+        )}
+
+        {/* Existing counters */}
+        {['top_list', 'best_of', 'worst_of'].includes(post.post_type) && (
+          <CounterListSection slug={slug} />
         )}
 
         {/* Related posts from same category */}
