@@ -411,7 +411,7 @@ export default function RankedSubmitClient({ initialType, parentSlug }: { initia
             className={`w-full rounded-xl bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none ${errors.category ? 'border-2 border-red-400' : 'border border-white/10 focus:border-orange-500/50'}`}
           />
           {catOpen && filteredCategories.length > 0 && (
-            <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-white/10 bg-zinc-900 shadow-xl">
+            <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-white/10 bg-[var(--color-bg)] shadow-xl">
               {filteredCategories.map(c => (
                 <button key={c.slug} type="button" onClick={() => handleCategoryChange(c.slug, c.name)}
                   className={`w-full px-3 py-2 text-left text-sm transition ${c.slug === categorySlug ? 'bg-orange-500/10 text-orange-400' : 'text-zinc-300 hover:bg-white/5'}`}

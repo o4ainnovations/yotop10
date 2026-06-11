@@ -163,7 +163,7 @@ export default function DebateClient() {
             className="w-full rounded-xl bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none border border-white/10 focus:border-purple-500/50"
           />
           {catOpen && filteredCategories.length > 0 && (
-            <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-white/10 bg-zinc-900 shadow-xl">
+            <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-white/10 bg-[var(--color-bg)] shadow-xl">
               {filteredCategories.map(c => (
                 <button key={c.slug} type="button" onClick={() => { setCategorySlug(c.slug); setCatSearch(c.name); setCatOpen(false); }}
                   className={`w-full px-3 py-2 text-left text-sm transition ${c.slug === categorySlug ? 'bg-purple-500/10 text-purple-400' : 'text-zinc-300 hover:bg-white/5'}`}
