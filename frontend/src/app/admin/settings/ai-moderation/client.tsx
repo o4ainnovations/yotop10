@@ -7,8 +7,8 @@ import { Icon } from '@/components/icons/Icon';
 const PREDEFINED_MODELS = [
   'deepseek-chat',
   'deepseek-reasoner',
-  'deepseek-chat-v4-flash',
-  'deepseek-pro',
+  'deepseek-v4-flash',
+  'deepseek-v4-pro',
   '__custom__',
 ];
 
@@ -134,10 +134,10 @@ export default function AiModerationClient() {
                 onChange={e => handleModelChange(e.target.value)}
                 className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-orange-500/50 focus:outline-none"
               >
-                <option value="deepseek-chat" className="bg-zinc-900">DeepSeek Chat (latest)</option>
+                <option value="deepseek-chat" className="bg-zinc-900">DeepSeek Chat</option>
                 <option value="deepseek-reasoner" className="bg-zinc-900">DeepSeek Reasoner</option>
-                <option value="deepseek-chat-v4-flash" className="bg-zinc-900">DeepSeek V4 Flash</option>
-                <option value="deepseek-pro" className="bg-zinc-900">DeepSeek Pro</option>
+                <option value="deepseek-v4-flash" className="bg-zinc-900">DeepSeek V4 Flash</option>
+                <option value="deepseek-v4-pro" className="bg-zinc-900">DeepSeek V4 Pro</option>
                 <option value="__custom__" className="bg-zinc-900">Custom...</option>
               </select>
               {modelSelect === '__custom__' && (
