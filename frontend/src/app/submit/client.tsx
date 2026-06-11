@@ -390,7 +390,7 @@ export default function SubmitClient({ initialType }: { initialType?: 'top_list'
   })();
 
   return (
-    <div className="mx-auto max-w-3xl px-3 py-6 sm:px-6 sm:py-10">
+    <div className="mx-auto max-w-3xl px-3 py-6 sm:px-6 sm:py-10 min-h-[calc(100vh-56px)]">
       <header className="mb-6">
         <h1 className="text-xl font-bold text-white sm:text-2xl">{help.title}</h1>
         <div className={`mt-2 rounded-xl border ${help.color} px-3 py-2 text-xs leading-relaxed`}>{help.tip}</div>

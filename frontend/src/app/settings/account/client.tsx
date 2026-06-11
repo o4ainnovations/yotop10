@@ -36,7 +36,7 @@ export default function AccountSettingsClient() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-12">
+    <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-12 min-h-[calc(100vh-56px)]">
       <nav className="mb-6">
         <Link href="/settings" className="text-sm text-orange-400 hover:text-orange-300 transition">
           &larr; Back to Settings
