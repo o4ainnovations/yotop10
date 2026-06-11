@@ -117,13 +117,15 @@ export default function DebateClient() {
       setSubmitting(false);
       const msg = err instanceof Error ? err.message : '';
       const s = parseInt(msg.match(/API Error: (\d+)/)?.[1] || '0', 10);
-      let body: Record<string, unknown> | null = null;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let body: any = null;
       try { const j = msg.lastIndexOf('{'); if (j !== -1) body = JSON.parse(msg.slice(j)); } catch { /* not json */ }
-      if (s === 400 && body?.format_code) setError((body.error as string) || 'Invalid format.');
-      else if (s === 400 && body?.error) setError(body.error as string);
-      else if (s === 409) setError((body?.error as string) || 'This already exists.');
-      else if (s === 429) setError((body?.error as string) || 'Rate limit exceeded.');
-      else if (body?.error) setError(body.error as string);
+      if (body?.errors?.[0]?.msg) setError(body.errors[0].msg);
+      else if (s === 400 && body?.format_code) setError(body?.error || 'Invalid format.');
+      else if (s === 400 && body?.error) setError(body.error);
+      else if (s === 409) setError(body?.error || 'This already exists.');
+      else if (s === 429) setError(body?.error || 'Rate limit exceeded.');
+      else if (body?.error) setError(body.error);
       else setError(msg || 'Failed to submit debate.');
     }
   };

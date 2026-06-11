@@ -325,9 +325,11 @@ export default function RankedSubmitClient({ initialType, parentSlug }: { initia
       console.error('Submit failed:', err);
       const msg = err instanceof Error ? err.message : '';
       const s = parseInt(msg.match(/API Error: (\d+)/)?.[1] || '0', 10);
-      let body: Record<string, unknown> | null = null;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let body: any = null;
       try { const j = msg.lastIndexOf('{'); if (j !== -1) body = JSON.parse(msg.slice(j)); } catch { /* not json */ }
-      if (s === 400 && body?.format_code) setErrors({ title: (body.error as string) || 'Invalid title format.' });
+      if (body?.errors?.[0]?.msg) setErrors({ title: body.errors[0].msg });
+      else if (s === 400 && body?.format_code) setErrors({ title: (body.error as string) || 'Invalid title format.' });
       else if (s === 400 && body?.error) setErrors({ title: body.error as string });
       else if (s === 409) setErrors({ title: (body?.error as string) || 'This list already exists. Choose a different title.' });
       else if (s === 429) setErrors({ title: (body?.error as string) || 'Rate limit exceeded.' });
