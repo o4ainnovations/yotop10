@@ -66,6 +66,7 @@ export default function AdminClientShell({
           {hasPermission('audit:read') && nav('/admin/audit', 'Audit Logs')}
           {hasPermission('mods:manage') && nav('/admin/settings/mods', 'Moderators')}
           {admin.role === 'super_admin' && nav('/admin/settings/rate-limits', 'Rate Limits')}
+          {admin.role === 'super_admin' && nav('/admin/settings/ai-moderation', 'AI Moderation')}
         </nav>
 
         <div className="px-3 py-3 border-t border-white/10 space-y-1">
