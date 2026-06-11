@@ -25,6 +25,10 @@ vi.mock('../lib/ladderSystem', () => ({
   getActiveBoost: vi.fn(() => null),
 }));
 
+vi.mock('../lib/titleSimilarityV2', () => ({
+  findSimilarTitles: vi.fn(() => Promise.resolve([])),
+}));
+
 import { atomicCheckRateLimit } from '../lib/redis';
 import postsRouter from '../routes/posts';
 
@@ -47,13 +51,14 @@ function createApp() {
 describe('POST /api/posts — rate limit integrity', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(atomicCheckRateLimit).mockResolvedValue({ allowed: true, remaining: 10 });
   });
 
-    it('returns 401 when fingerprint is missing', async () => {
+  it('returns 401 when fingerprint is missing', async () => {
     const res = await request(createApp())
       .post('/api/posts')
       .send({
-        title: 'Test Post Title Long Enough',
+        title: 'Top 10 Test Post Title',
         post_type: 'top_list',
         intro: 'Test intro',
         category_slug: 'tech',
@@ -75,7 +80,7 @@ describe('POST /api/posts — rate limit integrity', () => {
       .post('/api/posts')
       .set('x-device-fingerprint', 'test-fp-123')
       .send({
-        title: 'Test Post Title Long Enough',
+        title: 'Top 10 Test Post Title',
         post_type: 'top_list',
         intro: 'Test intro',
         category_slug: 'tech',

@@ -102,11 +102,11 @@ const validatePostSubmission = [
     .isLength({ max: 2000 })
     .withMessage('Item justification must be less than 2000 characters'),
   body('items.*.image_url')
-    .optional()
+    .optional({ values: 'falsy' })
     .isURL()
     .withMessage('Invalid image URL'),
   body('items.*.source_url')
-    .optional()
+    .optional({ values: 'falsy' })
     .isURL()
     .withMessage('Invalid source URL'),
   body('source_url')
@@ -486,27 +486,8 @@ router.post('/', ...validatePostSubmission as any[], async (req, res) => {
       effectiveTrustScore = req.user.rate_limit_override.posts_per_hour / 4;
     }
     
-    // Reject if no fingerprint — rate limiting requires identity
-    const fingerprint = req.user?.device_fingerprint || req.fingerprint || device_fingerprint;
-    if (!fingerprint) {
-      return res.status(401).json({ error: 'Device identity required for posting' });
-    }
-    const userId = req.user?.user_id;
-    const rateLimitResult = await checkRateLimit(fingerprint, effectiveTrustScore, post_type, userId, (req.user as any)?.trust_level);
-    if (!rateLimitResult.allowed) {
-      return res.status(429).json({
-        error: `Rate limit exceeded. You can submit ${rateLimitResult.maxRequests ?? 4} posts per hour.`,
-        resetTime: rateLimitResult.resetTime,
-      });
-    }
-
-    // User is guaranteed to exist by fingerprint middleware
-    const user = req.user!;
-
-    if (user.restricted_until && new Date() < new Date(user.restricted_until)) {
-      const remaining = Math.ceil((new Date(user.restricted_until).getTime() - Date.now()) / 60000);
-      return res.status(429).json({ error: `Account restricted. Resumes in ${remaining} minutes.`, resetTime: user.restricted_until });
-    }
+    // ─── Validation FIRST (before rate limit) — invalid submissions don't consume quota ───
+    const bodyItems: Array<{ title?: string; justification?: string; source_url?: string }> = req.body.items || [];
 
     // Validate title format for list-type posts
     if (needsListTitleValidation(post_type)) {
@@ -521,7 +502,6 @@ router.post('/', ...validatePostSubmission as any[], async (req, res) => {
     }
 
     // Per-type item count + field validation
-    const bodyItems: Array<{ title?: string; justification?: string; source_url?: string }> = req.body.items || [];
     const LIST_TYPES = new Set(['top_list', 'best_of', 'worst_of', 'hidden_gems', 'counter_list']);
 
     if (post_type === 'this_vs_that') {
@@ -551,7 +531,6 @@ router.post('/', ...validatePostSubmission as any[], async (req, res) => {
     // Final title similarity check on submit - ES-backed with MongoDB fallback
     if (post_type !== 'counter_list') {
       const similar = await findSimilarTitles(title);
-
       if (similar.length > 0) {
         return res.status(409).json({
           error: 'This list already exists.',
@@ -559,6 +538,26 @@ router.post('/', ...validatePostSubmission as any[], async (req, res) => {
           matches: similar.slice(0, 5),
         });
       }
+    }
+
+    // ─── Rate limit check (after validation — only valid submissions consume quota) ───
+    const fingerprint = req.user?.device_fingerprint || req.fingerprint || device_fingerprint;
+    if (!fingerprint) {
+      return res.status(401).json({ error: 'Device identity required for posting' });
+    }
+    const userId = req.user?.user_id;
+    const rateLimitResult = await checkRateLimit(fingerprint, effectiveTrustScore, post_type, userId, (req.user as any)?.trust_level);
+    if (!rateLimitResult.allowed) {
+      return res.status(429).json({
+        error: `Rate limit exceeded. You can submit ${rateLimitResult.maxRequests ?? 4} posts per hour.`,
+        resetTime: rateLimitResult.resetTime,
+      });
+    }
+
+    const user = req.user!;
+    if (user.restricted_until && new Date() < new Date(user.restricted_until)) {
+      const remaining = Math.ceil((new Date(user.restricted_until).getTime() - Date.now()) / 60000);
+      return res.status(429).json({ error: `Account restricted. Resumes in ${remaining} minutes.`, resetTime: user.restricted_until });
     }
 
     // Create post

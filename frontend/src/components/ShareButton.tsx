@@ -2,8 +2,8 @@
 
 import { useState, useCallback } from 'react';
 import { Icon } from './icons/Icon';
+import { ShareModal } from './ShareModal';
 import { API } from '@/lib/api';
-import { toast } from '@/lib/toast';
 
 interface ShareButtonProps {
   slug: string;
@@ -12,10 +12,12 @@ interface ShareButtonProps {
 }
 
 export function buildShareUrl(slug: string, postId: string): string {
-  return `https://yotop10.fun/${slug}?utm_source=share&utm_medium=user&utm_campaign=post_${postId}`;
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://yotop10.com';
+  return `${baseUrl}/${slug}?utm_source=share&utm_medium=user&utm_campaign=post_${postId}`;
 }
 
 export function ShareButton({ slug, title, postId }: ShareButtonProps) {
+  const [modalOpen, setModalOpen] = useState(false);
   const [pending, setPending] = useState(false);
 
   const handleClick = useCallback(
@@ -23,37 +25,34 @@ export function ShareButton({ slug, title, postId }: ShareButtonProps) {
       e.preventDefault();
       e.stopPropagation();
       if (pending) return;
-
-      const url = buildShareUrl(slug, postId);
       setPending(true);
-
-      try {
-        await navigator.clipboard.writeText(url);
-        toast.success('Link copied!');
-      } catch {
-        toast.error('Failed to copy link');
-      } finally {
-        setPending(false);
-      }
-
-      try {
-        await API.trackShare(slug);
-      } catch {
-        // Non-critical — share tracking is fire-and-forget
-      }
+      setModalOpen(true);
+      setPending(false);
+      try { await API.trackShare(slug); } catch { /* non-critical */ }
     },
-    [slug, postId, pending]
+    [slug, pending]
   );
 
+  const url = buildShareUrl(slug, postId);
+
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      disabled={pending}
-      className="inline-flex items-center justify-center rounded-lg transition-all duration-200 min-w-11 min-h-11 text-zinc-500 hover:text-zinc-300"
-      aria-label={`Share ${title}`}
-    >
-      <Icon name="Share2" size={16} />
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={pending}
+        className="inline-flex items-center justify-center rounded-lg transition-all duration-200 min-w-11 min-h-11 text-zinc-500 hover:text-zinc-300"
+        aria-label={`Share ${title}`}
+      >
+        <Icon name="Share2" size={16} />
+      </button>
+      <ShareModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        url={url}
+        title={title}
+        slug={slug}
+      />
+    </>
   );
 }

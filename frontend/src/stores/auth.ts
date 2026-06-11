@@ -49,11 +49,12 @@ export const useAuthStore = create<AuthState>((set) => ({
       try { localStorage.removeItem(key); } catch { /* ignore */ }
     }
 
-    // Generate a new fingerprint immediately (not wait for 3s timer)
+    // Generate a new fingerprint with random suffix so backend treats it as new device
     try {
       const { getFingerprint } = await import('@/lib/fingerprint');
       const fpHash = await getFingerprint();
-      localStorage.setItem('yotop10_fp', fpHash);
+      const uniqueFp = fpHash + '-' + Math.random().toString(36).slice(2, 8);
+      localStorage.setItem('yotop10_fp', uniqueFp);
     } catch { /* fingerprint failed — try without it */ }
 
     // Fetch new identity with the fresh fingerprint

@@ -66,6 +66,16 @@ const TYPES: PostTypeCard[] = [
     bgClass: 'from-red-500/10 to-red-600/5',
     href: '/submit/ranked?type=worst_of',
   },
+  {
+    type: 'article',
+    name: 'Article',
+    description: 'Long-form knowledge piece with sources',
+    icon: 'FileText',
+    color: 'sky',
+    borderClass: 'border-sky-500/30 hover:border-sky-500/50',
+    bgClass: 'from-sky-500/10 to-sky-600/5',
+    href: '/submit-article',
+  },
 ];
 
 const COLOR_MAP: Record<string, string> = {
@@ -74,6 +84,7 @@ const COLOR_MAP: Record<string, string> = {
   pink: 'text-pink-400',
   emerald: 'text-emerald-400',
   red: 'text-red-400',
+  sky: 'text-sky-400',
 };
 
 export default function NewPostClient() {

@@ -7,6 +7,8 @@ import type { Article } from '@/lib/api/types';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { BookmarkButton } from '@/components/BookmarkButton';
+import { ShareButton } from '@/components/ShareButton';
 import { Icon } from '@/components/icons/Icon';
 import { relativeTime } from '@/lib/dates';
 
@@ -174,21 +176,29 @@ export default function ArticleDetailClient() {
           </section>
         )}
 
-        {/* Stats bar */}
-        <div className="mt-8 pt-6 border-t border-white/5 flex items-center gap-6 text-xs text-zinc-600">
-          <span className="inline-flex items-center gap-1.5">
-            <Icon name="Eye" size={14} />
-            {article.view_count} views
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <Icon name="MessageCircle" size={14} />
-            {article.comment_count} comments
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <Icon name="Bookmark" size={14} />
-            {article.bookmark_count}
-          </span>
+        {/* Stats bar + actions */}
+        <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between text-xs text-zinc-600">
+          <div className="flex items-center gap-6">
+            <span className="inline-flex items-center gap-1.5">
+              <Icon name="Eye" size={14} />
+              {article.view_count} views
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Icon name="MessageCircle" size={14} />
+              {article.comment_count} comments
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <BookmarkButton postId={article.id} />
+            <ShareButton slug={article.slug} title={article.title} postId={article.id} />
+          </div>
         </div>
+
+        {/* Comments section */}
+        <section className="mt-8 pt-6 border-t border-white/5">
+          <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Comments ({article.comment_count})</h2>
+          <p className="text-xs text-zinc-600 text-center py-8">Comments coming soon for articles.</p>
+        </section>
       </article>
     </main>
   );
