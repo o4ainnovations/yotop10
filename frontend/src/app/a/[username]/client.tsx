@@ -52,6 +52,7 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile>(initialProfile);
   const [activeTab, setActiveTab] = useState<'posts' | 'comments' | 'stats'>('posts');
+  const [postFilter, setPostFilter] = useState<'all' | 'approved' | 'pending' | 'rejected'>('all');
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
 
@@ -98,6 +99,15 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
   };
 
   const initials = (profile.username[0] || '?').toUpperCase();
+
+  // Compute filtered posts based on active filter pill
+  const filteredPosts = profile.posts.filter(p => {
+    if (postFilter === 'all') return true;
+    if (postFilter === 'approved') return p.status === 'approved';
+    if (postFilter === 'pending') return p.status !== 'approved' && !p.rejection_reason;
+    if (postFilter === 'rejected') return p.status === 'rejected' || !!p.rejection_reason;
+    return true;
+  });
 
   return (
     <div className="mx-auto min-h-screen max-w-3xl bg-[var(--color-bg)] text-white px-4 py-8 sm:px-6 sm:py-12">
@@ -192,11 +202,42 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
 
       {/* ─── Posts Tab ─── */}
       {activeTab === 'posts' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {profile.posts.length === 0 ? (
+        <div>
+          {/* Status filter pills (own profile only) */}
+          {profile.is_own_profile && profile.posts.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {(['all', 'approved', 'pending', 'rejected'] as const).map(status => {
+                const count = status === 'all' ? profile.posts.length
+                  : status === 'pending' ? profile.posts.filter(p => p.status !== 'approved' && !p.rejection_reason).length
+                  : status === 'rejected' ? profile.posts.filter(p => p.status === 'rejected' || p.rejection_reason).length
+                  : profile.posts.filter(p => p.status === 'approved').length;
+                return (
+                  <button key={status} onClick={() => setPostFilter(status)}
+                    className={`rounded-full px-3 py-1 text-2xs font-medium transition ${
+                      postFilter === status
+                        ? status === 'approved' ? 'bg-green-500/15 text-green-400 border border-green-500/30'
+                          : status === 'pending' ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                          : status === 'rejected' ? 'bg-red-500/15 text-red-400 border border-red-500/30'
+                          : 'bg-orange-500/15 text-orange-400 border border-orange-500/30'
+                        : 'bg-white/5 text-zinc-500 border border-white/10 hover:bg-white/10 hover:text-zinc-300'
+                    }`}
+                  >
+                    {status === 'all' ? 'All' : status.charAt(0).toUpperCase() + status.slice(1)} ({count})
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {filteredPosts.length === 0 ? (
             <div className="col-span-full py-16 text-center">
               <Icon name="FileText" size={32} className="mx-auto mb-3 text-zinc-700" />
-              <p className="text-sm text-zinc-500 mb-4">No posts yet.</p>
+              <p className="text-sm text-zinc-500 mb-4">
+                {postFilter === 'approved' ? 'No approved posts yet.' :
+                 postFilter === 'pending' ? 'No pending posts.' :
+                 postFilter === 'rejected' ? 'No rejected posts.' :
+                 'No posts yet.'}
+              </p>
               {profile.is_own_profile && (
                 <Link href="/new" className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-5 py-2.5 text-xs font-bold text-white shadow-lg transition hover:shadow-xl active:scale-[0.98]">
                   <Icon name="Plus" size={14} /> Create your first post
@@ -204,38 +245,40 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
               )}
             </div>
           ) : (
-            profile.posts.map(post => (
-              <Link key={post.id} href={`/${post.slug}`} className="group rounded-xl border border-white/5 bg-white/[0.02] p-4 transition hover:border-orange-500/20">
-                <div className="flex items-start gap-2 mb-2">
-                  <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-2xs font-bold font-mono ${
-                    post.post_type === 'best_of' ? 'bg-emerald-500/10 text-emerald-400' :
-                    post.post_type === 'worst_of' ? 'bg-red-500/10 text-red-400' :
-                    post.post_type === 'this_vs_that' ? 'bg-purple-500/10 text-purple-400' :
-                    post.post_type === 'fact_drop' ? 'bg-pink-500/10 text-pink-400' :
-                    'bg-orange-500/10 text-orange-400'
-                  }`}>{POST_TYPE_LABELS[post.post_type] || post.post_type.replace(/_/g, ' ')}</span>
-                  {profile.is_own_profile && post.status !== 'approved' && (
-                    <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-2xs font-semibold ${
-                      post.revision_guidance ? 'bg-orange-500/10 text-orange-400' :
-                      post.status === 'rejected' ? 'bg-red-500/10 text-red-400' :
-                      'bg-amber-500/10 text-amber-400'
-                    }`}>{post.revision_guidance ? 'Revision' : post.status.replace(/_/g, ' ')}</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {filteredPosts.map(post => (
+                <Link key={post.id} href={`/${post.slug}`} className="group rounded-xl border border-white/5 bg-white/[0.02] p-4 transition hover:border-orange-500/20">
+                  <div className="flex items-start gap-2 mb-2">
+                    <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-2xs font-bold font-mono ${
+                      post.post_type === 'best_of' ? 'bg-emerald-500/10 text-emerald-400' :
+                      post.post_type === 'worst_of' ? 'bg-red-500/10 text-red-400' :
+                      post.post_type === 'this_vs_that' ? 'bg-purple-500/10 text-purple-400' :
+                      post.post_type === 'fact_drop' ? 'bg-pink-500/10 text-pink-400' :
+                      'bg-orange-500/10 text-orange-400'
+                    }`}>{POST_TYPE_LABELS[post.post_type] || post.post_type.replace(/_/g, ' ')}</span>
+                    {profile.is_own_profile && post.status !== 'approved' && (
+                      <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-2xs font-semibold ${
+                        post.revision_guidance ? 'bg-orange-500/10 text-orange-400' :
+                        post.status === 'rejected' ? 'bg-red-500/10 text-red-400' :
+                        'bg-amber-500/10 text-amber-400'
+                      }`}>{post.revision_guidance ? 'Revision' : post.status.replace(/_/g, ' ')}</span>
+                    )}
+                  </div>
+                  <h3 className="text-sm font-semibold text-zinc-200 leading-snug group-hover:text-white transition mb-2 line-clamp-2">{post.title}</h3>
+                  <div className="flex items-center gap-3 text-3xs text-zinc-600">
+                    <span className="inline-flex items-center gap-1"><Icon name="MessageCircle" size={11} /> {post.comment_count}</span>
+                    <span className="inline-flex items-center gap-1"><Icon name="Eye" size={11} /> {post.view_count ?? 0}</span>
+                    <span suppressHydrationWarning>{formatDate(post.created_at)}</span>
+                  </div>
+                  {profile.is_own_profile && post.rejection_reason && (
+                    <div className="mt-2 rounded-lg border border-red-500/20 bg-red-500/5 p-2 text-2xs text-red-400"><strong>Reason:</strong> {post.rejection_reason}</div>
                   )}
-                </div>
-                <h3 className="text-sm font-semibold text-zinc-200 leading-snug group-hover:text-white transition mb-2 line-clamp-2">{post.title}</h3>
-                <div className="flex items-center gap-3 text-3xs text-zinc-600">
-                  <span className="inline-flex items-center gap-1"><Icon name="MessageCircle" size={11} /> {post.comment_count}</span>
-                  <span className="inline-flex items-center gap-1"><Icon name="Eye" size={11} /> {post.view_count ?? 0}</span>
-                  <span suppressHydrationWarning>{formatDate(post.created_at)}</span>
-                </div>
-                {profile.is_own_profile && post.rejection_reason && (
-                  <div className="mt-2 rounded-lg border border-red-500/20 bg-red-500/5 p-2 text-2xs text-red-400"><strong>Reason:</strong> {post.rejection_reason}</div>
-                )}
-                {profile.is_own_profile && post.revision_guidance && (
-                  <div className="mt-2 rounded-lg border border-orange-500/20 bg-orange-500/5 p-2 text-2xs text-orange-400"><strong>Feedback:</strong> {post.revision_guidance}</div>
-                )}
-              </Link>
-            ))
+                  {profile.is_own_profile && post.revision_guidance && (
+                    <div className="mt-2 rounded-lg border border-orange-500/20 bg-orange-500/5 p-2 text-2xs text-orange-400"><strong>Feedback:</strong> {post.revision_guidance}</div>
+                  )}
+                </Link>
+              ))}
+            </div>
           )}
         </div>
       )}
