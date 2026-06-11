@@ -63,15 +63,79 @@ export async function getAiConfig(): Promise<AiModerationConfig | null> {
   }
 }
 
-const SYSTEM_PROMPT = `You are a content quality analyzer. Analyze this post and return ONLY valid JSON. No markdown, no explanation.
+function buildPrompt(postType: string): string {
+  const base = `You are a content quality analyzer for YoTop10. Analyze this ${postType} post and return ONLY valid JSON. No markdown, no explanation.
 
 {"score": <integer 0-100>, "flags": ["<issue>"]}
 
-HIGH QUALITY (80-100): substantive content, well-structured, clear justification for each item, proper length, original viewpoint.
-MODERATE QUALITY (40-79): some substance but issues like short entries, weak justification, minimal context, formatting problems.
-LOW QUALITY (0-39): gibberish, spam, excessive capitalization, repeated characters, nonsensical text, very minimal content, no coherent argument.
+SCORING RUBRIC:
+`;
 
-Flags (pick only relevant ones): thin_content, gibberish, excessive_caps, spam_patterns, short_items, weak_justification, no_structure, low_effort`;
+  const rubrics: Record<string, string> = {
+    top_list: `TOP LIST (ranked items with justifications):
+- 80-100: Strong intro contextualizing the list. Each item has substantive justification (2+ sentences). Logical ranking order. No filler items. Original perspective.
+- 40-79: Some items have weak justifications (1 sentence or vague). Intro is minimal. A few filler items. Ranking feels arbitrary in places.
+- 0-39: Most items lack justification. Gibberish/spam. Very short. No coherent ranking logic. Excessive caps or repeated characters.
+
+Flags: thin_content, gibberish, excessive_caps, spam_patterns, short_items, weak_justification, no_structure, low_effort`,
+
+    best_of: `BEST OF (curated positive picks):
+- 80-100: Title starts with "Best". Strong justification for why each item is the best. Intro explains the curation criteria. Items feel carefully selected.
+- 40-79: Some picks feel generic. Justifications are thin. Title format may be incorrect. Missing "of" in title.
+- 0-39: Spam or gibberish. No real justifications. Items don't fit "best of" theme.
+
+Flags: thin_content, gibberish, spam_patterns, wrong_title_format, weak_justification, no_structure`,
+
+    worst_of: `WORST OF (negative critique):
+- 80-100: Title starts with "Worst". Clear reasoning why each item is bad (specific criticism, not just insults). Intro sets context. Items are well-known offenders.
+- 40-79: Criticism is vague or generic. Some picks are questionable. Title format may be incorrect.
+- 0-39: Just insulting with no substance. Gibberish. Title missing "Worst" or "of".
+
+Flags: thin_content, gibberish, spam_patterns, wrong_title_format, weak_justification, no_structure`,
+
+    this_vs_that: `DEBATE (two sides compared):
+- 80-100: Both sides are well-defined with clear, distinct descriptions. Arguments for each side are substantive. Title clearly frames the debate. Source URLs add credibility.
+- 40-79: One side is weaker than the other. Arguments are generic or one-sided. Title is vague.
+- 0-39: Missing one side entirely. Gibberish. Both sides say the same thing. Spam detection.
+
+IMPORTANT: EXACTLY 2 items is CORRECT. Do NOT flag "short_items" — debates have exactly 2 options by design.
+
+Flags: gibberish, spam_patterns, one_sided_unbalanced, vague_title, low_effort`,
+
+    fact_drop: `FACT (single surprising fact):
+- 80-100: Fact is genuinely surprising/interesting. Explanation provides context and detail. Source URL is credible and relevant. Clear and well-written.
+- 40-79: Fact is common knowledge or uninteresting. Explanation is minimal. Source is missing or weak.
+- 0-39: Gibberish or false information. No source. Extremely short with no explanation.
+
+IMPORTANT: EXACTLY 1 item is CORRECT. Short length is EXPECTED for fact drops. Do NOT penalize for brevity.
+
+Flags: thin_content, gibberish, spam_patterns, missing_source, uninteresting_fact`,
+
+    counter_list: `COUNTER LIST (rebuttal to another list):
+- 80-100: Clearly addresses and improves upon the original. Items are well-justified. Shows why the counter position is better. Strong intro.
+- 40-79: Rebuttal is weak. Items overlap too much with original. Justifications are generic.
+- 0-39: No clear connection to parent list. Gibberish. Just a copy of the original.
+
+Flags: thin_content, gibberish, spam_patterns, weak_justification, no_original_rebuttal`,
+
+    article: `ARTICLE (long-form content):
+- 80-100: Well-structured with clear paragraphs. Substantial body (>500 chars). Sources cited. Original insight or well-researched. Proper grammar and formatting.
+- 40-79: Some structure but could be deeper. Minimal sources. Body could be longer. Some grammatical issues.
+- 0-39: Very short body. No structure. Gibberish. No sources. Spam.
+
+Flags: thin_content, gibberish, spam_patterns, no_structure, missing_sources, too_short`,
+
+    hidden_gems: `HIDDEN GEMS (underrated picks):
+- 80-100: Items are genuinely obscure/underrated. Justifications explain why they deserve more recognition. Intro sets the theme.
+- 40-79: Some picks are too obvious/mainstream. Justifications are weak.
+- 0-39: All items are well-known. Spam. No real justifications.
+
+Flags: thin_content, gibberish, spam_patterns, weak_justification, not_actually_underrated`,
+  };
+
+  const rubric = rubrics[postType] || rubrics.top_list;
+  return base + rubric + '\n\nEvaluate the post and return ONLY valid JSON. Score must be 0-100. Flags must be a (possibly empty) array of strings.';
+}
 
 export async function analyzePost(
   title: string,
@@ -91,7 +155,7 @@ export async function analyzePost(
     body: JSON.stringify({
       model: config.model,
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: buildPrompt(postType) },
         { role: 'user', content: userMessage },
       ],
       temperature: config.temperature ?? 0.1,

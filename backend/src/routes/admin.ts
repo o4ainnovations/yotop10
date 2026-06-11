@@ -3330,6 +3330,7 @@ router.post('/settings/ai-moderation', async (req, res) => {
 router.post('/settings/ai-moderation/test', async (req, res) => {
   try {
     const { encrypt: _e, decrypt: _d, getAiConfig, analyzePost } = await import('../lib/aiModeration');
+    const { ListItem } = await import('../models/ListItem');
     let config;
     if (req.body.api_key) {
       config = { api_key: req.body.api_key, model: req.body.model || 'deepseek-chat', temperature: req.body.temperature ?? 0.1, auto_approve_threshold: 80, enabled: true };
@@ -3338,14 +3339,27 @@ router.post('/settings/ai-moderation/test', async (req, res) => {
     }
     if (!config) return res.status(400).json({ error: 'No API key configured' });
 
-    // Run a real quality analysis on a sample post
-    const result = await analyzePost(
-      'Top 10 Greatest Football Players of All Time',
-      'top_list',
-      'A definitive ranking of the greatest footballers in history based on skill, achievements, and impact.',
-      '1. Lionel Messi: 8 Ballon d\'Or awards, World Cup winner, unmatched dribbling and vision. | 2. Cristiano Ronaldo: 5 Champions League titles, all-time top scorer, incredible athleticism. | 3. Pelé: 3 World Cups, over 1000 career goals, the original legend.',
-      config,
-    );
+    let title: string;
+    let postType: string;
+    let intro: string;
+    let itemsSummary: string;
+
+    if (req.body.slug) {
+      const post = await Post.findOne({ slug: req.body.slug, status: 'approved' }).lean();
+      if (!post) return res.status(404).json({ error: 'Post not found' });
+      const items = await ListItem.find({ post_id: post._id }).sort({ rank: 1 }).limit(10).lean();
+      title = (post as any).title;
+      postType = (post as any).post_type;
+      intro = ((post as any).intro || '').substring(0, 500);
+      itemsSummary = items.map((i: any) => `${i.rank}. ${i.title}: ${(i.justification || '').substring(0, 150)}`).join(' | ');
+    } else {
+      title = 'Top 10 Greatest Football Players of All Time';
+      postType = 'top_list';
+      intro = 'A definitive ranking of the greatest footballers in history based on skill, achievements, and impact.';
+      itemsSummary = '1. Lionel Messi: 8 Ballon d\'Or awards, World Cup winner, unmatched dribbling and vision. | 2. Cristiano Ronaldo: 5 Champions League titles, all-time top scorer, incredible athleticism. | 3. Pelé: 3 World Cups, over 1000 career goals, the original legend.';
+    }
+
+    const result = await analyzePost(title, postType, intro, itemsSummary, config);
 
     res.json({
       success: true,
@@ -3353,7 +3367,7 @@ router.post('/settings/ai-moderation/test', async (req, res) => {
       tokens: result.prompt_tokens,
       score: result.score,
       flags: result.flags,
-      sample: 'Analyzed a mock "Top 10 Football Players" post',
+      title,
     });
   } catch (e: any) {
     const msg = e instanceof Error ? e.message : String(e);
