@@ -40,7 +40,7 @@ router.get('/status', async (req: any, res: any) => {
       seed_generated_at: user.seed_generated_at || null,
       devices_linked: deviceCount,
     });
-  } catch (e) { res.status(500).json({ error: 'Failed' }); }
+  } catch (e) { console.error('[identity] status error:', e); res.status(500).json({ error: 'Failed' }); }
 });
 
 // POST /api/identity/generate-key — Generate seed identity
@@ -79,6 +79,7 @@ router.post('/generate-key', async (req: any, res: any) => {
     res.status(201).json({ success: true, authority_id: body.authority_id, device_linked: true });
   } catch (e: any) {
     if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
+    console.error('[identity] generate-key error:', e);
     res.status(500).json({ error: 'Failed to generate identity key' });
   }
 });
@@ -102,6 +103,7 @@ router.post('/claim', async (req: any, res: any) => {
     res.json({ challenge });
   } catch (e: any) {
     if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
+    console.error('[identity] claim challenge error:', e);
     res.status(500).json({ error: 'Failed' });
   }
 });
@@ -162,7 +164,8 @@ router.post('/claim/verify', async (req: any, res: any) => {
     });
   } catch (e: any) {
     if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
-    res.status(500).json({ error: 'Failed' });
+    console.error('[identity] verifyClaim error:', e);
+    res.status(500).json({ error: `Failed: ${e?.message || e}` });
   }
 });
 
