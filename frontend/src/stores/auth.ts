@@ -62,6 +62,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const data = await API.getCurrentUser() as AuthUser;
       set({ user: data, initialized: true });
+      const { toast } = await import('@/lib/toast');
+      toast.success('Logged out. New anonymous identity created.');
     } catch {
       // stay logged out — AuthInitializer will retry on next page load
     }

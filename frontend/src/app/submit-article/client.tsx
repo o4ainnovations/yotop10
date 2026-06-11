@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { API } from '@/lib/api';
 import type { ArticleSubmission } from '@/lib/api/types';
@@ -28,13 +28,6 @@ const CATEGORIES = [
   'health',
 ];
 
-function estimateReadingTime(text: string): number {
-  const wordsPerMinute = 200;
-  const words = text.trim().split(/\s+/).filter(Boolean).length;
-  const minutes = Math.ceil(words / wordsPerMinute);
-  return Math.max(1, minutes);
-}
-
 export default function SubmitArticleClient() {
   const idCounter = useRef(0);
   const generateId = () => `source-${++idCounter.current}`;
@@ -48,12 +41,6 @@ export default function SubmitArticleClient() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errors, setErrors] = useState<FormErrors>({});
-  const [readingTime, setReadingTime] = useState(1);
-
-  useEffect(() => {
-    setReadingTime(estimateReadingTime(body));
-  }, [body]);
-
   const validate = useCallback((): boolean => {
     const next: FormErrors = {};
     if (!title.trim()) {
@@ -231,9 +218,7 @@ export default function SubmitArticleClient() {
             ) : (
               <span />
             )}
-            <span className="text-xs font-mono text-zinc-500">
-              ~{readingTime} min read
-            </span>
+
           </div>
         </div>
 
@@ -303,14 +288,6 @@ export default function SubmitArticleClient() {
                 </button>
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* Reading Time Preview */}
-        <div className="rounded-xl border border-white/5 bg-white/5 px-5 py-4 backdrop-blur-xl">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-zinc-400">Estimated reading time</span>
-            <span className="font-mono text-sm text-white">{readingTime} min</span>
           </div>
         </div>
 
