@@ -394,7 +394,7 @@ export default function RankedSubmitClient({ initialType, parentSlug }: { initia
     <div className="mx-auto max-w-3xl px-3 py-6 sm:px-6 sm:py-10 min-h-[calc(100vh-56px)]">
       <header className="mb-6">
         <h1 className="text-xl font-bold text-white sm:text-2xl">{help.title}</h1>
-        <div className={`mt-2 rounded-xl border ${help.color} px-3 py-2 text-xs leading-relaxed`}>{help.tip}</div>
+        <div className={`mt-2 rounded-xl border ${help.color} px-3 py-3 text-sm font-medium leading-relaxed`}>{help.tip}</div>
         <nav className="mt-3 flex items-center gap-3 text-xs">
           <Link href="/new" className="text-orange-400 hover:text-orange-300 transition">&larr; Change type</Link>
           <span className="text-zinc-700">|</span>

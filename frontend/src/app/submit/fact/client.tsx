@@ -96,7 +96,7 @@ export default function FactClient() {
           <Icon name="Lightbulb" size={20} className="text-pink-400" />
           <h1 className="text-xl font-bold text-white sm:text-2xl">Drop a Fact</h1>
         </div>
-        <p className="text-xs text-zinc-500 leading-relaxed">Share a surprising fact with a verifiable source. Facts are automatically categorized under Education.</p>
+        <p className="text-sm font-medium text-zinc-400 leading-relaxed">Share a surprising fact with a verifiable source. Facts are automatically categorized under Education.</p>
         <nav className="mt-3 flex items-center gap-3 text-xs">
           <Link href="/new" className="text-pink-400 hover:text-pink-300 transition">&larr; Change type</Link>
           <span className="text-zinc-700">|</span>

@@ -137,7 +137,7 @@ export default function DebateClient() {
           <Icon name="Swords" size={20} className="text-purple-400" />
           <h1 className="text-xl font-bold text-white sm:text-2xl">Create a Debate</h1>
         </div>
-        <p className="text-xs text-zinc-500 leading-relaxed">Set up two sides for the community to debate and vote on. Exactly two options — no more, no less.</p>
+        <p className="text-sm font-medium text-zinc-400 leading-relaxed">Set up two sides for the community to debate and vote on. Exactly two options — no more, no less.</p>
         <nav className="mt-3 flex items-center gap-3 text-xs">
           <Link href="/new" className="text-purple-400 hover:text-purple-300 transition">&larr; Change type</Link>
           <span className="text-zinc-700">|</span>

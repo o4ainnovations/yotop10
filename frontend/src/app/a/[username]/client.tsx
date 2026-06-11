@@ -326,13 +326,22 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
 
           <div className="rounded-xl border border-white/5 bg-white/[0.02] p-5">
             <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Approval Rate</h3>
-            <div className="flex h-2 w-full rounded-full bg-zinc-800 overflow-hidden">
-              <div className="bg-green-500 transition-all" style={{ width: `${profile.stats.approval_rate}%` }} />
-              <div className="bg-red-500/50 transition-all" style={{ width: `${100 - profile.stats.approval_rate}%` }} />
-            </div>
+            {profile.stats.total_posts === 0 ? (
+              <div className="flex h-2 w-full rounded-full bg-zinc-800 overflow-hidden">
+                <div className="bg-zinc-700 transition-all" style={{ width: '100%' }} />
+              </div>
+            ) : (
+              <div className="flex h-2 w-full rounded-full bg-zinc-800 overflow-hidden">
+                <div className="bg-green-500 transition-all" style={{ width: `${profile.stats.approval_rate}%` }} />
+                <div className="bg-red-500/50 transition-all" style={{ width: `${100 - profile.stats.approval_rate}%` }} />
+              </div>
+            )}
             <div className="flex justify-between mt-1 text-2xs text-zinc-600">
-              <span>{profile.stats.approval_rate}% approved</span>
-              <span>{100 - profile.stats.approval_rate}% rejected</span>
+              {profile.stats.total_posts === 0 ? (
+                <span className="text-zinc-600">No posts yet</span>
+              ) : (
+                <><span>{profile.stats.approval_rate}% approved</span><span>{100 - profile.stats.approval_rate}% rejected</span></>
+              )}
             </div>
           </div>
 

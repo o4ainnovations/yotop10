@@ -19,8 +19,9 @@ export async function apiFetch<T>(
     try { deviceFingerprint = localStorage.getItem('yotop10_fp'); } catch { /* private browsing */ }
   }
 
+  const isFormData = options?.body instanceof FormData;
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
     ...(options?.headers as Record<string, string> || {}),
   };
 
