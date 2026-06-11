@@ -58,10 +58,19 @@ export default function AdminUsersClient() {
     }, 300);
   };
 
+  const sortMap: Record<string, { field: string; dir: string }> = {
+    newest: { field: 'created_at', dir: 'desc' },
+    oldest: { field: 'created_at', dir: 'asc' },
+    highest_trust: { field: 'trust_score', dir: 'desc' },
+    lowest_trust: { field: 'trust_score', dir: 'asc' },
+    most_posts: { field: 'post_count', dir: 'desc' },
+  };
+
   const fetchUsers = useCallback(async (p: number) => {
     setLoading(true);
     try {
-      const params: Record<string, string> = { page: String(p), limit: '20', sort, sort_dir: sortDir, stats: 'true' };
+      const sc = sortMap[sort] || sortMap.newest;
+      const params: Record<string, string> = { page: String(p), limit: '20', sort: sc.field, sort_dir: sc.dir, stats: 'true' };
       if (debouncedSearch) params.q = debouncedSearch;
       if (trustFilter) params.trust_tier = trustFilter;
       if (statusFilter) params.status = statusFilter;
