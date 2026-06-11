@@ -66,8 +66,7 @@ export const fingerprintMiddleware = async (req: Request, res: Response, next: N
       }
 
       if (!user) {
-        const userId = crypto.randomBytes(4).toString('hex');
-        const username = `a_${userId.slice(-4)}`;
+        const userId = crypto.randomBytes(8).toString('hex');
 
         let matchedUserId: string | null = null;
         if (Object.keys(tier0).length > 0) {
@@ -96,6 +95,7 @@ export const fingerprintMiddleware = async (req: Request, res: Response, next: N
         }
 
         // Create new user regardless of match (no auto-link)
+        const username = `a_${userId.substring(0, 4)}_${userId.substring(4, 8)}`;
         user = await User.create({ user_id: userId, username, device_fingerprint: fingerprint, trust_score: 1.0, is_admin: false });
       }
 
@@ -140,8 +140,8 @@ export const fingerprintMiddleware = async (req: Request, res: Response, next: N
 
     if (currentCount <= MAX_GRACE_REQUESTS) {
       const newFingerprint = generateFingerprint();
-      const userId = crypto.randomBytes(4).toString('hex');
-      const username = `a_${userId.slice(-4)}`;
+      const userId = crypto.randomBytes(8).toString('hex');
+      const username = `a_${userId.substring(0, 4)}_${userId.substring(4, 8)}`;
 
       // Pre-create the user record so subsequent requests find it
       try {
