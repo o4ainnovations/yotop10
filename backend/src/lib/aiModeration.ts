@@ -134,18 +134,14 @@ Flags: thin_content, gibberish, spam_patterns, weak_justification, not_actually_
   };
 
   const rubric = rubrics[postType] || rubrics.top_list;
-  return base + rubric + '\n\nEvaluate the post and return ONLY valid JSON. Score must be 0-100. Flags must be a (possibly empty) array of strings.';
+  return base + rubric + '\n\nEvaluate the post and return ONLY valid JSON. Score must be 0-100. Flags must be a (possibly empty) array of strings. You MUST include a "score" field. Never omit it.';
 }
 
-export async function analyzePost(
-  title: string,
-  postType: string,
-  intro: string,
-  itemsSummary: string,
+async function callDeepSeek(
+  prompt: string,
+  userMessage: string,
   config: AiModerationConfig,
-): Promise<AiModerationResult> {
-  const userMessage = `Title: ${title}\nType: ${postType}\nIntro: ${intro}\nItems: ${itemsSummary}`;
-
+): Promise<{ raw: string; tokens: number }> {
   const response = await fetch('https://api.deepseek.com/chat/completions', {
     method: 'POST',
     headers: {
@@ -155,11 +151,10 @@ export async function analyzePost(
     body: JSON.stringify({
       model: config.model,
       messages: [
-        { role: 'system', content: buildPrompt(postType) },
+        { role: 'system', content: prompt },
         { role: 'user', content: userMessage },
       ],
       temperature: config.temperature ?? 0.1,
-      max_tokens: 200,
     }),
   });
 
@@ -173,14 +168,55 @@ export async function analyzePost(
     usage: { prompt_tokens: number };
   };
 
-  const rawContent = data.choices?.[0]?.message?.content || '{}';
+  const rawContent = data.choices?.[0]?.message?.content || '';
+  return { raw: rawContent, tokens: data.usage?.prompt_tokens || 0 };
+}
+
+function parseScore(rawContent: string): { score: number; flags: string[] } | null {
   const cleaned = rawContent.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
-  const parsed = JSON.parse(cleaned) as { score?: number; flags?: string[] };
+  let parsed: Record<string, unknown> = {};
+  try { parsed = JSON.parse(cleaned); } catch { return null; }
+
+  const score = parsed.score;
+  if (typeof score !== 'number' || isNaN(score) || score < 0 || score > 100) return null;
 
   return {
-    score: Math.max(0, Math.min(100, parsed.score ?? 0)),
-    flags: Array.isArray(parsed.flags) ? parsed.flags.slice(0, 10) : [],
+    score: Math.round(score),
+    flags: Array.isArray(parsed.flags) ? parsed.flags.filter(f => typeof f === 'string').slice(0, 10) as string[] : [],
+  };
+}
+
+export async function analyzePost(
+  title: string,
+  postType: string,
+  intro: string,
+  itemsSummary: string,
+  config: AiModerationConfig,
+): Promise<AiModerationResult> {
+  const userMessage = `Title: ${title}\nType: ${postType}\nIntro: ${intro}\nItems: ${itemsSummary}`;
+
+  // First attempt
+  const first = await callDeepSeek(buildPrompt(postType), userMessage, config);
+  let result = parseScore(first.raw);
+  let tokens = first.tokens;
+
+  // Retry on missing/invalid score
+  if (!result) {
+    const retryPrompt = `You are a content quality analyzer. Score this ${postType} post 0-100. Return ONLY valid JSON: {"score": <0-100>, "flags": ["<issue>"]}. You MUST include a "score" field. Do not omit it. Score the following post:\n\n${userMessage}`;
+    const second = await callDeepSeek(retryPrompt, userMessage, config);
+    tokens += second.tokens;
+    result = parseScore(second.raw);
+  }
+
+  if (!result) {
+    const firstSnippet = first.raw.substring(0, 200);
+    throw new Error(`AI returned invalid response: unable to extract score. Raw: ${JSON.stringify(firstSnippet)}`);
+  }
+
+  return {
+    score: result.score,
+    flags: result.flags,
     model: config.model,
-    prompt_tokens: data.usage?.prompt_tokens || 0,
+    prompt_tokens: tokens,
   };
 }
