@@ -120,8 +120,7 @@ export async function mnemonicToKeyPair(mnemonic: string): Promise<{
 
 export async function signChallenge(privateKeyBytes: Uint8Array, challenge: string): Promise<string> {
   const message = new TextEncoder().encode(challenge);
-  const hash = sha256(message);
-  const signature = await ed.signAsync(hash, privateKeyBytes);
+  const signature = await ed.signAsync(message, privateKeyBytes);
   return bytesToHex(signature);
 }
 
