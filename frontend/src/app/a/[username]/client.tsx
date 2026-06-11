@@ -65,18 +65,24 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
   const rateLimitErrorCount = useRateLimitStore((s) => s.errorCount);
   const retryTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
-  const trustScore = profile.is_own_profile && authUser ? authUser.trust_score : profile.trust_score ?? 0;
+  // Compute is_own_profile locally — server-side fetch can't determine identity
+  const profileUsername = profile.username;
+  const isOwn = (profile as any).is_own_profile ||
+    (authUser?.username === profileUsername) ||
+    (authUser?.custom_display_name === profileUsername);
+
+  const trustScore = isOwn && authUser ? authUser.trust_score : profile.trust_score ?? 0;
   const tier = TIER_STYLES[profile.trust_level] || TIER_STYLES.neutral;
 
   useEffect(() => {
-    if (profile.is_own_profile && activeTab === 'stats' && rateLimitErrorCount > 0) {
+    if (isOwn && activeTab === 'stats' && rateLimitErrorCount > 0) {
       clearTimeout(retryTimeoutRef.current);
       retryTimeoutRef.current = setTimeout(fetchRateStatus, Math.min(1000 * Math.pow(2, rateLimitErrorCount), 10000));
     }
-  }, [profile.is_own_profile, activeTab, rateLimitErrorCount, fetchRateStatus]);
+  }, [isOwn, activeTab, rateLimitErrorCount, fetchRateStatus]);
   useEffect(() => {
-    if (profile.is_own_profile && activeTab === 'stats') fetchRateStatus();
-  }, [profile.is_own_profile, activeTab, fetchRateStatus]);
+    if (isOwn && activeTab === 'stats') fetchRateStatus();
+  }, [isOwn, activeTab, fetchRateStatus]);
   useEffect(() => {
     if (!rateLimitStatus || activeTab !== 'stats') return;
     const interval = setInterval(tickCountdown, 1000);
@@ -153,7 +159,7 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
           </div>
 
           {/* Own profile actions */}
-          {profile.is_own_profile && (
+          {isOwn && (
             <div className="flex flex-wrap items-center gap-2 mt-3">
               <label className="inline-flex cursor-pointer items-center gap-1.5 text-3xs text-zinc-600 hover:text-zinc-400 transition">
                 <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleProfileUpload} disabled={uploadingImage} className="hidden" />
@@ -169,7 +175,7 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
       </div>
 
       {/* ─── Trust gauge (own profile only) ─── */}
-      {profile.is_own_profile && (
+      {isOwn && (
         <div className="mb-6">
           <div className="flex h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden">
             <div className={`transition-all duration-500 ${tier.bg.split(' ')[0]}`} style={{ width: `${Math.min(100, (trustScore / 10) * 100)}%` }} />
@@ -192,7 +198,7 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
           Comments ({profile.comments.length})
           {activeTab === 'comments' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-orange-400" />}
         </button>
-        {profile.is_own_profile && (
+        {isOwn && (
           <button onClick={() => setActiveTab('stats')} className={`relative px-4 sm:px-5 py-3 text-xs font-medium transition-colors inline-flex items-center gap-1.5 ${activeTab === 'stats' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>
             <Icon name="ChartBar" size={13} /> Stats
             {activeTab === 'stats' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-orange-400" />}
@@ -204,7 +210,7 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
       {activeTab === 'posts' && (
         <div>
           {/* Status filter pills (own profile only) */}
-          {profile.is_own_profile && profile.posts.length > 0 && (
+          {isOwn && profile.posts.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-4">
               {(['all', 'approved', 'pending', 'rejected'] as const).map(status => {
                 const count = status === 'all' ? profile.posts.length
@@ -238,7 +244,7 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
                  postFilter === 'rejected' ? 'No rejected posts.' :
                  'No posts yet.'}
               </p>
-              {profile.is_own_profile && (
+              {isOwn && (
                 <Link href="/new" className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-5 py-2.5 text-xs font-bold text-white shadow-lg transition hover:shadow-xl active:scale-[0.98]">
                   <Icon name="Plus" size={14} /> Create your first post
                 </Link>
@@ -256,7 +262,7 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
                       post.post_type === 'fact_drop' ? 'bg-pink-500/10 text-pink-400' :
                       'bg-orange-500/10 text-orange-400'
                     }`}>{POST_TYPE_LABELS[post.post_type] || post.post_type.replace(/_/g, ' ')}</span>
-                    {profile.is_own_profile && post.status !== 'approved' && (
+                    {isOwn && post.status !== 'approved' && (
                       <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-2xs font-semibold ${
                         post.revision_guidance ? 'bg-orange-500/10 text-orange-400' :
                         post.status === 'rejected' ? 'bg-red-500/10 text-red-400' :
@@ -270,10 +276,10 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
                     <span className="inline-flex items-center gap-1"><Icon name="Eye" size={11} /> {post.view_count ?? 0}</span>
                     <span suppressHydrationWarning>{formatDate(post.created_at)}</span>
                   </div>
-                  {profile.is_own_profile && post.rejection_reason && (
+                  {isOwn && post.rejection_reason && (
                     <div className="mt-2 rounded-lg border border-red-500/20 bg-red-500/5 p-2 text-2xs text-red-400"><strong>Reason:</strong> {post.rejection_reason}</div>
                   )}
-                  {profile.is_own_profile && post.revision_guidance && (
+                  {isOwn && post.revision_guidance && (
                     <div className="mt-2 rounded-lg border border-orange-500/20 bg-orange-500/5 p-2 text-2xs text-orange-400"><strong>Feedback:</strong> {post.revision_guidance}</div>
                   )}
                 </Link>
@@ -307,7 +313,7 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
       )}
 
       {/* ─── Stats Tab (own only) ─── */}
-      {activeTab === 'stats' && profile.is_own_profile && rateLimitStatus && (
+      {activeTab === 'stats' && isOwn && rateLimitStatus && (
         <div className="space-y-4">
           <div className="rounded-xl border border-white/5 bg-white/[0.02] p-5">
             <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Engagement</h3>
@@ -360,7 +366,7 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
       )}
 
       {/* ─── Secure My Authority ─── */}
-      {profile.is_own_profile && <div className="mt-8"><SecureMyAuthority /></div>}
+      {isOwn && <div className="mt-8"><SecureMyAuthority /></div>}
     </div>
   );
 }
