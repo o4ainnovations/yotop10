@@ -544,6 +544,24 @@ export default function PostDetailClient({
           </div>
         </section>
 
+        {/* Counter-List Arena */}
+        {['top_list', 'best_of', 'worst_of'].includes(post.post_type) && (
+          <section className="border-t border-white/5 pt-8 mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-bold text-white uppercase tracking-wider">Challenge This List</h2>
+            </div>
+            <p className="text-xs text-zinc-500 mb-4 leading-relaxed">
+              Disagree with this ranking? Submit your own version and let the community decide.
+            </p>
+            <Link
+              href={`/submit?type=counter_list&parent=${slug}`}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-orange-500/25 transition hover:shadow-xl active:scale-[0.98]"
+            >
+              Submit a Counter-List
+            </Link>
+          </section>
+        )}
+
         {/* Related posts from same category */}
         <section className="border-t border-white/5 pt-8 mb-8">
           <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-4">More from {post.category_name || post.category_slug}</h2>

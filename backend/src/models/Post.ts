@@ -15,6 +15,7 @@ export interface IPost extends Document {
   revision_guidance?: string;
   revision_requested_at?: Date;
   revision_count: number;
+  parent_id?: string;
   category_id: string;
   category_slug: string;
   published_at?: Date;
@@ -130,6 +131,11 @@ const postSchema = new Schema<IPost>(
     trust_score_updated: {
       type: Boolean,
       default: false,
+    },
+    parent_id: {
+      type: String,
+      required: false,
+      index: true,
     },
     category_id: {
       type: String,

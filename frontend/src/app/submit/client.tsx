@@ -65,17 +65,18 @@ const debounce = <T extends unknown[]>(fn: (...args: T) => void, ms: number) => 
   };
 };
 
-export default function SubmitClient({ initialType }: { initialType?: 'top_list' | 'this_vs_that' | 'fact_drop' | 'best_of' | 'worst_of' }) {
+export default function SubmitClient({ initialType, parentSlug }: { initialType?: 'top_list' | 'this_vs_that' | 'fact_drop' | 'best_of' | 'worst_of' | 'counter_list'; parentSlug?: string }) {
   const idCounter = useRef(0);
   const generateId = () => `item-${++idCounter.current}`;
 
+  // Form state
   const getDefaultTitle = (t: string) => {
     if (t === 'best_of') return 'Best of ';
     if (t === 'worst_of') return 'Worst of ';
     if (t === 'top_list') return 'Top 10 ';
     return '';
   };
-  const [postType] = useState<'top_list' | 'this_vs_that' | 'fact_drop' | 'best_of' | 'worst_of'>(initialType || 'top_list');
+  const [postType] = useState<'top_list' | 'this_vs_that' | 'fact_drop' | 'best_of' | 'worst_of' | 'counter_list'>(initialType || 'top_list');
   const [categorySlug, setCategorySlug] = useState('');
   const [title, setTitle] = useState(getDefaultTitle(initialType || 'top_list'));
   const [intro, setIntro] = useState('');
@@ -223,17 +224,14 @@ export default function SubmitClient({ initialType }: { initialType?: 'top_list'
 
   const validateField = (field: string, value: string): string | undefined => {
     switch (field) {
-      case 'category': return !value ? 'Please select a category' : undefined;
+      case 'category': return postType === 'counter_list' ? undefined : (!value ? 'Please select a category' : undefined);
       case 'title':
         if (!value) return 'Title is required';
         if (value.length < 4) return 'Title must be at least 4 characters';
         if (value.length > 300) return 'Title must be less than 300 characters';
-        if (postType === 'top_list') { const f = validateListTitle(value); if (!f.valid) return f.error; }
+        if (postType === 'top_list' || postType === 'counter_list') { const f = validateListTitle(value); if (!f.valid) return f.error; }
         return undefined;
-      case 'intro':
-        if (!value) return 'Introduction is required';
-        if (value.length > 2000) return 'Introduction must be less than 2000 characters';
-        return undefined;
+      case 'intro': return postType === 'counter_list' ? undefined : (!value ? 'Introduction is required' : value.length > 2000 ? 'Introduction must be less than 2000 characters' : undefined);
       case 'author_display_name':
         if (value && value.length > 50) return 'Name must be less than 50 characters';
         return undefined;
@@ -303,18 +301,36 @@ export default function SubmitClient({ initialType }: { initialType?: 'top_list'
     if (!validateForm()) return;
     setSubmitting(true);
     setErrors({});
-    const submission: PostSubmission = {
-      title, post_type: postType, intro, category_slug: categorySlug,
-      items: items.map((item, idx) => ({ rank: idx + 1, title: item.title, justification: item.justification, image_url: item.image_url || undefined, source_url: item.source_url || undefined })),
-      author_display_name: authorName || undefined,
-    };
+
     try {
-      const response = await API.addPost(submission) as PostSubmissionResponse & { post?: { title: string; id: string; status: string }; items?: Array<{ id: string }> };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let response: any;
+
+      if (postType === 'counter_list' && parentSlug) {
+        const { apiFetch } = await import('@/lib/api/client');
+        response = await apiFetch(`/posts/${parentSlug}/counter`, {
+          method: 'POST',
+          body: JSON.stringify({
+            title,
+            intro,
+            items: items.map((item, idx) => ({ rank: idx + 1, title: item.title, justification: item.justification })),
+          }),
+        });
+      } else {
+        const submission: PostSubmission = {
+          title, post_type: postType, intro, category_slug: categorySlug,
+          items: items.map((item, idx) => ({ rank: idx + 1, title: item.title, justification: item.justification, image_url: item.image_url || undefined, source_url: item.source_url || undefined })),
+          author_display_name: authorName || undefined,
+        };
+        response = await API.addPost(submission) as PostSubmissionResponse & { post?: { title: string; id: string; status: string }; items?: Array<{ id: string }> };
+      }
+
       localStorage.removeItem(DRAFT_KEY);
       const authUser = useAuthStore.getState().user;
+      const p = response.post as Record<string, string> | undefined;
       setSubmitted({
-        title: response.post?.title || title, id: response.post?.id || '', status: response.post?.status || 'pending_review',
-        itemCount: response.items?.length || items.length, username: authUser?.username || '',
+        title: p?.title || title, id: p?.id || '', status: p?.status || 'pending_review',
+        itemCount: (response.items as Array<unknown>)?.length || items.length, username: authUser?.username || '',
       });
       toast.success('Post submitted! It\'s now pending review.');
     } catch (err: unknown) {
@@ -378,6 +394,7 @@ export default function SubmitClient({ initialType }: { initialType?: 'top_list'
     fact_drop: { title: 'Submit a Fact Drop', tip: 'Share a surprising fact with a source link. Keep it concise.', color: 'border-pink-500/20 bg-pink-500/5 text-pink-400' },
     best_of: { title: 'Submit a Best Of', tip: 'Curate the best picks. Title must start with "Best" and contain "of".', color: 'border-emerald-500/20 bg-emerald-500/5 text-emerald-400' },
     worst_of: { title: 'Submit a Worst Of', tip: 'Call out the worst offenders. Title must start with "Worst" and contain "of".', color: 'border-red-500/20 bg-red-500/5 text-red-400' },
+    counter_list: { title: 'Submit a Counter List', tip: `Challenge an existing list with your own ranking.${parentSlug ? ` Rebutting: ${parentSlug}.` : ''}`, color: 'border-purple-500/20 bg-purple-500/5 text-purple-400' },
   };
   const help = typeHelp[postType] || typeHelp.top_list;
 

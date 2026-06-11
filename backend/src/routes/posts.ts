@@ -931,4 +931,153 @@ router.post('/:id/vote', async (req, res) => {
   }
 });
 
+// ─── Counter-List Arena (M5.6) ─────────────────────────────────────────
+
+// POST /api/posts/:slug/counter — Create a counter list rebutting an existing post
+router.post('/:slug/counter', async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const parent = await Post.findOne({ slug, status: 'approved', deleted: { $ne: true } });
+    if (!parent) return res.status(404).json({ error: 'Original post not found' });
+
+    const user = req.user;
+    if (!user) return res.status(401).json({ error: 'Authentication required' });
+
+    const { title, intro, items } = req.body;
+    if (!title || !items || !Array.isArray(items) || items.length < 3) {
+      return res.status(400).json({ error: 'Title and at least 3 items are required' });
+    }
+
+    // Create counter post linked to parent
+    const counter = await Post.create({
+      author_id: user.user_id,
+      author_username: user.username,
+      author_display_name: user.custom_display_name || user.username,
+      title,
+      post_type: 'counter_list',
+      intro: intro ? `Counter to: ${parent.slug}. ${intro}` : `Counter to: ${parent.slug}`,
+      category_slug: parent.category_slug,
+      category_id: parent.category_id,
+      parent_id: parent._id.toString(),
+      status: 'pending_review',
+      slug: `${slug}-counter-${Date.now().toString(36)}`,
+      fire_count: 0,
+      comment_count: 0,
+      view_count: 0,
+    });
+
+    // Create list items
+    const listItems = items.map((item: { title: string; justification?: string }, idx: number) => ({
+      post_id: counter._id,
+      rank: idx + 1,
+      title: item.title,
+      justification: item.justification || '',
+    }));
+    await ListItem.insertMany(listItems);
+
+    // Boost parent spark
+    await Post.findByIdAndUpdate(parent._id, { $inc: { fire_count: 10 } });
+
+    res.status(201).json({
+      success: true,
+      post: { id: counter._id, slug: counter.slug, title: counter.title, status: counter.status },
+      rate_limit: { remaining: 9999, resetTime: Date.now() + 3600000 },
+    });
+  } catch (error) {
+    console.error('Counter create error:', error);
+    res.status(500).json({ error: 'Failed to create counter list' });
+  }
+});
+
+// GET /api/posts/:slug/counters — List all counters for a post
+router.get('/:slug/counters', async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const parent = await Post.findOne({ slug });
+    if (!parent) return res.status(404).json({ error: 'Post not found' });
+
+    const page = Math.max(1, parseInt(req.query.page as string, 10) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string, 10) || 20));
+    const skip = (page - 1) * limit;
+    const sortField = req.query.sort === 'oldest' ? 'created_at' : (req.query.sort === 'spark' ? 'fire_count' : 'created_at');
+    const sortDir = req.query.sort === 'oldest' ? 1 : -1;
+
+    const [counters, total] = await Promise.all([
+      Post.find({ parent_id: parent._id.toString(), status: 'approved', deleted: { $ne: true } })
+        .sort({ [sortField]: sortDir })
+        .skip(skip)
+        .limit(limit)
+        .select('title slug post_type fire_count comment_count view_count created_at author_username author_display_name')
+        .lean(),
+      Post.countDocuments({ parent_id: parent._id.toString(), status: 'approved', deleted: { $ne: true } }),
+    ]);
+
+    res.json({
+      counters: counters.map((c: any) => ({
+        id: c._id, slug: c.slug, title: c.title, post_type: c.post_type,
+        fire_count: c.fire_count, comment_count: c.comment_count, view_count: c.view_count,
+        created_at: c.created_at, author_username: c.author_username, author_display_name: c.author_display_name,
+      })),
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    });
+  } catch (error) {
+    console.error('List counters error:', error);
+    res.status(500).json({ error: 'Failed to list counters' });
+  }
+});
+
+// GET /api/posts/compare/:original/:counter — Compare two posts (diff engine)
+router.get('/compare/:original/:counter', async (req, res) => {
+  try {
+    const [original, counter] = await Promise.all([
+      Post.findOne({ slug: req.params.original, status: 'approved' }).lean(),
+      Post.findOne({ slug: req.params.counter, status: 'approved' }).lean(),
+    ]);
+    if (!original || !counter) return res.status(404).json({ error: 'One or both posts not found' });
+
+    const [origItems, counterItems] = await Promise.all([
+      ListItem.find({ post_id: original._id }).sort({ rank: 1 }).lean(),
+      ListItem.find({ post_id: counter._id }).sort({ rank: 1 }).lean(),
+    ]);
+
+    const origTitles = new Map(origItems.map((i: any) => [i.title.toLowerCase().trim(), i]));
+    const counterTitleSet = new Set(counterItems.map((i: any) => i.title.toLowerCase().trim()));
+
+    const matches: Array<{ rank: number; title: string }> = [];
+    const moved: Array<{ title: string; old_rank: number; new_rank: number }> = [];
+    const replaced: Array<{ title: string; old_rank: number }> = [];
+    const added: Array<{ title: string; new_rank: number }> = [];
+
+    for (const item of counterItems) {
+      const key = (item as any).title.toLowerCase().trim();
+      const origItem = origTitles.get(key);
+      if (origItem) {
+        const origRank = (origItem as any).rank;
+        if (origRank === (item as any).rank) {
+          matches.push({ rank: origRank, title: (item as any).title });
+        } else {
+          moved.push({ title: (item as any).title, old_rank: origRank, new_rank: (item as any).rank });
+        }
+      } else {
+        added.push({ title: (item as any).title, new_rank: (item as any).rank });
+      }
+    }
+
+    for (const item of origItems) {
+      if (!counterTitleSet.has((item as any).title.toLowerCase().trim())) {
+        replaced.push({ title: (item as any).title, old_rank: (item as any).rank });
+      }
+    }
+
+    res.json({
+      original: { title: (original as any).title, slug: (original as any).slug },
+      counter: { title: (counter as any).title, slug: (counter as any).slug },
+      diff: { matches, moved, replaced, added },
+    });
+  } catch (error) {
+    console.error('Compare error:', error);
+    res.status(500).json({ error: 'Failed to compare posts' });
+  }
+});
+
 export default router;
