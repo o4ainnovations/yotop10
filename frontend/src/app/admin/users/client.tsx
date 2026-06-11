@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { Icon } from '@/components/icons/Icon';
@@ -12,6 +13,7 @@ import { GlobalConfigModal } from '@/components/admin/GlobalConfigModal';
 import type { UserSummary, UserListResponse, SystemConfig, ConfigImpact } from '@/lib/api/types';
 
 export default function AdminUsersClient() {
+  const router = useRouter();
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -247,12 +249,13 @@ export default function AdminUsersClient() {
           {/* Mobile card view */}
           <div className="sm:hidden flex flex-col gap-2">
             {users.map(u => {
-              const initial = (u.display_name || u.username || '?')[0].toUpperCase();
+              const initial = (u.display_name || '?')[0].toUpperCase();
               const isDropdownOpen = openDropdown === u._id;
               return (
                 <div
                   key={u._id}
-                  className={`bg-white/5 border rounded-2xl p-3 transition-colors ${u.restricted ? 'border-red-500/30' : 'border-white/5'}`}
+                  onClick={() => router.push(`/admin/users/${u.username}`)}
+                  className={`bg-white/5 border rounded-2xl p-3 transition-colors cursor-pointer hover:bg-white/10 ${u.restricted ? 'border-red-500/30' : 'border-white/5'}`}
                 >
                   <div className="flex items-center gap-2.5 mb-2.5">
                     <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 min-w-[36px] min-h-9">
@@ -337,7 +340,7 @@ export default function AdminUsersClient() {
                     key={u._id}
                     user={u}
                     onAction={handleAction}
-                    onClickRow={() => { /* future: user detail */ }}
+                    onClickRow={() => router.push(`/admin/users/${u.username}`)}
                   />
                 ))}
               </tbody>
