@@ -6,14 +6,14 @@ export const generateKeySchema = z.object({
 
 export const claimChallengeSchema = z.object({
   authority_id: z.string().length(64).regex(/^[0-9a-f]+$/),
-  device_fingerprint: z.string().length(32).regex(/^[0-9a-f]+$/),
+  device_fingerprint: z.string().min(1),
 });
 
 export const claimVerifySchema = z.object({
   authority_id: z.string().length(64).regex(/^[0-9a-f]+$/),
   challenge: z.string().length(64).regex(/^[0-9a-f]+$/),
   signature: z.string().min(128),
-  device_fingerprint: z.string().length(32).regex(/^[0-9a-f]+$/),
+  device_fingerprint: z.string().min(1),
 });
 
 export const linkDeviceSchema = z.object({

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Icon, type LucideIconName } from '@/components/icons/Icon';
+import { CategoriesSkeleton } from '@/components/CategoriesSkeleton';
 
 interface Category {
   id: string;
@@ -27,7 +28,7 @@ export default function CategoriesClient() {
       .catch(() => { setError('Failed to load categories'); setLoading(false); });
   }, []);
 
-  if (loading) return null;
+  if (loading) return <CategoriesSkeleton />;
 
   if (error) {
     return (

@@ -5,6 +5,7 @@ import { API } from '@/lib/api';
 import type { SavedPost } from '@/lib/api/types';
 import Link from 'next/link';
 import Image from 'next/image';
+import { SavedSkeleton } from '@/components/SavedSkeleton';
 import { Icon } from '@/components/icons/Icon';
 
 export default function SavedClient() {
@@ -41,15 +42,7 @@ export default function SavedClient() {
       .finally(() => setLoadingMore(false));
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[var(--color-bg)] px-3 py-6 sm:px-6 sm:py-10">
-        <div className="mx-auto max-w-3xl text-center py-20">
-          <p className="text-zinc-500">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <SavedSkeleton />;
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)] px-3 py-6 sm:px-6 sm:py-10">
