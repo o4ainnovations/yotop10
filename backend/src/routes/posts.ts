@@ -961,6 +961,7 @@ router.post('/:slug/counter', async (req, res) => {
       parent_id: parent._id.toString(),
       status: 'pending_review',
       slug: `${slug}-counter-${Date.now().toString(36)}`,
+      meta_robots: 'noindex, follow',
       fire_count: 0,
       comment_count: 0,
       view_count: 0,
@@ -1077,6 +1078,60 @@ router.get('/compare/:original/:counter', async (req, res) => {
   } catch (error) {
     console.error('Compare error:', error);
     res.status(500).json({ error: 'Failed to compare posts' });
+  }
+});
+
+// POST /api/posts/compare/:original/:counter/vote — Community "Better List" Vote
+router.post('/compare/:original/:counter/vote', async (req, res) => {
+  try {
+    const [original, counter] = await Promise.all([
+      Post.findOne({ slug: req.params.original, status: 'approved' }),
+      Post.findOne({ slug: req.params.counter, status: 'approved' }),
+    ]);
+    if (!original || !counter) return res.status(404).json({ error: 'One or both posts not found' });
+    if (counter.parent_id !== original._id.toString()) return res.status(400).json({ error: 'Posts are not related as original/counter' });
+
+    const { vote } = req.body;
+    if (!vote || !['original', 'counter'].includes(vote)) return res.status(400).json({ error: 'Vote must be "original" or "counter"' });
+
+    const fingerprint = (req as any).fingerprint || req.headers['x-device-fingerprint'] as string;
+    if (!fingerprint) return res.status(400).json({ error: 'Fingerprint required' });
+
+    const voteKey = `better_list:${original._id}:${counter._id}:fp:${fingerprint}`;
+    const existing = await redis.get(voteKey);
+    if (existing) return res.status(409).json({ error: 'Already voted' });
+
+    const target = vote === 'original' ? original : counter;
+    await Post.findByIdAndUpdate(target._id, { $inc: { fire_count: 5 } });
+    await redis.set(voteKey, vote, { EX: 86400 * 365 });
+
+    res.json({ success: true, voted: vote });
+  } catch (error) {
+    console.error('Better list vote error:', error);
+    res.status(500).json({ error: 'Failed to record vote' });
+  }
+});
+
+// GET /api/posts/:slug/authority-flip — Check if a counter has surpassed the original
+router.get('/:slug/authority-flip', async (req, res) => {
+  try {
+    const parent = await Post.findOne({ slug: req.params.slug });
+    if (!parent) return res.status(404).json({ error: 'Post not found' });
+
+    const counters = await Post.find({ parent_id: parent._id.toString(), status: 'approved' })
+      .select('title slug fire_count view_count comment_count created_at')
+      .sort({ fire_count: -1 })
+      .lean() as any[];
+
+    const parentFire = (parent as any).fire_count || 0;
+    const flips = counters
+      .filter(c => (c.fire_count || 0) > parentFire * 1.2)
+      .map(c => ({ title: c.title, slug: c.slug, fire_count: c.fire_count || 0, parent_fire_count: parentFire }));
+
+    res.json({ flips });
+  } catch (error) {
+    console.error('Authority flip error:', error);
+    res.status(500).json({ error: 'Failed' });
   }
 });
 

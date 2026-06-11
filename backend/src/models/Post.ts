@@ -31,6 +31,7 @@ export interface IPost extends Document {
   featured: boolean;
   featured_at: Date | null;
   editorial_note: string | null;
+  fire_count: number;
   votes_a: number;
   votes_b: number;
   bookmark_count: number;
@@ -172,6 +173,7 @@ const postSchema = new Schema<IPost>(
     featured: { type: Boolean, default: false },
     featured_at: { type: Date, default: null },
     editorial_note: { type: String, default: null },
+    fire_count: { type: Number, default: 0 },
     votes_a: { type: Number, default: 0 },
     votes_b: { type: Number, default: 0 },
     bookmark_count: { type: Number, default: 0 },

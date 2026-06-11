@@ -3263,4 +3263,66 @@ router.post('/mods/:id/reset-password', async (req, res) => {
   }
 });
 
+// ─── Battle Monitor (Counter-List Admin) ────────────────────────────────
+
+// GET /api/admin/posts/battles — All posts with counter activity
+router.get('/posts/battles', async (req, res) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page as string, 10) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string, 10) || 20));
+    const skip = (page - 1) * limit;
+
+    const postsWithCounters = await Post.aggregate([
+      { $match: { post_type: { $in: ['top_list', 'best_of', 'worst_of'] }, deleted: { $ne: true } } },
+      {
+        $lookup: {
+          from: 'posts',
+          localField: '_id',
+          foreignField: 'parent_id',
+          as: 'counters',
+        },
+      },
+      { $addFields: { counter_count: { $size: '$counters' } } },
+      { $match: { counter_count: { $gt: 0 } } },
+      { $sort: { counter_count: -1, updated_at: -1 } },
+      { $skip: skip },
+      { $limit: limit },
+      {
+        $project: {
+          _id: 1, title: 1, slug: 1, fire_count: 1, comment_count: 1, view_count: 1,
+          counter_count: 1, status: 1, created_at: 1, updated_at: 1, bumped_at: 1,
+        },
+      },
+    ]);
+
+    const totalResult = await Post.aggregate([
+      { $match: { post_type: { $in: ['top_list', 'best_of', 'worst_of'] }, deleted: { $ne: true } } },
+      {
+        $lookup: {
+          from: 'posts',
+          localField: '_id',
+          foreignField: 'parent_id',
+          as: 'counters',
+        },
+      },
+      { $addFields: { counter_count: { $size: '$counters' } } },
+      { $match: { counter_count: { $gt: 0 } } },
+      { $count: 'total' },
+    ]);
+    const total = totalResult[0]?.total || 0;
+
+    res.json({
+      battles: postsWithCounters.map((p: any) => ({
+        id: p._id, title: p.title, slug: p.slug,
+        fire_count: p.fire_count || 0, comment_count: p.comment_count || 0, view_count: p.view_count || 0,
+        counter_count: p.counter_count, status: p.status,
+      })),
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    });
+  } catch (error) {
+    console.error('Battle monitor error:', error);
+    res.status(500).json({ error: 'Failed to list battles' });
+  }
+});
+
 export default router;

@@ -14,6 +14,7 @@ import { ShareButton } from '@/components/ShareButton';
 import { ThisVsThatView } from '@/components/ThisVsThatView';
 import { BattleView } from '@/components/BattleView';
 import { CounterListSection } from '@/components/CounterListSection';
+import { AuthorityFlipBanner } from '@/components/AuthorityFlipBanner';
 import { RESERVED_ROUTES } from '@/lib/reservedRoutes';
 
 interface ListItem {
@@ -353,6 +354,9 @@ export default function PostDetailClient({
           { label: post.category_name || post.category_slug, href: `/c/${post.category_slug}` },
           { label: post.title, href: `/${post.slug}` },
         ]} />
+        {!vsSlug && ['top_list', 'best_of', 'worst_of'].includes(post.post_type) && (
+          <AuthorityFlipBanner slug={slug} />
+        )}
         {vsSlug && ['top_list', 'best_of', 'worst_of'].includes(post.post_type) ? (
           <BattleView originalSlug={slug} counterSlug={vsSlug} onClose={() => setVsSlug(null)} />
         ) : post.post_type === 'this_vs_that' ? (
