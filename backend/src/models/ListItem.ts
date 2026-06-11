@@ -5,7 +5,7 @@ export interface IListItem extends Document {
   post_id: mongoose.Types.ObjectId;
   rank: number;
   title: string;
-  justification: string;
+  justification?: string;
   image_url?: string;
   source_url?: string;
   created_at: Date;
@@ -30,7 +30,7 @@ const listItemSchema = new Schema<IListItem>(
     },
     justification: {
       type: String,
-      required: true,
+      default: '',
     },
     image_url: {
       type: String,
