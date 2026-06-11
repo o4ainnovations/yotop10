@@ -104,7 +104,7 @@ export default function CategoryFeedClient({ slug, initialCategory, initialPosts
             </div>
             <p className="mb-6 text-sm text-zinc-500">No posts yet in this category.</p>
             <Link
-              href="/submit"
+              href="/new"
               className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:shadow-xl hover:shadow-orange-500/40"
             >
               <Icon name="Plus" size={16} />
@@ -140,7 +140,7 @@ export default function CategoryFeedClient({ slug, initialCategory, initialPosts
           <span className="mx-2">&middot;</span>
           <Link href="/categories" className="text-orange-400 transition hover:text-orange-300">All Categories</Link>
           <span className="mx-2">&middot;</span>
-          <Link href="/submit" className="text-orange-400 transition hover:text-orange-300">Submit</Link>
+          <Link href="/new" className="text-orange-400 transition hover:text-orange-300">Submit</Link>
         </p>
       </footer>
     </div>

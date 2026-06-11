@@ -93,7 +93,7 @@ export default async function Home() {
         <p className="mb-8 max-w-md text-sm text-zinc-500 leading-relaxed">
           The open catalog of ranked lists. Be the first to submit a list and start the conversation.
         </p>
-        <CtaButton href="/submit">
+        <CtaButton href="/new">
           <Icon name="Plus" size={16} />
           Submit a List
         </CtaButton>
@@ -151,7 +151,7 @@ export default async function Home() {
         <p className="mb-4 text-sm text-zinc-500 leading-relaxed max-w-md mx-auto">
           Have a ranking to share? Submit your list and join the debate.
         </p>
-        <CtaButton href="/submit">
+        <CtaButton href="/new">
           <Icon name="Plus" size={16} />
           Submit a List
         </CtaButton>

@@ -114,7 +114,7 @@ export function FeedClient({ initialPosts, initialHasMore, category }: FeedClien
         <p className="mb-6 text-sm text-zinc-600 max-w-xs">
           Be the first to rank your top 10. Share your picks and spark the debate.
         </p>
-        <CtaButton href="/submit">
+        <CtaButton href="/new">
           <Icon name="Plus" size={16} />
           Submit a List
         </CtaButton>

@@ -141,7 +141,7 @@ export default function ArgumentsClient({ initialPosts, initialCategories, initi
             No active debates right now. Start one by submitting a This vs That or countering an existing list.
           </p>
           <Link
-            href="/submit"
+            href="/new"
             className="mt-4 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-red-600 px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
           >
             <Icon name="Plus" size={14} />

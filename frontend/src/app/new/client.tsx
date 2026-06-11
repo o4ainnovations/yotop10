@@ -12,17 +12,19 @@ interface PostTypeCard {
   color: string;
   borderClass: string;
   bgClass: string;
+  href: string;
 }
 
 const TYPES: PostTypeCard[] = [
   {
-    type: 'top_list',
+    type: 'ranked',
     name: 'Ranked List',
     description: 'Classic top 10 format with ranked items',
     icon: 'ListOrdered',
     color: 'orange',
     borderClass: 'border-orange-500/30 hover:border-orange-500/50',
     bgClass: 'from-orange-500/10 to-orange-600/5',
+    href: '/submit/ranked?type=top_list',
   },
   {
     type: 'this_vs_that',
@@ -32,6 +34,7 @@ const TYPES: PostTypeCard[] = [
     color: 'purple',
     borderClass: 'border-purple-500/30 hover:border-purple-500/50',
     bgClass: 'from-purple-500/10 to-purple-600/5',
+    href: '/submit/debate',
   },
   {
     type: 'fact_drop',
@@ -41,6 +44,7 @@ const TYPES: PostTypeCard[] = [
     color: 'pink',
     borderClass: 'border-pink-500/30 hover:border-pink-500/50',
     bgClass: 'from-pink-500/10 to-pink-600/5',
+    href: '/submit/fact',
   },
   {
     type: 'best_of',
@@ -50,6 +54,7 @@ const TYPES: PostTypeCard[] = [
     color: 'emerald',
     borderClass: 'border-emerald-500/30 hover:border-emerald-500/50',
     bgClass: 'from-emerald-500/10 to-emerald-600/5',
+    href: '/submit/ranked?type=best_of',
   },
   {
     type: 'worst_of',
@@ -59,6 +64,7 @@ const TYPES: PostTypeCard[] = [
     color: 'red',
     borderClass: 'border-red-500/30 hover:border-red-500/50',
     bgClass: 'from-red-500/10 to-red-600/5',
+    href: '/submit/ranked?type=worst_of',
   },
 ];
 
@@ -88,7 +94,7 @@ export default function NewPostClient() {
         {TYPES.map(t => (
           <button
             key={t.type}
-            onClick={() => router.push(`/submit?type=${t.type}`)}
+            onClick={() => router.push(t.href)}
             className={`rounded-2xl border bg-gradient-to-br ${t.borderClass} ${t.bgClass} p-5 text-left transition hover:shadow-lg hover:shadow-${t.color}-500/5 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500`}
           >
             <div className={`mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 ${COLOR_MAP[t.color]}`}>
