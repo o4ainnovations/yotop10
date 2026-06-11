@@ -2,13 +2,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
 import { SecureMyAuthority } from '@/components/SecureMyAuthority';
 import { API } from '@/lib/api';
 
 export default function AccountSettingsClient() {
-  const router = useRouter();
   const authUser = useAuthStore(s => s.user);
   const logout = useAuthStore(s => s.logout);
   const fetchAuthUser = useAuthStore(s => s.fetchUser);
@@ -32,7 +30,8 @@ export default function AccountSettingsClient() {
 
   const handleLogout = async () => {
     await logout();
-    router.push('/');
+    // Force hard redirect to clear all React state + trigger fresh fingerprint
+    window.location.href = '/';
   };
 
   return (

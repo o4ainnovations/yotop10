@@ -75,7 +75,7 @@ export function SecureMyAuthority() {
 
   const handleCloseSeed = () => {
     setShowSeed(false);
-    setSeedWords([]);
+    // Keep seedWords in state so user can re-view by clicking "Show Seed Phrase" again if needed
   };
 
   const fetchDevices = async () => {
@@ -153,12 +153,14 @@ export function SecureMyAuthority() {
             >
               Manage Devices ({status.devices_linked})
             </button>
-            <button
-              onClick={() => window.location.href = '/claim'}
-              className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl cursor-pointer text-sm2 text-white min-h-10 hover:bg-white/10"
-            >
-              Claim on Another Device
-            </button>
+            {seedWords.length > 0 && (
+              <button
+                onClick={() => setShowSeed(true)}
+                className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl cursor-pointer text-sm2 text-white min-h-10 hover:bg-white/10"
+              >
+                Show Seed Phrase
+              </button>
+            )}
           </div>
         </div>
       )}

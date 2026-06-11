@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { validateMnemonic, mnemonicToKeyPair, signChallenge } from '@/lib/identity';
+import { WORDLIST } from '@/lib/bip39Wordlist';
 import { API } from '@/lib/api';
 import { Icon } from '@/components/icons/Icon';
 
@@ -15,6 +16,10 @@ export default function ClaimPage() {
 
   const mnemonic = words.map((w) => w.trim().toLowerCase()).join(' ');
 
+  const invalidWordIndices = words
+    .map((w, i) => ({ word: w.trim().toLowerCase(), i }))
+    .filter(({ word }) => word.length > 0 && !WORDLIST.includes(word))
+    .map(({ i }) => i);
   const isValid = words.every((w) => w.trim().length > 0) && validateMnemonic(mnemonic);
 
   const handleWordChange = (index: number, value: string) => {
@@ -26,7 +31,13 @@ export default function ClaimPage() {
 
   const handleClaim = async () => {
     if (!isValid) {
-      setError('Invalid seed phrase. Check each word and try again.');
+      if (invalidWordIndices.length > 0) {
+        setError(`Invalid word${invalidWordIndices.length > 1 ? 's' : ''} at position${invalidWordIndices.length > 1 ? 's' : ''}: ${invalidWordIndices.map(i => i + 1).join(', ')}. Check spelling and try again.`);
+      } else if (words.some(w => !w.trim())) {
+        setError('All 12 words are required. Fill in every field.');
+      } else {
+        setError('Invalid seed phrase. The words are valid but the checksum failed. Check the order and try again.');
+      }
       return;
     }
 
@@ -149,9 +160,11 @@ export default function ClaimPage() {
                     autoCapitalize="off"
                     spellCheck={false}
                     className={`w-full rounded-xl border bg-white/5 px-2.5 py-2.5 text-sm font-mono text-white placeholder:text-zinc-600 outline-none transition sm:px-3 sm:py-3 ${
-                      isValid
-                        ? 'border-orange-500/50 ring-1 ring-orange-500/20'
-                        : 'border-white/10 focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/20'
+                      invalidWordIndices.includes(i)
+                        ? 'border-red-500/50 ring-1 ring-red-500/20'
+                        : isValid
+                          ? 'border-orange-500/50 ring-1 ring-orange-500/20'
+                          : 'border-white/10 focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/20'
                     }`}
                   />
                 </div>
