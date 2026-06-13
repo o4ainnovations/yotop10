@@ -63,7 +63,7 @@ export function DesktopCarousel({ posts }: DesktopCarouselProps) {
           {canScrollLeft && (
             <button
               onClick={() => scroll('left')}
-              className="absolute -left-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/60 backdrop-blur-sm p-2.5 transition hover:bg-black/80 shadow-lg"
+              className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/60 backdrop-blur-sm p-3 transition hover:bg-black/80 shadow-lg"
               aria-label="Scroll left"
             >
               <Icon name="ChevronLeft" size={20} className="text-white" />
@@ -73,7 +73,7 @@ export function DesktopCarousel({ posts }: DesktopCarouselProps) {
           {/* Carousel Container */}
           <div
             ref={scrollContainerRef}
-            className="flex flex-row overflow-x-auto overflow-y-hidden gap-3 py-6 px-4 -webkit-overflow-scrolling-touch snap-x snap-mandatory scroll-smooth scrollbar-hide"
+            className="flex flex-row overflow-x-auto overflow-y-hidden gap-3 py-6 px-3 sm:px-4 lg:px-6 xl:px-8 -webkit-overflow-scrolling-touch snap-x snap-mandatory scroll-smooth scrollbar-hide"
             style={{ scrollBehavior: 'smooth' }}
           >
             {posts.map((post) => (
@@ -87,7 +87,7 @@ export function DesktopCarousel({ posts }: DesktopCarouselProps) {
           {canScrollRight && (
             <button
               onClick={() => scroll('right')}
-              className="absolute -right-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/60 backdrop-blur-sm p-2.5 transition hover:bg-black/80 shadow-lg"
+              className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/60 backdrop-blur-sm p-3 transition hover:bg-black/80 shadow-lg"
               aria-label="Scroll right"
             >
               <Icon name="ChevronRight" size={20} className="text-white" />

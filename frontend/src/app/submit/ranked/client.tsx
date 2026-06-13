@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { API, PostSubmission, TitleCheckResponse } from '@/lib/api';
 import { Icon } from '@/components/icons/Icon';
+import { ImageUploader } from '@/components/ImageUploader';
 import { useAuthStore } from '@/stores/auth';
 import { toast } from '@/lib/toast';
 
@@ -108,6 +109,7 @@ export default function RankedSubmitClient({ initialType, parentSlug }: { initia
     suggestion?: string;
   } | null>(null);
 
+  const [heroImageUrl, setHeroImageUrl] = useState('');
   const [submitted, setSubmitted] = useState<{
     title: string;
     id: string;
@@ -306,7 +308,7 @@ export default function RankedSubmitClient({ initialType, parentSlug }: { initia
         });
       } else {
         const submission: PostSubmission = {
-          title, post_type: postType, intro, category_slug: categorySlug,
+          title, post_type: postType, intro, category_slug: categorySlug, hero_image_url: heroImageUrl || undefined,
           items: items.map((item, idx) => ({ rank: idx + 1, title: item.title, justification: item.justification, image_url: item.image_url || undefined, source_url: item.source_url || undefined })),
           author_display_name: authorName || undefined,
         };
@@ -500,6 +502,8 @@ export default function RankedSubmitClient({ initialType, parentSlug }: { initia
             className="mt-3 inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-zinc-400 transition hover:border-white/20 hover:text-zinc-200 disabled:opacity-40"
           ><Icon name="Plus" size={12} /> Add item</button>
         </div>
+
+        <ImageUploader currentUrl={heroImageUrl} onUpload={setHeroImageUrl} label="Cover Image (optional)" />
 
         <div>
           <label htmlFor="author" className="mb-1 block text-xs font-medium text-zinc-400">Display Name <span className="text-zinc-600">(optional)</span></label>

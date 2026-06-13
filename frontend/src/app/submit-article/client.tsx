@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { API } from '@/lib/api';
 import type { ArticleSubmission } from '@/lib/api/types';
 import { Icon } from '@/components/icons/Icon';
+import { ImageUploader } from '@/components/ImageUploader';
 
 interface SourceField {
   id: string;
@@ -223,20 +224,11 @@ export default function SubmitArticleClient() {
         </div>
 
         {/* Cover Image */}
-        <div>
-          <label htmlFor="article-cover" className="mb-2 block text-sm font-medium text-zinc-400">
-            Cover Image URL
-            <span className="ml-1 text-zinc-600">(optional)</span>
-          </label>
-          <input
-            id="article-cover"
-            type="text"
-            value={coverImage}
-            onChange={(e) => setCoverImage(e.target.value)}
-            placeholder="https://example.com/image.jpg"
-            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-zinc-600"
-          />
-        </div>
+        <ImageUploader
+          currentUrl={coverImage}
+          onUpload={url => setCoverImage(url)}
+          label="Cover Image (optional)"
+        />
 
         {/* Sources */}
         <div>

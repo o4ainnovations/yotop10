@@ -62,8 +62,8 @@ export const PostCarouselCard = memo(function PostCarouselCard({ post }: { post:
         </div>
       )}
 
-      {/* Section C: Media — Image or Category Fallback */}
-      <div className="mx-4 lg:mx-5 rounded-xl overflow-hidden h-44 lg:h-56 bg-white/5 flex items-center justify-center">
+      {/* Section C: Media — Image or Category Gradient Fallback */}
+      <div className="mx-4 lg:mx-5 rounded-xl overflow-hidden h-44 lg:h-64 bg-white/5">
         {post.hero_image_url ? (
           <Image
             src={post.hero_image_url}
@@ -74,11 +74,13 @@ export const PostCarouselCard = memo(function PostCarouselCard({ post }: { post:
             unoptimized
           />
         ) : (
-          <div className="flex flex-col items-center gap-2 lg:gap-3 text-zinc-700">
-            <Icon name={getCategoryIcon(post.category_slug) as LucideIconName} size={40} />
-            <span className="text-2xs lg:text-xs font-mono uppercase tracking-widest text-zinc-600">
-              {post.category_name || post.category_slug}
-            </span>
+          <div className="w-full h-full bg-gradient-to-br from-orange-600/30 via-purple-700/20 to-red-700/30 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-2">
+              <Icon name={getCategoryIcon(post.category_slug) as LucideIconName} size={48} className="text-white/25" />
+              <span className="text-xs font-mono uppercase tracking-widest text-white/40">
+                {post.category_name || post.category_slug}
+              </span>
+            </div>
           </div>
         )}
       </div>
