@@ -31,7 +31,7 @@ export function SlideMenuPanel() {
   const navItems = [
     { icon: 'User' as const, label: 'Profile', href: user ? `/a/${cleanUsername}` : '/a' },
     { icon: 'Folder' as const, label: 'Categories', href: '/categories' },
-    { icon: 'MessageCircle' as const, label: 'Argument', href: '/arguments', badge: 'Beta' },
+    { icon: 'MessageCircle' as const, label: 'Argument', href: '/arguments', badge: 'Hot' },
     { icon: 'Search' as const, label: 'Explore', href: '/explore' },
     { icon: 'Bookmark' as const, label: 'Saved', href: '/saved' },
     { icon: 'FileText' as const, label: 'Articles', href: '/articles' },

@@ -42,11 +42,11 @@ const POST_TYPE_LABELS: Record<string, string> = {
 };
 
 const TIER_STYLES: Record<string, { ring: string; label: string; text: string; bg: string; dot: string }> = {
-  scholar: { ring: 'ring-amber-500', label: 'Scholar', text: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20', dot: 'bg-amber-500' },
-  neutral: { ring: 'ring-zinc-500', label: 'Neutral', text: 'text-zinc-400', bg: 'bg-zinc-500/10 border-zinc-500/20', dot: 'bg-zinc-500' },
-  troll: { ring: 'ring-red-500', label: 'Troll', text: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20', dot: 'bg-red-500' },
-  newbie: { ring: 'ring-blue-500', label: 'Newbie', text: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20', dot: 'bg-blue-500' },
-  ghost: { ring: 'ring-zinc-600', label: 'Ghost', text: 'text-zinc-500', bg: 'bg-zinc-700/30 border-zinc-700/30', dot: 'bg-zinc-600' },
+  scholar: { ring: 'ring-white/30', label: 'Scholar', text: 'text-white', bg: 'bg-white/10 border-white/20', dot: 'bg-white' },
+  neutral: { ring: 'ring-white/20', label: 'Neutral', text: 'text-white/80', bg: 'bg-white/5 border-white/10', dot: 'bg-white/50' },
+  troll: { ring: 'ring-white/10', label: 'Troll', text: 'text-white/60', bg: 'bg-white/[0.03] border-white/5', dot: 'bg-white/30' },
+  newbie: { ring: 'ring-white/10', label: 'New Member', text: 'text-white/50', bg: 'bg-white/[0.03] border-white/5', dot: 'bg-white/20' },
+  ghost: { ring: 'ring-white/5', label: 'Inactive', text: 'text-white/40', bg: 'bg-white/[0.02] border-white/[0.03]', dot: 'bg-white/10' },
 };
 
 export default function UserProfileClient({ initialProfile }: { initialProfile: UserProfile }) {
@@ -178,13 +178,21 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
       {/* ─── Trust gauge (own profile only) ─── */}
       {isOwn && (
         <div className="mb-6">
-          <div className="flex h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden">
-            <div className={`transition-all duration-500 ${tier.bg.split(' ')[0]}`} style={{ width: `${Math.min(100, (trustScore / 10) * 100)}%` }} />
-          </div>
+          {profile.trust_level === 'newbie' || profile.trust_level === 'ghost' ? (
+            <div className="flex h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden">
+              <div className="bg-zinc-700 transition-all" style={{ width: '100%' }} />
+            </div>
+          ) : (
+            <div className="flex h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden">
+              <div className={`transition-all duration-500 bg-white/20`} style={{ width: `${Math.min(100, Math.max(0, ((trustScore - 0.1) / 1.9) * 100))}%` }} />
+            </div>
+          )}
           <div className="flex justify-between mt-1 text-3xs text-zinc-700">
-            <span>Troll</span>
-            <span>Neutral</span>
-            <span>Scholar</span>
+            {profile.trust_level === 'newbie' || profile.trust_level === 'ghost' ? (
+              <span className="text-zinc-600">Building reputation</span>
+            ) : (
+              <><span>Troll</span><span>Neutral</span><span>Scholar</span></>
+            )}
           </div>
         </div>
       )}

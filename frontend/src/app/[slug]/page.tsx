@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import PostDetailClient from './client';
 import PostPendingClient from '@/components/PostPendingClient';
@@ -72,23 +73,45 @@ export default async function PostDetailPage({ params }: PageProps) {
     notFound();
   }
 
+  // Forward device_fingerprint cookie so backend can identify the viewer
+  const cookieStore = await cookies();
+  const fpCookie = cookieStore.get('device_fingerprint')?.value || '';
+  const baseUrl = process.env.INTERNAL_API_URL || 'http://backend:8000/api';
+
+  const headers: Record<string, string> = {};
+  if (fpCookie) headers.Cookie = `device_fingerprint=${fpCookie}`;
+
+  async function apiFetchWithCookie<T>(endpoint: string, fallback: T): Promise<T> {
+    try {
+      const res = await fetch(`${baseUrl}${endpoint}`, { headers, cache: 'no-store' });
+      if (!res.ok) return fallback;
+      return await res.json();
+    } catch { return fallback; }
+  }
+
   try {
     const [postData, commentsData] = await Promise.all([
-      API.getPost(slug),
-      API.getComments(slug),
+      apiFetchWithCookie<{ post: Record<string, unknown> | null; items: Record<string, unknown>[] }>(`/posts/${encodeURIComponent(slug)}`, { post: null, items: [] }),
+      apiFetchWithCookie<{ comments: Record<string, unknown>[] }>(`/posts/${encodeURIComponent(slug)}/comments?limit=50`, { comments: [] }),
     ]);
 
-    const { post, items } = postData;
+    const { post: rawPost, items: rawItems } = postData;
     const { comments } = commentsData;
 
+    if (!rawPost) { notFound(); }
+
+    const post = rawPost as unknown as import('@/lib/api/types').Post;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const items = rawItems as any;
+    const pStatus = post.status;
+
     // Show pending/rejected page instead of full post
-    if (post.status && post.status !== 'approved') {
-      const isRejected = post.status === 'rejected';
+    if (pStatus && pStatus !== 'approved') {
       return (
         <PostPendingClient
           title={post.title}
           rejectionReason={post.rejection_reason}
-          isRejected={isRejected}
+          isRejected={pStatus === 'rejected'}
         />
       );
     }

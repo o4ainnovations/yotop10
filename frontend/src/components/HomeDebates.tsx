@@ -68,6 +68,7 @@ export function HomeDebates({ debates }: { debates: DebateItem[] }) {
       </div>
       <div className="space-y-4">
         {localDebates.slice(0, 4).map((d, idx) => {
+          const isHiddenMobile = idx >= 2;
           const votesA = d.votes_a ?? 0;
           const votesB = d.votes_b ?? 0;
           const totalVotes = votesA + votesB;
@@ -80,7 +81,7 @@ export function HomeDebates({ debates }: { debates: DebateItem[] }) {
           return (
             <article
               key={d.slug}
-              className="rounded-2xl border border-white/5 bg-white/5 overflow-hidden transition hover:border-orange-500/20 hover:bg-white/[0.07]"
+              className={`rounded-2xl border border-white/5 bg-white/5 overflow-hidden transition hover:border-orange-500/20 hover:bg-white/[0.07] ${isHiddenMobile ? 'hidden sm:block' : ''}`}
             >
               {/* A. Debate Banner Image */}
               <Link href={`/${d.slug}`} className="block relative h-36 w-full overflow-hidden bg-zinc-900">
