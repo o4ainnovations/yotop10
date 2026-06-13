@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
 import { useSlideMenu } from '@/stores/slideMenu';
@@ -13,6 +14,15 @@ export function SlideMenuPanel() {
   const setOpen = useSlideMenu((s) => s.setOpen);
   const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
+
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [open]);
 
   const displayName = user?.custom_display_name || user?.username || 'User';
   const rawUsername = user?.username || 'unknown';

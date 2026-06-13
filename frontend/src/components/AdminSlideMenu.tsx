@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useSlideMenu } from '@/stores/slideMenu';
 import { useAdminStore } from '@/stores/admin';
@@ -13,6 +14,15 @@ export function AdminSlideMenu() {
   const open = useSlideMenu((s) => s.open);
   const setOpen = useSlideMenu((s) => s.setOpen);
   const admin = useAdminStore((s) => s.admin);
+
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [open]);
 
   const showPosts = usePermission('posts:read').allowed;
   const showComments = usePermission('comments:read').allowed;
