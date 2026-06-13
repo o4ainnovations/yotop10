@@ -357,6 +357,29 @@ router.get('/:id/queue', async (req, res) => {
   }
 });
 
+// DELETE /api/posts/:id/cancel — Cancel own pending post
+router.delete('/:id/cancel', async (req, res) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: 'Authentication required' });
+
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid id' });
+
+    const post = await Post.findById(id);
+    if (!post) return res.status(404).json({ error: 'Post not found' });
+    if (post.author_id !== req.user.user_id) return res.status(403).json({ error: 'Not your post' });
+    if (post.status !== 'pending_review') return res.status(400).json({ error: 'Only pending posts can be cancelled' });
+
+    await ListItem.deleteMany({ post_id: post._id });
+    await Post.findByIdAndDelete(post._id);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Cancel post error:', error);
+    res.status(500).json({ error: 'Failed to cancel post' });
+  }
+});
+
 // GET /api/posts/:idOrSlug — Single post with items and comments
 router.get('/:idOrSlug', async (req, res) => {
   try {

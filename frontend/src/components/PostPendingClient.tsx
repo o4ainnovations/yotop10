@@ -54,7 +54,7 @@ export default function PostPendingClient({ title, rejectionReason, isRejected, 
         </div>
       )}
 
-      <div className="flex flex-wrap items-center justify-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 w-full max-w-md mx-auto">
         <button
           onClick={() => window.history.back()}
           className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-zinc-300 backdrop-blur-sm transition hover:border-white/20 hover:bg-white/10"
@@ -68,8 +68,23 @@ export default function PostPendingClient({ title, rejectionReason, isRejected, 
           className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:shadow-xl"
         >
           <Icon name="House" size={16} />
-          Continue to Homepage
+          Home
         </Link>
+
+        <button
+          onClick={async () => {
+            if (!postId) return;
+            try {
+              const { apiFetch } = await import('@/lib/api/client');
+              await apiFetch(`/posts/${postId}/cancel`, { method: 'DELETE' });
+              window.location.href = '/';
+            } catch {}
+          }}
+          className="inline-flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 px-5 py-3 text-sm font-medium text-red-400 backdrop-blur-sm transition hover:bg-red-500/10 hover:border-red-500/50"
+        >
+          <Icon name="Trash2" size={16} />
+          Cancel Post
+        </button>
       </div>
     </div>
   );
