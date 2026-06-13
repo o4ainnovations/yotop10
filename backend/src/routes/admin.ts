@@ -3291,7 +3291,9 @@ router.get('/settings/ai-moderation', async (_req, res) => {
       model: ai.model || 'deepseek-chat',
       temperature: ai.temperature ?? 0.1,
       auto_approve_threshold: ai.auto_approve_threshold ?? 80,
+      auto_approve_mode: ai.auto_approve_mode || 'approve_only',
       has_key: !!(ai.api_key_encrypted),
+      has_config: !!ai && Object.keys(ai).length > 0,
     });
   } catch { res.status(500).json({ error: 'Failed' }); }
 });
@@ -3299,13 +3301,14 @@ router.get('/settings/ai-moderation', async (_req, res) => {
 // POST /api/admin/settings/ai-moderation — Save AI moderation config
 router.post('/settings/ai-moderation', async (req, res) => {
   try {
-    const { api_key, model, temperature, auto_approve_threshold, enabled } = req.body;
+    const { api_key, model, temperature, auto_approve_threshold, auto_approve_mode, enabled } = req.body;
     const { encrypt } = await import('../lib/aiModeration');
     const setOps: Record<string, unknown> = {};
     if (api_key) setOps['ai_moderation.api_key_encrypted'] = encrypt(api_key);
     if (model) setOps['ai_moderation.model'] = model;
     if (typeof temperature === 'number') setOps['ai_moderation.temperature'] = Math.max(0, Math.min(2, temperature));
     if (typeof auto_approve_threshold === 'number') setOps['ai_moderation.auto_approve_threshold'] = Math.max(0, Math.min(100, auto_approve_threshold));
+    if (auto_approve_mode && ['approve_only', 'approve_reject', 'approve_revision'].includes(auto_approve_mode)) setOps['ai_moderation.auto_approve_mode'] = auto_approve_mode;
     if (typeof enabled === 'boolean') setOps['ai_moderation.enabled'] = enabled;
     if (Object.keys(setOps).length === 0) return res.status(400).json({ error: 'No fields to update' });
 
@@ -3317,7 +3320,9 @@ router.post('/settings/ai-moderation', async (req, res) => {
       model: ai.model || 'deepseek-chat',
       temperature: ai.temperature ?? 0.1,
       auto_approve_threshold: ai.auto_approve_threshold ?? 80,
+      auto_approve_mode: ai.auto_approve_mode || 'approve_only',
       has_key: !!(ai.api_key_encrypted),
+      has_config: !!ai && Object.keys(ai).length > 0,
     });
   } catch (e: any) {
     if (e?.issues) return res.status(400).json({ code: 'VALIDATION', error: e.issues.map((i: any) => i.message).join('; ') });
@@ -3333,7 +3338,7 @@ router.post('/settings/ai-moderation/test', async (req, res) => {
     const { ListItem } = await import('../models/ListItem');
     let config;
     if (req.body.api_key) {
-      config = { api_key: req.body.api_key, model: req.body.model || 'deepseek-chat', temperature: req.body.temperature ?? 0.1, auto_approve_threshold: 80, enabled: true };
+      config = { api_key: req.body.api_key, model: req.body.model || 'deepseek-chat', temperature: req.body.temperature ?? 0.1, auto_approve_threshold: 80, auto_approve_mode: 'approve_only' as const, enabled: true };
     } else {
       config = await getAiConfig();
     }

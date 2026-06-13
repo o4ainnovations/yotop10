@@ -87,10 +87,17 @@ async function processSinglePost(postId: string, config: AiModerationConfig): Pr
     ai_prompt_tokens: result.prompt_tokens,
   };
 
-  // Auto-approve if score meets threshold
+  const mode = config.auto_approve_mode || 'approve_only';
+
   if (result.score >= config.auto_approve_threshold) {
     update.status = 'approved';
     update.published_at = new Date();
+  } else if (mode === 'approve_reject') {
+    update.status = 'rejected';
+  } else if (mode === 'approve_revision') {
+    update.ai_feedback = result.flags.length > 0
+      ? `This post needs revision. Issues: ${result.flags.join(', ')}. Score: ${result.score}/100.`
+      : `This post scored ${result.score}/100 and could be improved before approval.`;
   }
 
   const updated = await Post.findByIdAndUpdate(postId, { $set: update }, { new: true });
@@ -98,8 +105,10 @@ async function processSinglePost(postId: string, config: AiModerationConfig): Pr
     try {
       await indexPost(updated as unknown as Record<string, unknown>);
     } catch { /* non-critical */ }
-    console.log(`[aiWorker] Auto-approved ${post.slug} (score: ${result.score})`);
+    console.log(`[aiWorker] Auto-approved ${post.slug} (score: ${result.score}, mode: ${mode})`);
+  } else if (updated && update.status === 'rejected') {
+    console.log(`[aiWorker] Auto-rejected ${post.slug} (score: ${result.score}, mode: ${mode})`);
   } else {
-    console.log(`[aiWorker] Flagged ${post.slug} (score: ${result.score}, flags: ${result.flags.join(', ')})`);
+    console.log(`[aiWorker] Flagged ${post.slug} (score: ${result.score}, mode: ${mode}, flags: ${result.flags.join(', ')})`);
   }
 }

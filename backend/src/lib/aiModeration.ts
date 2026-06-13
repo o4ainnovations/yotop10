@@ -30,11 +30,14 @@ export function decrypt(encoded: string): string {
   return decipher.update(Buffer.from(dataHex, 'hex'), undefined, 'utf8') + decipher.final('utf8');
 }
 
+export type AutoApproveMode = 'approve_only' | 'approve_reject' | 'approve_revision';
+
 export interface AiModerationConfig {
   api_key: string;
   model: string;
   temperature: number;
   auto_approve_threshold: number;
+  auto_approve_mode: AutoApproveMode;
   enabled: boolean;
 }
 
@@ -56,6 +59,7 @@ export async function getAiConfig(): Promise<AiModerationConfig | null> {
       model: ai.model || 'deepseek-chat',
       temperature: ai.temperature ?? 0.1,
       auto_approve_threshold: ai.auto_approve_threshold ?? 80,
+      auto_approve_mode: ai.auto_approve_mode || 'approve_only',
       enabled: ai.enabled,
     };
   } catch {

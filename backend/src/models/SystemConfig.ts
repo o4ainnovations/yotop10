@@ -23,6 +23,14 @@ export interface ISystemConfig extends Document {
     review_window: number;
     double_blind: boolean;
   };
+  ai_moderation?: {
+    enabled: boolean;
+    api_key_encrypted: string;
+    model: string;
+    temperature: number;
+    auto_approve_threshold: number;
+    auto_approve_mode: 'approve_only' | 'approve_reject' | 'approve_revision';
+  };
   version: number;
   updated_at: Date;
   updated_by: string;
@@ -59,6 +67,7 @@ const systemConfigSchema = new Schema<ISystemConfig>({
     review_window: { type: Number, default: 50 },
     double_blind: { type: Boolean, default: true },
   },
+  ai_moderation: { type: Schema.Types.Mixed },
   version: { type: Number, default: 1 },
   updated_at: { type: Date, default: Date.now },
   updated_by: { type: String, default: 'system' },

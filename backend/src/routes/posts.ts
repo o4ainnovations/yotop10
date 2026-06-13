@@ -140,9 +140,11 @@ router.get('/', async (req, res) => {
       sort = 'newest',
     } = req.query;
 
-    const pageNum = Math.max(1, parseInt(page as string, 10));
-    const limitNum = Math.min(50, Math.max(1, parseInt(limit as string, 10)));
-    const skip = (pageNum - 1) * limitNum;
+    // Pagination — when limit is not provided, return ALL matching posts
+    const hasPagination = typeof limit === 'string' && limit.length > 0;
+    const pageNum = hasPagination ? Math.max(1, parseInt(page as string, 10)) : 1;
+    const limitNum = hasPagination ? Math.min(50, Math.max(1, parseInt(limit as string, 10))) : undefined;
+    const skip = limitNum !== undefined ? (pageNum - 1) * limitNum : 0;
 
     // Build query - only approved posts
     const query: Record<string, unknown> = { status: 'approved', deleted: { $ne: true } };
@@ -186,12 +188,14 @@ router.get('/', async (req, res) => {
     const categoryNameMap = await getCategoryNameMap();
 
     // Execute query with pagination
+    let queryBuilder = Post.find(query)
+      .sort(sortOption)
+      .skip(skip);
+    if (limitNum !== undefined) {
+      queryBuilder = queryBuilder.limit(limitNum);
+    }
     const [posts, total] = await Promise.all([
-      Post.find(query)
-        .sort(sortOption)
-        .skip(skip)
-        .limit(limitNum)
-        .lean(),
+      queryBuilder.lean(),
       Post.countDocuments(query),
     ]);
 
@@ -237,9 +241,9 @@ router.get('/', async (req, res) => {
       posts: formattedPosts,
       pagination: {
         page: pageNum,
-        limit: limitNum,
+        limit: limitNum ?? total,
         total,
-        totalPages: Math.ceil(total / limitNum),
+        totalPages: limitNum !== undefined ? Math.ceil(total / limitNum) : 1,
       },
     });
   } catch (error) {

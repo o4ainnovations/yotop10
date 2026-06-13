@@ -9,6 +9,8 @@ import { DynamicIsland } from "@/components/DynamicIsland";
 import { SubmitFAB } from "@/components/SubmitFAB";
 import { AppFooter } from "@/components/AppFooter";
 import DesktopTopBar from "@/components/DesktopTopBar";
+import DesktopTopBarMinimal from "@/components/DesktopTopBarMinimal";
+import { DesktopSidebar } from "@/components/DesktopSidebar";
 import { SlideMenuRouter } from "@/components/SlideMenuRouter";
 // import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import { FingerprintMergeDetector } from "@/components/FingerprintMergeDialog";
@@ -111,16 +113,34 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         `}} />
       </head>
       <body className={`${anton.variable} ${monoton.variable} min-h-screen flex flex-col bg-[var(--color-bg)] text-[#eaeaef]`} suppressHydrationWarning>
+        {/* Mobile top bar */}
         <Suspense fallback={<div className="h-14 bg-[var(--color-bg)] animate-pulse" />}>
-          <DesktopTopBar />
+          <div className="lg:hidden">
+            <DesktopTopBar />
+          </div>
         </Suspense>
+
+        {/* Desktop sidebar */}
+        <Suspense fallback={<div className="hidden lg:block fixed top-0 left-0 z-40 h-full w-64 lg:w-72 bg-[var(--color-bg)] animate-pulse" />}>
+          <div className="hidden lg:block">
+            <DesktopSidebar />
+          </div>
+        </Suspense>
+
+        {/* Desktop minimal top bar */}
+        <Suspense fallback={<div className="hidden lg:block h-14 bg-[var(--color-bg)] animate-pulse" />}>
+          <div className="hidden lg:block">
+            <DesktopTopBarMinimal />
+          </div>
+        </Suspense>
+
         <Suspense fallback={<div className="fixed inset-0 z-40 bg-[var(--color-bg)]/50" />}>
           <SlideMenuRouter />
         </Suspense>
         <Suspense>
           <AuthInitializer />
         </Suspense>
-        <main className="flex-1 pt-14">
+        <main className="flex-1 pt-14 lg:pt-14 lg:ml-64 xl:ml-72">
           {children}
           <AppFooter />
         </main>

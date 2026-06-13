@@ -13,12 +13,17 @@ export function DesktopCarousel({ posts }: DesktopCarouselProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+  const [cardWidth, setCardWidth] = useState(400);
 
   const checkScroll = () => {
     if (!scrollContainerRef.current) return;
     const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
     setCanScrollLeft(scrollLeft > 0);
     setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+    const gap = 12;
+    const padding = 32;
+    const computed = Math.floor((clientWidth - padding - gap * 2) / 3);
+    if (computed > 320) setCardWidth(Math.min(computed, 640));
   };
 
   useEffect(() => {
@@ -32,19 +37,19 @@ export function DesktopCarousel({ posts }: DesktopCarouselProps) {
         window.removeEventListener('resize', checkScroll);
       };
     }
-  }, []);
+  }, [posts]);
 
   const scroll = (direction: 'left' | 'right') => {
     if (!scrollContainerRef.current) return;
-    const scrollAmount = 500;
+    const gap = 12;
     scrollContainerRef.current.scrollBy({
-      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      left: direction === 'left' ? -(cardWidth + gap) : (cardWidth + gap),
       behavior: 'smooth',
     });
   };
 
   return (
-    <div className="pb-24">
+    <div>
       {posts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5">
@@ -53,26 +58,26 @@ export function DesktopCarousel({ posts }: DesktopCarouselProps) {
           <h3 className="mb-2 text-base font-semibold text-zinc-300">No ranked lists yet.</h3>
         </div>
       ) : (
-        <div className="relative flex justify-end">
+        <div className="relative">
           {/* Left Arrow */}
           {canScrollLeft && (
             <button
               onClick={() => scroll('left')}
-              className="absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 p-2 transition hover:bg-black/70"
+              className="absolute -left-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/60 backdrop-blur-sm p-2.5 transition hover:bg-black/80 shadow-lg"
               aria-label="Scroll left"
             >
-              <Icon name="ChevronLeft" size={24} className="text-white" />
+              <Icon name="ChevronLeft" size={20} className="text-white" />
             </button>
           )}
 
           {/* Carousel Container */}
           <div
             ref={scrollContainerRef}
-            className="flex flex-row overflow-x-auto overflow-y-hidden gap-3 py-6 px-8 -webkit-overflow-scrolling-touch snap-x snap-mandatory scroll-smooth scrollbar-hide"
+            className="flex flex-row overflow-x-auto overflow-y-hidden gap-3 py-6 px-4 -webkit-overflow-scrolling-touch snap-x snap-mandatory scroll-smooth scrollbar-hide"
             style={{ scrollBehavior: 'smooth' }}
           >
             {posts.map((post) => (
-              <div key={post.id} className="flex-shrink-0 w-[464px] aspect-square scroll-snap-align-start">
+              <div key={post.id} className="flex-shrink-0 scroll-snap-align-start" style={{ width: cardWidth }}>
                 <PostCarouselCard post={post} />
               </div>
             ))}
@@ -82,10 +87,10 @@ export function DesktopCarousel({ posts }: DesktopCarouselProps) {
           {canScrollRight && (
             <button
               onClick={() => scroll('right')}
-              className="absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 p-2 transition hover:bg-black/70"
+              className="absolute -right-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/60 backdrop-blur-sm p-2.5 transition hover:bg-black/80 shadow-lg"
               aria-label="Scroll right"
             >
-              <Icon name="ChevronRight" size={24} className="text-white" />
+              <Icon name="ChevronRight" size={20} className="text-white" />
             </button>
           )}
         </div>

@@ -7,6 +7,15 @@ import { HomeDebates } from '@/components/HomeDebates';
 import { HomeArticles } from '@/components/HomeArticles';
 import { HomeFactDrop } from '@/components/HomeFactDrop';
 import { HomeSkeleton } from '@/components/HomeSkeleton';
+import { DesktopDebates } from '@/components/DesktopDebates';
+import { DesktopArticles } from '@/components/DesktopArticles';
+import { DesktopCategories } from '@/components/DesktopCategories';
+import { DesktopFacts } from '@/components/DesktopFacts';
+import { DesktopCta } from '@/components/DesktopCta';
+
+import { DesktopTrending } from '@/components/DesktopTrending';
+import { DesktopHallOfFame } from '@/components/DesktopHallOfFame';
+import { DesktopStats } from '@/components/DesktopStats';
 import CtaButton from '@/components/CtaButton';
 import { Icon } from '@/components/icons/Icon';
 import type { PostsResponse } from '@/lib/api/types';
@@ -68,11 +77,11 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   const [postsData, catsData, argsData, artsData, factsData] = await Promise.all([
-    fetchJson<PostsResponse>(`${API_BASE}/posts?page=1&limit=12&post_type=top_list%2Cbest_of%2Cworst_of`, { posts: [] }),
+    fetchJson<PostsResponse>(`${API_BASE}/posts?post_type=top_list%2Cbest_of%2Cworst_of`, { posts: [] }),
     fetchJson<{ categories: CategoryItem[] }>(`${API_BASE}/categories`, { categories: [] }),
-    fetchJson<{ arguments: DebateItem[] }>(`${API_BASE}/arguments?limit=4`, { arguments: [] }),
-    fetchJson<{ articles: ArticleItem[] }>(`${API_BASE}/articles?limit=3`, { articles: [] }),
-    fetchJson<PostsResponse>(`${API_BASE}/posts?post_type=fact_drop&limit=5`, { posts: [] }),
+    fetchJson<{ arguments: DebateItem[] }>(`${API_BASE}/arguments?limit=12`, { arguments: [] }),
+    fetchJson<{ articles: ArticleItem[] }>(`${API_BASE}/articles?limit=8`, { articles: [] }),
+    fetchJson<PostsResponse>(`${API_BASE}/posts?post_type=fact_drop&limit=10`, { posts: [] }),
   ]);
 
   const posts = postsData.posts || [];
@@ -126,36 +135,62 @@ export default async function Home() {
         </div>
       </div>
 
-      {/* Section 2: Hot Debates */}
-      <HomeDebates debates={debates} />
+      {/* ─── Mobile sections (unchanged, hidden on md+) ─── */}
+      <div className="md:hidden">
+        {/* Section 2: Hot Debates */}
+        <HomeDebates debates={debates} />
 
-      {debates.length > 0 && <hr className="border-white/5 mx-3 sm:mx-6" />}
+        {debates.length > 0 && <hr className="border-white/5 mx-3 sm:mx-6" />}
 
-      {/* Section 3: Categories — pills + 3-slide post feed */}
-      <HomeCategoryFeed categories={categories} />
+        {/* Section 3: Categories — pills + 3-slide post feed */}
+        <HomeCategoryFeed categories={categories} />
 
-      <hr className="border-white/5 mx-3 sm:mx-6" />
+        <hr className="border-white/5 mx-3 sm:mx-6" />
 
-      {/* Section 4: Did You Know? (Fact Drop widget) */}
-      <HomeFactDrop facts={facts} />
+        {/* Section 4: Did You Know? (Fact Drop widget) */}
+        <HomeFactDrop facts={facts} />
 
-      {facts.length > 0 && <hr className="border-white/5 mx-3 sm:mx-6" />}
+        {facts.length > 0 && <hr className="border-white/5 mx-3 sm:mx-6" />}
 
-      {/* Section 5: Recent Articles */}
-      <HomeArticles articles={articles} />
+        {/* Section 5: Recent Articles */}
+        <HomeArticles articles={articles} />
 
-      <hr className="border-white/5 mx-3 sm:mx-6" />
+        <hr className="border-white/5 mx-3 sm:mx-6" />
 
-      {/* Section 6: Bottom CTA */}
-      <section className="px-3 sm:px-6 py-8 text-center">
-        <p className="mb-4 text-sm text-zinc-500 leading-relaxed max-w-md mx-auto">
-          Have a ranking to share? Submit your list and join the debate.
-        </p>
-        <CtaButton href="/new">
-          <Icon name="Plus" size={16} />
-          Submit a List
-        </CtaButton>
-      </section>
+        {/* Section 6: Bottom CTA */}
+        <section className="px-3 sm:px-6 py-8 text-center">
+          <p className="mb-4 text-sm text-zinc-500 leading-relaxed max-w-md mx-auto">
+            Have a ranking to share? Submit your list and join the debate.
+          </p>
+          <CtaButton href="/new">
+            <Icon name="Plus" size={16} />
+            Submit a List
+          </CtaButton>
+        </section>
+      </div>
+
+      {/* ─── Desktop sections (hidden below md) ─── */}
+      <div className="hidden md:block px-4 lg:px-6 pb-12">
+        <div className="grid grid-cols-2 gap-5 lg:gap-6">
+          {/* Row 1: Debates Arena + Articles */}
+          <DesktopDebates className="col-span-2 lg:col-span-1" debates={debates} />
+          <DesktopArticles className="col-span-2 lg:col-span-1" articles={articles} />
+
+          {/* Row 2: Categories + Did You Know */}
+          <DesktopCategories className="col-span-2 lg:col-span-1" categories={categories} />
+          <DesktopFacts className="col-span-2 lg:col-span-1" facts={facts} />
+
+          {/* Row 3: Trending + Hall of Fame */}
+          <DesktopTrending className="col-span-2 lg:col-span-1" />
+          <DesktopHallOfFame className="col-span-2 lg:col-span-1" />
+
+          {/* Row 4: Stats + CTA */}
+          <DesktopStats className="col-span-2 lg:col-span-1" />
+
+          {/* Row 5: CTA */}
+          <DesktopCta className="col-span-2" />
+        </div>
+      </div>
     </>
     </Suspense>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import { Icon } from '@/components/icons/Icon';
 
@@ -12,7 +12,17 @@ const PREDEFINED_MODELS = [
   '__custom__',
 ];
 
+type ApproveMode = 'approve_only' | 'approve_reject' | 'approve_revision';
+
+const MODE_OPTIONS: { value: ApproveMode; label: string; desc: string }[] = [
+  { value: 'approve_only', label: 'Auto-Approve Only', desc: 'Approves posts that score above the threshold. Low-scoring posts stay pending for manual review.' },
+  { value: 'approve_reject', label: 'Approve & Reject', desc: 'Automatically approves high-scoring posts and rejects low-scoring ones.' },
+  { value: 'approve_revision', label: 'Approve & Request Revision', desc: 'Approves high-scoring posts. Low-scoring posts stay pending with AI feedback.' },
+];
+
 export default function AiModerationClient() {
+  const [configLoaded, setConfigLoaded] = useState(false);
+  const [hasConfig, setHasConfig] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [savedKey, setSavedKey] = useState(false);
   const [model, setModel] = useState('deepseek-chat');
@@ -20,6 +30,7 @@ export default function AiModerationClient() {
   const [modelSelect, setModelSelect] = useState('deepseek-chat');
   const [temperature, setTemperature] = useState(0.1);
   const [threshold, setThreshold] = useState(80);
+  const [autoApproveMode, setAutoApproveMode] = useState<ApproveMode>('approve_only');
   const [enabled, setEnabled] = useState(false);
   const [stats, setStats] = useState<{ posts_reviewed: number; auto_approved: number; avg_score: number; total_tokens: number } | null>(null);
   const [availablePosts, setAvailablePosts] = useState<Array<{ slug: string; title: string }>>([]);
@@ -29,8 +40,15 @@ export default function AiModerationClient() {
   const [testResult, setTestResult] = useState<{ score: number; flags: string[]; model: string; tokens: number; sample?: string } | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  useEffect(() => {
-    apiFetch<{ model?: string; temperature?: number; auto_approve_threshold?: number; enabled?: boolean; has_key?: boolean }>('/admin/settings/ai-moderation').then(d => {
+  const fetchConfig = useCallback(async () => {
+    try {
+      const d = await apiFetch<{
+        has_config?: boolean; model?: string; temperature?: number;
+        auto_approve_threshold?: number; auto_approve_mode?: string;
+        enabled?: boolean; has_key?: boolean;
+      }>('/admin/settings/ai-moderation');
+      setHasConfig(d.has_config ?? false);
+      setSavedKey(d.has_key ?? false);
       const m = d.model || 'deepseek-chat';
       if (PREDEFINED_MODELS.includes(m)) {
         setModelSelect(m);
@@ -42,12 +60,31 @@ export default function AiModerationClient() {
       }
       setTemperature(d.temperature ?? 0.1);
       setThreshold(d.auto_approve_threshold ?? 80);
+      setAutoApproveMode((d.auto_approve_mode as ApproveMode) || 'approve_only');
       setEnabled(d.enabled ?? false);
-      setSavedKey(d.has_key ?? false);
-    }).catch(() => {});
-    apiFetch<{ posts_reviewed: number; auto_approved: number; avg_score: number; total_tokens: number }>('/admin/stats/ai-moderation').then(setStats).catch(() => {});
-    apiFetch<{ posts: Array<{ slug: string; title: string }> }>('/admin/posts?limit=50&status=approved').then(d => setAvailablePosts(d.posts || [])).catch(() => {});
+    } catch { /* ignore */ }
+    setConfigLoaded(true);
   }, []);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const s = await apiFetch<{ posts_reviewed: number; auto_approved: number; avg_score: number; total_tokens: number }>('/admin/stats/ai-moderation');
+      setStats(s);
+    } catch { /* ignore */ }
+  }, []);
+
+  const fetchPosts = useCallback(async () => {
+    try {
+      const d = await apiFetch<{ posts: Array<{ slug: string; title: string }> }>('/admin/posts?limit=50&status=approved');
+      setAvailablePosts(d.posts || []);
+    } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => {
+    fetchConfig();
+    fetchStats();
+    fetchPosts();
+  }, [fetchConfig, fetchStats, fetchPosts]);
 
   const handleModelChange = (val: string) => {
     setModelSelect(val);
@@ -63,17 +100,26 @@ export default function AiModerationClient() {
     setModel(val);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     setSaving(true);
     setMessage(null);
     try {
-      const body: Record<string, unknown> = { model, temperature, auto_approve_threshold: threshold, enabled };
+      const body: Record<string, unknown> = {
+        model, temperature, auto_approve_threshold: threshold,
+        auto_approve_mode: autoApproveMode, enabled,
+      };
       if (apiKey) body.api_key = apiKey;
-      await apiFetch('/admin/settings/ai-moderation', { method: 'POST', body: JSON.stringify(body) });
-      setSavedKey(true);
+      const res = await apiFetch<{ has_config?: boolean; has_key?: boolean }>('/admin/settings/ai-moderation', {
+        method: 'POST', body: JSON.stringify(body),
+      });
+      setHasConfig(res.has_config ?? true);
+      setSavedKey(res.has_key ?? savedKey);
       setApiKey('');
       setMessage({ type: 'success', text: 'Settings saved.' });
-    } catch { setMessage({ type: 'error', text: 'Failed to save settings.' }); }
+    } catch {
+      setMessage({ type: 'error', text: 'Failed to save settings.' });
+    }
     setSaving(false);
   };
 
@@ -87,7 +133,9 @@ export default function AiModerationClient() {
       body.model = model;
       body.temperature = temperature;
       if (testPostSlug) body.slug = testPostSlug;
-      const res = await apiFetch<{ success: boolean; score: number; flags: string[]; model: string; tokens: number; title: string }>('/admin/settings/ai-moderation/test', { method: 'POST', body: JSON.stringify(body) });
+      const res = await apiFetch<{ success: boolean; score: number; flags: string[]; model: string; tokens: number; title: string }>(
+        '/admin/settings/ai-moderation/test', { method: 'POST', body: JSON.stringify(body) },
+      );
       setTestResult({ score: res.score, flags: res.flags, model: res.model, tokens: res.tokens, sample: res.title || '' });
       setMessage({ type: 'success', text: `AI scored it ${res.score}/100 — Model: ${res.model}` });
     } catch (e: unknown) {
@@ -97,9 +145,122 @@ export default function AiModerationClient() {
     setTesting(false);
   };
 
+  const resetConfig = async () => {
+    setMessage(null);
+    try {
+      await apiFetch('/admin/settings/ai-moderation', {
+        method: 'POST',
+        body: JSON.stringify({ enabled: false, api_key: '', model: 'deepseek-chat', temperature: 0.1, auto_approve_threshold: 80, auto_approve_mode: 'approve_only' }),
+      });
+      setHasConfig(false);
+      setSavedKey(false);
+      setApiKey('');
+      setAutoApproveMode('approve_only');
+      setEnabled(false);
+      setMessage({ type: 'success', text: 'Configuration reset.' });
+    } catch {
+      setMessage({ type: 'error', text: 'Failed to reset.' });
+    }
+  };
+
+  if (!configLoaded) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 w-48 rounded bg-white/10" />
+          <div className="h-64 rounded-xl bg-white/5" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!hasConfig) {
+    /* ───── Setup View: no config yet ───── */
+    return (
+      <div className="max-w-lg mx-auto px-4 py-12 text-center">
+        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500/20 to-pink-500/20">
+          <Icon name="Sparkles" size={28} className="text-orange-400" />
+        </div>
+        <h1 className="text-2xl font-bold text-white mb-2">Activate AI Moderation</h1>
+        <p className="text-sm text-zinc-400 mb-8 max-w-md mx-auto leading-relaxed">
+          YoTop10 can automatically review and score new posts using DeepSeek AI.
+          Set up your API key below to get started. No coding required.
+        </p>
+
+        {message && (
+          <div className={`mb-6 rounded-xl border px-4 py-3 text-sm text-left ${message.type === 'success' ? 'border-green-500/30 bg-green-500/10 text-green-400' : 'border-red-500/30 bg-red-500/10 text-red-400'}`}>
+            {message.text}
+          </div>
+        )}
+
+        <form onSubmit={handleSave} className="text-left space-y-5">
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-zinc-400">DeepSeek API Key</label>
+            <input
+              type="password"
+              value={apiKey}
+              onChange={e => setApiKey(e.target.value)}
+              placeholder="sk-..."
+              required
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none"
+            />
+            <p className="text-2xs text-zinc-600 mt-1.5">Get your key at platform.deepseek.com</p>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-zinc-400">Model</label>
+            <div className="flex gap-2">
+              <select
+                value={modelSelect}
+                onChange={e => handleModelChange(e.target.value)}
+                className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-sm text-white focus:border-orange-500/50 focus:outline-none"
+              >
+                <option value="deepseek-chat" className="bg-zinc-900">DeepSeek Chat</option>
+                <option value="deepseek-reasoner" className="bg-zinc-900">DeepSeek Reasoner</option>
+                <option value="deepseek-v4-flash" className="bg-zinc-900">DeepSeek V4 Flash</option>
+                <option value="deepseek-v4-pro" className="bg-zinc-900">DeepSeek V4 Pro</option>
+                <option value="__custom__" className="bg-zinc-900">Custom...</option>
+              </select>
+              {modelSelect === '__custom__' && (
+                <input
+                  type="text"
+                  value={customModel}
+                  onChange={e => handleCustomModelChange(e.target.value)}
+                  placeholder="Enter model name"
+                  className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none"
+                />
+              )}
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={saving || !apiKey}
+            className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 py-3.5 text-sm font-bold text-white shadow-lg transition hover:shadow-xl disabled:opacity-50"
+          >
+            {saving ? 'Activating...' : 'Activate Moderation'}
+          </button>
+        </form>
+      </div>
+    );
+  }
+
+  /* ───── Settings View: config exists ───── */
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-white mb-8">AI Moderation Settings</h1>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-white">AI Moderation</h1>
+          <span className="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-3 py-0.5 text-2xs font-bold text-green-400">
+            <Icon name="Check" size={10} />
+            Active
+          </span>
+        </div>
+        <button onClick={resetConfig} className="text-2xs text-zinc-500 hover:text-red-400 transition">
+          Reset Configuration
+        </button>
+      </div>
 
       {message && (
         <div className={`mb-6 rounded-xl border px-4 py-3 text-sm ${message.type === 'success' ? 'border-green-500/30 bg-green-500/10 text-green-400' : 'border-red-500/30 bg-red-500/10 text-red-400'}`}>
@@ -108,7 +269,39 @@ export default function AiModerationClient() {
       )}
 
       <div className="space-y-6">
-        {/* API Configuration */}
+        {/* ── Mode Selector ── */}
+        <div className="rounded-xl border border-white/10 bg-white/5 p-6">
+          <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Approval Mode</h2>
+
+          <div className="grid gap-2">
+            {MODE_OPTIONS.map(opt => {
+              const active = autoApproveMode === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  onClick={() => setAutoApproveMode(opt.value)}
+                  className={`flex items-start gap-3 rounded-xl border p-4 text-left transition ${
+                    active
+                      ? 'border-orange-500/50 bg-orange-500/10'
+                      : 'border-white/5 bg-white/[0.02] hover:border-white/10 hover:bg-white/5'
+                  }`}
+                >
+                  <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition ${
+                    active ? 'border-orange-400 bg-orange-400' : 'border-zinc-600'
+                  }`}>
+                    {active && <Icon name="Check" size={10} className="text-black" />}
+                  </span>
+                  <div>
+                    <p className={`text-sm font-semibold ${active ? 'text-white' : 'text-zinc-300'}`}>{opt.label}</p>
+                    <p className="text-2xs text-zinc-500 mt-0.5 leading-relaxed">{opt.desc}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── API Configuration ── */}
         <div className="rounded-xl border border-white/10 bg-white/5 p-6">
           <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-4">API Configuration</h2>
 
@@ -119,10 +312,14 @@ export default function AiModerationClient() {
                 type="password"
                 value={apiKey}
                 onChange={e => setApiKey(e.target.value)}
-                placeholder={savedKey ? 'Saved — enter new to replace' : 'sk-...'}
+                placeholder={savedKey ? 'Enter new key to replace' : 'sk-...'}
                 className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:border-orange-500/50 focus:outline-none"
               />
-              {savedKey && <span className="inline-flex items-center text-2xs text-green-400"><Icon name="Check" size={14} /> Saved</span>}
+              {savedKey && (
+                <span className="inline-flex items-center gap-1 text-2xs text-green-400">
+                  <Icon name="Check" size={12} /> Saved
+                </span>
+              )}
             </div>
           </div>
 
@@ -186,7 +383,7 @@ export default function AiModerationClient() {
             />
             <div className="flex justify-between text-3xs text-zinc-600 mt-1">
               <span>0</span>
-              <span>Score &ge; {threshold} auto-approved</span>
+              <span>Score &ge; {threshold} {autoApproveMode === 'approve_reject' ? 'approved / below rejected' : 'auto-approved'}</span>
               <span>100</span>
             </div>
           </div>
@@ -201,6 +398,22 @@ export default function AiModerationClient() {
             </button>
           </div>
 
+          <div className="flex gap-3">
+            <button onClick={handleSave} disabled={saving}
+              className="rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:shadow-xl disabled:opacity-50">
+              {saving ? 'Saving...' : 'Save Settings'}
+            </button>
+            <button onClick={handleTest} disabled={testing}
+              className="rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-sm font-medium text-zinc-300 transition hover:bg-white/10 disabled:opacity-50">
+              {testing ? 'Testing...' : 'Test Connection'}
+            </button>
+          </div>
+        </div>
+
+        {/* ── Test Panel ── */}
+        <div className="rounded-xl border border-white/10 bg-white/5 p-6">
+          <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Test & Preview</h2>
+
           <div className="mb-4">
             <label className="mb-1.5 block text-xs font-medium text-zinc-400">Test Post (optional)</label>
             <select value={testPostSlug} onChange={e => setTestPostSlug(e.target.value)}
@@ -212,18 +425,11 @@ export default function AiModerationClient() {
             </select>
           </div>
 
-          <div className="flex gap-3">
-            <button onClick={handleSave} disabled={saving}
-              className="rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:shadow-xl disabled:opacity-50">
-              {saving ? 'Saving...' : 'Save Settings'}
-            </button>
-            <button onClick={handleTest} disabled={testing}
-              className="rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-sm font-medium text-zinc-300 transition hover:bg-white/10 disabled:opacity-50">
-              {testing ? 'Testing...' : 'Test Connection'}
-            </button>
-          </div>
+          <button onClick={handleTest} disabled={testing}
+            className="rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-sm font-medium text-zinc-300 transition hover:bg-white/10 disabled:opacity-50">
+            {testing ? 'Testing...' : 'Run Analysis'}
+          </button>
 
-          {/* Test result */}
           {testResult && (
             <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4">
               <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Test Analysis Result</h3>
@@ -253,7 +459,7 @@ export default function AiModerationClient() {
           )}
         </div>
 
-        {/* Stats */}
+        {/* ── Stats ── */}
         {stats && (
           <div className="rounded-xl border border-white/10 bg-white/5 p-6">
             <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Stats</h2>
