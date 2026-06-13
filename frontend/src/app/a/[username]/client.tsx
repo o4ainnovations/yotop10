@@ -179,15 +179,15 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
       {isOwn && (
         <div className="mb-6">
           {profile.trust_level === 'newbie' || profile.trust_level === 'ghost' ? (
-            <div className="flex h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden">
-              <div className="bg-zinc-700 transition-all" style={{ width: '100%' }} />
+            <div className="flex h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+              <div className="bg-white/20 transition-all" style={{ width: '100%' }} />
             </div>
           ) : (
-            <div className="flex h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden">
-              <div className={`transition-all duration-500 bg-white/20`} style={{ width: `${Math.min(100, Math.max(0, ((trustScore - 0.1) / 1.9) * 100))}%` }} />
+            <div className="flex h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+              <div className={`transition-all duration-500 bg-white/30`} style={{ width: `${Math.min(100, Math.max(0, ((trustScore - 0.1) / 1.9) * 100))}%` }} />
             </div>
           )}
-          <div className="flex justify-between mt-1 text-3xs text-zinc-700">
+          <div className="flex justify-between mt-1 text-3xs text-zinc-500">
             {profile.trust_level === 'newbie' || profile.trust_level === 'ghost' ? (
               <span className="text-zinc-600">Building reputation</span>
             ) : (
@@ -336,15 +336,15 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
           <div className="rounded-xl border border-white/5 bg-white/[0.02] p-5">
             <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Approval Rate</h3>
             {profile.stats.total_posts === 0 ? (
-              <div className="flex h-2 w-full rounded-full bg-zinc-800 overflow-hidden">
-                <div className="bg-zinc-700 transition-all" style={{ width: '100%' }} />
+              <div className="flex h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                <div className="bg-white/20 transition-all" style={{ width: '100%' }} />
               </div>
             ) : profile.stats.approval_rate === null || profile.stats.approval_rate === undefined ? (
-              <div className="flex h-2 w-full rounded-full bg-zinc-800 overflow-hidden">
-                <div className="bg-zinc-600 transition-all" style={{ width: '100%' }} />
+              <div className="flex h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                <div className="bg-white/20 transition-all" style={{ width: '100%' }} />
               </div>
             ) : (
-              <div className="flex h-2 w-full rounded-full bg-zinc-800 overflow-hidden">
+              <div className="flex h-2 w-full rounded-full bg-white/10 overflow-hidden">
                 <div className="bg-green-500 transition-all" style={{ width: `${profile.stats.approval_rate}%` }} />
                 {profile.stats.approval_rate < 100 && (
                   <div className="bg-red-500/50 transition-all" style={{ width: `${100 - profile.stats.approval_rate}%` }} />
@@ -376,7 +376,7 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
                       <span className="font-mono text-zinc-500">{limit.remaining} / {limit.total}</span>
                     </div>
                     {typeof limit.total === 'number' && (
-                      <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+                      <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
                         <div className="bg-orange-500 transition-all" style={{ width: `${pct}%` }} />
                       </div>
                     )}
