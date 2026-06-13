@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
 import { useSlideMenu } from '@/stores/slideMenu';
@@ -43,9 +44,13 @@ export function SlideMenuPanel() {
       >
         <div className="px-6 pt-10 pb-4">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-11 h-11 rounded-full bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold text-lg shrink-0">
-              {displayName[0].toUpperCase()}
-            </div>
+            {user?.profile_image_url ? (
+              <Image src={user.profile_image_url} alt="" width={44} height={44} className="w-11 h-11 rounded-full object-cover shrink-0" unoptimized />
+            ) : (
+              <div className="flex items-center justify-center w-11 h-11 rounded-full bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold text-lg shrink-0">
+                {displayName[0].toUpperCase()}
+              </div>
+            )}
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <span className="text-base font-bold text-white truncate">{displayName}</span>

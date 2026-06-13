@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
 import { Icon } from './icons/Icon';
@@ -68,9 +69,13 @@ export function DesktopSidebar() {
           href={user ? `/a/${cleanUsername}` : '/a'}
           className="flex items-center gap-3 px-4 py-2.5 rounded-xl transition text-sm text-zinc-400 hover:text-white hover:bg-white/5"
         >
-          <span className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold text-xs shrink-0">
-            {displayName[0].toUpperCase()}
-          </span>
+          {user?.profile_image_url ? (
+            <Image src={user.profile_image_url} alt="" width={32} height={32} className="w-8 h-8 rounded-full object-cover shrink-0" unoptimized />
+          ) : (
+            <span className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold text-xs shrink-0">
+              {displayName[0].toUpperCase()}
+            </span>
+          )}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1">
               <span className="text-sm font-semibold text-zinc-300 truncate">{displayName}</span>
