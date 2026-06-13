@@ -2,6 +2,8 @@ import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import PostPendingClient from '@/components/PostPendingClient';
 
+export const dynamic = 'force-dynamic';
+
 type PageProps = {
   params: Promise<{ id: string }>;
 };
