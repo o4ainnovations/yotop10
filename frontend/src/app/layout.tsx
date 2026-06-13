@@ -140,8 +140,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Suspense>
           <AuthInitializer />
         </Suspense>
-        <main className="flex-1 pt-14 lg:pt-14 lg:ml-64 xl:ml-72 transition-[margin] duration-300 ease-out">
-          {children}
+        <main className="flex-1 pt-14 lg:pt-14 lg:ml-64 xl:ml-72 transition-[margin] duration-300 ease-out flex flex-col">
+          <div className="flex-1">{children}</div>
           <AppFooter />
         </main>
         <Suspense>
