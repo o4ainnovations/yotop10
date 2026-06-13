@@ -175,9 +175,9 @@ router.get('/', async (req, res) => {
     }
 
     // Determine sort order
-    let sortOption: Record<string, 1 | -1> = { created_at: -1 }; // newest first
+    let sortOption: Record<string, 1 | -1> = { published_at: -1, created_at: -1 }; // by publish date, newest first
     if (sort === 'oldest') {
-      sortOption = { created_at: 1 };
+      sortOption = { published_at: 1, created_at: 1 };
     } else if (sort === 'most_commented') {
       sortOption = { comment_count: -1 };
     } else if (sort === 'most_viewed') {
