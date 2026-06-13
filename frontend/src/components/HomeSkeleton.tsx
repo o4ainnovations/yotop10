@@ -36,7 +36,7 @@ export function HomeSkeleton() {
       </div>
 
       {/* ── Desktop skeleton (matches current 3-col grid homepage) ── */}
-      <div className="hidden md:block px-4 lg:px-6 pt-6 pb-12 animate-pulse">
+      <div className="block max-md:hidden px-4 lg:px-6 pt-6 pb-12 animate-pulse">
         {/* Carousel skeleton */}
         <div className="space-y-3 mb-10">
           <div className="h-4 w-24 rounded bg-white/5" />

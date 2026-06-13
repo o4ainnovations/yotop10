@@ -179,6 +179,7 @@ export interface BookmarkResponse {
 
 export interface SavedPost extends Post {
   saved_at: string;
+  reading_time?: number;
 }
 
 export interface SavedPostsResponse {

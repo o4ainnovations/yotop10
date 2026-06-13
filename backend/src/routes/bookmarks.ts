@@ -3,6 +3,7 @@ import { Router } from 'express';
 import mongoose from 'mongoose';
 import { SavedPost } from '../models/SavedPost';
 import { Post } from '../models/Post';
+import { Article } from '../models/Article';
 import { ListItem } from '../models/ListItem';
 import { redis } from '../lib/redis';
 
@@ -19,21 +20,26 @@ router.post('/save', async (req: any, res: any) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const { post_id } = req.body;
+    const { post_id, content_type } = req.body;
     if (!post_id || !mongoose.Types.ObjectId.isValid(post_id)) {
       return res.status(400).json({ error: 'Invalid post_id' });
     }
 
     const userId = req.user.user_id;
+    const type = (content_type === 'article') ? 'article' : 'post';
 
     const existing = await SavedPost.findOne({ user_id: userId, post_id }).lean();
     if (existing) {
       return res.json({ success: true, bookmarked: true, already: true });
     }
 
-    await SavedPost.create({ user_id: userId, post_id });
+    await SavedPost.create({ user_id: userId, post_id, content_type: type });
 
-    await Post.findByIdAndUpdate(post_id, { $inc: { bookmark_count: 1 } });
+    if (type === 'article') {
+      await Article.findByIdAndUpdate(post_id, { $inc: { bookmark_count: 1 } });
+    } else {
+      await Post.findByIdAndUpdate(post_id, { $inc: { bookmark_count: 1 } });
+    }
 
     try {
       const key = savedKey(userId);
@@ -65,7 +71,11 @@ router.delete('/save', async (req: any, res: any) => {
     const deleted = await SavedPost.findOneAndDelete({ user_id: userId, post_id });
 
     if (deleted) {
-      await Post.findByIdAndUpdate(post_id, { $inc: { bookmark_count: -1 } });
+      if (deleted.content_type === 'article') {
+        await Article.findByIdAndUpdate(post_id, { $inc: { bookmark_count: -1 } });
+      } else {
+        await Post.findByIdAndUpdate(post_id, { $inc: { bookmark_count: -1 } });
+      }
     }
 
     try {
@@ -102,7 +112,12 @@ router.get('/saved', async (req: any, res: any) => {
       .limit(limit)
       .lean();
 
-    const postIds = saves.map((s: any) => s.post_id);
+    const postIds: string[] = [];
+    const articleIds: string[] = [];
+    for (const s of saves as any[]) {
+      if (s.content_type === 'article') articleIds.push(s.post_id.toString());
+      else postIds.push(s.post_id.toString());
+    }
 
     const posts = await Post.find({
       _id: { $in: postIds },
@@ -112,41 +127,35 @@ router.get('/saved', async (req: any, res: any) => {
       .select('slug title post_type author_username category_slug view_count comment_count format hero_image_url created_at')
       .lean();
 
-    const postsMap = new Map<string, any>();
-    for (const p of posts) {
-      postsMap.set((p._id as any).toString(), p);
-    }
-
-    const allItems = await ListItem.find({ post_id: { $in: postIds } })
-      .sort({ rank: 1 })
-      .select('post_id rank title')
+    const articles = await Article.find({
+      _id: { $in: articleIds },
+      status: 'approved',
+    })
+      .select('slug title author_username category_slug view_count comment_count cover_image created_at reading_time')
       .lean();
 
-    const itemsByPost: Record<string, Array<{ rank: number; title: string }>> = {};
-    for (const item of allItems) {
-      const pid = ((item as any).post_id?.toString() || '') as string;
-      if (!itemsByPost[pid]) itemsByPost[pid] = [];
-      if (itemsByPost[pid].length < 3) itemsByPost[pid].push({ rank: item.rank, title: item.title });
-    }
+    const contentMap = new Map<string, any>();
+    for (const p of posts) contentMap.set((p._id as any).toString(), p);
+    for (const a of articles) contentMap.set((a._id as any).toString(), a);
 
-    const resultPosts = saves.map((s: any) => {
+    const resultPosts = (saves as any[]).map((s) => {
       const pid = s.post_id.toString();
-      const post = postsMap.get(pid);
-      if (!post) return null;
+      const item = contentMap.get(pid);
+      if (!item) return null;
+      const isArticle = s.content_type === 'article';
       return {
         id: pid,
-        slug: post.slug,
-        title: post.title,
-        post_type: post.post_type,
-        author_username: post.author_username,
-        category_slug: post.category_slug,
-        view_count: post.view_count,
-        comment_count: post.comment_count,
-        format: post.format,
-        hero_image_url: post.hero_image_url,
-        created_at: post.created_at,
+        slug: item.slug,
+        title: item.title,
+        post_type: isArticle ? 'article' : (item.post_type || 'list'),
+        author_username: item.author_username,
+        category_slug: item.category_slug,
+        view_count: item.view_count,
+        comment_count: item.comment_count,
+        hero_image_url: isArticle ? item.cover_image : item.hero_image_url,
+        created_at: item.created_at,
         saved_at: s.saved_at,
-        topItems: itemsByPost[pid] || [],
+        reading_time: isArticle ? item.reading_time : undefined,
       };
     }).filter(Boolean);
 

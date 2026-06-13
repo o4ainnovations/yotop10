@@ -4,13 +4,15 @@ import { registerModel } from '../lib/modelRegistry';
 export interface ISavedPost extends Document {
   user_id: string;
   post_id: Schema.Types.ObjectId;
+  content_type: 'post' | 'article';
   saved_at: Date;
 }
 
 const savedPostSchema = new Schema<ISavedPost>(
   {
     user_id: { type: String, required: true, index: true },
-    post_id: { type: Schema.Types.ObjectId, ref: 'Post', required: true, index: true },
+    post_id: { type: Schema.Types.ObjectId, required: true, index: true },
+    content_type: { type: String, enum: ['post', 'article'], default: 'post' },
     saved_at: { type: Date, default: Date.now },
   },
   { timestamps: false }

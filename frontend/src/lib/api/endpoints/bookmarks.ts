@@ -2,10 +2,10 @@ import { apiFetch } from '../client';
 import type { BookmarkResponse, SavedPostsResponse } from '../types';
 
 export const bookmarksApi = {
-  save: (postId: string) =>
+  save: (postId: string, contentType?: 'post' | 'article') =>
     apiFetch<BookmarkResponse>('/bookmarks/save', {
       method: 'POST',
-      body: JSON.stringify({ post_id: postId }),
+      body: JSON.stringify({ post_id: postId, content_type: contentType || 'post' }),
     }),
 
   unsave: (postId: string) =>

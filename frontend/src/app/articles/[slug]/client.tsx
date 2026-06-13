@@ -121,7 +121,7 @@ export default function ArticleDetailClient() {
           </div>
           {/* Bookmark + Share at top */}
           <div className="flex items-center gap-2">
-            <BookmarkButton postId={article.id} />
+            <BookmarkButton postId={article.id} contentType="article" />
             <ShareButton slug={article.slug} title={article.title} postId={article.id} />
           </div>
         </div>

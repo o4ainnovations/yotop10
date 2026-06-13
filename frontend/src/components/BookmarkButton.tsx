@@ -8,9 +8,10 @@ import { toast } from '@/lib/toast';
 interface BookmarkButtonProps {
   postId: string;
   initialBookmarked?: boolean;
+  contentType?: 'post' | 'article';
 }
 
-export function BookmarkButton({ postId, initialBookmarked }: BookmarkButtonProps) {
+export function BookmarkButton({ postId, initialBookmarked, contentType }: BookmarkButtonProps) {
   const [bookmarked, setBookmarked] = useState(initialBookmarked ?? false);
   const [pending, setPending] = useState(false);
   const [fetched, setFetched] = useState(false);
@@ -43,7 +44,7 @@ export function BookmarkButton({ postId, initialBookmarked }: BookmarkButtonProp
           await API.unsave(postId);
           toast.info('Removed from Bookmarks');
         } else {
-          await API.save(postId);
+          await API.save(postId, contentType);
           toast.success('Saved to Bookmarks');
         }
       } catch {

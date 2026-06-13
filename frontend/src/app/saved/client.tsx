@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { API } from '@/lib/api';
 import type { SavedPost } from '@/lib/api/types';
 import Link from 'next/link';
-import Image from 'next/image';
 import { SavedSkeleton } from '@/components/SavedSkeleton';
 import { Icon } from '@/components/icons/Icon';
+import { BookmarkButton } from '@/components/BookmarkButton';
 
 export default function SavedClient() {
   const [posts, setPosts] = useState<SavedPost[]>([]);
@@ -29,7 +29,7 @@ export default function SavedClient() {
     return () => { cancelled = true; };
   }, []);
 
-  const loadMore = () => {
+  const loadMore = useCallback(() => {
     const nextPage = page + 1;
     setLoadingMore(true);
     API.getSaved(nextPage, 20)
@@ -40,7 +40,7 @@ export default function SavedClient() {
       })
       .catch(() => setError('Failed to load more.'))
       .finally(() => setLoadingMore(false));
-  };
+  }, [page]);
 
   if (loading) return <SavedSkeleton />;
 
@@ -58,24 +58,34 @@ export default function SavedClient() {
             <p className="text-sm text-zinc-500">No saved posts yet.</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {posts.map((post) => (
-              <Link key={post.id} href={`/${post.slug}`} className="block group">
-                <div className="rounded-2xl border border-white/5 bg-white/5 p-5 backdrop-blur-sm transition hover:border-white/10">
-                  {post.hero_image_url && (
-                    <div className="mb-3 overflow-hidden rounded-xl">
-                      <Image src={post.hero_image_url} alt="" width={1200} height={675} className="w-full h-auto" unoptimized />
+          <div className="divide-y divide-white/5">
+            {posts.map((post) => {
+              const isArticle = post.post_type === 'article';
+              const href = isArticle ? `/articles/${post.slug}` : `/${post.slug}`;
+              return (
+                <div key={post.id} className="group flex items-start gap-3 py-4">
+                  <Link href={href} className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 text-3xs text-zinc-600 mb-1">
+                      <Icon name={isArticle ? 'FileText' : 'List'} size={11} />
+                      <span className="uppercase tracking-wider">{isArticle ? 'Article' : (post.post_type || 'List')}</span>
+                      {post.reading_time && <span>· {post.reading_time} min read</span>}
+                      <span>· {new Date(post.saved_at).toLocaleDateString()}</span>
                     </div>
-                  )}
-                  <h2 className="text-lg font-bold text-white group-hover:text-orange-400 transition-colors">{post.title}</h2>
-                  <div className="flex items-center gap-3 mt-2 text-xs text-zinc-500">
-                    <span>{post.author_display_name}</span>
-                    <span className="flex items-center gap-1"><Icon name="MessageCircle" size={12} /> {post.comment_count}</span>
-                    <span className="flex items-center gap-1"><Icon name="Eye" size={13} /> {post.view_count}</span>
+                    <h2 className="text-sm font-semibold text-zinc-200 leading-snug group-hover:text-white transition-colors line-clamp-2">
+                      {post.title}
+                    </h2>
+                    <div className="flex items-center gap-3 mt-1.5 text-3xs text-zinc-600">
+                      <span>@{post.author_username}</span>
+                      <span className="flex items-center gap-1"><Icon name="MessageCircle" size={10} /> {post.comment_count}</span>
+                      <span className="flex items-center gap-1"><Icon name="Eye" size={11} /> {post.view_count}</span>
+                    </div>
+                  </Link>
+                  <div className="shrink-0 pt-0.5" onClick={e => e.stopPropagation()}>
+                    <BookmarkButton postId={post.id} initialBookmarked contentType={isArticle ? 'article' : 'post'} />
                   </div>
                 </div>
-              </Link>
-            ))}
+              );
+            })}
           </div>
         )}
 
