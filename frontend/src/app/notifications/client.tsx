@@ -56,11 +56,15 @@ export default function NotificationsClient() {
     router.push(`/notifications/${n._id}`);
   };
 
-  const handleDismissAdmin = async (e: React.MouseEvent, id: string) => {
+  const handleDismiss = async (e: React.MouseEvent, n: NotifItem) => {
     e.stopPropagation();
     try {
-      await apiFetch(`/users/me/messages/${id}/dismiss`, { method: 'PATCH' });
-      setNotifications((prev) => prev.filter((n) => n._id !== id));
+      if (n.is_admin || n.type === 'admin_message') {
+        await apiFetch(`/users/me/messages/${n._id}/dismiss`, { method: 'PATCH' });
+      } else {
+        await apiFetch(`/users/me/notifications/${n._id}/read`, { method: 'PATCH' });
+      }
+      setNotifications((prev) => prev.filter((x) => x._id !== n._id));
     } catch {}
   };
 
@@ -130,15 +134,13 @@ export default function NotificationsClient() {
                     )}
                   </div>
                 </div>
-                {isAdmin && (
-                  <button
-                    onClick={(e) => handleDismissAdmin(e, n._id)}
-                    className="bg-transparent border-none text-white/30 cursor-pointer text-base px-2 py-1 flex-shrink-0 hover:text-white/60"
-                    aria-label="Dismiss" title="Dismiss"
-                  >
-                    <Icon name="X" size={16} />
-                  </button>
-                )}
+                <button
+                  onClick={(e) => handleDismiss(e, n)}
+                  className="bg-transparent border-none text-white/20 cursor-pointer text-base px-2 py-1 flex-shrink-0 hover:text-white/60 transition"
+                  aria-label="Dismiss" title="Dismiss"
+                >
+                  <Icon name="X" size={16} />
+                </button>
               </div>
             </div>
           );

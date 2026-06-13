@@ -21,7 +21,8 @@ interface UserProfile {
     member_since: string;
     total_posts: number;
     total_comments: number;
-    approval_rate: number;
+    approval_rate: number | null;
+    verified?: boolean;
     total_views?: number;
   };
   posts: Array<{
@@ -151,7 +152,7 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
               <Icon name="Eye" size={12} /> {profile.stats.total_views ?? 0}
             </span>
             <span className="inline-flex items-center gap-1">
-              <Icon name="BadgeCheck" size={12} /> {profile.stats.approval_rate}%
+              {profile.stats.verified && <Icon name="BadgeCheck" size={12} />} {profile.stats.approval_rate}%
             </span>
             <span suppressHydrationWarning className="inline-flex items-center gap-1">
               <Icon name="Calendar" size={12} /> {formatDate(profile.stats.member_since)}
@@ -330,15 +331,23 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
               <div className="flex h-2 w-full rounded-full bg-zinc-800 overflow-hidden">
                 <div className="bg-zinc-700 transition-all" style={{ width: '100%' }} />
               </div>
+            ) : profile.stats.approval_rate === null || profile.stats.approval_rate === undefined ? (
+              <div className="flex h-2 w-full rounded-full bg-zinc-800 overflow-hidden">
+                <div className="bg-zinc-600 transition-all" style={{ width: '100%' }} />
+              </div>
             ) : (
               <div className="flex h-2 w-full rounded-full bg-zinc-800 overflow-hidden">
                 <div className="bg-green-500 transition-all" style={{ width: `${profile.stats.approval_rate}%` }} />
-                <div className="bg-red-500/50 transition-all" style={{ width: `${100 - profile.stats.approval_rate}%` }} />
+                {profile.stats.approval_rate < 100 && (
+                  <div className="bg-red-500/50 transition-all" style={{ width: `${100 - profile.stats.approval_rate}%` }} />
+                )}
               </div>
             )}
             <div className="flex justify-between mt-1 text-2xs text-zinc-600">
               {profile.stats.total_posts === 0 ? (
                 <span className="text-zinc-600">No posts yet</span>
+              ) : profile.stats.approval_rate === null || profile.stats.approval_rate === undefined ? (
+                <span className="text-zinc-600">Awaiting reviews</span>
               ) : (
                 <><span>{profile.stats.approval_rate}% approved</span><span>{100 - profile.stats.approval_rate}% rejected</span></>
               )}

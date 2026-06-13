@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import React from 'react';
-import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { Icon } from '@/components/icons/Icon';
@@ -12,7 +11,6 @@ interface PendingPost { _id: string; title: string; author_username: string; pos
 interface CategoryOption { slug: string; name: string; children?: Array<{ slug: string; name: string }> }
 
 export default function PendingPostsClient() {
-  const router = useRouter();
   const postsRef = useRef<PendingPost[]>([]);
   const [posts, setPosts] = useState<PendingPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,8 +99,9 @@ export default function PendingPostsClient() {
       if (action === 'approve') await apiFetch(`/admin/posts/${id}/approve`, { method: 'PATCH' });
       else if (action === 'reject') await apiFetch(`/admin/posts/${id}/reject`, { method: 'PATCH', body: JSON.stringify({ reason: rejectReason || 'Rejected' }) });
       else if (action === 'retry') await apiFetch(`/admin/posts/${id}/retry`, { method: 'POST', body: JSON.stringify({ guidance: retryGuidance }) });
-      toast.success(`${action === 'approve' ? 'Approved.' : action === 'reject' ? 'Rejected.' : 'Guidance sent.'}`);
-      if (action !== 'retry') { setRejectReason(''); setRetryGuidance(''); setShowRejectModal(false); setShowRetryModal(false); }
+      else if (action === 'cancel') await apiFetch(`/admin/posts/${id}/cancel`, { method: 'DELETE' });
+      toast.success(`${action === 'approve' ? 'Approved.' : action === 'reject' ? 'Rejected.' : action === 'cancel' ? 'Cancelled.' : 'Guidance sent.'}`);
+      if (action !== 'retry' && action !== 'cancel') { setRejectReason(''); setRetryGuidance(''); setShowRejectModal(false); setShowRetryModal(false); }
       fetchPosts(page);
     } catch {} finally { setActionLoading(false); }
   }, [rejectReason, retryGuidance, fetchPosts, page]);
@@ -197,7 +196,7 @@ export default function PendingPostsClient() {
                         {mobileDropdownId === p._id && (
                           <div className="absolute right-0 top-full mt-1 z-50 bg-zinc-800 border border-white/10 rounded-xl py-1 min-w-[180px] shadow-2xl">
                             <button onClick={e => { e.stopPropagation(); singleAction(p._id, 'approve'); }} disabled={actionLoading} className={dropdownItemClass}><Icon name="Check" size={14} color="#2e7d32" /> Approve</button>
-                            <button onClick={e => { e.stopPropagation(); setMobileDropdownId(null); router.push(`/admin/posts/pending/${p._id}`); }} className={dropdownItemClass}><Icon name="Search" size={14} /> View Details</button>
+                            <button onClick={e => { e.stopPropagation(); singleAction(p._id, 'cancel'); }} disabled={actionLoading} className={dropdownItemClass}><Icon name="Trash2" size={14} color="#c62828" /> Cancel Post</button>
                             <button onClick={e => { e.stopPropagation(); setMobileDropdownId(null); setShowRejectModal(true); setSelected(new Set([p._id])); }} disabled={actionLoading} className={dropdownItemClass}><Icon name="X" size={14} color="#c62828" /> Reject</button>
                             <button onClick={e => { e.stopPropagation(); setMobileDropdownId(null); setShowRetryModal(true); setSelected(new Set([p._id])); }} disabled={actionLoading} className={dropdownItemClass}><Icon name="RefreshCw" size={14} /> Request Revision</button>
                           </div>
@@ -240,7 +239,7 @@ export default function PendingPostsClient() {
                   <span className={`hidden sm:block w-[50px] text-3xs ${ageColor(p.created_at)}`} suppressHydrationWarning>{relativeTime(p.created_at)}</span>
                   <span className="hidden sm:flex w-[140px] gap-1">
                     <button aria-label="Approve" onClick={e => { e.stopPropagation(); singleAction(p._id, 'approve'); }} disabled={actionLoading} className={btnSmClass}><Icon name="Check" size={14} color="#2e7d32" /></button>
-                    <button aria-label="View details" onClick={e => { e.stopPropagation(); router.push(`/admin/posts/pending/${p._id}`); }} className={btnSmClass}><Icon name="Search" size={14} /></button>
+                    <button aria-label="Cancel post" onClick={e => { e.stopPropagation(); singleAction(p._id, 'cancel'); }} disabled={actionLoading} className={btnSmClass}><Icon name="Trash2" size={14} color="#c62828" /></button>
                     <button aria-label="Reject" onClick={e => { e.stopPropagation(); setShowRejectModal(true); setSelected(new Set([p._id])); }} disabled={actionLoading} className={btnSmClass}><Icon name="X" size={14} color="#c62828" /></button>
                     <button aria-label="Request revision" onClick={e => { e.stopPropagation(); setShowRetryModal(true); setSelected(new Set([p._id])); }} disabled={actionLoading} className={btnSmClass}><Icon name="RefreshCw" size={14} /></button>
                   </span>

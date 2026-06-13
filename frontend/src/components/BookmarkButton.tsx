@@ -54,7 +54,7 @@ export function BookmarkButton({ postId, initialBookmarked, contentType }: Bookm
         setPending(false);
       }
     },
-    [postId, bookmarked, pending]
+    [postId, bookmarked, pending, contentType]
   );
 
   return (

@@ -480,6 +480,26 @@ router.post('/posts/:id/retry', async (req, res) => {
 });
 
 /**
+ * DELETE /api/admin/posts/:id/cancel — Remove a pending post from review queue
+ */
+router.delete('/posts/:id/cancel', async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ code: 'NOT_FOUND', error: 'Post not found' });
+    if (post.status !== 'pending_review') return res.status(400).json({ code: 'INVALID_STATUS', error: 'Only pending posts can be cancelled' });
+
+    await ListItem.deleteMany({ post_id: post._id });
+    await Post.findByIdAndDelete(post._id);
+
+    logAudit({ admin_id: (req.admin?.id as string) || 'unknown', action: 'cancel_post', ip: getClientIp(req), metadata: { post_id: (req.params.id as string).toString(), post_title: post.title }, user_agent: req.headers['user-agent'] || '' });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error cancelling post:', error);
+    res.status(500).json({ code: 'SERVER_ERROR', error: 'Failed to cancel post' });
+  }
+});
+
+/**
  * PATCH /api/admin/posts/:id/reject
  * Protected — reject pending post
  *

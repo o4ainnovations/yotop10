@@ -79,7 +79,7 @@ export function DesktopSidebar() {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1">
               <span className="text-sm font-semibold text-zinc-300 truncate">{displayName}</span>
-              <Icon name="BadgeCheck" size={12} className="text-orange-400 shrink-0" />
+              {(user?.posts_approved ?? 0) >= 3 && <Icon name="BadgeCheck" size={12} className="text-orange-400 shrink-0" />}
             </div>
             <p className="text-3xs text-zinc-600 font-mono truncate">@{cleanUsername}</p>
           </div>

@@ -64,7 +64,7 @@ export function SlideMenuPanel() {
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <span className="text-base font-bold text-white truncate">{displayName}</span>
-                <Icon name="BadgeCheck" size={15} className="text-orange-400 shrink-0" />
+                {(user?.posts_approved ?? 0) >= 3 && <Icon name="BadgeCheck" size={15} className="text-orange-400 shrink-0" />}
               </div>
               <p className="text-sm2 text-zinc-500 font-mono">@{cleanUsername}</p>
             </div>

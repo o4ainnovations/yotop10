@@ -12,7 +12,8 @@ interface UserProfile {
     member_since: string;
     total_posts: number;
     total_comments: number;
-    approval_rate: number;
+    approval_rate: number | null;
+    verified?: boolean;
   };
   posts: Array<{
     id: string;

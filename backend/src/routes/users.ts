@@ -237,8 +237,9 @@ router.get('/:username', async (req, res) => {
 
     const postsApproved = countMap.approved || 0;
     const postsRejected = countMap.rejected || 0;
-    const postCount = postsApproved + postsRejected + (countMap.pending_review || 0);
-    const approvalRate = postCount > 0 ? postsApproved / postCount : 0;
+    const decidedCount = postsApproved + postsRejected;
+    const postCount = decidedCount + (countMap.pending_review || 0);
+    const approvalRate = decidedCount > 0 ? postsApproved / decidedCount : -1;
 
     const currentUsername = user.custom_display_name || user.username;
     const cleanCurrentUsername = currentUsername.replace(/^a_/, '');
@@ -271,8 +272,9 @@ router.get('/:username', async (req, res) => {
         member_since: user.created_at,
         total_posts: isOwnProfile ? postCount : postsApproved,
         total_comments: userComments.length,
-        approval_rate: Math.round(approvalRate * 100),
+        approval_rate: approvalRate >= 0 ? Math.round(approvalRate * 100) : null,
         total_views: totalViews,
+        verified: postsApproved >= 3,
       },
       posts: userPosts.map((post: any) => ({
         id: post._id,

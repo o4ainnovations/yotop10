@@ -96,7 +96,7 @@ export function DesktopDebates({ debates, className = '' }: { debates: DebateIte
                     {(d.user_display_name || 'A')[0].toUpperCase()}
                   </span>
                   <span className="text-2xs text-zinc-500">{d.user_display_name || 'anonymous'}</span>
-                  <Icon name="BadgeCheck" size={10} className="text-blue-400" />
+                  <span className="text-blue-400/30"><Icon name="BadgeCheck" size={10} /></span>
                 </div>
                 <div className="space-y-2 lg:space-y-3">
                   <div className="rounded-lg border border-red-500/10 bg-red-500/[0.03] px-3 lg:px-4 py-2 lg:py-3">

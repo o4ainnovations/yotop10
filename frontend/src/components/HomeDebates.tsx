@@ -105,7 +105,7 @@ export function HomeDebates({ debates }: { debates: DebateItem[] }) {
                     {(d.user_display_name || 'A')[0].toUpperCase()}
                   </span>
                   <span className="text-xs text-zinc-500">{d.user_display_name || 'anonymous'}</span>
-                  <Icon name="BadgeCheck" size={12} className="text-blue-400" />
+                  <Icon name="BadgeCheck" size={12} className="text-blue-400/30" />
                 </div>
 
                 {/* C. Debate Info */}
