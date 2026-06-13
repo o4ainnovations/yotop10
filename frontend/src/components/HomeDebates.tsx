@@ -18,6 +18,7 @@ interface DebateItem {
   votes_b?: number;
   hero_image_url?: string | null;
   user_display_name?: string;
+  created_at?: string;
 }
 
 const BG_GRADIENTS = [
@@ -28,7 +29,8 @@ const BG_GRADIENTS = [
 ];
 
 export function HomeDebates({ debates }: { debates: DebateItem[] }) {
-  const [localDebates, setLocalDebates] = useState(debates);
+  const sorted = [...debates].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+  const [localDebates, setLocalDebates] = useState(sorted);
   const [votedMap, setVotedMap] = useState<Record<string, 'A' | 'B' | null>>({});
 
   if (!localDebates || localDebates.length === 0) return null;

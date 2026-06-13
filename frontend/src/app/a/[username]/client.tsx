@@ -122,7 +122,7 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
         {/* Avatar */}
         <div className={`shrink-0 rounded-full ring-2 ${tier.ring} p-0.5`}>
           {profile.profile_image_url ? (
-            <Image src={profile.profile_image_url} alt="" width={64} height={64} className="h-16 w-16 rounded-full object-cover" />
+            <Image src={profile.profile_image_url} alt="" width={64} height={64} className="h-16 w-16 rounded-full object-cover" unoptimized />
           ) : (
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-orange-500/20 to-red-600/20 text-xl font-bold text-zinc-400">
               {initials}
