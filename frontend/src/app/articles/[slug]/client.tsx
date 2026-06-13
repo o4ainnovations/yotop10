@@ -9,6 +9,7 @@ import Image from 'next/image';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { BookmarkButton } from '@/components/BookmarkButton';
 import { ShareButton } from '@/components/ShareButton';
+import { ArticleDetailSkeleton } from '@/components/ArticleDetailSkeleton';
 import { Icon } from '@/components/icons/Icon';
 import { relativeTime } from '@/lib/dates';
 
@@ -45,13 +46,7 @@ export default function ArticleDetailClient() {
   }, [slug]);
 
   if (loading) {
-    return (
-      <main className="mx-auto min-h-screen max-w-2xl px-5 py-20 sm:px-6">
-        <div className="flex items-center justify-center py-20">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/10 border-t-orange-500" />
-        </div>
-      </main>
-    );
+    return <ArticleDetailSkeleton />;
   }
 
   if (error) {

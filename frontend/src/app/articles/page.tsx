@@ -1,12 +1,14 @@
+import { Suspense } from 'react';
 import { API } from '@/lib/api';
 import type { Article } from '@/lib/api/types';
+import { ArticlesSkeleton } from '@/components/ArticlesSkeleton';
 import ArticlesClient from './client';
 
 export const dynamic = 'force-dynamic';
 
 const PAGE_SIZE = 10;
 
-export default async function ArticlesPage() {
+async function ArticlesFeed() {
   let articles: Article[] = [];
   let hasMore = false;
 
@@ -18,4 +20,12 @@ export default async function ArticlesPage() {
   } catch {}
 
   return <ArticlesClient initialArticles={articles} initialHasMore={hasMore} />;
+}
+
+export default function ArticlesPage() {
+  return (
+    <Suspense fallback={<ArticlesSkeleton />}>
+      <ArticlesFeed />
+    </Suspense>
+  );
 }
