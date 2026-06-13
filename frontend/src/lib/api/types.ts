@@ -46,6 +46,7 @@ export interface Post {
   totalItems?: number;
   created_at: string;
   published_at?: string;
+  rejection_reason?: string;
 }
 
 export interface PostHistoryResponse { versions: PostVersion[]; }

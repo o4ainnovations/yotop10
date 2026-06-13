@@ -345,14 +345,29 @@ router.get('/:idOrSlug', async (req, res) => {
       return res.status(404).json({ error: 'Not found' });
     }
 
-    // Find approved post - try both _id and slug
+    // Find post — approved for everyone, pending/rejected only for the author
     let post: { _id: { toString(): string }; [key: string]: unknown } | null = null;
+    const authorId = req.user?.user_id;
     if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
-      post = await Post.findOne({ _id: idOrSlug, status: 'approved', deleted: { $ne: true } }).lean();
+      post = await Post.findOne({
+        _id: idOrSlug,
+        deleted: { $ne: true },
+        $or: [
+          { status: 'approved' },
+          { status: { $ne: 'approved' }, author_id: authorId },
+        ],
+      }).lean();
     }
     
     if (!post) {
-      post = await Post.findOne({ slug: idOrSlug, status: 'approved', deleted: { $ne: true } }).lean();
+      post = await Post.findOne({
+        slug: idOrSlug,
+        deleted: { $ne: true },
+        $or: [
+          { status: 'approved' },
+          { status: { $ne: 'approved' }, author_id: authorId },
+        ],
+      }).lean();
     }
 
     if (!post) {
@@ -411,6 +426,7 @@ router.get('/:idOrSlug', async (req, res) => {
         author_display_name: post.author_display_name,
         category_slug: post.category_slug,
         status: post.status,
+        rejection_reason: (post as Record<string, unknown>).rejection_reason || null,
         format: (post as Record<string, unknown>).format || 'list_only',
         hero_image_url: (post as Record<string, unknown>).hero_image_url || null,
         share_count: (post as Record<string, unknown>).share_count || 0,

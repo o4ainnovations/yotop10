@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import PostDetailClient from './client';
+import PostPendingClient from '@/components/PostPendingClient';
 import { API } from '@/lib/api';
 import { RESERVED_ROUTES } from '@/lib/reservedRoutes';
 import { absoluteUrl } from '@/lib/urls';
@@ -79,6 +80,18 @@ export default async function PostDetailPage({ params }: PageProps) {
 
     const { post, items } = postData;
     const { comments } = commentsData;
+
+    // Show pending/rejected page instead of full post
+    if (post.status && post.status !== 'approved') {
+      const isRejected = post.status === 'rejected';
+      return (
+        <PostPendingClient
+          title={post.title}
+          rejectionReason={post.rejection_reason}
+          isRejected={isRejected}
+        />
+      );
+    }
 
     interface ListItemSchema {
       rank: number;
