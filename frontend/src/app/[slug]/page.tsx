@@ -81,28 +81,27 @@ export default async function PostDetailPage({ params }: PageProps) {
   const headers: Record<string, string> = {};
   if (fpCookie) headers.Cookie = `device_fingerprint=${fpCookie}`;
 
-  async function apiFetchWithCookie<T>(endpoint: string, fallback: T): Promise<T> {
+  async function apiFetchWithCookie<T>(endpoint: string): Promise<T | null> {
     try {
       const res = await fetch(`${baseUrl}${endpoint}`, { headers, cache: 'no-store' });
-      if (!res.ok) return fallback;
+      if (!res.ok) return null;
       return await res.json();
-    } catch { return fallback; }
+    } catch { return null; }
   }
 
   try {
+    interface PostResponse { post: import('@/lib/api/types').Post; items: unknown[] }
+    interface CommentsResponse { comments: unknown[] }
     const [postData, commentsData] = await Promise.all([
-      apiFetchWithCookie<{ post: Record<string, unknown> | null; items: Record<string, unknown>[] }>(`/posts/${encodeURIComponent(slug)}`, { post: null, items: [] }),
-      apiFetchWithCookie<{ comments: Record<string, unknown>[] }>(`/posts/${encodeURIComponent(slug)}/comments?limit=50`, { comments: [] }),
+      apiFetchWithCookie<PostResponse>(`/posts/${encodeURIComponent(slug)}`),
+      apiFetchWithCookie<CommentsResponse>(`/posts/${encodeURIComponent(slug)}/comments?limit=50`),
     ]);
 
-    const { post: rawPost, items: rawItems } = postData;
-    const { comments } = commentsData;
+    if (!postData || !postData.post) { notFound(); return; }
 
-    if (!rawPost) { notFound(); }
-
-    const post = rawPost as unknown as import('@/lib/api/types').Post;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const items = rawItems as any;
+    const post = postData.post;
+    const items = (postData.items || []) as unknown as { id: string; rank: number; title: string; justification: string }[];
+    const comments = (commentsData?.comments || []) as unknown as { id: string; content: string; depth: number; fire_count: number; reply_count: number; spark_score: number; author_username: string; author_display_name: string; created_at: string; updated_at?: string; list_item_id?: string; parent_comment_id?: string; replies?: never[] }[];
     const pStatus = post.status;
 
     // Show pending/rejected page instead of full post
@@ -116,12 +115,6 @@ export default async function PostDetailPage({ params }: PageProps) {
       );
     }
 
-    interface ListItemSchema {
-      rank: number;
-      title: string;
-      justification: string;
-    }
-
     const ld = items.length > 0 ? {
       "@context": "https://schema.org",
       "@graph": [
@@ -131,13 +124,13 @@ export default async function PostDetailPage({ params }: PageProps) {
           "name": post.title,
           "description": post.intro?.substring(0, 200) || '',
           "numberOfItems": items.length,
-          "itemListElement": items.map((item: ListItemSchema, idx: number) => ({
+          "itemListElement": items.map((item, idx) => ({
             "@type": "ListItem",
             "position": idx + 1,
             "item": {
               "@type": "Thing",
               "name": item.title,
-              "description": item.justification?.substring(0, 300) || '',
+              "description": ((item.justification as string) || '').substring(0, 300),
             },
           })),
           "author": { "@type": "Person", "name": post.author_display_name || post.author_username, "url": absoluteUrl(`/a/${post.author_username.replace(/^a_/, '')}`) },
