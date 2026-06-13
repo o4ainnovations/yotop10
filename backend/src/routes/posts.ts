@@ -422,11 +422,11 @@ router.get('/:idOrSlug', async (req, res) => {
     const viewerFp = req.user?.device_fingerprint || req.headers['x-device-fingerprint'] as string || req.ip || 'unknown';
     const viewKey = `post_view:${post._id}:${viewerFp}`;
     const alreadyViewed = await redis.get(viewKey);
+    let liveViewCount = post.view_count as number;
     if (!alreadyViewed) {
-      await Promise.all([
-        Post.findByIdAndUpdate(post._id, { $inc: { view_count: 1 } }),
-        redis.set(viewKey, '1', { EX: 1800 }),
-      ]);
+      const updated = await Post.findByIdAndUpdate(post._id, { $inc: { view_count: 1 } }, { new: true }).select('view_count').lean();
+      if (updated) liveViewCount = updated.view_count as number;
+      await redis.set(viewKey, '1', { EX: 1800 });
     }
 
     // Compute SEO robots
@@ -464,7 +464,7 @@ router.get('/:idOrSlug', async (req, res) => {
         post_type: post.post_type,
         intro: post.intro,
         comment_count: post.comment_count,
-        view_count: (post.view_count as number) + 1,
+        view_count: liveViewCount,
         author_id: post.author_id,
         author_username: post.author_username,
         author_display_name: post.author_display_name,

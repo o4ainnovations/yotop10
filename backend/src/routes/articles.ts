@@ -148,11 +148,11 @@ router.get('/:slug', async (req, res) => {
       'unknown';
     const viewKey = `article_view:${article._id}:${viewerFp}`;
     const alreadyViewed = await redis.get(viewKey);
+    let liveViewCount = article.view_count as number;
     if (!alreadyViewed) {
-      await Promise.all([
-        Article.findByIdAndUpdate(article._id, { $inc: { view_count: 1 } }),
-        redis.set(viewKey, '1', { EX: 1800 }),
-      ]);
+      const updated = await Article.findByIdAndUpdate(article._id, { $inc: { view_count: 1 } }, { new: true }).select('view_count').lean();
+      if (updated) liveViewCount = updated.view_count as number;
+      await redis.set(viewKey, '1', { EX: 1800 });
     }
 
     res.json({
@@ -168,7 +168,7 @@ router.get('/:slug', async (req, res) => {
         author_id: article.author_id,
         author_username: article.author_username,
         author_display_name: article.author_display_name,
-        view_count: (article.view_count as number) + 1,
+        view_count: liveViewCount,
         comment_count: article.comment_count,
         bookmark_count: article.bookmark_count,
         category_slug: article.category_slug,

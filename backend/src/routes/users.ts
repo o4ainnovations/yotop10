@@ -2,6 +2,7 @@
 import { Router } from 'express';
 import { body, validationResult } from 'express-validator';
 import { Post } from '../models/Post';
+import { Article } from '../models/Article';
 import { Comment } from '../models/Comment';
 import { User } from '../models/User';
 import { Notification } from '../models/Notification';
@@ -250,12 +251,18 @@ router.get('/:username', async (req, res) => {
       .limit(100)
       .select('content post_id fire_count reply_count created_at');
 
-    // Aggregate total view_count across all posts
-    const viewAgg = await Post.aggregate([
-      { $match: { author_id: user.user_id } },
-      { $group: { _id: null, total_views: { $sum: '$view_count' } } },
+    // Aggregate total view_count across all posts and articles
+    const [postViewAgg, articleViewAgg] = await Promise.all([
+      Post.aggregate([
+        { $match: { author_id: user.user_id } },
+        { $group: { _id: null, total_views: { $sum: '$view_count' } } },
+      ]),
+      Article.aggregate([
+        { $match: { author_id: user.user_id } },
+        { $group: { _id: null, total_views: { $sum: '$view_count' } } },
+      ]),
     ]);
-    const totalViews = viewAgg[0]?.total_views || 0;
+    const totalViews = (postViewAgg[0]?.total_views || 0) + (articleViewAgg[0]?.total_views || 0);
 
     // Category name map for resolving post categories
     const catNameMap = await getCategoryNameMap();
