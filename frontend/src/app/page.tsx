@@ -171,24 +171,22 @@ export default async function Home() {
 
       {/* ─── Desktop sections (hidden below md) ─── */}
       <div className="hidden md:block px-4 lg:px-6 pb-12">
-        <div className="grid grid-cols-2 gap-5 lg:gap-6">
-          {/* Row 1: Debates Arena + Articles */}
-          <DesktopDebates className="col-span-2 lg:col-span-1" debates={debates} />
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
+          {/* Row 1: Debates Arena (2/3 width) + Articles (1/3 width) */}
+          <DesktopDebates className="col-span-2 lg:col-span-2" debates={debates} />
           <DesktopArticles className="col-span-2 lg:col-span-1" articles={articles} />
 
           {/* Row 2: Categories + Did You Know */}
           <DesktopCategories className="col-span-2 lg:col-span-1" categories={categories} />
           <DesktopFacts className="col-span-2 lg:col-span-1" facts={facts} />
 
-          {/* Row 3: Trending + Hall of Fame */}
+          {/* Row 3: Trending + Hall of Fame + Stats */}
           <DesktopTrending className="col-span-2 lg:col-span-1" />
           <DesktopHallOfFame className="col-span-2 lg:col-span-1" />
-
-          {/* Row 4: Stats + CTA */}
           <DesktopStats className="col-span-2 lg:col-span-1" />
 
-          {/* Row 5: CTA */}
-          <DesktopCta className="col-span-2" />
+          {/* Row 4: CTA */}
+          <DesktopCta className="col-span-2 lg:col-span-3" />
         </div>
       </div>
     </>

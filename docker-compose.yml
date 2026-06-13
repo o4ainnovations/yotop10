@@ -92,8 +92,8 @@ services:
       - MONGO_PASSWORD=${MONGO_PASSWORD}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - ES_PASSWORD=${ES_PASSWORD}
-    tmpfs:
-      - /app/uploads:uid=1001,gid=1001,size=256m
+    volumes:
+      - uploads_data:/app/uploads
     healthcheck:
       test: ["CMD", "node", "scripts/healthcheck.mjs"]
       interval: 15s
@@ -210,6 +210,7 @@ volumes:
   mongodb_data:
   redis_data:
   elasticsearch_data:
+  uploads_data:
 
 networks:
   frontend_net:

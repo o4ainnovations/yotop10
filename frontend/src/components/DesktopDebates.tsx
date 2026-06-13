@@ -18,10 +18,13 @@ interface DebateItem {
   votes_b?: number;
   hero_image_url?: string | null;
   user_display_name?: string;
+  created_at?: string;
 }
 
 export function DesktopDebates({ debates, className = '' }: { debates: DebateItem[]; className?: string }) {
-  const [localDebates, setLocalDebates] = useState(debates);
+  // Sort newest first and take top 4
+  const sorted = [...debates].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+  const [localDebates, setLocalDebates] = useState(sorted);
   const [votedMap, setVotedMap] = useState<Record<string, 'A' | 'B' | null>>({});
 
   if (!localDebates || localDebates.length === 0) return null;
@@ -70,7 +73,7 @@ export function DesktopDebates({ debates, className = '' }: { debates: DebateIte
               key={d.slug}
               className="rounded-2xl border border-white/5 bg-white/[0.03] overflow-hidden transition hover:border-orange-500/20 hover:bg-white/[0.06]"
             >
-              <Link href={`/${d.slug}`} className="block relative h-28 w-full overflow-hidden bg-zinc-900">
+              <Link href={`/${d.slug}`} className="block relative h-28 lg:h-36 w-full overflow-hidden bg-zinc-900">
                 {d.hero_image_url ? (
                   <Image src={d.hero_image_url} alt="" fill className="object-cover" unoptimized />
                 ) : (
@@ -79,14 +82,14 @@ export function DesktopDebates({ debates, className = '' }: { debates: DebateIte
                   </div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-                <span className="absolute top-2 left-2 rounded-md bg-black/50 backdrop-blur-sm px-2 py-0.5 text-2xs font-bold text-orange-400 tracking-wider flex items-center gap-1">
+                <span className="absolute top-2 left-2 rounded-md bg-black/50 backdrop-blur-sm px-2 py-0.5 text-2xs lg:text-xs font-bold text-orange-400 tracking-wider flex items-center gap-1">
                   <Icon name="Flame" size={10} />
                   TRENDING
                 </span>
               </Link>
-              <div className="px-4 pb-4">
-                <Link href={`/${d.slug}`} className="block mt-3 mb-3">
-                  <h3 className="text-sm font-bold text-white leading-snug line-clamp-2">{d.title}</h3>
+              <div className="px-4 lg:px-5 pb-4 lg:pb-5">
+                <Link href={`/${d.slug}`} className="block mt-3 lg:mt-4 mb-3 lg:mb-4">
+                  <h3 className="text-sm lg:text-xl font-bold text-white leading-snug line-clamp-2">{d.title}</h3>
                 </Link>
                 <div className="flex items-center gap-3 mb-3">
                   <span className="flex items-center justify-center w-5 h-5 rounded-full bg-white/10 text-2xs font-mono text-zinc-400 shrink-0">
@@ -95,20 +98,20 @@ export function DesktopDebates({ debates, className = '' }: { debates: DebateIte
                   <span className="text-2xs text-zinc-500">{d.user_display_name || 'anonymous'}</span>
                   <Icon name="BadgeCheck" size={10} className="text-blue-400" />
                 </div>
-                <div className="space-y-2">
-                  <div className="rounded-lg border border-red-500/10 bg-red-500/[0.03] px-3 py-2">
+                <div className="space-y-2 lg:space-y-3">
+                  <div className="rounded-lg border border-red-500/10 bg-red-500/[0.03] px-3 lg:px-4 py-2 lg:py-3">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium text-zinc-300 truncate">{d.item_a_title || ''}</span>
-                      <span className="text-xs font-bold font-mono text-red-400 shrink-0 ml-2">{hasVotes ? `${pctA}%` : '--'}</span>
+                      <span className="text-xs lg:text-lg font-medium text-zinc-300 truncate">{d.item_a_title || ''}</span>
+                      <span className="text-xs lg:text-lg font-bold font-mono text-red-400 shrink-0 ml-2">{hasVotes ? `${pctA}%` : '--'}</span>
                     </div>
-                    <div className="h-1 rounded-full bg-zinc-800 overflow-hidden mb-1">
+                    <div className="h-1 lg:h-1.5 rounded-full bg-zinc-800 overflow-hidden mb-1">
                       <div className={`h-full rounded-full bg-gradient-to-r from-red-500 to-orange-500 transition-all ${!hasVotes ? 'opacity-0' : ''}`} style={{ width: `${hasVotes ? pctA : 0}%` }} />
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-3xs text-zinc-600">{votesA.toLocaleString()} votes</span>
+                      <span className="text-3xs lg:text-sm text-zinc-600">{votesA.toLocaleString()} votes</span>
                       <button
                         onClick={() => handleVote(d, 'A')}
-                        className={`rounded px-2 py-0.5 text-3xs font-semibold transition ${
+                        className={`rounded px-2 lg:px-3 py-0.5 lg:py-1 text-3xs lg:text-sm font-semibold transition ${
                           voted === 'A'
                             ? 'bg-red-500/20 text-red-400 border border-red-500/30'
                             : 'border border-white/10 text-zinc-500 hover:border-red-500/30 hover:text-red-400'
@@ -118,19 +121,19 @@ export function DesktopDebates({ debates, className = '' }: { debates: DebateIte
                       </button>
                     </div>
                   </div>
-                  <div className="rounded-lg border border-blue-500/10 bg-blue-500/[0.03] px-3 py-2">
+                  <div className="rounded-lg border border-blue-500/10 bg-blue-500/[0.03] px-3 lg:px-4 py-2 lg:py-3">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium text-zinc-300 truncate">{d.item_b_title || ''}</span>
-                      <span className="text-xs font-bold font-mono text-blue-400 shrink-0 ml-2">{hasVotes ? `${pctB}%` : '--'}</span>
+                      <span className="text-xs lg:text-lg font-medium text-zinc-300 truncate">{d.item_b_title || ''}</span>
+                      <span className="text-xs lg:text-lg font-bold font-mono text-blue-400 shrink-0 ml-2">{hasVotes ? `${pctB}%` : '--'}</span>
                     </div>
-                    <div className="h-1 rounded-full bg-zinc-800 overflow-hidden mb-1">
+                    <div className="h-1 lg:h-1.5 rounded-full bg-zinc-800 overflow-hidden mb-1">
                       <div className={`h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all ${!hasVotes ? 'opacity-0' : ''}`} style={{ width: `${hasVotes ? pctB : 0}%` }} />
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-3xs text-zinc-600">{votesB.toLocaleString()} votes</span>
+                      <span className="text-3xs lg:text-sm text-zinc-600">{votesB.toLocaleString()} votes</span>
                       <button
                         onClick={() => handleVote(d, 'B')}
-                        className={`rounded px-2 py-0.5 text-3xs font-semibold transition ${
+                        className={`rounded px-2 lg:px-3 py-0.5 lg:py-1 text-3xs lg:text-sm font-semibold transition ${
                           voted === 'B'
                             ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
                             : 'border border-white/10 text-zinc-500 hover:border-blue-500/30 hover:text-blue-400'
@@ -141,17 +144,17 @@ export function DesktopDebates({ debates, className = '' }: { debates: DebateIte
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 pt-3 mt-3 border-t border-zinc-800">
-                  <span className="flex items-center gap-1 text-3xs text-zinc-600">
-                    <Icon name="Users" size={12} />
+                <div className="flex items-center gap-4 lg:gap-6 pt-3 lg:pt-4 mt-3 lg:mt-4 border-t border-zinc-800">
+                  <span className="flex items-center gap-1 text-3xs lg:text-sm text-zinc-600">
+                    <Icon name="Users" size={12} className="lg:w-4 lg:h-4" />
                     {totalVotes}
                   </span>
-                  <Link href={`/${d.slug}`} className="flex items-center gap-1 text-3xs text-zinc-600 hover:text-zinc-400 transition">
-                    <Icon name="MessageCircle" size={12} />
+                  <Link href={`/${d.slug}`} className="flex items-center gap-1 text-3xs lg:text-sm text-zinc-600 hover:text-zinc-400 transition">
+                    <Icon name="MessageCircle" size={12} className="lg:w-4 lg:h-4" />
                     {d.comment_count}
                   </Link>
-                  <span className="flex items-center gap-1 text-3xs text-zinc-600">
-                    <Icon name="Eye" size={12} />
+                  <span className="flex items-center gap-1 text-3xs lg:text-sm text-zinc-600">
+                    <Icon name="Eye" size={12} className="lg:w-4 lg:h-4" />
                     {(d.view_count ?? 0).toLocaleString()}
                   </span>
                 </div>
