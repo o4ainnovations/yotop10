@@ -336,6 +336,27 @@ const RESERVED_SLUGS = new Set([
   'username-history', 'submit-article',
 ]);
 
+// GET /api/posts/:id/queue — Get queue position for a pending post
+router.get('/:id/queue', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid id' });
+
+    const post = await Post.findById(id).select('created_at status').lean();
+    if (!post) return res.status(404).json({ error: 'Post not found' });
+
+    const position = await Post.countDocuments({
+      status: 'pending_review',
+      created_at: { $lt: post.created_at },
+    });
+
+    res.json({ position: position + 1 });
+  } catch (error) {
+    console.error('Queue position error:', error);
+    res.status(500).json({ error: 'Failed to get queue position' });
+  }
+});
+
 // GET /api/posts/:idOrSlug — Single post with items and comments
 router.get('/:idOrSlug', async (req, res) => {
   try {

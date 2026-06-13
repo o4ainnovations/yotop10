@@ -262,7 +262,7 @@ export default function UserProfileClient({ initialProfile }: { initialProfile: 
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {filteredPosts.map(post => (
-                <Link key={post.id} href={`/${post.slug}`} className="group rounded-xl border border-white/5 bg-white/[0.02] p-4 transition hover:border-orange-500/20">
+                <Link key={post.id} href={post.status !== 'approved' ? `/pending/${post.id}` : `/${post.slug}`} className="group rounded-xl border border-white/5 bg-white/[0.02] p-4 transition hover:border-orange-500/20">
                   <div className="flex items-start gap-2 mb-2">
                     <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-2xs font-bold font-mono ${
                       post.post_type === 'best_of' ? 'bg-emerald-500/10 text-emerald-400' :

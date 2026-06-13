@@ -5,9 +5,11 @@ interface PostPendingClientProps {
   title: string;
   rejectionReason?: string;
   isRejected: boolean;
+  postId?: string;
+  queueNumber?: number;
 }
 
-export default function PostPendingClient({ title, rejectionReason, isRejected }: PostPendingClientProps) {
+export default function PostPendingClient({ title, rejectionReason, isRejected, postId, queueNumber }: PostPendingClientProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] px-6 text-center">
       <div className="mb-6 inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-white/5">
@@ -25,6 +27,17 @@ export default function PostPendingClient({ title, rejectionReason, isRejected }
       <p className="mb-2 text-sm text-zinc-400 leading-relaxed max-w-md">
         &ldquo;{title}&rdquo;
       </p>
+
+      {!isRejected && queueNumber && queueNumber > 0 && (
+        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-4 py-1.5 text-sm font-mono text-orange-400">
+          <Icon name="Hash" size={14} />
+          #{queueNumber} in review queue
+        </div>
+      )}
+
+      {!isRejected && postId && (
+        <p className="mb-1 text-3xs text-zinc-700 font-mono">ID: {postId}</p>
+      )}
 
       <p className="mb-8 text-sm text-zinc-600 leading-relaxed max-w-md">
         {isRejected
