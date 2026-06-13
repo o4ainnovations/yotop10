@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/stores/auth';
 import HeaderBells from './HeaderBells';
 import Link from 'next/link';
 import { Icon } from './icons/Icon';
@@ -9,6 +10,9 @@ import { Icon } from './icons/Icon';
 export default function DesktopTopBarMinimal() {
   const router = useRouter();
   const [query, setQuery] = useState('');
+  const user = useAuthStore(s => s.user);
+  const cleanUsername = user?.username?.replace(/^a_/, '') || '';
+  const profileHref = cleanUsername ? `/a/${cleanUsername}` : '/a';
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && query.trim()) {
@@ -32,7 +36,7 @@ export default function DesktopTopBarMinimal() {
         <div className="flex items-center gap-3 ml-3 shrink-0">
           <HeaderBells />
           <Link
-            href="/a"
+            href={profileHref}
             className="flex items-center justify-center w-9 h-9 rounded-full bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10 transition"
             aria-label="Profile"
           >
