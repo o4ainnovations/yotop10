@@ -68,7 +68,23 @@ export default function NotificationsClient() {
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)] max-w-[700px] mx-auto px-3 sm:px-5 py-5">
-      <h1 className="text-xl font-bold mb-5 flex items-center gap-2 text-white"><Icon name="Bell" size={20} /> All Notifications</h1>
+      <div className="flex items-center justify-between mb-5">
+        <h1 className="text-xl font-bold flex items-center gap-2 text-white"><Icon name="Bell" size={20} /> All Notifications</h1>
+        {notifs.some(n => !n.read) && (
+          <button
+            onClick={async () => {
+              try {
+                await apiFetch('/users/me/notifications/read-all', { method: 'PATCH' });
+                setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+              } catch { /* ignore */ }
+            }}
+            className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-2xs font-medium text-zinc-400 hover:text-white hover:bg-white/10 transition"
+          >
+            <Icon name="CheckCheck" size={14} />
+            Mark all read
+          </button>
+        )}
+      </div>
 
       {error && <div className="mb-4 rounded-lg bg-red-500/10 px-4 py-2 text-sm text-red-400">{error}</div>}
 

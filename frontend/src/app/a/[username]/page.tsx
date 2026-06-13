@@ -1,4 +1,4 @@
-import { API } from '@/lib/api';
+import { cookies } from 'next/headers';
 import { redirect, notFound } from 'next/navigation';
 import UserProfileClient from './client';
 
@@ -50,9 +50,19 @@ export default async function UserProfileServer({ params }: PageProps) {
     redirect(`/a/${username.slice(2)}`);
   }
 
+  // Forward device_fingerprint cookie so backend can identify the viewer
+  const cookieStore = await cookies();
+  const fpCookie = cookieStore.get('device_fingerprint')?.value || '';
+  const baseUrl = process.env.INTERNAL_API_URL || 'http://backend:8000/api';
+
   let profile: UserProfile | null = null;
   try {
-    profile = await API.getUserProfile(username) as UserProfile;
+    const res = await fetch(`${baseUrl}/users/${username}`, {
+      headers: fpCookie ? { Cookie: `device_fingerprint=${fpCookie}` } : {},
+      cache: 'no-store',
+    });
+    if (!res.ok) notFound();
+    profile = await res.json() as UserProfile;
   } catch {
     notFound();
   }
