@@ -21,6 +21,7 @@ const quickLinks = [
   { title: 'Notifications', icon: 'Mail' as const, href: '/admin/notifications' },
   { title: 'Hall of Fame', icon: 'Star' as const, href: '/admin/hall-of-fame' },
   { title: 'Mods', icon: 'Shield' as const, href: '/admin/settings/mods' },
+  { title: 'AI Moderation', icon: 'Bot' as const, href: '/admin/settings/ai-moderation' },
   { title: 'Config', icon: 'Settings' as const, href: '/admin/config' },
 ];
 
