@@ -31,6 +31,17 @@ require_command() {
 require_command docker
 require_command curl
 
+step "Committing and pushing local changes"
+if ! git diff --quiet --exit-code || ! git diff --cached --quiet --exit-code || [ -n "$(git ls-files --others --exclude-standard)" ]; then
+  TIMESTAMP=$(date -Iseconds)
+  SUMMARY=$(git status --short | head -5 | tr '\n' '; ' | sed 's/; $//')
+  git add .
+  git commit -m "auto: ${TIMESTAMP} — ${SUMMARY}" || true
+  git push origin main && ok "Pushed $(git rev-parse --short HEAD)" || warn "Push failed (may be behind remote)"
+else
+  ok "No local changes to commit"
+fi
+
 step "Pulling latest code"
 git pull origin main
 
