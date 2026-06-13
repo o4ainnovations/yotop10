@@ -24,7 +24,7 @@ export function DesktopSidebar() {
   const cleanUsername = rawUsername.replace(/^a_/, '');
 
   return (
-    <aside className="fixed top-0 left-0 z-40 h-full w-64 lg:w-72 bg-[var(--color-bg)]/95 backdrop-blur-2xl border-r border-white/5 flex flex-col overflow-y-auto">
+    <aside className="fixed top-0 left-0 z-50 h-full w-64 lg:w-72 bg-[var(--color-bg)]/95 backdrop-blur-2xl border-r border-white/5 flex flex-col overflow-y-auto">
       {/* Logo */}
       <Link href="/" className="flex flex-col px-6 pt-6 pb-4 shrink-0">
         <div className="flex items-baseline gap-0">
