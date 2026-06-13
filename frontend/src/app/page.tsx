@@ -45,6 +45,7 @@ interface DebateItem {
   hero_image_url?: string | null;
   user_display_name?: string;
   view_count?: number;
+  created_at?: string;
 }
 
 interface ArticleItem {
@@ -84,11 +85,22 @@ export default async function Home() {
     fetchJson<PostsResponse>(`${API_BASE}/posts?post_type=fact_drop&limit=10`, { posts: [] }),
   ]);
 
-  const posts = postsData.posts || [];
+  // Deduplicate by title — never show the same content twice
+  const uniqueByTitle = <T extends { title: string }>(items: T[]): T[] => {
+    const seen = new Set<string>();
+    return items.filter(item => {
+      const key = item.title.toLowerCase().trim();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  };
+
+  const posts = uniqueByTitle(postsData.posts || []);
   const categories = catsData.categories || [];
-  const debates = argsData.arguments || [];
-  const articles = artsData.articles || [];
-  const facts = factsData.posts || [];
+  const debates = uniqueByTitle(argsData.arguments || []);
+  const articles = uniqueByTitle(artsData.articles || []);
+  const facts = uniqueByTitle(factsData.posts || []);
 
   const hasContent = posts.length > 0 || debates.length > 0 || categories.some(c => c.post_count > 0) || articles.length > 0;
 

@@ -191,6 +191,7 @@ router.get('/', async (req, res) => {
         hero_image_url: post.hero_image_url || null,
         user_display_name: post.author_display_name,
         user_avatar_url: null,
+        created_at: post.created_at,
       };
     });
 

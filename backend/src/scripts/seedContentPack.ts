@@ -23,7 +23,7 @@ const IMAGES = {
   mysteries: 'https://images.unsplash.com/photo-1503174971373-b1f69850bded?w=1200&q=80',
   worldCup: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=1200&q=80',
   wwe: 'https://images.unsplash.com/photo-1577471488278-16eec37ffcc2?w=1200&q=80',
-  ww2: 'https://images.unsplash.com/photo-1546608235-3310a2494cdf?w=1200&q=80',
+  ww2: 'https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=1200&q=80',
 };
 
 async function downloadImage(url: string, dest: string): Promise<void> {
