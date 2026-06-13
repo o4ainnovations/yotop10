@@ -45,6 +45,7 @@ export interface Post {
   topItems?: Array<{ rank: number; title: string }>;
   totalItems?: number;
   created_at: string;
+  published_at?: string;
 }
 
 export interface PostHistoryResponse { versions: PostVersion[]; }

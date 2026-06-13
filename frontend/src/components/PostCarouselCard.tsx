@@ -91,7 +91,7 @@ export const PostCarouselCard = memo(function PostCarouselCard({ post }: { post:
         <span className="font-mono text-zinc-400">@{displayName}</span>
         <Icon name="BadgeCheck" size={14} className="text-orange-400" />
         <span className="text-zinc-700">&middot;</span>
-        <span suppressHydrationWarning>{formatDate(post.created_at)}</span>
+        <span suppressHydrationWarning>{formatDate(post.published_at || post.created_at)}</span>
       </div>
 
       {/* Section E: Engagement Footer */}
