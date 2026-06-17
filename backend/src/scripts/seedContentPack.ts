@@ -12,7 +12,6 @@ import { ListItem } from '../models/ListItem';
 import { User } from '../models/User';
 import { Article } from '../models/Article';
 import { Category } from '../models/Category';
-import { createPost } from '../services/posts';
 
 dotenv.config();
 
@@ -275,15 +274,15 @@ The final trigger came on September 1, 1939, when Germany invaded Poland. Britai
 
 ### The European Theater
 
-Germany\'s blitzkrieg ("lightning war") tactics quickly overwhelmed Poland, Denmark, Norway, the Netherlands, Belgium, and France. By June 1940, France had fallen, and Britain stood alone against Nazi Germany. The Battle of Britain (July–October 1940) saw the Royal Air Force repel the German Luftwaffe, forcing Hitler to abandon plans for a cross-Channel invasion.
+Germany's blitzkrieg ("lightning war") tactics quickly overwhelmed Poland, Denmark, Norway, the Netherlands, Belgium, and France. By June 1940, France had fallen, and Britain stood alone against Nazi Germany. The Battle of Britain (July–October 1940) saw the Royal Air Force repel the German Luftwaffe, forcing Hitler to abandon plans for a cross-Channel invasion.
 
-Hitler\'s greatest strategic mistake was the invasion of the Soviet Union on June 22, 1941 (Operation Barbarossa). Despite initial successes, the German advance stalled at the gates of Moscow in December 1941 and was decisively defeated at the Battle of Stalingrad (1942–1943), which became the turning point on the Eastern Front. The brutal Eastern Front saw some of the largest battles in history, including Kursk (the largest tank battle ever) and the prolonged Siege of Leningrad, which lasted 872 days.
+Hitler's greatest strategic mistake was the invasion of the Soviet Union on June 22, 1941 (Operation Barbarossa). Despite initial successes, the German advance stalled at the gates of Moscow in December 1941 and was decisively defeated at the Battle of Stalingrad (1942–1943), which became the turning point on the Eastern Front. The brutal Eastern Front saw some of the largest battles in history, including Kursk (the largest tank battle ever) and the prolonged Siege of Leningrad, which lasted 872 days.
 
-The Western Allies launched the D-Day invasion on June 6, 1944 (Operation Overlord), the largest amphibious invasion in history. Allied forces liberated France and pushed toward Germany. The Battle of the Bulge (December 1944–January 1945) was Germany\'s last major offensive. By April 1945, Allied forces had crossed the Rhine, and Soviet forces had captured Berlin. Hitler committed suicide on April 30, 1945, and Germany surrendered unconditionally on May 7–8, 1945 (V-E Day).
+The Western Allies launched the D-Day invasion on June 6, 1944 (Operation Overlord), the largest amphibious invasion in history. Allied forces liberated France and pushed toward Germany. The Battle of the Bulge (December 1944–January 1945) was Germany's last major offensive. By April 1945, Allied forces had crossed the Rhine, and Soviet forces had captured Berlin. Hitler committed suicide on April 30, 1945, and Germany surrendered unconditionally on May 7–8, 1945 (V-E Day).
 
 ### The Pacific Theater
 
-Japan\'s attack on Pearl Harbor on December 7, 1941 brought the United States into the war. Japan rapidly conquered Southeast Asia and the Western Pacific, including the Philippines, Singapore, and the Dutch East Indies.
+Japan's attack on Pearl Harbor on December 7, 1941 brought the United States into the war. Japan rapidly conquered Southeast Asia and the Western Pacific, including the Philippines, Singapore, and the Dutch East Indies.
 
 The turning point came at the Battle of Midway (June 1942), where the U.S. Navy destroyed four Japanese aircraft carriers. The subsequent Allied strategy of "island hopping" — capturing key islands while bypassing others — gradually pushed Japanese forces back. Major battles included Guadalcanal (1942–1943), Iwo Jima (February–March 1945), and Okinawa (April–June 1945), where casualties on both sides were staggering.
 
@@ -307,13 +306,13 @@ The war also saw the forced relocation and internment of Japanese Americans in t
 
 World War II accelerated technological development at an astonishing pace. Radar, jet engines, rocketry, computers (the Colossus and ENIAC), and nuclear weapons all emerged from wartime research. Penicillin was mass-produced for the first time. Blood plasma transfusions, advanced surgery techniques, and psychological understanding of trauma (then called "shell shock") advanced dramatically.
 
-The war also led to the development of the first electronic digital computers, used for codebreaking at Bletchley Park, where Alan Turing\'s work on the Enigma machine helped shorten the war by an estimated two years.
+The war also led to the development of the first electronic digital computers, used for codebreaking at Bletchley Park, where Alan Turing's work on the Enigma machine helped shorten the war by an estimated two years.
 
 ## The Aftermath and Legacy
 
-World War II left a devastated world. Europe lay in ruins, Japan was occupied, and an estimated 60–80 million people had died — about 3% of the world\'s population at the time.
+World War II left a devastated world. Europe lay in ruins, Japan was occupied, and an estimated 60–80 million people had died — about 3% of the world's population at the time.
 
-The war\'s aftermath reshaped global politics:
+The war's aftermath reshaped global politics:
 - The United Nations was established in 1945 to prevent future conflicts.
 - The United States launched the Marshall Plan, providing $13 billion (over $150 billion today) to rebuild Western Europe.
 - Germany was divided into East and West, becoming the frontline of the Cold War.

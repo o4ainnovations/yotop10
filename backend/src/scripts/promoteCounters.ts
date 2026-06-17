@@ -32,27 +32,27 @@ async function promoteCounters() {
     let promoted = 0;
 
     for (const counter of counters) {
-      const parentId = (counter as any).parent_id;
+      const c = counter as Record<string, unknown>;
+      const parentId = c.parent_id as string | undefined;
       if (!parentId) continue;
 
       let shouldPromote = false;
 
-      // Check if counter fire_count >= 50 (significant engagement)
-      if ((counter as any).fire_count >= 50) {
+      if ((c.fire_count as number) >= 50) {
         shouldPromote = true;
       }
 
-      // Check if counter fire_count exceeds parent
       if (!shouldPromote) {
         const parent = await Post.findById(parentId).select('fire_count').lean();
-        if (parent && (counter as any).fire_count > (parent as any).fire_count) {
+        const p = parent as Record<string, unknown> | null;
+        if (p && (c.fire_count as number) > (p.fire_count as number)) {
           shouldPromote = true;
         }
       }
 
       if (shouldPromote) {
         await Post.findByIdAndUpdate(counter._id, { meta_robots: 'index, follow' });
-        console.log(`Promoted: ${(counter as any).slug} (fire: ${(counter as any).fire_count})`);
+        console.log(`Promoted: ${c.slug as string} (fire: ${c.fire_count as string})`);
         promoted++;
       }
     }

@@ -1,6 +1,5 @@
 import crypto from 'crypto';
 import { SystemConfig } from '../models/SystemConfig';
-import { getConfig } from './systemConfig';
 
 const ALGO = 'aes-256-gcm';
 const KEY = process.env.CONFIG_ENCRYPTION_KEY;
@@ -52,14 +51,14 @@ export async function getAiConfig(): Promise<AiModerationConfig | null> {
   try {
     const doc = await SystemConfig.findOne({ key: 'global' }).lean();
     if (!doc) return null;
-    const ai = (doc as any).ai_moderation;
+    const ai = (doc as Record<string, unknown>).ai_moderation as { api_key_encrypted?: string; model?: string; temperature?: number; auto_approve_threshold?: number; auto_approve_mode?: string; enabled?: boolean } | undefined;
     if (!ai || !ai.api_key_encrypted || !ai.enabled) return null;
     return {
       api_key: decrypt(ai.api_key_encrypted),
       model: ai.model || 'deepseek-chat',
       temperature: ai.temperature ?? 0.1,
       auto_approve_threshold: ai.auto_approve_threshold ?? 80,
-      auto_approve_mode: ai.auto_approve_mode || 'approve_only',
+      auto_approve_mode: (ai.auto_approve_mode as AutoApproveMode) || 'approve_only',
       enabled: ai.enabled,
     };
   } catch {

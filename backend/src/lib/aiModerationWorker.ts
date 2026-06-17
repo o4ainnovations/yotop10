@@ -58,7 +58,7 @@ async function processSinglePost(postId: string, config: AiModerationConfig): Pr
   const post = await Post.findById(postId).lean();
   if (!post) return;
   if (post.status !== 'pending_review') return;
-  if ((post as any).ai_reviewed_at) return; // already reviewed
+  if ((post as Record<string, unknown>).ai_reviewed_at) return;
 
   // Build items summary
   const items = await ListItem.find({ post_id: postId })
@@ -68,13 +68,13 @@ async function processSinglePost(postId: string, config: AiModerationConfig): Pr
     .lean();
 
   const itemsSummary = items
-    .map((item: any) => `${item.title}: ${(item.justification || '').substring(0, 100)}`)
+    .map((item: Record<string, unknown>) => `${item.title}: ${((item.justification as string) || '').substring(0, 100)}`)
     .join(' | ');
 
   const result: AiModerationResult = await analyzePost(
     post.title,
     post.post_type,
-    (post as any).intro || '',
+    (post as Record<string, unknown>).intro as string || '',
     itemsSummary,
     config,
   );

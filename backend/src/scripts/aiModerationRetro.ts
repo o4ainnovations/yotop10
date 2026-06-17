@@ -42,7 +42,7 @@ async function retro() {
       if (posts.length === 0) break;
 
       for (const post of posts) {
-        await queuePostForAiReview((post as any)._id.toString());
+        await queuePostForAiReview(((post as Record<string, unknown>)._id as { toString(): string }).toString());
         processed++;
         if (processed % 50 === 0) console.log(`Queued ${processed}/${totalPosts}`);
       }

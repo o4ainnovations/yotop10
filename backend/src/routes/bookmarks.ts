@@ -4,7 +4,6 @@ import mongoose from 'mongoose';
 import { SavedPost } from '../models/SavedPost';
 import { Post } from '../models/Post';
 import { Article } from '../models/Article';
-import { ListItem } from '../models/ListItem';
 import { redis } from '../lib/redis';
 
 const router: Router = Router();
