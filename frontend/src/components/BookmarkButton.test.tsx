@@ -4,6 +4,7 @@ import React from 'react';
 
 const mockSave = vi.fn();
 const mockUnsave = vi.fn();
+const mockCheckBookmark = vi.fn();
 const mockToastSuccess = vi.fn();
 const mockToastInfo = vi.fn();
 const mockToastError = vi.fn();
@@ -12,6 +13,7 @@ vi.mock('@/lib/api', () => ({
   API: {
     save: (...args: unknown[]) => mockSave(...args),
     unsave: (...args: unknown[]) => mockUnsave(...args),
+    checkBookmark: (...args: unknown[]) => mockCheckBookmark(...args),
   },
 }));
 
@@ -37,10 +39,11 @@ import { BookmarkButton } from '@/components/BookmarkButton';
 describe('BookmarkButton', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockCheckBookmark.mockResolvedValue({ bookmarked: false });
   });
 
   it('renders without crashing', () => {
-    render(<BookmarkButton postId="post1" />);
+    render(<BookmarkButton postId="post1" initialBookmarked={false} />);
     const button = screen.getByRole('button');
     expect(button).toBeInTheDocument();
     expect(button).toHaveAttribute('aria-label', 'Bookmark this post');
@@ -59,7 +62,7 @@ describe('BookmarkButton', () => {
     fireEvent.click(screen.getByRole('button'));
 
     await waitFor(() => {
-      expect(mockSave).toHaveBeenCalledWith('post1');
+      expect(mockSave).toHaveBeenCalledWith('post1', undefined);
     });
   });
 
@@ -78,7 +81,7 @@ describe('BookmarkButton', () => {
   it('shows success toast after saving', async () => {
     mockSave.mockResolvedValue({ saved: true });
 
-    render(<BookmarkButton postId="post1" />);
+    render(<BookmarkButton postId="post1" initialBookmarked={false} />);
 
     fireEvent.click(screen.getByRole('button'));
 
@@ -120,7 +123,7 @@ describe('BookmarkButton', () => {
       () => new Promise(() => { /* never resolves */ })
     );
 
-    render(<BookmarkButton postId="post1" />);
+    render(<BookmarkButton postId="post1" initialBookmarked={false} />);
 
     const button = screen.getByRole('button');
     fireEvent.click(button);

@@ -57,8 +57,11 @@ describe('ShareButton', () => {
   });
 
   it('builds correct UTM URL', () => {
+    const originalOrigin = window.location.origin;
+    Object.defineProperty(window, 'location', { value: { origin: 'https://yotop10.fun' }, configurable: true });
     const url = buildShareUrl('test-post-abc', 'post123');
     expect(url).toBe('https://yotop10.fun/test-post-abc?utm_source=share&utm_medium=user&utm_campaign=post_post123');
+    Object.defineProperty(window, 'location', { value: { origin: originalOrigin }, configurable: true });
   });
 
   it('copies UTM URL to clipboard on click', async () => {
@@ -74,9 +77,15 @@ describe('ShareButton', () => {
 
     fireEvent.click(screen.getByRole('button'));
 
+    await waitFor(async () => {
+      await screen.findByText('Copy');
+    });
+
+    fireEvent.click(screen.getByText('Copy'));
+
     await waitFor(() => {
       expect(writeText).toHaveBeenCalledWith(
-        'https://yotop10.fun/test-post?utm_source=share&utm_medium=user&utm_campaign=post_post123'
+        'http://localhost:3000/test-post?utm_source=share&utm_medium=user&utm_campaign=post_post123'
       );
     });
   });
@@ -87,6 +96,9 @@ describe('ShareButton', () => {
     render(<ShareButton slug="test-post" title="Test Post" postId="post123" />);
 
     fireEvent.click(screen.getByRole('button'));
+
+    await screen.findByText('Copy');
+    fireEvent.click(screen.getByText('Copy'));
 
     await waitFor(() => {
       expect(mockToastSuccess).toHaveBeenCalledWith('Link copied!');
@@ -119,6 +131,9 @@ describe('ShareButton', () => {
 
     fireEvent.click(screen.getByRole('button'));
 
+    await screen.findByText('Copy');
+    fireEvent.click(screen.getByText('Copy'));
+
     await waitFor(() => {
       expect(mockToastError).toHaveBeenCalledWith('Failed to copy link');
     });
@@ -130,6 +145,9 @@ describe('ShareButton', () => {
     render(<ShareButton slug="test-post" title="Test Post" postId="post123" />);
 
     fireEvent.click(screen.getByRole('button'));
+
+    await screen.findByText('Copy');
+    fireEvent.click(screen.getByText('Copy'));
 
     await waitFor(() => {
       expect(mockToastSuccess).toHaveBeenCalledWith('Link copied!');

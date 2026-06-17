@@ -27,8 +27,8 @@ export function ShareButton({ slug, title, postId }: ShareButtonProps) {
       if (pending) return;
       setPending(true);
       setModalOpen(true);
-      setPending(false);
       try { await API.trackShare(slug); } catch { /* non-critical */ }
+      setPending(false);
     },
     [slug, pending]
   );
