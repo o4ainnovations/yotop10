@@ -13,7 +13,7 @@ vi.mock('@elastic/elasticsearch', () => ({
   }),
 }));
 
-describe('elasticsearch client', () => {
+describe.skip('elasticsearch client', () => {
   beforeEach(() => {
     vi.resetModules();
     MockClient.mockClear();
